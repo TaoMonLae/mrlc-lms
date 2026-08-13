@@ -35,7 +35,6 @@ const encode = (lesson: GedScienceV2LessonSeed) => PREFIX + JSON.stringify({
   checkpoint: lesson.checkpoint,
 });
 
-const icons = ["🔬", "🧪", "📊", "💡"];
 const q = (question: string, correct: string, distractors: string[], explanation: string, hint?: string) => ({ question, correct, distractors, explanation, hint });
 
 function challenges(lesson: GedScienceV2LessonSeed): OfficialLanguageQuestChallenge[] {
@@ -49,10 +48,10 @@ function challenges(lesson: GedScienceV2LessonSeed): OfficialLanguageQuestChalle
       question: item.question,
       explanation: item.explanation,
       hint: item.hint || "Use the labels, units, variables, or evidence shown in the learning section before choosing.",
-      options: rotated.map((text, optionIndex) => ({
+      options: rotated.map((text) => ({
         text,
         correct: text === item.correct,
-        emoji: icons[optionIndex] || null,
+        emoji: null,
         audioText: null,
       })),
     };
@@ -539,7 +538,7 @@ export const gedScienceV2Course: OfficialLanguageQuestCourse = {
   description: "A concept-first, visual, evidence-based GED Science course with rich learning blocks, labeled tables/diagrams, formulas, worked examples, checkpoints, and expanded practice before assessment.",
   language: "GED Science",
   category: "GED Preparation",
-  imageEmoji: "🧬",
+  imageEmoji: "",
   accentColor: "#0369a1",
   published: true,
   units: [

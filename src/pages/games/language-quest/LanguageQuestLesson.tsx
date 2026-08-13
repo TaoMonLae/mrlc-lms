@@ -25,6 +25,7 @@ import { LanguageQuestReorderTiles } from '@/src/components/games/LanguageQuestR
 import { LanguageQuestMatchingBoard } from '@/src/components/games/LanguageQuestMatchingBoard';
 import { LanguageQuestCompanion } from '@/src/components/games/LanguageQuestCompanion';
 import { LanguageQuestRewardReveal } from '@/src/components/games/LanguageQuestRewards';
+import { LanguageQuestScienceConcept } from '@/src/components/games/LanguageQuestScienceConcept';
 import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
 import { playLanguageQuestSuccessSound } from '@/src/lib/languageQuestAudio';
 import {
@@ -119,7 +120,7 @@ const MATH_CHALLENGE_GUIDANCE: Partial<Record<LanguageQuestChallenge['type'], { 
   },
 };
 
-const guidanceStorageKey = (type: LanguageQuestChallenge['type'], mode: 'language' | 'math') => `lq-challenge-guidance-v2:${mode}:${type}`;
+const guidanceStorageKey = (type: LanguageQuestChallenge['type'], mode: 'language' | 'math' | 'science') => `lq-challenge-guidance-v2:${mode}:${type}`;
 
 async function lessonAnswerMatches(answer: string, modelText: string): Promise<boolean> {
   const normalizedAnswer = normalizeSentenceAnswer(answer);
@@ -279,7 +280,12 @@ export default function LanguageQuestLesson() {
   const vocabularyQuestion = vocabularyQuestions[vocabularyIndex];
   const sentenceCard = sentenceCards[sentenceIndex];
   const spellingCard = spellingCards[spellingIndex];
-  const isMathematics = Boolean(lesson && !languageQuestCourseUsesStudyCards(lesson.course.language));
+  const normalizedCourseLanguage = lesson?.course.language.trim().toLocaleLowerCase() ?? '';
+  const usesStudyCards = Boolean(lesson && languageQuestCourseUsesStudyCards(lesson.course.language));
+  const isMathematics = normalizedCourseLanguage.includes('math');
+  const isScience = normalizedCourseLanguage.includes('science');
+  const isSubjectCourse = isMathematics || isScience;
+  const guidanceMode = isMathematics ? 'math' : isScience ? 'science' : 'language';
   const challengeGuidance = isMathematics ? MATH_CHALLENGE_GUIDANCE : CHALLENGE_GUIDANCE;
   // Practising an already-completed challenge is how hearts get refilled, so
   // only gate challenges the learner hasn't cleared yet (matches the server
@@ -292,11 +298,11 @@ export default function LanguageQuestLesson() {
       return;
     }
     try {
-      setGuidanceType(window.localStorage.getItem(guidanceStorageKey(challenge.type, isMathematics ? 'math' : 'language')) ? null : challenge.type);
+      setGuidanceType(window.localStorage.getItem(guidanceStorageKey(challenge.type, guidanceMode)) ? null : challenge.type);
     } catch {
       setGuidanceType(challenge.type);
     }
-  }, [challenge?.type, challengeGuidance, isMathematics, phase]);
+  }, [challenge?.type, challengeGuidance, guidanceMode, phase]);
 
   // A revealed hint only makes sense for the challenge it belongs to.
   useEffect(() => {
@@ -306,7 +312,7 @@ export default function LanguageQuestLesson() {
   const dismissGuidance = () => {
     if (!guidanceType) return;
     try {
-      window.localStorage.setItem(guidanceStorageKey(guidanceType, isMathematics ? 'math' : 'language'), 'seen');
+      window.localStorage.setItem(guidanceStorageKey(guidanceType, guidanceMode), 'seen');
     } catch {
       // Dismiss for this session even when browser storage is unavailable.
     }
@@ -333,7 +339,7 @@ export default function LanguageQuestLesson() {
   // uses next -- straight to the quiz for courses with no study cards (like
   // Mathematics), or the usual flashcard "Learn" step otherwise.
   const startFromConcept = () => {
-    setPhase(isMathematics ? 'quiz' : 'learn');
+    setPhase(usesStudyCards ? 'learn' : 'quiz');
   };
 
   const continueAfterVocabulary = () => {
@@ -575,7 +581,7 @@ export default function LanguageQuestLesson() {
     } catch (error: any) {
       toast.error(error?.message || 'Could not refresh the lesson');
     }
-    setPhase(isMathematics ? 'quiz' : 'learn');
+    setPhase(usesStudyCards ? 'learn' : 'quiz');
     setPreviewIndex(0);
     setVocabularyIndex(0);
     setVocabularySelectedText(null);
@@ -725,9 +731,7 @@ export default function LanguageQuestLesson() {
           </p>
           <h1 className="mt-4 text-2xl font-black leading-tight text-slate-900 dark:text-white sm:text-3xl">{lesson.title}</h1>
           <div className="mt-6 space-y-4 rounded-3xl border border-sky-200 bg-gradient-to-br from-sky-50 via-white to-violet-50 p-6 shadow-lg shadow-sky-950/5 dark:border-sky-500/20 dark:from-sky-950/30 dark:via-slate-900 dark:to-violet-950/20 sm:p-7">
-            {(lesson.conceptIntro || '').split(/\n{2,}/).map((paragraph, paragraphIndex) => (
-              <p key={paragraphIndex} className="whitespace-pre-line text-sm leading-7 text-slate-700 dark:text-slate-200">{paragraph}</p>
-            ))}
+            <LanguageQuestScienceConcept source={lesson.conceptIntro || ''} />
           </div>
           <Button className="mt-8 w-full sm:w-auto" onClick={startFromConcept}>Start practice</Button>
         </main>
@@ -1238,8 +1242,8 @@ export default function LanguageQuestLesson() {
           </div>
           <div className="rounded-2xl border-2 border-sky-200 bg-sky-50 p-3 sm:p-4 dark:border-sky-500/20 dark:bg-sky-500/10">
             <BookA className="mx-auto h-6 w-6 text-sky-600" />
-            <p className="mt-2 text-xl font-black text-sky-700 sm:text-2xl dark:text-sky-400">{isMathematics ? quizChallenges.length : practiceCards.length}</p>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-600/70 sm:text-xs">{isMathematics ? 'Problems practised' : 'Words learned'}</p>
+            <p className="mt-2 text-xl font-black text-sky-700 sm:text-2xl dark:text-sky-400">{isSubjectCourse ? quizChallenges.length : practiceCards.length}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-600/70 sm:text-xs">{isMathematics ? 'Problems practised' : isScience ? 'Questions practised' : 'Words learned'}</p>
           </div>
           <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-3 sm:p-4 dark:border-orange-500/20 dark:bg-orange-500/10">
             <Flame className={`mx-auto h-6 w-6 fill-orange-500 text-orange-500 ${reducedMotion ? '' : 'animate-pulse'}`} />
@@ -1259,7 +1263,7 @@ export default function LanguageQuestLesson() {
           </div>
         )}
         <div className="mt-7 flex w-full flex-col gap-2 sm:flex-row">
-          {!isMathematics && (
+          {usesStudyCards && (
             <Button variant="outline" className="flex-1" render={<Link to={`/games/language-quest/words?courseId=${lesson.course.id}`} />} nativeButton={false}>
               <BookA className="mr-2 h-4 w-4" /> Learned words
             </Button>
@@ -1340,7 +1344,11 @@ export default function LanguageQuestLesson() {
         </div>
         <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-sky-600 dark:text-sky-300">
           <BookA className="h-3.5 w-3.5" />
-          {isMathematics ? 'Work it out before choosing. Feedback explains the correct method.' : 'Highlight an unfamiliar word to check the dictionary.'}
+          {isMathematics
+            ? 'Work it out before choosing. Feedback explains the correct method.'
+            : isScience
+              ? 'Use the passage, visual, units, and evidence before choosing.'
+              : 'Highlight an unfamiliar word to check the dictionary.'}
         </p>
 
         {challenge.hint && (
@@ -1452,7 +1460,7 @@ export default function LanguageQuestLesson() {
               <div className="flex items-center gap-3 text-emerald-700 dark:text-emerald-400">
                 <LanguageQuestCompanion rewards={profile?.rewards} reaction="correct" reducedMotion={reducedMotion} size="sm" />
                 <div>
-                  <p className="font-black">{isMathematics ? 'Correct — your reasoning checks out.' : 'Excellent — that meaning fits.'}</p>
+                  <p className="font-black">{isMathematics ? 'Correct — your reasoning checks out.' : isScience ? 'Correct — the evidence supports that answer.' : 'Excellent — that meaning fits.'}</p>
                   {challenge.explanation && (
                     <p className="mt-1 max-w-2xl text-sm leading-6 text-emerald-800 dark:text-emerald-300">{challenge.explanation}</p>
                   )}
@@ -1461,7 +1469,7 @@ export default function LanguageQuestLesson() {
                       text={answer.correctAnswer}
                       pinyin={isReorder || isMatching ? null : challenge.options.find((option) => option.id === answer.correctOptionId)?.pinyin ?? null}
                     />
-                    <span>{isMathematics ? 'is the correct result here.' : 'is the best response here.'} +{answer.pointsAwarded} XP</span>
+                    <span>{isMathematics ? 'is the correct result here.' : isScience ? 'is the best-supported answer.' : 'is the best response here.'} +{answer.pointsAwarded} XP</span>
                   </div>
                 </div>
               </div>
@@ -1470,12 +1478,12 @@ export default function LanguageQuestLesson() {
               <div className="flex items-center gap-3 text-rose-700 dark:text-rose-400">
                 <LanguageQuestCompanion rewards={profile?.rewards} reaction="incorrect" reducedMotion={reducedMotion} size="sm" />
                 <div>
-                  <p className="font-black">{isMathematics ? 'Not quite — this problem will return after a few more questions.' : 'Not quite — we’ll revisit this after a few more questions.'}</p>
+                  <p className="font-black">{isMathematics ? 'Not quite — this problem will return after a few more questions.' : isScience ? 'Not quite — review the evidence before this question returns.' : 'Not quite — we’ll revisit this after a few more questions.'}</p>
                   {challenge.explanation && (
                     <p className="mt-1 max-w-2xl text-sm leading-6 text-rose-800 dark:text-rose-300">{challenge.explanation}</p>
                   )}
                   <div className="mt-1 flex flex-wrap items-end gap-1 text-xs">
-                    <span>{isMathematics ? 'Correct result:' : 'Best answer:'}</span>
+                    <span>{isMathematics ? 'Correct result:' : isScience ? 'Evidence-supported answer:' : 'Best answer:'}</span>
                     <LanguageQuestPinyinText
                       text={answer.correctAnswer}
                       pinyin={isReorder || isMatching ? null : challenge.options.find((option) => option.id === answer.correctOptionId)?.pinyin ?? null}

@@ -350,6 +350,7 @@ test("structural review challenges do not become misleading study cards", () => 
   assert.equal(languageQuestCourseUsesStudyCards('English'), true);
   assert.equal(languageQuestCourseUsesStudyCards('Mandarin Chinese'), true);
   assert.equal(languageQuestCourseUsesStudyCards('Mathematics'), false);
+  assert.equal(languageQuestCourseUsesStudyCards('GED Science'), false);
 });
 
 test("Language Quest dictionary extracts a useful highlighted term", () => {
