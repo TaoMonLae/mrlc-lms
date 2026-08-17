@@ -788,6 +788,22 @@ function verifyToken(token: string): JwtPayload {
   return jwt.verify(token, JWT_SECRET as string) as JwtPayload;
 }
 
+async function verifyTokenSession(token: string): Promise<JwtPayload> {
+  const payload = verifyToken(token);
+  if (payload.externalLearner) throw new Error("Learning-only account");
+  if (!payload.sessionId) throw new Error("Missing sessionId");
+
+  const session = await prisma.authSession.findUnique({ where: { id: payload.sessionId } });
+  if (!session || session.userId !== payload.userId || session.revokedAt || session.expiresAt <= new Date()) {
+    throw new Error("Session revoked");
+  }
+  if (Date.now() - (session.lastSeenAt?.getTime() || 0) > 5 * 60 * 1000) {
+    prisma.authSession.update({ where: { id: session.id }, data: { lastSeenAt: new Date() } }).catch(() => {});
+  }
+
+  return payload;
+}
+
 function hashSecurityToken(value: string): string {
   return crypto.createHash("sha256").update(value).digest("hex");
 }
@@ -1942,8 +1958,7 @@ async function startServer() {
   app.use("/uploads/social", async (req, res, next) => {
     let jwtUser: JwtPayload;
     try {
-      jwtUser = verifyToken(String(req.cookies?.social_media_token || ""));
-      if (jwtUser.externalLearner) throw new Error("Learning-only account");
+      jwtUser = await verifyTokenSession(String(req.cookies?.social_media_token || ""));
     } catch {
       res.status(401).json({ error: "Unauthorized" });
       return;
@@ -2006,8 +2021,7 @@ async function startServer() {
   app.use("/uploads/library", async (req, res, next) => {
     let jwtUser: JwtPayload;
     try {
-      jwtUser = verifyToken(String(req.cookies?.library_media_token || ""));
-      if (jwtUser.externalLearner) throw new Error("Learning-only account");
+      jwtUser = await verifyTokenSession(String(req.cookies?.library_media_token || ""));
     } catch {
       res.status(401).json({ error: "Unauthorized" });
       return;
@@ -2052,8 +2066,7 @@ async function startServer() {
   app.use("/uploads/videos", async (req, res, next) => {
     let jwtUser: JwtPayload;
     try {
-      jwtUser = verifyToken(String(req.cookies?.video_media_token || ""));
-      if (jwtUser.externalLearner) throw new Error("Learning-only account");
+      jwtUser = await verifyTokenSession(String(req.cookies?.video_media_token || ""));
     } catch {
       res.status(401).json({ error: "Unauthorized" });
       return;
@@ -2514,6 +2527,12 @@ async function startServer() {
   app.post("/api/auth/logout", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.sessionId) await prisma.authSession.updateMany({ where: { id: jwtUser.sessionId, userId: jwtUser.userId }, data: { revokedAt: new Date() } });
+    res.clearCookie("library_media_token", {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "strict",
+      path: "/uploads/library",
+    });
     res.clearCookie("video_media_token", {
       httpOnly: true,
       secure: isProduction,
@@ -2525,6 +2544,12 @@ async function startServer() {
       secure: isProduction,
       sameSite: "strict",
       path: "/uploads/social",
+    });
+    res.clearCookie("auth_token", {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "strict",
+      path: "/api/chat/stream",
     });
     res.json({ success: true });
   });
@@ -21071,9 +21096,9 @@ async function startServer() {
   }
   // EventSource cannot send Authorization headers, so this endpoint authenticates
   // from an httpOnly cookie instead of authMiddleware.
-  app.get("/api/chat/stream", (req, res) => {
+  app.get("/api/chat/stream", async (req, res) => {
     let user: JwtPayload;
-    try { user = verifyToken(String(req.cookies?.auth_token || "")); }
+    try { user = await verifyTokenSession(String(req.cookies?.auth_token || "")); }
     catch { res.status(401).end(); return; }
     res.set({ "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive", "X-Accel-Buffering": "no" });
     (res as any).flushHeaders?.();
