@@ -49,8 +49,8 @@ export default function AccommodationManagement() {
               {students.map((s) => <option key={s.id} value={s.id}>{studentName(s)}</option>)}
             </select>
           </div>
-          <div><Label>Extra time %</Label><Input type="number" value={form.extraTimePercent} onChange={(e) => setForm({ ...form, extraTimePercent: e.target.value })} /></div>
-          <div><Label>Extra minutes</Label><Input type="number" value={form.extraTimeMinutes} onChange={(e) => setForm({ ...form, extraTimeMinutes: e.target.value })} /></div>
+          <div><Label>Extra time %</Label><Input type="number" min={0} max={1000} step={1} value={form.extraTimePercent} onChange={(e) => setForm({ ...form, extraTimePercent: e.target.value })} /></div>
+          <div><Label>Extra minutes</Label><Input type="number" min={0} max={1440} step={1} value={form.extraTimeMinutes} onChange={(e) => setForm({ ...form, extraTimeMinutes: e.target.value })} /></div>
         </div>
         <div className="flex flex-wrap gap-3">
           {TOGGLES.map(([k, label]) => (

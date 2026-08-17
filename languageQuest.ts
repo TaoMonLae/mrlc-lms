@@ -82,10 +82,10 @@ import {
   LANGUAGE_QUEST_FINAL_EXAM_MAX_QUESTIONS,
   LANGUAGE_QUEST_FINAL_EXAM_MIN_QUESTIONS,
   LANGUAGE_QUEST_FINAL_EXAM_PASS_RATIO,
-  LANGUAGE_QUEST_FINAL_EXAM_TYPES,
   languageQuestFinalExamResult,
   languageQuestFinalExamRetryAt,
   languageQuestFinalExamSubmissionMatchesDeck,
+  languageQuestFinalExamTypeIsEligible,
 } from "./shared/languageQuestFinalExam";
 import {
   LANGUAGE_QUEST_DAILY_CHAIN_TARGET,
@@ -892,6 +892,11 @@ export function canAttemptNewChallenge(hearts: number, alreadyCompleted: boolean
 export function registerLanguageQuestRoutes(deps: Deps): void {
   const { app, prisma, authMiddleware, createAuditLog, logger } = deps;
   const voiceService = languageQuestVoiceServiceFromEnv();
+  // A dictation answer must never be embedded as browser speech text in a
+  // monitored certificate exam. It is eligible only when the server can stream
+  // protected audio; other objective question types remain available.
+  const finalExamChallengeIsEligible = (type: string, language: string) =>
+    languageQuestFinalExamTypeIsEligible(type, voiceService.enabled && kokoroSupportsLanguage(language));
   const voiceLimiter = rateLimit({
     windowMs: 60_000,
     max: 20,
@@ -1178,7 +1183,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         courses: courses.map((course: any) => {
           const challengeIds = course.units.flatMap((unit: any) => unit.lessons.flatMap((lesson: any) => lesson.challenges.map((challenge: any) => challenge.id)));
           const examEligibleChallenges = course.units.flatMap((unit: any) => unit.lessons.flatMap((lesson: any) => lesson.challenges))
-            .filter((challenge: any) => LANGUAGE_QUEST_FINAL_EXAM_TYPES.has(challenge.type));
+            .filter((challenge: any) => finalExamChallengeIsEligible(challenge.type, course.language));
           const completedChallenges = challengeIds.filter((id: string) => completed.has(id)).length;
           const lessonCount = course.units.reduce((sum: number, unit: any) => sum + unit.lessons.length, 0);
           const courseCompleted = challengeIds.length > 0 && completedChallenges === challengeIds.length;
@@ -1633,7 +1638,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           expiresAt: true, submittedAt: true, createdAt: true, updatedAt: true, violationReason: true,
         },
       });
-      const examEligibleChallenges = challenges.filter((challenge: any) => LANGUAGE_QUEST_FINAL_EXAM_TYPES.has(challenge.type));
+      const examEligibleChallenges = challenges.filter((challenge: any) => finalExamChallengeIsEligible(challenge.type, course.language));
       const currentVersionExamAttempts = finalExamAttempts.filter(
         (attempt: any) => attempt.courseUpdatedAt.getTime() === course.updatedAt.getTime(),
       );
@@ -1760,7 +1765,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       }
 
       const eligible = challenges.filter((challenge: any) =>
-        LANGUAGE_QUEST_FINAL_EXAM_TYPES.has(challenge.type)
+        finalExamChallengeIsEligible(challenge.type, course.language)
         && challenge.options.some((option: any) => option.correct),
       );
       if (eligible.length < LANGUAGE_QUEST_FINAL_EXAM_MIN_QUESTIONS) {
@@ -1803,10 +1808,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         passPercent: Math.round(LANGUAGE_QUEST_FINAL_EXAM_PASS_RATIO * 100),
         course: { id: course.id, title: course.title, language: course.language, accentColor: course.accentColor },
         cards: deck.map((challenge: any) => {
-          const correctOption = challenge.options.find((option: any) => option.correct);
-          const secureAudio = challenge.type === "DICTATION"
-            && voiceService.enabled
-            && kokoroSupportsLanguage(course.language);
+          const secureAudio = challenge.type === "DICTATION";
           return {
             challengeId: challenge.id,
             type: challenge.type,
@@ -1816,9 +1818,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
               challenge.options.map((option: any) => option.text),
             ),
             secureAudio,
-            speechText: challenge.type === "DICTATION" && !secureAudio
-              ? correctOption?.audioText || correctOption?.text || null
-              : null,
+            speechText: null,
             options: challenge.type === "DICTATION"
               ? []
               : shuffle(challenge.options).map((option: any) => ({

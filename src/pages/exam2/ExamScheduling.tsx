@@ -6,8 +6,18 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { apiGet, apiSend } from '../../lib/api';
 import { CalendarClock, Save, ShieldCheck } from 'lucide-react';
+import { fromDateTimeLocalValue, toDateTimeLocalValue } from '../../../shared/examScheduleTime';
 
-const dtLocal = (v?: string | null) => (v ? new Date(v).toISOString().slice(0, 16) : '');
+const schedulePayload = (value: any) => ({
+  ...value,
+  availableFrom: fromDateTimeLocalValue(value.availableFrom),
+  availableUntil: fromDateTimeLocalValue(value.availableUntil),
+});
+
+const policyPayload = (value: any) => ({
+  ...value,
+  releaseAt: fromDateTimeLocalValue(value.releaseAt),
+});
 
 export default function ExamScheduling() {
   const { examId } = useParams();
@@ -16,8 +26,15 @@ export default function ExamScheduling() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    apiGet(`/api/exams/${examId}/schedule`).then(setS).catch(() => setS({}));
-    apiGet(`/api/exams/${examId}/result-policy`).then((r) => setP(r || { releaseMode: 'IMMEDIATE', showScore: true, showPassFail: true, showTeacherFeedback: true })).catch(() => setP({ releaseMode: 'IMMEDIATE' }));
+    apiGet(`/api/exams/${examId}/schedule`).then((value: any) => setS({
+      ...value,
+      availableFrom: toDateTimeLocalValue(value?.availableFrom),
+      availableUntil: toDateTimeLocalValue(value?.availableUntil),
+    })).catch(() => setS({}));
+    apiGet(`/api/exams/${examId}/result-policy`).then((value: any) => {
+      const result = value || { releaseMode: 'IMMEDIATE', showScore: true, showPassFail: true, showTeacherFeedback: true };
+      setP({ ...result, releaseAt: toDateTimeLocalValue(result.releaseAt) });
+    }).catch(() => setP({ releaseMode: 'IMMEDIATE' }));
   }, [examId]);
 
   const field = (k: string, v: any) => setS((o: any) => ({ ...o, [k]: v }));
@@ -26,8 +43,8 @@ export default function ExamScheduling() {
   const saveAll = async () => {
     setSaving(true);
     try {
-      await apiSend(`/api/exams/${examId}/schedule`, 'PUT', s);
-      await apiSend(`/api/exams/${examId}/result-policy`, 'PUT', p);
+      await apiSend(`/api/exams/${examId}/schedule`, 'PUT', schedulePayload(s));
+      await apiSend(`/api/exams/${examId}/result-policy`, 'PUT', policyPayload(p));
       toast.success('Schedule & result policy saved');
     } catch (e: any) { toast.error(e.message || 'Save failed'); } finally { setSaving(false); }
   };
@@ -36,7 +53,7 @@ export default function ExamScheduling() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-10">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><CalendarClock className="h-6 w-6 text-aubergine-600" /> Exam Scheduling</h1>
           <p className="text-sm text-slate-500 mt-1">Availability window, attempt rules, security and result release.</p>
@@ -46,13 +63,13 @@ export default function ExamScheduling() {
 
       <section className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 space-y-4">
         <h2 className="font-bold text-slate-800 dark:text-white text-sm uppercase tracking-widest">Availability</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>Available from</Label><Input type="datetime-local" value={dtLocal(s.availableFrom)} onChange={(e) => field('availableFrom', e.target.value || null)} /></div>
-          <div><Label>Available until</Label><Input type="datetime-local" value={dtLocal(s.availableUntil)} onChange={(e) => field('availableUntil', e.target.value || null)} /></div>
-          <div><Label>Duration (minutes)</Label><Input type="number" value={s.durationMinutes ?? ''} onChange={(e) => field('durationMinutes', e.target.value)} /></div>
-          <div><Label>Grace period (minutes)</Label><Input type="number" value={s.gracePeriodMinutes ?? 0} onChange={(e) => field('gracePeriodMinutes', e.target.value)} /></div>
-          <div><Label>Attempt limit</Label><Input type="number" value={s.attemptLimit ?? 1} onChange={(e) => field('attemptLimit', e.target.value)} /></div>
-          <div><Label>Pass mark</Label><Input type="number" value={s.passMark ?? ''} onChange={(e) => field('passMark', e.target.value)} /></div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div><Label>Available from</Label><Input type="datetime-local" value={s.availableFrom || ''} onChange={(e) => field('availableFrom', e.target.value || null)} /></div>
+          <div><Label>Available until</Label><Input type="datetime-local" value={s.availableUntil || ''} onChange={(e) => field('availableUntil', e.target.value || null)} /></div>
+          <div><Label>Duration (minutes)</Label><Input type="number" min={1} step={1} value={s.durationMinutes ?? ''} onChange={(e) => field('durationMinutes', e.target.value)} /></div>
+          <div><Label>Grace period (minutes)</Label><Input type="number" min={0} step={1} value={s.gracePeriodMinutes ?? 0} onChange={(e) => field('gracePeriodMinutes', e.target.value)} /></div>
+          <div><Label>Attempt limit</Label><Input type="number" min={1} step={1} value={s.attemptLimit ?? 1} onChange={(e) => field('attemptLimit', e.target.value)} /></div>
+          <div><Label>Pass mark</Label><Input type="number" min={0} max={s.totalMarks ?? undefined} value={s.passMark ?? ''} onChange={(e) => field('passMark', e.target.value)} /></div>
         </div>
         <div className="flex flex-wrap gap-4 pt-2">
           {[['allowLateStart', 'Allow late start'], ['shuffleQuestions', 'Shuffle questions'], ['shuffleOptions', 'Shuffle options'], ['negativeMarking', 'Negative marking'], ['requiresInvigilator', 'Requires invigilator']].map(([k, label]) => (
@@ -81,7 +98,7 @@ export default function ExamScheduling() {
             <option value="HIDDEN">Hidden (never)</option>
           </select>
         </div>
-        {p.releaseMode === 'SCHEDULED' && <div><Label>Release at</Label><Input type="datetime-local" value={dtLocal(p.releaseAt)} onChange={(e) => pol('releaseAt', e.target.value || null)} /></div>}
+        {p.releaseMode === 'SCHEDULED' && <div><Label>Release at</Label><Input type="datetime-local" value={p.releaseAt || ''} onChange={(e) => pol('releaseAt', e.target.value || null)} /></div>}
         <div className="flex flex-wrap gap-4 pt-2">
           {[['showScore', 'Show score'], ['showPassFail', 'Show pass/fail'], ['showCorrectAnswers', 'Show correct answers'], ['showExplanations', 'Show explanations'], ['showTeacherFeedback', 'Show feedback']].map(([k, label]) => (
             <label key={k} className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">

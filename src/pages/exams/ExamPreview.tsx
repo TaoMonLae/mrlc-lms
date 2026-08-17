@@ -9,7 +9,7 @@ import { splitDragText } from '../../lib/dragBlanks';
 type DragBankItem = { key: string; label: string };
 type Q = { id: string; text: string; type: string; points: number; options: { value: string; text: string }[] | null; dragText?: string; dragBank?: DragBankItem[]; passageText?: string | null; imageUrl?: string | null };
 
-const TEXT_ANSWER_TYPES = ['SHORT_ANSWER', 'ESSAY', 'WRITTEN'];
+const TEXT_ANSWER_TYPES = ['SHORT_ANSWER', 'ESSAY', 'WRITTEN', 'EXTENDED'];
 
 /**
  * Read-only teacher preview of an exam — shows questions, passages and options

@@ -18,6 +18,11 @@ export const LANGUAGE_QUEST_FINAL_EXAM_TYPES = new Set([
   "DICTATION",
 ]);
 
+export function languageQuestFinalExamTypeIsEligible(type: string, secureDictationAvailable: boolean): boolean {
+  return LANGUAGE_QUEST_FINAL_EXAM_TYPES.has(type)
+    && (type !== "DICTATION" || secureDictationAvailable);
+}
+
 export type LanguageQuestFinalExamStatus =
   | "IN_PROGRESS"
   | "PASSED"

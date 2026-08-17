@@ -5,7 +5,7 @@ import { AlertTriangle, ArrowLeft, Award, Check, CheckCircle2, Clock3, Expand, F
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ApiError, apiGet, apiSend } from '@/src/lib/api';
+import { ApiError, apiGet, apiSend, authHeaders } from '@/src/lib/api';
 import type { LanguageQuestOption } from '@/src/types/languageQuest';
 import { LanguageQuestContentText } from '@/src/components/games/LanguageQuestContentText';
 import { LanguageQuestQuestionText } from '@/src/components/games/LanguageQuestQuestionText';
@@ -164,7 +164,7 @@ export default function LanguageQuestFinalExam() {
       if (finishingRef.current) return;
       void fetch(`/api/language-quest/courses/${courseId}/final-exam/violation`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         credentials: 'include',
         keepalive: true,
         body: JSON.stringify({ attemptId: payload.attemptId, reason: 'PAGE_EXIT' }),

@@ -8,6 +8,7 @@ import {
   languageQuestFinalExamResult,
   languageQuestFinalExamRetryAt,
   languageQuestFinalExamSubmissionMatchesDeck,
+  languageQuestFinalExamTypeIsEligible,
 } from "../../shared/languageQuestFinalExam";
 
 test("final exam uses an 80% pass mark rounded up", () => {
@@ -73,6 +74,12 @@ test("final exam includes and server-grades typed spelling questions", () => {
     answerKey,
   );
   assert.equal(cannotSpoofWithOptionId.correctCount, 0);
+});
+
+test("certificate dictation requires protected server audio", () => {
+  assert.equal(languageQuestFinalExamTypeIsEligible("SELECT", false), true);
+  assert.equal(languageQuestFinalExamTypeIsEligible("DICTATION", false), false);
+  assert.equal(languageQuestFinalExamTypeIsEligible("DICTATION", true), true);
 });
 
 test("failed and terminated attempts require a review break", () => {

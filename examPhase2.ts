@@ -4,6 +4,11 @@ import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
 import { composeQuestionSet, freezeAttempt, dragDropBank, seededShuffle } from "./examBank";
 import { analyticsSelectedValues, analyzeDistractorResponses, hasAnalyticsResponse } from "./shared/examAnalytics";
+import {
+  effectiveExamDurationMinutes,
+  examAccommodationValidationError,
+  examAttemptIsExpired,
+} from "./shared/examRules";
 
 interface JwtPayload { userId: string; role: string; email: string; }
 
@@ -116,6 +121,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
       groupId: q.groupId ?? null,
       stimulusId: q.stimulusId ?? null,
       partialCredit: q.partialCredit ?? false,
+      multipleSelection: Array.isArray(q.correctAnswers) && q.correctAnswers.length > 1,
       passageText: q.passageText ?? null,
       imageUrl: q.imageUrl ?? null,
     };
@@ -129,7 +135,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
     }
     return Math.max(0, Math.floor((new Date(attempt.serverDeadline).getTime() - Date.now()) / 1000));
   }
-  const isExpired = (attempt: any) => attempt.serverDeadline && attempt.state !== "PAUSED" && Date.now() > new Date(attempt.serverDeadline).getTime();
+  const isExpired = (attempt: any) => examAttemptIsExpired(attempt);
 
   function hasCurrentSession(attempt: any, sessionToken: unknown): boolean {
     return typeof sessionToken === "string" && !!attempt.sessionToken && sessionToken === attempt.sessionToken;
@@ -149,7 +155,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
     const b = req.body || {};
     const has = (key: string) => Object.prototype.hasOwnProperty.call(b, key);
     try {
-      const existing = await prisma.exam.findUnique({ where: { id }, select: { accessCodeHash: true } });
+      const existing = await prisma.exam.findUnique({ where: { id }, select: { accessCodeHash: true, totalMarks: true } });
       if (!existing) { res.status(404).json({ error: "Exam not found" }); return; }
       const availableFrom = b.availableFrom ? new Date(b.availableFrom) : null;
       const availableUntil = b.availableUntil ? new Date(b.availableUntil) : null;
@@ -168,6 +174,9 @@ export function registerExamPhase2Routes(deps: Deps): void {
       if (!Number.isInteger(gracePeriodMinutes) || gracePeriodMinutes < 0) { res.status(400).json({ error: "Grace period must be a non-negative integer" }); return; }
       if (durationMinutes !== null && (!Number.isInteger(durationMinutes) || durationMinutes < 1)) { res.status(400).json({ error: "Duration must be a positive integer" }); return; }
       if (passMark !== null && passMark < 0) { res.status(400).json({ error: "Pass mark cannot be negative" }); return; }
+      if (passMark !== null && existing.totalMarks != null && passMark > Number(existing.totalMarks)) {
+        res.status(400).json({ error: `Pass mark cannot exceed the exam total of ${existing.totalMarks}` }); return;
+      }
       if (b.status !== undefined && !["DRAFT", "SCHEDULED", "ACTIVE", "CLOSED", "PUBLISHED"].includes(b.status)) {
         res.status(400).json({ error: "Invalid exam status" }); return;
       }
@@ -226,7 +235,10 @@ export function registerExamPhase2Routes(deps: Deps): void {
   app.put("/api/exams/:id/result-policy", authMiddleware, teacherGuard, examGuard(), async (req, res) => {
     const { id } = req.params; const b = req.body || {};
     const has = (key: string) => Object.prototype.hasOwnProperty.call(b, key);
-    const releaseMode = ["IMMEDIATE", "SCHEDULED", "AFTER_GRADING", "HIDDEN"].includes(b.releaseMode) ? b.releaseMode : "IMMEDIATE";
+    if (b.releaseMode !== undefined && !["IMMEDIATE", "SCHEDULED", "AFTER_GRADING", "HIDDEN"].includes(b.releaseMode)) {
+      res.status(400).json({ error: "Invalid result release mode" }); return;
+    }
+    const releaseMode = b.releaseMode || "IMMEDIATE";
     const releaseAt = b.releaseAt ? new Date(b.releaseAt) : null;
     if (releaseAt && Number.isNaN(releaseAt.getTime())) { res.status(400).json({ error: "Invalid result release date" }); return; }
     if (releaseMode === "SCHEDULED" && !releaseAt) { res.status(400).json({ error: "A release date is required for scheduled results" }); return; }
@@ -313,7 +325,10 @@ export function registerExamPhase2Routes(deps: Deps): void {
     if (!b.studentId) { res.status(400).json({ error: "studentId is required" }); return; }
     try {
       if (!(await canManageAccommodationTarget(req, b.studentId, b.examId || null))) { res.status(403).json({ error: "Forbidden" }); return; }
-      const row = await prisma.examAccommodation.create({ data: { studentId: b.studentId, examId: b.examId || null, ...accommodationFields(b) } });
+      const fields = accommodationFields(b);
+      const validationError = examAccommodationValidationError(fields);
+      if (validationError) { res.status(400).json({ error: validationError }); return; }
+      const row = await prisma.examAccommodation.create({ data: { studentId: b.studentId, examId: b.examId || null, ...fields } });
       await createAuditLog(user(req).userId, user(req).email, "CREATE", "EXAM_ACCOMMODATION", row.id, `Accommodation created for student ${b.studentId}.`, ipOf(req), uaOf(req), "SUCCESS");
       res.status(201).json(row);
     } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
@@ -324,7 +339,10 @@ export function registerExamPhase2Routes(deps: Deps): void {
       const existing = await prisma.examAccommodation.findUnique({ where: { id: req.params.id } });
       if (!existing) { res.status(404).json({ error: "Not found" }); return; }
       if (!(await canManageAccommodationTarget(req, existing.studentId, existing.examId))) { res.status(403).json({ error: "Forbidden" }); return; }
-      const row = await prisma.examAccommodation.update({ where: { id: req.params.id }, data: accommodationFields(req.body || {}) });
+      const fields = accommodationFields(req.body || {});
+      const validationError = examAccommodationValidationError(fields);
+      if (validationError) { res.status(400).json({ error: validationError }); return; }
+      const row = await prisma.examAccommodation.update({ where: { id: req.params.id }, data: fields });
       await createAuditLog(user(req).userId, user(req).email, "UPDATE", "EXAM_ACCOMMODATION", row.id, `Accommodation updated.`, ipOf(req), uaOf(req), "SUCCESS");
       res.json(row);
     } catch (err: any) {
@@ -412,13 +430,6 @@ export function registerExamPhase2Routes(deps: Deps): void {
     }
   });
 
-
-  function effectiveDuration(baseMin: number, accom: any): number {
-    let mins = baseMin;
-    if (accom?.extraTimePercent) mins += (baseMin * accom.extraTimePercent) / 100;
-    if (accom?.extraTimeMinutes) mins += accom.extraTimeMinutes;
-    return Math.round(mins);
-  }
 
   app.post("/api/exam2/:examId/start", authMiddleware, examLimiter, async (req, res) => {
     if (isTeacher(req)) { res.status(403).json({ error: "Only students take exams" }); return; }
@@ -512,7 +523,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
           ? await tx.examAccommodation.findUnique({ where: { id: assignment.accommodationId } })
           : await accommodationFor(student.id, examId);
         const baseMin = exam.durationMinutes || 60;
-        const effMin = effectiveDuration(baseMin, accom);
+        const effMin = effectiveExamDurationMinutes(baseMin, accom);
         const serverDeadline = new Date(now + effMin * 60000 + (exam.gracePeriodMinutes || 0) * 60000);
 
         const composed = await composeQuestionSet(tx, examId, randomSeed);
@@ -575,6 +586,9 @@ export function registerExamPhase2Routes(deps: Deps): void {
           id: q.id, text: q.text, type: q.type,
           points: q.pointsOverride ?? q.defaultPoints ?? q.points ?? 0,
           options,
+          multipleSelection: Array.isArray(q.optionRows) && q.optionRows.length
+            ? q.optionRows.filter((option: any) => option.isCorrect).length > 1
+            : Array.isArray(q.correctAnswers) && q.correctAnswers.length > 1,
           dragText: q.type === "DRAG_DROP" ? String(q.options?.text ?? "") : undefined,
           dragBank: q.type === "DRAG_DROP" ? dragDropBank(q.options) : undefined,
           passageText: q.passageText ?? null, imageUrl: q.imageUrl ?? null,
@@ -605,6 +619,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
         passageText: q.passageText ?? null,
         imageUrl: q.imageUrl ?? null,
         partialCredit: q.partialCredit ?? false,
+        multipleSelection: q.multipleSelection ?? false,
       }));
     } else {
       const questions = exam.questions || (await prisma.question.findMany({ where: { examId: exam.id } }));
@@ -793,6 +808,11 @@ export function registerExamPhase2Routes(deps: Deps): void {
       if (!student || attempt.studentId !== student.id) { res.status(403).json({ error: "Forbidden" }); return; }
       if (attempt.state !== "IN_PROGRESS") { res.status(409).json({ error: "Not in progress" }); return; }
       if (!hasCurrentSession(attempt, req.body?.sessionToken)) { res.status(409).json({ error: "SESSION_CONFLICT", message: "This attempt is open in another session." }); return; }
+      if (isExpired(attempt)) {
+        const finalized = await finalizeSubmission(attempt.id, true, ipOf(req), uaOf(req));
+        res.status(409).json({ error: "TIME_EXPIRED", autoSubmitted: true, state: finalized.state });
+        return;
+      }
       if (!attempt.accommodation?.additionalBreaks) { res.status(403).json({ error: "Only an invigilator can pause this attempt" }); return; }
       const updated = await prisma.examAttempt.update({ where: { id: attempt.id }, data: { state: "PAUSED", pausedAt: new Date(), lastSavedAt: new Date() } });
       await prisma.attemptEvent.create({ data: { attemptId: attempt.id, type: "PAUSE", actorRole: "STUDENT", ipAddress: ipOf(req), userAgent: uaOf(req) } }).catch(() => {});
@@ -808,8 +828,9 @@ export function registerExamPhase2Routes(deps: Deps): void {
       if (!attempt || !student || attempt.studentId !== student.id) { res.status(403).json({ error: "Forbidden" }); return; }
       if (attempt.state !== "IN_PROGRESS") { res.status(409).json({ error: attempt.state === "PAUSED" ? "Resume the attempt before submitting" : "Already submitted", state: attempt.state }); return; }
       if (!hasCurrentSession(attempt, req.body?.sessionToken)) { res.status(409).json({ error: "SESSION_CONFLICT", message: "This attempt is open in another session." }); return; }
-      const finalized = await finalizeSubmission(attempt.id, false, ipOf(req), uaOf(req));
-      res.json({ ok: true, state: finalized.state });
+      const expired = isExpired(attempt);
+      const finalized = await finalizeSubmission(attempt.id, expired, ipOf(req), uaOf(req));
+      res.json({ ok: true, state: finalized.state, autoSubmitted: expired });
     } catch (err: any) {
       if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Exam system not migrated yet" }); return; }
       logger.error("submit failed", err);
@@ -965,8 +986,12 @@ export function registerExamPhase2Routes(deps: Deps): void {
         if (Array.isArray(source.options) && source.options.length && source.correctAnswer != null && (!Array.isArray(source.correctAnswers) || !source.correctAnswers.length)) {
           const accepted = [String(source.correctAnswer)];
           const idx = Number(source.correctAnswer);
-          if (Number.isInteger(idx) && source.options[idx] != null) {
-            const opt = source.options[idx];
+          // Old frozen attempts may still contain an index key. Resolve that
+          // index against the canonical database option order, never the
+          // shuffled student-facing order.
+          const canonicalOptions = Array.isArray(q.options) ? q.options : source.options;
+          if (Number.isInteger(idx) && canonicalOptions[idx] != null) {
+            const opt = canonicalOptions[idx];
             accepted.push(String(typeof opt === "object" ? (opt.key ?? opt.value ?? opt.text ?? idx) : opt));
           }
           return { ...source, points: max, correctAnswers: accepted };
@@ -1049,7 +1074,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
       for (const g of manualGrades) fbByQ[g.questionId] = g;
 
       let questions: any[] = [];
-      if (showCorrect || showExpl) {
+      if (showCorrect || showExpl || showFeedback) {
         // Use the frozen selected set when present (bank/blueprint attempts draw
         // questions that don't belong to this examId), else the exam's own questions.
         const selectedIds: string[] | null = Array.isArray(attempt.selectedQuestionIds) && attempt.selectedQuestionIds.length
@@ -1061,8 +1086,59 @@ export function registerExamPhase2Routes(deps: Deps): void {
         const orderedQs = selectedIds
           ? selectedIds.map((id) => qs.find((q: any) => q.id === id)).filter(Boolean)
           : qs;
+        const frozenByQ: Record<string, any> = {};
+        if (Array.isArray(attempt.frozenContent)) {
+          for (const frozen of attempt.frozenContent) frozenByQ[frozen.id] = frozen;
+        }
+        const reviewQs = orderedQs.map((question: any) => {
+          const frozen = frozenByQ[question.id];
+          if (!frozen) return question;
+          return {
+            ...question,
+            text: frozen.text,
+            type: frozen.type,
+            points: frozen.points,
+            passageText: frozen.passageText ?? null,
+            explanation: frozen.explanation ?? question.explanation,
+            options: frozen.scoringOptions ?? frozen.options ?? question.options,
+            optionRows: [],
+            correctAnswer: frozen.correctAnswer,
+            correctAnswers: frozen.correctAnswers,
+            _canonicalOptions: question.options,
+          };
+        });
         const ansByQ: Record<string, any> = {};
         for (const a of attempt.answers) ansByQ[a.questionId] = a;
+        const optionEntries = (q: any): Array<{ key: string; label: string }> => {
+          if (Array.isArray(q.optionRows) && q.optionRows.length) {
+            return q.optionRows.map((option: any) => ({ key: String(option.id), label: String(option.text) }));
+          }
+          if (!Array.isArray(q.options)) return [];
+          return q.options.map((option: any, index: number) => ({
+            key: String(typeof option === "object" ? option.key ?? option.value ?? option.text ?? index : option),
+            label: String(typeof option === "object" ? option.text ?? option.value ?? option.key ?? index : option),
+          }));
+        };
+        const optionLabel = (q: any, value: unknown) => {
+          const raw = String(value ?? "");
+          const matched = optionEntries(q).find((option) => option.key === raw);
+          if (matched) return matched.label;
+          const index = Number(raw);
+          if (Number.isInteger(index) && Array.isArray(q._canonicalOptions) && q._canonicalOptions[index] != null) {
+            const option = q._canonicalOptions[index];
+            return String(typeof option === "object" ? option.text ?? option.value ?? index : option);
+          }
+          return raw;
+        };
+        const acceptedAnswerValues = (q: any): unknown[] => {
+          if (Array.isArray(q.optionRows) && q.optionRows.length) {
+            const correctOptionIds = q.optionRows.filter((option: any) => option.isCorrect).map((option: any) => option.id);
+            if (correctOptionIds.length) return correctOptionIds;
+          }
+          return Array.isArray(q.correctAnswers) && q.correctAnswers.length
+            ? q.correctAnswers
+            : q.correctAnswer == null ? [] : [q.correctAnswer];
+        };
         // For legacy MCQs the correct answer is stored as an option *index*; show
         // the option *text* so it matches the student's (text) answer.
         const correctText = (q: any) => {
@@ -1070,22 +1146,13 @@ export function registerExamPhase2Routes(deps: Deps): void {
             const blanks = q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).blanks) ? (q.options as any).blanks : [];
             return blanks.length ? blanks.map((b: any, i: number) => `${i + 1}. ${b.answer}`).join("   ") : null;
           }
-          if (Array.isArray(q.optionRows) && q.optionRows.length) {
-            return q.optionRows.filter((o: any) => o.isCorrect).map((o: any) => o.text).join(", ");
-          }
-          if (q.correctAnswer == null) return q.correctAnswer;
-          if (Array.isArray(q.options) && q.options.length) {
-            const idx = Number(q.correctAnswer);
-            if (Number.isInteger(idx) && q.options[idx] != null) {
-              const o = q.options[idx];
-              return String(typeof o === "object" ? (o.text ?? o.value ?? idx) : o);
-            }
-          }
-          return q.correctAnswer;
+          const accepted = acceptedAnswerValues(q);
+          return accepted.length ? accepted.map((answer: unknown) => optionLabel(q, answer)).join(", ") : null;
         };
-        const correctAnswers = (q: any) => Array.isArray(q.optionRows) && q.optionRows.length
-          ? q.optionRows.filter((o: any) => o.isCorrect).map((o: any) => o.text)
-          : q.correctAnswers;
+        const correctAnswers = (q: any) => {
+          const accepted = acceptedAnswerValues(q);
+          return accepted.map((answer: unknown) => optionLabel(q, answer));
+        };
         // Drag-drop answers live in selectedOptions ({ [blankId]: bankKey }),
         // not answerText, so the plain answerText lookup below always showed
         // "—" for these questions even when answered and correctly graded.
@@ -1100,7 +1167,11 @@ export function registerExamPhase2Routes(deps: Deps): void {
             const lines = blanks.map((b: any, i: number) => matches[b.id] != null && bankLabel[matches[b.id]] ? `${i + 1}. ${bankLabel[matches[b.id]]}` : null).filter(Boolean);
             return lines.length ? lines.join("   ") : null;
           }
-          return ans?.answerText ?? null;
+          if (Array.isArray(ans?.selectedOptions)) {
+            const labels = ans.selectedOptions.map((answer: unknown) => optionLabel(q, answer)).filter(Boolean);
+            return labels.length ? labels.join(", ") : null;
+          }
+          return ans?.answerText != null ? optionLabel(q, ans.answerText) : null;
         };
         // A per-blank breakdown for the review screen (which blank the student
         // got right/wrong, their word vs. the correct one) — richer than the
@@ -1121,7 +1192,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
             return { label: `Blank ${i + 1}`, your: yourWord || null, correct: b.answer, isCorrect };
           });
         };
-        questions = orderedQs.map((q: any) => ({
+        questions = reviewQs.map((q: any) => ({
           id: q.id, text: q.text, passageText: q.passageText ?? null,
           ...(showCorrect ? { correctAnswer: correctText(q), correctAnswers: correctAnswers(q) } : {}),
           ...(showExpl ? { explanation: q.explanation } : {}),

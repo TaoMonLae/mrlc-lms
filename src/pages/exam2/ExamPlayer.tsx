@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { authHeaders } from '../../lib/api';
-import { Clock, Save, Flag, Pause, Send, AlertTriangle, Loader2 } from 'lucide-react';
+import { Clock, Save, Flag, Pause, Send, AlertTriangle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import MathText from '../../components/MathText';
 import { splitDragText } from '../../lib/dragBlanks';
 
@@ -16,9 +16,19 @@ import { splitDragText } from '../../lib/dragBlanks';
  *  - Handles SESSION_CONFLICT (another session) and TIME_EXPIRED (auto-submit).
  */
 type DragBankItem = { key: string; label: string };
-type Q = { id: string; text: string; type: string; points: number; options: any; partialCredit?: boolean; passageText?: string | null; imageUrl?: string | null; dragText?: string; dragBank?: DragBankItem[] };
+type Q = { id: string; text: string; type: string; points: number; options: any; partialCredit?: boolean; multipleSelection?: boolean; passageText?: string | null; imageUrl?: string | null; dragText?: string; dragBank?: DragBankItem[] };
 type Answer = { answerText?: string; selectedOptions?: string[] | Record<string, string>; flaggedForReview?: boolean };
 type ExamSettings = { audience?: string; questionTheme?: string; lockdownBrowser?: boolean; antiCheat?: { requireFullscreen?: boolean; blockClipboard?: boolean; warnOnFocusLoss?: boolean } };
+
+function answerIsComplete(question: Q, answer?: Answer): boolean {
+  if (question.type === 'DRAG_DROP') {
+    const blankIds = splitDragText(question.dragText || '').filter((segment) => segment.kind === 'blank').map((segment: any) => segment.blankId);
+    const matches = answer?.selectedOptions && !Array.isArray(answer.selectedOptions) ? answer.selectedOptions : {};
+    return blankIds.length > 0 && blankIds.every((blankId) => Boolean(matches[blankId]));
+  }
+  if (Array.isArray(answer?.selectedOptions)) return answer.selectedOptions.length > 0;
+  return Boolean(answer?.answerText?.trim());
+}
 
 // A small rotating palette so drag chips read as playful/colorful (Wayground
 // style) rather than one flat color — purely cosmetic, keyed by chip index.
@@ -46,6 +56,7 @@ export default function ExamPlayer() {
   const [canPause, setCanPause] = useState(false);
   const [savedAt, setSavedAt] = useState<string>('');
   const [saving, setSaving] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [examTitle, setExamTitle] = useState('');
   const [examSettings, setExamSettings] = useState<ExamSettings>({});
   const [securityWarnings, setSecurityWarnings] = useState(0);
@@ -76,6 +87,11 @@ export default function ExamPlayer() {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) { setBlocked(data.message || data.error || 'Could not load attempt'); setLoading(false); return; }
     if (data.autoSubmitted) { toast.info('Time expired — your attempt was submitted.'); navigate(`/exam2/attempts/${attemptId}/result`); return; }
+    if (data.attempt?.state !== 'IN_PROGRESS') {
+      sessionStorage.removeItem(`exam_attempt_session_${attemptId}`);
+      navigate(`/exam2/attempts/${attemptId}/result`, { replace: true });
+      return;
+    }
     setQuestions(data.questions || []);
     setExamTitle(data.exam?.title || 'Exam');
     setExamSettings(data.exam?.settings || {});
@@ -121,6 +137,7 @@ export default function ExamPlayer() {
     if (status === 409 && data.error === 'SESSION_CONFLICT') { setBlocked('This attempt was opened in another window or device. This session is now read-only.'); return false; }
     if (status === 409 && data.error === 'ATTEMPT_PAUSED') { setBlocked('This attempt has been paused. Resume it from My Exams before continuing.'); return false; }
     if (status === 409 && (data.error === 'TIME_EXPIRED' || data.autoSubmitted)) { toast.info('Time expired — submitted.'); navigate(`/exam2/attempts/${attemptId}/result`); return false; }
+    if (reason !== 'AUTOSAVE') toast.error(data.error || 'Your answers could not be saved. Check your connection and try again.');
     return false;
   }, [attemptId, sessionToken, post, navigate]);
 
@@ -201,11 +218,24 @@ export default function ExamPlayer() {
   };
 
   const handleSubmit = async (auto = false) => {
-    if (!auto && !confirm('Submit your exam? You will not be able to change your answers.')) return;
-    if (!(await save('SUBMIT'))) return;
-    const { ok, data } = await post(`/api/attempts/${attemptId}/submit`, { sessionToken });
-    if (ok) { sessionStorage.removeItem(`exam_attempt_session_${attemptId}`); toast.success('Exam submitted.'); navigate(`/exam2/attempts/${attemptId}/result`); }
-    else toast.error(data.error || 'Could not submit');
+    if (submitting) return;
+    if (!auto) {
+      const unanswered = questions.filter((question) => !answerIsComplete(question, answersRef.current[question.id])).length;
+      const warning = unanswered ? ` ${unanswered} question${unanswered === 1 ? ' is' : 's are'} unanswered.` : '';
+      if (!confirm(`Submit your exam?${warning} You will not be able to change your answers.`)) return;
+    }
+    setSubmitting(true);
+    try {
+      if (!(await save('SUBMIT'))) return;
+      const { ok, data } = await post(`/api/attempts/${attemptId}/submit`, { sessionToken });
+      if (ok) {
+        sessionStorage.removeItem(`exam_attempt_session_${attemptId}`);
+        toast.success(data.autoSubmitted ? 'Time expired — your exam was submitted.' : 'Exam submitted.');
+        navigate(`/exam2/attempts/${attemptId}/result`);
+      } else toast.error(data.error || 'Could not submit');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) return <div className="flex items-center justify-center py-32 text-slate-500"><Loader2 className="h-6 w-6 animate-spin mr-2" /> Loading exam…</div>;
@@ -334,7 +364,7 @@ export default function ExamPlayer() {
         <div className="space-y-2">
           {(q.options as any[]).map((opt, i) => {
             const val = String(typeof opt === 'object' ? opt.value ?? opt.text ?? i : opt);
-            const multi = q.partialCredit;
+            const multi = q.multipleSelection ?? q.partialCredit;
             const selected = multi ? selectedChoices(q.id).includes(val) : answers[q.id]?.answerText === val;
             return (
               <button key={i} type="button"
@@ -367,10 +397,10 @@ export default function ExamPlayer() {
     : examSettings.questionTheme === 'focus' ? 'exam-theme-focus contrast-125' : '';
 
   return (
-    <div className={`${hasPassage ? 'max-w-6xl' : 'max-w-3xl'} ${themeClass} mx-auto pb-24`} data-no-i18n>
-      <div className="sticky top-0 z-10 bg-white/90 dark:bg-canvas/90 backdrop-blur border-b border-slate-200 dark:border-surface-raised py-3 mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="font-bold text-slate-900 dark:text-white">{examTitle}</h1>
+    <div className={`${hasPassage ? 'max-w-6xl' : 'max-w-3xl'} ${themeClass} mx-auto min-w-0 pb-32`} data-no-i18n>
+      <div className="sticky top-0 z-10 mb-6 flex min-w-0 items-center justify-between gap-3 border-b border-slate-200 bg-white/90 py-3 backdrop-blur dark:border-surface-raised dark:bg-canvas/90">
+        <div className="min-w-0">
+          <h1 className="truncate font-bold text-slate-900 dark:text-white">{examTitle}</h1>
           <p className="text-[11px] text-slate-400 font-medium">{saving ? 'Saving…' : savedAt ? `Saved ${new Date(savedAt).toLocaleTimeString()}` : 'Not saved yet'}</p>
         </div>
         <div className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono font-bold ${low ? 'bg-red-500 text-white animate-pulse' : 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'}`}>
@@ -388,7 +418,7 @@ export default function ExamPlayer() {
       {hasPassage ? (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
           {/* Left Column: Passage */}
-          <div className="exam-card md:col-span-6 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4 max-h-[60vh] md:max-h-[70vh] overflow-y-auto md:sticky top-20">
+          <div className="exam-card max-h-[45vh] space-y-4 overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-surface-raised dark:bg-surface-indigo sm:p-6 md:sticky md:top-20 md:col-span-6 md:max-h-[70vh]">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b pb-2 dark:border-surface-raised">Passage</h3>
             <div className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
               <MathText>{q.passageText || ''}</MathText>
@@ -396,7 +426,7 @@ export default function ExamPlayer() {
           </div>
 
           {/* Right Column: Question & Answer */}
-          <div className="exam-card md:col-span-6 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-5">
+          <div className="exam-card space-y-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-surface-raised dark:bg-surface-indigo sm:p-6 md:col-span-6">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Question {idx + 1} of {questions.length} · {q?.points} pts</span>
               <Button variant="ghost" size="sm" onClick={() => setAnswer(q.id, { flaggedForReview: !answers[q.id]?.flaggedForReview })} className={answers[q.id]?.flaggedForReview ? 'text-amber-600' : 'text-slate-400'}>
@@ -409,7 +439,7 @@ export default function ExamPlayer() {
           </div>
         </div>
       ) : (
-        <div className="exam-card bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-5">
+        <div className="exam-card space-y-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-surface-raised dark:bg-surface-indigo sm:p-6">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Question {idx + 1} of {questions.length} · {q?.points} pts</span>
             <Button variant="ghost" size="sm" onClick={() => setAnswer(q.id, { flaggedForReview: !answers[q.id]?.flaggedForReview })} className={answers[q.id]?.flaggedForReview ? 'text-amber-600' : 'text-slate-400'}>
@@ -423,24 +453,27 @@ export default function ExamPlayer() {
       )}
 
       {/* question navigator */}
-      <div className="flex flex-wrap gap-1.5 mt-4">
+      <div className="mt-4 flex flex-wrap items-center gap-1.5" aria-label="Question navigation">
         {questions.map((qq, i) => (
-          <button key={qq.id} onClick={() => goTo(i)}
-            className={`h-8 w-8 rounded text-xs font-bold ${i === idx ? 'bg-aubergine-600 text-white' : answers[qq.id]?.flaggedForReview ? 'bg-amber-100 text-amber-700 border border-amber-300' : (answers[qq.id]?.answerText || selectedChoices(qq.id).length || Object.keys(dragMatches(qq.id)).length) ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 dark:bg-surface-raised text-slate-500'}`}>
+          <button key={qq.id} type="button" onClick={() => goTo(i)} aria-label={`Question ${i + 1}${answerIsComplete(qq, answers[qq.id]) ? ', answered' : ', unanswered'}${answers[qq.id]?.flaggedForReview ? ', flagged' : ''}`} aria-current={i === idx ? 'step' : undefined}
+            className={`h-8 w-8 rounded text-xs font-bold ${i === idx ? 'bg-aubergine-600 text-white' : answers[qq.id]?.flaggedForReview ? 'bg-amber-100 text-amber-700 border border-amber-300' : answerIsComplete(qq, answers[qq.id]) ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 dark:bg-surface-raised text-slate-500'}`}>
             {i + 1}
           </button>
         ))}
+        <span className="ml-2 text-xs font-semibold text-slate-500">{questions.filter((question) => answerIsComplete(question, answers[question.id])).length}/{questions.length} answered</span>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-canvas border-t border-slate-200 dark:border-surface-raised p-4 flex items-center justify-between gap-3">
-        <div className="flex gap-2">
-          <Button variant="outline" disabled={idx === 0} onClick={() => goTo(idx - 1)}>Previous</Button>
-          <Button variant="outline" disabled={idx >= questions.length - 1} onClick={() => goTo(idx + 1)}>Next</Button>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => save('AUTOSAVE')}><Save className="h-4 w-4 mr-1" /> Save</Button>
-          {canPause && <Button variant="outline" onClick={handlePause}><Pause className="h-4 w-4 mr-1" /> Pause</Button>}
-          <Button className="bg-primary text-primary-foreground" onClick={() => handleSubmit(false)}><Send className="h-4 w-4 mr-1" /> Submit</Button>
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur dark:border-surface-raised dark:bg-canvas/95">
+        <div className={`${hasPassage ? 'max-w-6xl' : 'max-w-3xl'} mx-auto flex items-center justify-between gap-2`}>
+          <div className="flex gap-1.5 sm:gap-2">
+            <Button variant="outline" size="sm" disabled={idx === 0 || saving || submitting} onClick={() => goTo(idx - 1)} aria-label="Previous question"><ChevronLeft className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Previous</span></Button>
+            <Button variant="outline" size="sm" disabled={idx >= questions.length - 1 || saving || submitting} onClick={() => goTo(idx + 1)} aria-label="Next question"><span className="hidden sm:inline">Next</span><ChevronRight className="h-4 w-4 sm:ml-1" /></Button>
+          </div>
+          <div className="flex min-w-0 gap-1.5 sm:gap-2">
+            <Button variant="outline" size="sm" disabled={saving || submitting} onClick={() => save('AUTOSAVE')} aria-label="Save answers"><Save className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Save</span></Button>
+            {canPause && <Button variant="outline" size="sm" disabled={saving || submitting} onClick={handlePause} aria-label="Pause exam"><Pause className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Pause</span></Button>}
+            <Button size="sm" disabled={saving || submitting} className="bg-primary text-primary-foreground" onClick={() => handleSubmit(false)}><Send className="h-4 w-4 sm:mr-1" /><span className="hidden min-[380px]:inline">{submitting ? 'Submitting…' : 'Submit'}</span></Button>
+          </div>
         </div>
       </div>
     </div>

@@ -137,6 +137,26 @@ export function freezeAttempt(questions: any[], exam: any, seed: string) {
     } else if (Array.isArray(q.options)) {
       opts = (q.options as any[]).map((o, i) => ({ key: String(typeof o === "object" ? o.value ?? o.text ?? i : o), text: String(typeof o === "object" ? o.text ?? o.value : o) }));
     }
+    // Resolve legacy index-based answer keys before shuffling. Keeping the raw
+    // index made "answer 0" point at whichever option happened to land first,
+    // so a correctly answered shuffled MCQ could be marked wrong.
+    let frozenCorrectAnswers: string[] = Array.isArray(q.correctAnswers)
+      ? q.correctAnswers.map((answer: unknown) => {
+          const raw = String(answer);
+          const index = Number(raw);
+          return Number.isInteger(index) && opts[index] ? opts[index].key : raw;
+        })
+      : [];
+    if (!frozenCorrectAnswers.length && q.correctAnswer != null) {
+      const raw = String(q.correctAnswer);
+      const index = Number(raw);
+      frozenCorrectAnswers = [
+        Number.isInteger(index) && opts[index] ? opts[index].key : raw,
+      ];
+    }
+    const multipleSelection = Array.isArray(q.optionRows) && q.optionRows.length
+      ? q.optionRows.filter((option: any) => option.isCorrect).length > 1
+      : frozenCorrectAnswers.length > 1;
     if (exam.shuffleOptions && opts.length) opts = seededShuffle(opts, `${seed}:opt:${qid}`);
     optionOrder[qid] = opts.map((o) => o.key);
     frozenContent.push({
@@ -144,17 +164,19 @@ export function freezeAttempt(questions: any[], exam: any, seed: string) {
       points: q.pointsOverride ?? q.defaultPoints ?? q.points ?? 0,
       passageText: q.passageText ?? null,
       imageUrl: q.imageUrl ?? null,
+      explanation: q.explanation ?? null,
       // Needed so the player renders multi-answer questions as multi-select;
       // omitting it made every frozen question render single-select.
       partialCredit: q.partialCredit ?? false,
+      multipleSelection,
       // Keep the scoring key/config immutable too. attemptPayload() explicitly
       // whitelists student-facing fields, so these values never leave the server.
       correctAnswer: Array.isArray(q.optionRows) && q.optionRows.length
         ? (q.optionRows.find((o: any) => o.isCorrect)?.id ?? q.correctAnswer ?? null)
-        : (q.correctAnswer ?? null),
+        : (frozenCorrectAnswers[0] ?? q.correctAnswer ?? null),
       correctAnswers: Array.isArray(q.optionRows) && q.optionRows.length
         ? q.optionRows.filter((o: any) => o.isCorrect).map((o: any) => o.id)
-        : (q.correctAnswers ?? null),
+        : (frozenCorrectAnswers.length ? frozenCorrectAnswers : null),
       optionWeights: Array.isArray(q.optionRows) && q.optionRows.length
         ? (q.optionRows.some((o: any) => o.weight != null)
             ? Object.fromEntries(q.optionRows.filter((o: any) => o.weight != null).map((o: any) => [o.id, o.weight]))
