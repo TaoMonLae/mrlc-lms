@@ -116,13 +116,6 @@ export default function ExamPlayer() {
     return () => clearInterval(t);
   }, [loading, blocked]);
 
-  useEffect(() => {
-    // Only auto-submit when a real timer has counted down to zero — never on a
-    // seeded remaining=0 for an untimed attempt.
-    if (!loading && remaining === 0 && !blocked && timerArmed.current) { handleSubmit(true); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [remaining, loading]);
-
   const save = useCallback(async (reason: string) => {
     if (!attemptId) return;
     const toSave = Array.from(dirty.current);
@@ -227,7 +220,8 @@ export default function ExamPlayer() {
     setSubmitting(true);
     try {
       if (!(await save('SUBMIT'))) return;
-      const { ok, data } = await post(`/api/attempts/${attemptId}/submit`, { sessionToken });
+      const finalAnswers = Object.entries(answersRef.current).map(([questionId, answer]) => ({ questionId, ...answer }));
+      const { ok, data } = await post(`/api/attempts/${attemptId}/submit`, { sessionToken, answers: finalAnswers });
       if (ok) {
         sessionStorage.removeItem(`exam_attempt_session_${attemptId}`);
         toast.success(data.autoSubmitted ? 'Time expired — your exam was submitted.' : 'Exam submitted.');
@@ -237,6 +231,41 @@ export default function ExamPlayer() {
       setSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    // Auto-submit only after a local countdown hit and server-state recheck
+    // confirms the attempt is still active.
+    if (loading || blocked || submitting) return;
+    if (remaining !== 0 || !timerArmed.current) return;
+    const verifyStateBeforeSubmit = async () => {
+      const storedToken = attemptId ? sessionStorage.getItem(`exam_attempt_session_${attemptId}`) || '' : '';
+      if (!storedToken) { setBlocked('This exam session has expired. Resume the attempt from My Exams.'); return; }
+      const res = await fetch(`/api/attempts/${attemptId}/state`, { headers: { ...authHeaders(), 'X-Exam-Session': storedToken } });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (data.error === 'SESSION_CONFLICT') { setBlocked('This attempt was opened in another window or device. This session is now read-only.'); return; }
+        if (data.error === 'ATTEMPT_PAUSED') { setBlocked('This attempt has been paused. Resume it from My Exams before continuing.'); return; }
+        if (data.error === 'TIME_EXPIRED' || data.autoSubmitted) { toast.info('Time expired — submitted.'); navigate(`/exam2/attempts/${attemptId}/result`); return; }
+        setBlocked(data.message || data.error || 'Could not verify exam state.');
+        return;
+      }
+      if (data.autoSubmitted) { toast.info('Time expired — your attempt was submitted.'); navigate(`/exam2/attempts/${attemptId}/result`); return; }
+      if (data.attempt?.state !== 'IN_PROGRESS') {
+        sessionStorage.removeItem(`exam_attempt_session_${attemptId}`);
+        navigate(`/exam2/attempts/${attemptId}/result`, { replace: true });
+        return;
+      }
+      if (typeof data.attempt?.remainingSeconds === 'number' && data.attempt.remainingSeconds > 0) {
+        timerArmed.current = true;
+        setRemaining(data.attempt.remainingSeconds);
+        return;
+      }
+      await handleSubmit(true);
+    };
+    void verifyStateBeforeSubmit();
+    // handleSubmit intentionally uses the latest render's answer snapshot.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remaining, loading, blocked, attemptId, submitting, navigate]);
 
   if (loading) return <div className="flex items-center justify-center py-32 text-slate-500"><Loader2 className="h-6 w-6 animate-spin mr-2" /> Loading exam…</div>;
   if (blocked) return (

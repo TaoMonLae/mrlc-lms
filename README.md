@@ -195,6 +195,10 @@ The service binds to `127.0.0.1` by default. Do not expose port `8810` publicly.
 - Scheduling, targeted assignment, accommodations, invigilator tools, lockdown controls, printable exports, rubrics, manual grading, and question analytics.
 - Fixed attempt limits, invalidated-attempt numbering, paused/resumed attempt behavior, session conflicts, empty exams, and access-code configuration.
 - Attempts are graded from their immutable question snapshot, so later answer-key or point edits do not change an attempt already in progress.
+- Autosave and final submission now share validated answer handling, enforce attempt question ownership, and persist the final answer set atomically with scoring and the final snapshot.
+- Attempt lifecycle transitions use guarded database updates so stale saves, duplicate submissions, concurrent resumes, pauses, and integrity events cannot overwrite newer state or issue multiple valid session tokens.
+- Manual grading now locks finalized grades against concurrent edits, finalizes only the latest successfully saved score, validates marker scores, and exposes finalized work through the grading queue's All filter.
+- Invigilator timing actions validate whole-minute limits, reject stale state changes, and preserve the frozen remaining time shown for paused attempts.
 
 ### Video lessons
 

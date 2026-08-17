@@ -14,7 +14,7 @@ export default function ManualGradingQueue() {
   useEffect(() => {
     setLoading(true);
     const qs = new URLSearchParams();
-    if (filter) qs.set('status', filter);
+    qs.set('status', filter || 'ALL');
     if (examId) qs.set('examId', examId);
     apiGet(`/api/grading/queue?${qs}`).then((d) => setRows(d || [])).catch(() => setRows([])).finally(() => setLoading(false));
   }, [filter, examId]);

@@ -56,6 +56,12 @@ export function registerExamPhase2Routes(deps: Deps): void {
     const parsed = Number(v);
     return Number.isFinite(parsed) ? parsed : null;
   };
+  const MAX_ANSWERS_PER_PAYLOAD = 250;
+  const MAX_ANSWER_TEXT_LENGTH = 50000;
+  const MAX_SELECTION_LENGTH = 500;
+  const MAX_SELECTION_COUNT = 100;
+  const MAX_QUESTION_ID_LENGTH = 64;
+  const PROTOTYPE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 
   const examLimiter = rateLimit({
     windowMs: 60 * 1000,
@@ -140,6 +146,98 @@ export function registerExamPhase2Routes(deps: Deps): void {
   function hasCurrentSession(attempt: any, sessionToken: unknown): boolean {
     return typeof sessionToken === "string" && !!attempt.sessionToken && sessionToken === attempt.sessionToken;
   }
+
+  const parseAnswerPayload = (answersInput: unknown) => {
+    if (answersInput !== undefined && !Array.isArray(answersInput)) {
+      return { ok: false, error: "Answers must be an array", answers: [] as any[] };
+    }
+    const answers = Array.isArray(answersInput) ? answersInput : [];
+    if (answers.length > MAX_ANSWERS_PER_PAYLOAD) return { ok: false, error: "Answer payload is too large", answers: [] as any[] };
+    const seenQuestionIds = new Set<string>();
+    const parsed: any[] = [];
+
+    const invalidAnswers = answers.some((answer: any) => {
+      if (!answer || typeof answer !== "object") return true;
+      if (typeof answer.questionId !== "string") return true;
+      const questionId = answer.questionId.trim();
+      if (!questionId || questionId.length > MAX_QUESTION_ID_LENGTH || seenQuestionIds.has(questionId)) return true;
+      seenQuestionIds.add(questionId);
+
+      if (answer.answerText !== null && answer.answerText !== undefined && typeof answer.answerText !== "string") return true;
+      if (typeof answer.answerText === "string" && answer.answerText.length > MAX_ANSWER_TEXT_LENGTH) return true;
+      if (answer.timeSpentSeconds !== undefined && answer.timeSpentSeconds !== null) {
+        const value = num(answer.timeSpentSeconds);
+        if (value === null || !Number.isInteger(value) || value < 0 || value > 7 * 24 * 3600) return true;
+      }
+      if (answer.flaggedForReview !== undefined && answer.flaggedForReview !== null && typeof answer.flaggedForReview !== "boolean") return true;
+
+      const selected = answer.selectedOptions;
+      if (selected == null) {
+        parsed.push({ questionId, answerText: answer.answerText ?? null, selectedOptions: null, flaggedForReview: !!answer.flaggedForReview, timeSpentSeconds: answer.timeSpentSeconds !== undefined ? num(answer.timeSpentSeconds) : undefined });
+        return false;
+      }
+      if (Array.isArray(selected)) {
+        const selectedValues = selected.filter((v) => typeof v === "string");
+        if (selectedValues.length !== selected.length || selectedValues.length > MAX_SELECTION_COUNT || selectedValues.some((v: string) => v.length > MAX_SELECTION_LENGTH)) {
+          return true;
+        }
+        parsed.push({ questionId, answerText: answer.answerText ?? null, selectedOptions: selectedValues, flaggedForReview: !!answer.flaggedForReview, timeSpentSeconds: answer.timeSpentSeconds !== undefined ? num(answer.timeSpentSeconds) : undefined });
+        return false;
+      }
+      if (typeof selected !== "object" || selected === null || Array.isArray(selected) || Object.getPrototypeOf(selected) !== Object.prototype) return true;
+      const entries = Object.entries(selected as Record<string, unknown>);
+      if (entries.length > MAX_SELECTION_COUNT) return true;
+      for (const [k, v] of entries) {
+        if (typeof k !== "string" || !k || k.length > 200 || PROTOTYPE_KEYS.has(k)) return true;
+        if (typeof v !== "string" || v.length > MAX_SELECTION_LENGTH) return true;
+      }
+      parsed.push({ questionId, answerText: answer.answerText ?? null, selectedOptions: selected, flaggedForReview: !!answer.flaggedForReview, timeSpentSeconds: answer.timeSpentSeconds !== undefined ? num(answer.timeSpentSeconds) : undefined });
+      return false;
+    });
+
+    if (invalidAnswers) return { ok: false, error: "Invalid answer payload", answers: [] as any[] };
+    return { ok: true, answers: parsed };
+  };
+
+  const persistAnswerPayload = async (
+    tx: any,
+    attempt: any,
+    answers: any[],
+    reason = "AUTOSAVE",
+    includeEvent = true,
+    eventIp: string | null = null,
+    eventUa: string | null = null,
+  ) => {
+    const now = new Date();
+    if (!answers.length) {
+      await tx.examAttempt.update({ where: { id: attempt.id }, data: { lastSavedAt: now } });
+      const snap = await tx.examAnswer.findMany({ where: { attemptId: attempt.id }, select: { questionId: true, answerText: true, selectedOptions: true, flaggedForReview: true } });
+      await tx.attemptSnapshot.create({ data: { attemptId: attempt.id, reason, answers: snap, questionOrder: attempt.questionOrder ?? undefined, remainingSeconds: remainingSeconds(attempt) } });
+      if (includeEvent) await tx.attemptEvent.create({ data: { attemptId: attempt.id, type: reason, actorRole: "STUDENT", ipAddress: eventIp, userAgent: eventUa } }).catch(() => {});
+      return { now };
+    }
+    for (const a of answers) {
+      if (!a.questionId) continue;
+      await tx.examAnswer.upsert({
+        where: { attemptId_questionId: { attemptId: attempt.id, questionId: a.questionId } },
+        create: {
+          attemptId: attempt.id, questionId: a.questionId,
+          answerText: a.answerText ?? null, selectedOptions: a.selectedOptions ?? null,
+          flaggedForReview: !!a.flaggedForReview, timeSpentSeconds: a.timeSpentSeconds ?? null,
+        },
+        update: {
+          answerText: a.answerText ?? null, selectedOptions: a.selectedOptions ?? null,
+          flaggedForReview: !!a.flaggedForReview,
+          timeSpentSeconds: a.timeSpentSeconds !== undefined ? a.timeSpentSeconds : undefined,
+        },
+      });
+    }
+    await tx.examAttempt.update({ where: { id: attempt.id }, data: { lastSavedAt: now } });
+    const snap = await tx.examAnswer.findMany({ where: { attemptId: attempt.id }, select: { questionId: true, answerText: true, selectedOptions: true, flaggedForReview: true } });
+    await tx.attemptSnapshot.create({ data: { attemptId: attempt.id, reason, answers: snap, questionOrder: attempt.questionOrder ?? undefined, remainingSeconds: remainingSeconds(attempt) } });
+    if (includeEvent) await tx.attemptEvent.create({ data: { attemptId: attempt.id, type: reason, actorRole: "STUDENT", ipAddress: eventIp, userAgent: eventUa } });
+    return { now };
+  };
 
   async function accommodationFor(studentId: string, examId: string) {
     const rows = await prisma.examAccommodation.findMany({ where: { studentId, OR: [{ examId }, { examId: null }] } });
@@ -491,11 +589,19 @@ export function registerExamPhase2Routes(deps: Deps): void {
             serverDeadline: new Date(new Date(existing.serverDeadline).getTime() + extra),
           };
         }
-        const resumed = await prisma.examAttempt.update({
-          where: { id: existing.id },
-          data: { sessionToken, state: "IN_PROGRESS", ipAddress: ipOf(req), userAgent: uaOf(req), deviceInfo: b.deviceInfo || undefined, ...pauseComp },
+        const resumed = await prisma.$transaction(async (tx: any) => {
+          const claimed = await tx.examAttempt.updateMany({
+            where: { id: existing.id, state: existing.state, sessionToken: existing.sessionToken, updatedAt: existing.updatedAt },
+            data: { sessionToken, state: "IN_PROGRESS", ipAddress: ipOf(req), userAgent: uaOf(req), deviceInfo: b.deviceInfo || undefined, ...pauseComp },
+          });
+          if (claimed.count !== 1) return null;
+          await tx.attemptEvent.create({ data: { attemptId: existing.id, type: "RECONNECT", actorRole: "STUDENT", ipAddress: ipOf(req), userAgent: uaOf(req) } }).catch(() => {});
+          return tx.examAttempt.findUnique({ where: { id: existing.id } });
         });
-        await prisma.attemptEvent.create({ data: { attemptId: existing.id, type: "RECONNECT", actorRole: "STUDENT", ipAddress: ipOf(req), userAgent: uaOf(req) } }).catch(() => {});
+        if (!resumed) {
+          res.status(409).json({ error: "SESSION_CONFLICT", message: "The attempt changed while it was being resumed. Try again." });
+          return;
+        }
         return res.json(await attemptPayload(resumed, exam, student.id));
       }
 
@@ -711,23 +817,16 @@ export function registerExamPhase2Routes(deps: Deps): void {
         return;
       }
 
-      const answers: any[] = Array.isArray(b.answers) ? b.answers : [];
       const reason = String(b.reason || "AUTOSAVE").toUpperCase();
       if (!["AUTOSAVE", "NAVIGATE", "PAUSE", "SUBMIT"].includes(reason)) {
         res.status(400).json({ error: "Invalid save reason" }); return;
       }
-      if (answers.length > 250 || answers.some((a) => typeof a?.answerText === "string" && a.answerText.length > 50000)) {
-        res.status(400).json({ error: "Answer payload is too large" }); return;
+      const validation = parseAnswerPayload(b.answers);
+      if (!validation.ok) {
+        res.status(400).json({ error: validation.error || "Invalid answer payload" });
+        return;
       }
-      const invalidSelections = answers.some((a) => {
-        const value = a?.selectedOptions;
-        if (value == null) return false;
-        if (Array.isArray(value)) return value.length > 100 || value.some((v) => typeof v !== "string" || v.length > 500);
-        if (typeof value !== "object") return true;
-        const entries = Object.entries(value);
-        return entries.length > 100 || entries.some(([k, v]) => k.length > 200 || typeof v !== "string" || v.length > 500);
-      });
-      if (invalidSelections) { res.status(400).json({ error: "Invalid selected options" }); return; }
+      const answers = validation.answers;
       const allowedQuestionIds = new Set<string>(
         Array.isArray(attempt.selectedQuestionIds) && attempt.selectedQuestionIds.length
           ? attempt.selectedQuestionIds
@@ -739,38 +838,20 @@ export function registerExamPhase2Routes(deps: Deps): void {
         res.status(400).json({ error: "One or more answers do not belong to this attempt" });
         return;
       }
-      const now = new Date();
+      let lastSavedAt = new Date();
       await prisma.$transaction(async (tx: any) => {
-        try {
-          for (const a of answers) {
-            if (!a.questionId) continue;
-            await tx.examAnswer.upsert({
-              where: { attemptId_questionId: { attemptId: attempt.id, questionId: a.questionId } },
-              create: {
-                attemptId: attempt.id, questionId: a.questionId,
-                answerText: a.answerText ?? null, selectedOptions: a.selectedOptions ?? null,
-                flaggedForReview: !!a.flaggedForReview, timeSpentSeconds: num(a.timeSpentSeconds) ?? null,
-              },
-              update: {
-                answerText: a.answerText ?? null, selectedOptions: a.selectedOptions ?? null,
-                flaggedForReview: !!a.flaggedForReview,
-                timeSpentSeconds: a.timeSpentSeconds !== undefined ? num(a.timeSpentSeconds) : undefined,
-              },
-            });
-          }
-          await tx.examAttempt.update({ where: { id: attempt.id }, data: { lastSavedAt: now } });
-          // Lightweight immutable snapshot for recovery/audit.
-          const snap = await tx.examAnswer.findMany({ where: { attemptId: attempt.id }, select: { questionId: true, answerText: true, selectedOptions: true, flaggedForReview: true } });
-          await tx.attemptSnapshot.create({ data: { attemptId: attempt.id, reason, answers: snap, questionOrder: attempt.questionOrder ?? undefined, remainingSeconds: remainingSeconds(attempt) } });
-          await tx.attemptEvent.create({ data: { attemptId: attempt.id, type: reason, actorRole: "STUDENT", ipAddress: ipOf(req), userAgent: uaOf(req) } });
-        } catch (err: any) {
-          logger.error("Transaction failed during autosave:", err);
-          throw err;
-        }
+        const claimed = await tx.examAttempt.updateMany({
+          where: { id: attempt.id, state: "IN_PROGRESS", sessionToken: b.sessionToken },
+          data: { lastSavedAt },
+        });
+        if (claimed.count !== 1) throw Object.assign(new Error("Attempt changed during save"), { examTransition: true });
+        const saved = await persistAnswerPayload(tx, attempt, answers, reason, true, ipOf(req), uaOf(req));
+        lastSavedAt = saved.now;
       });
-      res.json({ ok: true, lastSavedAt: now.toISOString(), remainingSeconds: remainingSeconds({ ...attempt }), serverTime: new Date().toISOString() });
+      res.json({ ok: true, lastSavedAt: lastSavedAt.toISOString(), remainingSeconds: remainingSeconds({ ...attempt }), serverTime: new Date().toISOString() });
     } catch (err: any) {
       if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Exam system not migrated yet" }); return; }
+      if (err?.examTransition) { res.status(409).json({ error: "ATTEMPT_CHANGED", message: "The attempt changed while answers were being saved. Reload the attempt." }); return; }
       logger.error("autosave failed", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
@@ -789,14 +870,23 @@ export function registerExamPhase2Routes(deps: Deps): void {
       const type = String(b.type || "").toUpperCase();
       if (!INTEGRITY_EVENT_TYPES.has(type)) { res.status(400).json({ error: "Invalid integrity event" }); return; }
       const detail = String(b.detail || "").slice(0, 300);
-      const existing = Array.isArray(attempt.integrityEvents) ? attempt.integrityEvents : [];
       const event = { type, detail: detail || undefined, at: new Date().toISOString() };
       const updated = await prisma.$transaction(async (tx: any) => {
+        const claimed = await tx.examAttempt.updateMany({
+          where: { id: attempt.id, state: "IN_PROGRESS", sessionToken: b.sessionToken },
+          data: { securityWarnings: { increment: 1 } },
+        });
+        if (claimed.count !== 1) throw Object.assign(new Error("Attempt changed during integrity event"), { examTransition: true });
+        const current = await tx.examAttempt.findUnique({ where: { id: attempt.id }, select: { integrityEvents: true } });
+        const existing = Array.isArray(current?.integrityEvents) ? current.integrityEvents : [];
         await tx.attemptEvent.create({ data: { attemptId: attempt.id, type, actorRole: "STUDENT", payload: detail ? { detail } : undefined, ipAddress: ipOf(req), userAgent: uaOf(req) } });
-        return tx.examAttempt.update({ where: { id: attempt.id }, data: { securityWarnings: { increment: 1 }, integrityEvents: [...existing.slice(-99), event] }, select: { securityWarnings: true } });
+        return tx.examAttempt.update({ where: { id: attempt.id }, data: { integrityEvents: [...existing.slice(-99), event] }, select: { securityWarnings: true } });
       });
       res.json({ ok: true, securityWarnings: updated.securityWarnings });
-    } catch (err) { logger.error("integrity event failed", err); res.status(500).json({ error: "Internal Server Error" }); }
+    } catch (err: any) {
+      if (err?.examTransition) { res.status(409).json({ error: "ATTEMPT_CHANGED", message: "The attempt is no longer active in this session." }); return; }
+      logger.error("integrity event failed", err); res.status(500).json({ error: "Internal Server Error" });
+    }
   });
 
   // PAUSE — freezes the clock (records remaining time at pause).
@@ -814,8 +904,17 @@ export function registerExamPhase2Routes(deps: Deps): void {
         return;
       }
       if (!attempt.accommodation?.additionalBreaks) { res.status(403).json({ error: "Only an invigilator can pause this attempt" }); return; }
-      const updated = await prisma.examAttempt.update({ where: { id: attempt.id }, data: { state: "PAUSED", pausedAt: new Date(), lastSavedAt: new Date() } });
-      await prisma.attemptEvent.create({ data: { attemptId: attempt.id, type: "PAUSE", actorRole: "STUDENT", ipAddress: ipOf(req), userAgent: uaOf(req) } }).catch(() => {});
+      const updated = await prisma.$transaction(async (tx: any) => {
+        const pausedAt = new Date();
+        const claimed = await tx.examAttempt.updateMany({
+          where: { id: attempt.id, state: "IN_PROGRESS", sessionToken: req.body?.sessionToken },
+          data: { state: "PAUSED", pausedAt, lastSavedAt: pausedAt },
+        });
+        if (claimed.count !== 1) return null;
+        await tx.attemptEvent.create({ data: { attemptId: attempt.id, type: "PAUSE", actorRole: "STUDENT", ipAddress: ipOf(req), userAgent: uaOf(req) } }).catch(() => {});
+        return tx.examAttempt.findUnique({ where: { id: attempt.id } });
+      });
+      if (!updated) { res.status(409).json({ error: "ATTEMPT_CHANGED", message: "The attempt changed before it could be paused." }); return; }
       res.json({ ok: true, state: updated.state, remainingSeconds: remainingSeconds(updated) });
     } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
@@ -828,11 +927,32 @@ export function registerExamPhase2Routes(deps: Deps): void {
       if (!attempt || !student || attempt.studentId !== student.id) { res.status(403).json({ error: "Forbidden" }); return; }
       if (attempt.state !== "IN_PROGRESS") { res.status(409).json({ error: attempt.state === "PAUSED" ? "Resume the attempt before submitting" : "Already submitted", state: attempt.state }); return; }
       if (!hasCurrentSession(attempt, req.body?.sessionToken)) { res.status(409).json({ error: "SESSION_CONFLICT", message: "This attempt is open in another session." }); return; }
+      const validation = parseAnswerPayload(req.body?.answers);
+      if (!validation.ok) {
+        res.status(400).json({ error: validation.error || "Invalid answer payload" });
+        return;
+      }
+      const answers = validation.answers;
+      if (answers.length) {
+        const allowedQuestionIds = new Set<string>(
+          Array.isArray(attempt.selectedQuestionIds) && attempt.selectedQuestionIds.length
+            ? attempt.selectedQuestionIds
+            : Array.isArray(attempt.questionOrder) && attempt.questionOrder.length
+              ? attempt.questionOrder
+              : (await prisma.question.findMany({ where: { examId: attempt.examId }, select: { id: true } })).map((q: any) => q.id),
+        );
+        if (answers.some((answer) => !answer?.questionId || !allowedQuestionIds.has(answer.questionId))) {
+          res.status(400).json({ error: "One or more answers do not belong to this attempt" });
+          return;
+        }
+      }
       const expired = isExpired(attempt);
-      const finalized = await finalizeSubmission(attempt.id, expired, ipOf(req), uaOf(req));
+      const finalized = await finalizeSubmission(attempt.id, expired, ipOf(req), uaOf(req), answers, req.body?.sessionToken);
       res.json({ ok: true, state: finalized.state, autoSubmitted: expired });
     } catch (err: any) {
       if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Exam system not migrated yet" }); return; }
+      if (err?.examCode === "SESSION_CONFLICT") { res.status(409).json({ error: "SESSION_CONFLICT", message: "This attempt is open in another session." }); return; }
+      if (err?.examCode === "ATTEMPT_PAUSED") { res.status(409).json({ error: "ATTEMPT_PAUSED", message: "Resume the attempt before submitting." }); return; }
       logger.error("submit failed", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
@@ -929,11 +1049,31 @@ export function registerExamPhase2Routes(deps: Deps): void {
   }
 
   // Shared submission finalizer. Used by manual submit and auto-submit on expiry.
-  async function finalizeSubmission(attemptId: string, autoSubmitted: boolean, ip: string | null, ua: string | null) {
+  async function finalizeSubmission(
+    attemptId: string,
+    autoSubmitted: boolean,
+    ip: string | null,
+    ua: string | null,
+    finalAnswers: any[] = [],
+    expectedSessionToken?: string,
+  ) {
     return prisma.$transaction(async (tx: any) => {
+      const claimWhere: any = { id: attemptId, state: { in: expectedSessionToken ? ["IN_PROGRESS"] : ["IN_PROGRESS", "PAUSED"] } };
+      if (expectedSessionToken) claimWhere.sessionToken = expectedSessionToken;
+      const claimed = await tx.examAttempt.updateMany({ where: claimWhere, data: { sessionToken: null } });
+      if (claimed.count !== 1) {
+        const current = await tx.examAttempt.findUnique({ where: { id: attemptId } });
+        if (!current) throw new Error("attempt missing");
+        if (expectedSessionToken && current.state === "PAUSED") throw Object.assign(new Error("Attempt is paused"), { examCode: "ATTEMPT_PAUSED" });
+        if (expectedSessionToken && current.state === "IN_PROGRESS") throw Object.assign(new Error("Session changed"), { examCode: "SESSION_CONFLICT" });
+        return current;
+      }
       const attempt = await tx.examAttempt.findUnique({ where: { id: attemptId }, include: { exam: { include: { questions: true } }, answers: true } });
       if (!attempt) throw new Error("attempt missing");
-      if (!["IN_PROGRESS", "PAUSED"].includes(attempt.state)) return attempt; // idempotent
+      if (finalAnswers.length) {
+        await persistAnswerPayload(tx, attempt, finalAnswers, "SUBMIT", false);
+        attempt.answers = await tx.examAnswer.findMany({ where: { attemptId } });
+      }
 
       // Score over the FROZEN selected set when present (randomized/bank attempts),
       // else the legacy exam-owned questions. This guarantees a student is graded
@@ -1271,7 +1411,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
 
   // The grading/analysis/invigilator/export routes are registered by a second
   // function to keep each module focused.
-  registerGradingAndOps({ ...deps, helpers: { user, isTeacher, ipOf, uaOf, num, teacherGuard, gradingLimiter, studentForReq, examGuard, attemptExamGuard, canManageExam, finalizeSubmission } });
+  registerGradingAndOps({ ...deps, helpers: { user, isTeacher, ipOf, uaOf, num, remainingSeconds, teacherGuard, gradingLimiter, studentForReq, examGuard, attemptExamGuard, canManageExam, finalizeSubmission } });
   // Authoring CRUD (sections, stimuli, groups, rubrics, question structure).
   registerAuthoringRoutes({ ...deps, helpers: { user, ipOf, uaOf, num, teacherGuard, examGuard, canManageExam } });
 }
@@ -1484,12 +1624,14 @@ function registerAuthoringRoutes(deps: any) {
 // =============================================================================
 function registerGradingAndOps(deps: any) {
   const { app, prisma, authMiddleware, createAuditLog, logger, helpers } = deps;
-  const { user, ipOf, uaOf, num, teacherGuard, gradingLimiter, examGuard, attemptExamGuard, canManageExam, finalizeSubmission } = helpers;
+  const { user, ipOf, uaOf, num, remainingSeconds, teacherGuard, gradingLimiter, examGuard, attemptExamGuard, canManageExam, finalizeSubmission } = helpers;
 
   // ── Manual grading queue ─────────────────────────────────────────────────
   app.get("/api/grading/queue", authMiddleware, teacherGuard, async (req: any, res: any) => {
     const { examId, status } = req.query as Record<string, string>;
     try {
+      const allowedStatuses = new Set(["PENDING", "IN_REVIEW", "GRADED", "MODERATED", "FINALIZED", "ALL"]);
+      if (status && !allowedStatuses.has(status)) { res.status(400).json({ error: "Invalid grading status" }); return; }
       // Teachers only see grading work for exams of classes they teach.
       let attemptScope: any = examId ? { examId } : undefined;
       if (user(req).role === "TEACHER") {
@@ -1499,7 +1641,7 @@ function registerGradingAndOps(deps: any) {
       }
       const rows = await prisma.manualGrade.findMany({
         where: {
-          ...(status ? { status } : { status: { in: ["PENDING", "IN_REVIEW", "GRADED", "MODERATED"] } }),
+          ...(status === "ALL" ? {} : status ? { status } : { status: { in: ["PENDING", "IN_REVIEW", "GRADED", "MODERATED"] } }),
           ...(attemptScope ? { attempt: attemptScope } : {}),
         },
         include: {
@@ -1530,8 +1672,10 @@ function registerGradingAndOps(deps: any) {
       const maxPoints = Number(answer.maxPoints ?? 0);
       const score = num(b.score);
       const scoreOverride = num(b.scoreOverride);
+      const secondMarkerScore = num(b.secondMarkerScore);
       if ((score !== null && (!Number.isFinite(score) || score < 0 || score > maxPoints)) ||
-          (scoreOverride !== null && (!Number.isFinite(scoreOverride) || scoreOverride < 0 || scoreOverride > maxPoints))) {
+          (scoreOverride !== null && (!Number.isFinite(scoreOverride) || scoreOverride < 0 || scoreOverride > maxPoints)) ||
+          (secondMarkerScore !== null && (!Number.isFinite(secondMarkerScore) || secondMarkerScore < 0 || secondMarkerScore > maxPoints))) {
         res.status(400).json({ error: `Score must be between 0 and ${maxPoints}` }); return;
       }
       if (b.status !== undefined && !["PENDING", "IN_REVIEW", "GRADED", "MODERATED"].includes(b.status)) {
@@ -1549,14 +1693,19 @@ function registerGradingAndOps(deps: any) {
         scoreOverride,
         overrideReason: b.overrideReason || null,
         secondMarkerId: b.secondMarkerId || null,
-        secondMarkerScore: num(b.secondMarkerScore),
+        secondMarkerScore,
         moderationComment: b.moderationComment || null,
         status: b.status || "GRADED",
         graderId: user(req).userId,
       };
-      const grade = existing
-        ? await prisma.manualGrade.update({ where: { id: existing.id }, data })
-        : await prisma.manualGrade.create({ data: { attemptId, questionId, ...data } });
+      let grade: any;
+      if (existing) {
+        const updated = await prisma.manualGrade.updateMany({ where: { id: existing.id, isFinalized: false }, data });
+        if (updated.count !== 1) { res.status(409).json({ error: "Grade is finalized and locked" }); return; }
+        grade = await prisma.manualGrade.findUnique({ where: { id: existing.id } });
+      } else {
+        grade = await prisma.manualGrade.create({ data: { attemptId, questionId, ...data } });
+      }
 
       await createAuditLog(user(req).userId, user(req).email, "GRADE", "MANUAL_GRADE", grade.id, `Graded Q ${questionId} on attempt ${attemptId} (status ${data.status}).`, ipOf(req), uaOf(req), "SUCCESS");
       res.json(grade);
@@ -1577,25 +1726,30 @@ function registerGradingAndOps(deps: any) {
         if (grade.isFinalized) throw Object.assign(new Error("already finalized"), { http: 409 });
         if (grade.scoreOverride == null && grade.score == null) throw Object.assign(new Error("Enter a score before finalizing"), { http: 400 });
 
-        const finalScore = grade.scoreOverride ?? grade.score ?? 0;
-        const answer = await tx.examAnswer.findUnique({ where: { attemptId_questionId: { attemptId: grade.attemptId, questionId: grade.questionId } } });
+        const locked = await tx.manualGrade.updateMany({ where: { id: grade.id, isFinalized: false }, data: { status: grade.status } });
+        if (locked.count !== 1) throw Object.assign(new Error("already finalized"), { http: 409 });
+        const currentGrade = await tx.manualGrade.findUnique({ where: { id: grade.id } });
+        if (!currentGrade) throw Object.assign(new Error("not found"), { http: 404 });
+        if (currentGrade.scoreOverride == null && currentGrade.score == null) throw Object.assign(new Error("Enter a score before finalizing"), { http: 400 });
+        const finalScore = currentGrade.scoreOverride ?? currentGrade.score ?? 0;
+        const answer = await tx.examAnswer.findUnique({ where: { attemptId_questionId: { attemptId: currentGrade.attemptId, questionId: currentGrade.questionId } } });
         const maxPoints = Number(answer?.maxPoints ?? 0);
         if (!answer || !Number.isFinite(finalScore) || finalScore < 0 || finalScore > maxPoints) {
           throw Object.assign(new Error(`Score must be between 0 and ${maxPoints}`), { http: 400 });
         }
-        await tx.manualGrade.update({ where: { id: grade.id }, data: { isFinalized: true, status: "FINALIZED", finalizedAt: new Date(), finalizedById: user(req).userId } });
+        await tx.manualGrade.update({ where: { id: currentGrade.id }, data: { isFinalized: true, status: "FINALIZED", finalizedAt: new Date(), finalizedById: user(req).userId } });
         // Write the awarded points onto the answer.
-        await tx.examAnswer.updateMany({ where: { attemptId: grade.attemptId, questionId: grade.questionId }, data: { manualScore: finalScore, pointsAwarded: finalScore, gradingState: "GRADED" } });
+        await tx.examAnswer.updateMany({ where: { attemptId: currentGrade.attemptId, questionId: currentGrade.questionId }, data: { manualScore: finalScore, pointsAwarded: finalScore, gradingState: "GRADED" } });
 
         // If no more pending manual grades on this attempt → finalize the attempt score.
-        const pending = await tx.manualGrade.count({ where: { attemptId: grade.attemptId, isFinalized: false } });
-        const attempt = await tx.examAttempt.findUnique({ where: { id: grade.attemptId } });
+        const pending = await tx.manualGrade.count({ where: { attemptId: currentGrade.attemptId, isFinalized: false } });
+        const attempt = await tx.examAttempt.findUnique({ where: { id: currentGrade.attemptId } });
         if (pending === 0 && attempt) {
-          const answers = await tx.examAnswer.findMany({ where: { attemptId: grade.attemptId } });
+          const answers = await tx.examAnswer.findMany({ where: { attemptId: currentGrade.attemptId } });
           const total = answers.reduce((s: number, a: any) => s + (a.pointsAwarded || 0), 0);
-          await tx.examAttempt.update({ where: { id: grade.attemptId }, data: { score: Math.max(0, total), state: "FINALIZED", gradingStatus: "COMPLETE", gradedAt: new Date() } });
+          await tx.examAttempt.update({ where: { id: currentGrade.attemptId }, data: { score: Math.max(0, total), state: "FINALIZED", gradingStatus: "COMPLETE", gradedAt: new Date() } });
         }
-        return { gradeId: grade.id, attemptFinalized: pending === 0 };
+        return { gradeId: currentGrade.id, attemptFinalized: pending === 0 };
       });
       await createAuditLog(user(req).userId, user(req).email, "FINALIZE", "MANUAL_GRADE", req.params.gradeId, `Finalized grade.`, ipOf(req), uaOf(req), "SUCCESS");
       res.json(result);
@@ -1764,7 +1918,7 @@ function registerGradingAndOps(deps: any) {
           name: `${r.student?.user?.firstName ?? ""} ${r.student?.user?.lastName ?? ""}`.trim() || r.student?.studentCode,
           attemptId: at?.id || null,
           state: at?.state || "NOT_STARTED",
-          remainingSeconds: at?.serverDeadline && at.state !== "PAUSED" ? Math.max(0, Math.floor((new Date(at.serverDeadline).getTime() - now) / 1000)) : null,
+          remainingSeconds: at?.serverDeadline ? remainingSeconds(at) : null,
           lastSavedAt: at?.lastSavedAt || null,
           disconnected: !!disconnected,
           securityWarnings: at?.securityWarnings || 0,
@@ -1814,7 +1968,7 @@ function registerGradingAndOps(deps: any) {
         case "EXTRA_TIME": {
           if (!["IN_PROGRESS", "PAUSED"].includes(attempt.state)) { res.status(409).json({ error: "Extra time can only be added to an active attempt" }); return; }
           const mins = num(b.minutes) || 0;
-          if (!Number.isFinite(mins) || mins <= 0) { res.status(400).json({ error: "Minutes must be positive" }); return; }
+          if (!Number.isInteger(mins) || mins <= 0 || mins > 1440) { res.status(400).json({ error: "Minutes must be a whole number between 1 and 1440" }); return; }
           const base = attempt.serverDeadline ? new Date(attempt.serverDeadline).getTime() : Date.now();
           data = { serverDeadline: new Date(base + mins * 60000), effectiveDurationMinutes: (attempt.effectiveDurationMinutes || 0) + mins };
           break;
@@ -1834,7 +1988,7 @@ function registerGradingAndOps(deps: any) {
         case "REOPEN": {
           if (!["SUBMITTED", "AUTO_SUBMITTED", "PENDING_GRADING", "FINALIZED"].includes(attempt.state)) { res.status(409).json({ error: "This attempt cannot be reopened" }); return; }
           const mins = num(b.minutes) ?? 15;
-          if (!Number.isFinite(mins) || mins <= 0) { res.status(400).json({ error: "Minutes must be positive" }); return; }
+          if (!Number.isInteger(mins) || mins <= 0 || mins > 1440) { res.status(400).json({ error: "Minutes must be a whole number between 1 and 1440" }); return; }
           data = { state: "IN_PROGRESS", isCompleted: false, submittedAt: null, completedAt: null, serverDeadline: new Date(Date.now() + mins * 60000), sessionToken: null };
           break;
         }
@@ -1844,7 +1998,8 @@ function registerGradingAndOps(deps: any) {
       }
       if (action === "REOPEN") {
         await prisma.$transaction(async (tx: any) => {
-          await tx.examAttempt.update({ where: { id: attemptId }, data: { ...data, score: null, gradingStatus: null, gradedAt: null, releasedAt: null } });
+          const claimed = await tx.examAttempt.updateMany({ where: { id: attemptId, state: attempt.state, updatedAt: attempt.updatedAt }, data: { ...data, score: null, gradingStatus: null, gradedAt: null, releasedAt: null } });
+          if (claimed.count !== 1) throw Object.assign(new Error("Attempt changed while applying action"), { http: 409 });
           await tx.examAnswer.updateMany({ where: { attemptId }, data: { isCorrect: null, pointsAwarded: null, autoScore: null, manualScore: null, gradingState: null } });
           await tx.manualGrade.updateMany({
             where: { attemptId },
@@ -1852,12 +2007,16 @@ function registerGradingAndOps(deps: any) {
           });
         });
       } else if (Object.keys(data).length) {
-        await prisma.examAttempt.update({ where: { id: attemptId }, data });
+        const claimed = await prisma.examAttempt.updateMany({ where: { id: attemptId, state: attempt.state, updatedAt: attempt.updatedAt }, data });
+        if (claimed.count !== 1) { res.status(409).json({ error: "Attempt changed while applying action" }); return; }
       }
       await prisma.attemptEvent.create({ data: { attemptId, type: evType, actorId: user(req).userId, actorRole: user(req).role, payload: b, ipAddress: ipOf(req), userAgent: uaOf(req) } }).catch(() => {});
       await createAuditLog(user(req).userId, user(req).email, "INVIGILATE", "EXAM_ATTEMPT", attemptId, `Invigilator action ${action}${b.note ? `: ${b.note}` : ""}.`, ipOf(req), uaOf(req), "SUCCESS");
       res.json({ ok: true, action });
-    } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
+    } catch (err: any) {
+      if (err?.http) { res.status(err.http).json({ error: err.message }); return; }
+      logger.error(err); res.status(500).json({ error: "Internal Server Error" });
+    }
   });
 
   // ── Printable export payload ──────────────────────────────────────────────

@@ -17,7 +17,7 @@ export default function RubricGrading() {
   const [form, setForm] = useState<any>({ score: '', overallComment: '', scoreOverride: '', overrideReason: '', secondMarkerScore: '', moderationComment: '' });
 
   useEffect(() => {
-    apiGet(`/api/grading/queue?`).then((rows: any[]) => {
+    apiGet(`/api/grading/queue?status=ALL`).then((rows: any[]) => {
       const found = (rows || []).find((r) => r.attemptId === attemptId && r.questionId === questionId);
       setItem(found || { attemptId, questionId });
       if (found) {
@@ -34,23 +34,25 @@ export default function RubricGrading() {
   const save = async (status: string) => {
     try {
       const critTotal = Object.values(crit).reduce((a: number, b: any) => a + Number(b || 0), 0);
-      await apiSend(`/api/grading/${attemptId}/${questionId}`, 'POST', {
+      const saved = await apiSend(`/api/grading/${attemptId}/${questionId}`, 'POST', {
         ...form, status, criterionScores: criteria.length ? crit : undefined,
         score: criteria.length ? critTotal : (form.score === '' ? null : Number(form.score)),
         scoreOverride: form.scoreOverride === '' ? null : Number(form.scoreOverride),
         secondMarkerScore: form.secondMarkerScore === '' ? null : Number(form.secondMarkerScore),
         rubricId: item.rubric?.id,
       });
+      setItem((current: any) => ({ ...current, ...saved }));
       toast.success('Saved');
-    } catch (e: any) { toast.error(e.message || 'Save failed'); }
+      return saved;
+    } catch (e: any) { toast.error(e.message || 'Save failed'); return null; }
   };
 
   const finalize = async () => {
     if (!confirm('Finalize locks this grade and updates the attempt total. Continue?')) return;
-    await save('GRADED');
+    const saved = await save('GRADED');
+    if (!saved?.id) return;
     try {
-      if (!item.id) { const rows = await apiGet(`/api/grading/queue?`); const g = (rows || []).find((r: any) => r.attemptId === attemptId && r.questionId === questionId); item.id = g?.id; }
-      await apiSend(`/api/grading/${item.id}/finalize`, 'POST');
+      await apiSend(`/api/grading/${saved.id}/finalize`, 'POST');
       toast.success('Finalized & locked');
       navigate('/exam2/grading');
     } catch (e: any) { toast.error(e.message || 'Finalize failed'); }
