@@ -31,3 +31,16 @@ test('GED RLA sources render in a scrollable box outside the question heading', 
   assert.match(html, /<h2[^>]*>Which detail is supported\?<\/h2>/);
   assert.doesNotMatch(html, /<h2[^>]*>[^<]*A short source passage/);
 });
+
+test('GED RLA sources can stay dark on a fixed light exam surface', () => {
+  const html = renderToStaticMarkup(createElement(LanguageQuestQuestionText, {
+    language: 'GED RLA',
+    text: rlaText,
+    headingLevel: 2,
+    appearance: 'light',
+  }));
+
+  assert.match(html, /text-slate-700/);
+  assert.match(html, /text-slate-900/);
+  assert.doesNotMatch(html, /dark:/);
+});

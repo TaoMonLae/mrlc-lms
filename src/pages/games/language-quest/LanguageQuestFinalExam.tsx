@@ -332,7 +332,7 @@ export default function LanguageQuestFinalExam() {
               <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-violet-600">
                 {isSpelling && <Keyboard className="h-4 w-4" />} Question {index + 1}{isSpelling ? ' • Spelling' : ''}
               </p>
-              <LanguageQuestQuestionText language={payload.course.language} text={card.question} headingLevel={2} className="mt-3" />
+              <LanguageQuestQuestionText language={payload.course.language} text={card.question} headingLevel={2} className="mt-3" appearance="light" />
               {isSpelling ? (
                 <div className="mt-6 rounded-2xl border-2 border-violet-200 bg-violet-50/70 p-4 sm:p-5">
                   <Button
