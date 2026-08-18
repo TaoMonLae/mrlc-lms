@@ -489,7 +489,17 @@ test("every Hanzi answer in every built-in Chinese course receives Pinyin", () =
 test("Learning Quest accepts only the curated built-in learner avatars", () => {
   assert.ok(LANGUAGE_QUEST_AVATARS.length >= 8);
   assert.equal(new Set(LANGUAGE_QUEST_AVATARS.map((avatar) => avatar.id)).size, LANGUAGE_QUEST_AVATARS.length);
-  assert.equal(isLanguageQuestAvatarId("owl"), true);
+  for (const avatarId of [
+    "owl",
+    "crocodile-kid", "puppy-kid", "lion-kid", "koala-kid",
+    "baby-cow-brown", "baby-cow-grey", "baby-cow-white",
+    "baby-sheep-black", "baby-sheep-grey", "baby-sheep-white",
+    "cube-fox-golden", "cube-tiger-peach", "cube-tiger-orange", "cube-fox-amber",
+    "cube-bear-tan", "cube-panda-blue", "cube-bear-brown", "cube-panda-navy",
+    "cube-wolf-silver", "cube-wolf-grey", "cube-red-panda-coral", "cube-red-panda-rose",
+  ]) {
+    assert.equal(isLanguageQuestAvatarId(avatarId), true, `${avatarId} is a curated avatar`);
+  }
   assert.equal(isLanguageQuestAvatarId("https://example.com/photo.jpg"), false);
   assert.equal(isLanguageQuestAvatarId("../uploads/avatar.png"), false);
 });
