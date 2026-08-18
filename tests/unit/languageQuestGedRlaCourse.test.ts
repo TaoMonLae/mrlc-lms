@@ -61,3 +61,37 @@ test('GED RLA is comprehensive, source-balanced, and assessment-ready', () => {
   assert.equal(sourceTypes.get('literary'), lessons.length * 0.25);
   assert.ok(finalExamQuestionCount >= LANGUAGE_QUEST_FINAL_EXAM_MIN_QUESTIONS);
 });
+
+test('GED RLA choices do not reveal answers through length or position patterns', () => {
+  const challenges = gedRlaCourse.units.flatMap((unit) =>
+    unit.lessons.flatMap((lesson) => lesson.challenges),
+  );
+  const correctPositions = [0, 0, 0, 0];
+  let strictlyLongestCorrect = 0;
+  let strictlyShortestCorrect = 0;
+
+  for (const challenge of challenges) {
+    const lengths = challenge.options.map((option) => option.text.replace(/\s+/g, ' ').trim().length);
+    const correctIndex = challenge.options.findIndex((option) => option.correct);
+    const correctLength = lengths[correctIndex];
+    const distractorLengths = lengths.filter((_, index) => index !== correctIndex);
+    const longest = Math.max(...lengths);
+    const shortest = Math.min(...lengths);
+
+    correctPositions[correctIndex] += 1;
+    if (correctLength === longest && lengths.filter((length) => length === longest).length === 1) {
+      strictlyLongestCorrect += 1;
+    }
+    if (correctLength === shortest && lengths.filter((length) => length === shortest).length === 1) {
+      strictlyShortestCorrect += 1;
+    }
+    assert.ok(
+      correctLength <= Math.max(...distractorLengths) + 10,
+      `Correct answer is conspicuously longer: ${challenge.question}`,
+    );
+  }
+
+  assert.ok(strictlyLongestCorrect <= challenges.length * 0.25);
+  assert.ok(strictlyShortestCorrect <= challenges.length * 0.35);
+  assert.ok(correctPositions.every((count) => count >= challenges.length * 0.18));
+});
