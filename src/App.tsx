@@ -615,30 +615,38 @@ export default function App() {
 
                 <Route element={<ProtectedRoute requiredPermission="view_expenses" />}>
                   <Route path="/expenses" element={<ExpensesDashboard />} />
+                  <Route path="/expenses/:id" element={<ExpenseDetail />} />
+                </Route>
+                <Route element={<ProtectedRoute requiredPermission="manage_expenses" />}>
                   <Route path="/expenses/new" element={<ExpenseNew />} />
                   <Route path="/expenses/:id/edit" element={<ExpenseEdit />} />
-                  <Route path="/expenses/:id" element={<ExpenseDetail />} />
                 </Route>
 
                 <Route element={<ProtectedRoute requiredPermission="view_vendors" />}>
                   <Route path="/vendors" element={<VendorsPage />} />
+                  <Route path="/vendors/:id" element={<VendorDetail />} />
+                </Route>
+                <Route element={<ProtectedRoute requiredPermission="manage_vendors" />}>
                   <Route path="/vendors/new" element={<VendorNew />} />
                   <Route path="/vendors/:id/edit" element={<VendorEdit />} />
-                  <Route path="/vendors/:id" element={<VendorDetail />} />
                 </Route>
 
                 <Route element={<ProtectedRoute requiredPermission="view_budgets" />}>
                   <Route path="/budgets" element={<BudgetsPage />} />
+                  <Route path="/budgets/:id" element={<BudgetDetail />} />
+                </Route>
+                <Route element={<ProtectedRoute requiredPermission="manage_budgets" />}>
                   <Route path="/budgets/new" element={<BudgetNew />} />
                   <Route path="/budgets/:id/edit" element={<BudgetEdit />} />
-                  <Route path="/budgets/:id" element={<BudgetDetail />} />
                 </Route>
 
                 <Route element={<ProtectedRoute requiredPermission="view_fee_structures" />}>
                   <Route path="/fee-structures" element={<FeeStructuresDashboard />} />
+                  <Route path="/fee-structures/:id" element={<FeeStructureDetail />} />
+                </Route>
+                <Route element={<ProtectedRoute requiredPermission="manage_fee_structures" />}>
                   <Route path="/fee-structures/new" element={<FeeStructureNew />} />
                   <Route path="/fee-structures/:id/edit" element={<FeeStructureEdit />} />
-                  <Route path="/fee-structures/:id" element={<FeeStructureDetail />} />
                   <Route path="/fee-assignments" element={<FeeAssignmentsPage />} />
                   <Route path="/fee-discounts" element={<FeeDiscountsPage />} />
                 </Route>

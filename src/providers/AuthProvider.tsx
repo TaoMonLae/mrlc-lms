@@ -13,6 +13,8 @@ import type { User } from '../lib/permissions';
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  isSessionVerified: boolean;
+  retrySessionValidation: () => void;
   // "identifier" is whatever the person typed into the login field — their
   // email address or their username. The server figures out which it is.
   login: (
@@ -31,6 +33,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
+  isSessionVerified: false,
+  retrySessionValidation: () => {},
   login: async () => ({ success: false }),
   logout: () => {},
   updateUser: () => {},
@@ -91,11 +95,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSessionVerified, setIsSessionVerified] = useState(false);
+  const [validationAttempt, setValidationAttempt] = useState(0);
 
   // On mount: validate any existing token via /api/auth/me.
   useEffect(() => {
     const token = sessionStorage.getItem('auth_token');
     if (!token) {
+      setUser(null);
+      setIsSessionVerified(false);
       setIsLoading(false);
       return;
     }
@@ -107,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (res.ok) {
           const data = await res.json();
           setUser(mapApiUser(data.user));
+          setIsSessionVerified(true);
           return;
         }
         // Only 401/403 mean the token itself is bad. Transient failures
@@ -118,10 +127,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           sessionStorage.removeItem('auth_user');
           localStorage.removeItem('auth_token');
           localStorage.removeItem('auth_user');
+          setUser(null);
+          setIsSessionVerified(false);
           return;
         }
         // Transient error: fall back to the cached user so the session survives.
         const cached = sessionStorage.getItem('auth_user');
+        setIsSessionVerified(false);
         if (cached) {
           try { setUser(mapApiUser(JSON.parse(cached))); } catch { /* ignore */ }
         }
@@ -129,11 +141,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .catch(() => {
         // Network error — keep the session; fall back to the cached user.
         const cached = sessionStorage.getItem('auth_user');
+        setIsSessionVerified(false);
         if (cached) {
           try { setUser(mapApiUser(JSON.parse(cached))); } catch { /* ignore */ }
         }
       })
       .finally(() => setIsLoading(false));
+  }, [validationAttempt]);
+
+  const retrySessionValidation = useCallback(() => {
+    setIsLoading(true);
+    setValidationAttempt((current) => current + 1);
   }, []);
 
   const login = useCallback(
@@ -168,6 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem('auth_user');
         }
         setUser(mapApiUser(data.user));
+        setIsSessionVerified(true);
 
         // Dispatch custom event for other providers to listen to
         window.dispatchEvent(new Event('auth-state-changed'));
@@ -188,6 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
     setUser(null);
+    setIsSessionVerified(false);
 
     // Dispatch custom event for other providers to listen to
     window.dispatchEvent(new Event('auth-state-changed'));
@@ -208,7 +228,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, isLoading, isSessionVerified, retrySessionValidation, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

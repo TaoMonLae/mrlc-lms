@@ -12,7 +12,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ requiredPermission, allowedRoles, strictRoles }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isSessionVerified, retrySessionValidation } = useAuth();
   const location = useLocation();
 
   // Auth is still being validated (checking existing token on mount)
@@ -33,6 +33,27 @@ export function ProtectedRoute({ requiredPermission, allowedRoles, strictRoles }
 
   if (user.status !== 'ACTIVE') {
     return <Navigate to="/unauthorized" replace />;
+  }
+
+  const requiresElevatedAccess = Boolean(requiredPermission || allowedRoles || strictRoles);
+  if (requiresElevatedAccess && !isSessionVerified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+        <div className="w-full max-w-md rounded-2xl border border-amber-200 bg-white p-6 text-center shadow-sm">
+          <h1 className="text-lg font-bold text-slate-900">Session verification unavailable</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            We kept you signed in, but privileged access stays locked until the server confirms your account.
+          </p>
+          <button
+            type="button"
+            onClick={retrySessionValidation}
+            className="mt-5 min-h-11 rounded-lg bg-aubergine-600 px-5 text-sm font-bold text-white hover:bg-aubergine-700"
+          >
+            Retry verification
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // Enforce temporary-password replacement for every protected experience,

@@ -28,17 +28,26 @@ const EMPTY_SUMMARY = { average: 0, gpa: 0, credits: 0 };
 export default function StudentResults() {
   const [results, setResults] = useState<ResultRow[]>([]);
   const [perf, setPerf] = useState(EMPTY_SUMMARY);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [hasLoadedData, setHasLoadedData] = useState(false);
 
-  useEffect(() => {
-    apiGet<{ average: number; gpa: number; credits: number; results: ResultRow[] }>('/api/student/results')
+  const loadResults = () => {
+    setLoadError(null);
+    return apiGet<{ average: number; gpa: number; credits: number; results: ResultRow[] }>('/api/student/results')
       .then((d) => {
         setResults(d?.results ?? []);
         setPerf({ average: d?.average ?? 0, gpa: d?.gpa ?? 0, credits: d?.credits ?? 0 });
+        setHasLoadedData(true);
       })
       .catch(() => {
-        setResults([]);
-        setPerf(EMPTY_SUMMARY);
+        setLoadError(hasLoadedData
+          ? 'We could not refresh your academic results. The last confirmed values remain visible.'
+          : 'We could not load your academic results. Retry when your connection is available.');
       });
+  };
+
+  useEffect(() => {
+    void loadResults();
   }, []);
 
   return (
@@ -58,8 +67,18 @@ export default function StudentResults() {
         </div>
       </div>
 
+      {loadError && (
+        <div role="alert" className="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <MessageSquare className="mt-0.5 h-5 w-5 shrink-0" />
+            <p className="text-sm font-medium">{loadError}</p>
+          </div>
+          <Button type="button" variant="outline" onClick={() => void loadResults()}>Retry</Button>
+        </div>
+      )}
+
       {/* Performance Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {hasLoadedData && <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-2 border-slate-200 dark:border-surface-raised shadow-sm bg-white dark:bg-surface-indigo overflow-hidden">
           <CardHeader className="bg-slate-50 dark:bg-surface-raised/50 border-b border-slate-100 dark:border-surface-raised/50">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -118,10 +137,10 @@ export default function StudentResults() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div>}
 
       {/* Detailed Results List */}
-      <div className="space-y-6">
+      <div className={hasLoadedData ? "space-y-6" : "hidden"}>
         <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Recent Graded Assessments</h3>
         {results.map((result) => (
           <Card key={result.id} className="border-slate-200 dark:border-surface-raised hover:shadow-md transition-all overflow-hidden bg-white dark:bg-surface-indigo">

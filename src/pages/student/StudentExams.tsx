@@ -34,9 +34,12 @@ export default function StudentExams() {
   const [availableExams, setAvailableExams] = useState<AvailableExam[]>([]);
   const [submittedExams, setSubmittedExams] = useState<SubmittedExam[]>([]);
   const [lockdownSettings, setLockdownSettings] = useState<LockdownSettings | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [hasLoadedData, setHasLoadedData] = useState(false);
 
-  useEffect(() => {
-    Promise.all([
+  const loadExams = () => {
+    setLoadError(null);
+    return Promise.all([
       apiGet<{ available: AvailableExam[]; submitted: SubmittedExam[] }>('/api/student/exams'),
       apiGet<LockdownSettings>('/api/settings').catch(() => null),
     ])
@@ -44,11 +47,17 @@ export default function StudentExams() {
         setAvailableExams(d?.available ?? []);
         setSubmittedExams(d?.submitted ?? []);
         setLockdownSettings(settings);
+        setHasLoadedData(true);
       })
       .catch(() => {
-        setAvailableExams([]);
-        setSubmittedExams([]);
+        setLoadError(hasLoadedData
+          ? 'We could not refresh your exams. The last confirmed information remains visible.'
+          : 'We could not load your exams. Retry when your connection is available.');
       });
+  };
+
+  useEffect(() => {
+    void loadExams();
   }, []);
 
   const handleStartExam = (exam: any) => {
@@ -71,7 +80,17 @@ export default function StudentExams() {
         <p className="text-sm text-slate-500 mt-1">View available exams and your submission history.</p>
       </div>
 
-      <Tabs defaultValue="available" className="space-y-6">
+      {loadError && (
+        <div role="alert" className="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+            <p className="text-sm font-medium">{loadError}</p>
+          </div>
+          <Button type="button" variant="outline" onClick={() => void loadExams()}>Retry</Button>
+        </div>
+      )}
+
+      {hasLoadedData && <Tabs defaultValue="available" className="space-y-6">
         <TabsList className="bg-slate-100 dark:bg-surface-raised p-1 rounded-xl h-12 w-fit">
           <TabsTrigger value="available" className="rounded-lg h-10 px-6 font-bold text-xs uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">
             Available ({availableExams.length})
@@ -184,7 +203,7 @@ export default function StudentExams() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
+      </Tabs>}
 
       {/* Security Warning */}
       <div className="bg-amber-50 dark:bg-amber-900/10 p-5 rounded-2xl border border-amber-100 dark:border-amber-900/30 flex gap-4">

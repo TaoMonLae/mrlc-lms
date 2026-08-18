@@ -36,7 +36,9 @@ export default function SignupPage() {
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || 'Could not create your account.');
-      const result = await login(form.email.trim().toLowerCase(), form.password, true);
+      // Public devices are common in learning environments. Keep new accounts
+      // session-only unless the learner explicitly opts in on the login page.
+      const result = await login(form.email.trim().toLowerCase(), form.password, false);
       if (!result.success) throw new Error(result.error || 'Account created. Please sign in.');
       const returnPath = safeAppReturnPath((location.state as { from?: unknown } | null)?.from);
       navigate(returnPath || '/games/language-quest', { replace: true });

@@ -212,18 +212,24 @@ const brandingAssetUpload = multer({
   }),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
   fileFilter: (_req, file, cb) => {
-    const allowed = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
+    const allowed = new Map([
+      [".png", "image/png"], [".jpg", "image/jpeg"], [".jpeg", "image/jpeg"],
+      [".webp", "image/webp"], [".gif", "image/gif"],
+    ]);
     const ext = path.extname(file.originalname).toLowerCase();
-    if (file.mimetype.startsWith("image/") && allowed.has(ext)) cb(null, true);
-    else cb(new Error("Only PNG, JPG, WEBP, GIF, and SVG image files are allowed"));
+    if (allowed.get(ext) === file.mimetype) cb(null, true);
+    else cb(new Error("Only PNG, JPG, WEBP, and GIF image files are allowed"));
   },
 });
 
 const imageUploadFilter = (_req: express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowed = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
+  const allowed = new Map([
+    [".png", "image/png"], [".jpg", "image/jpeg"], [".jpeg", "image/jpeg"],
+    [".webp", "image/webp"], [".gif", "image/gif"],
+  ]);
   const ext = path.extname(file.originalname).toLowerCase();
-  if (file.mimetype.startsWith("image/") && allowed.has(ext)) cb(null, true);
-  else cb(new Error("Only PNG, JPG, WEBP, GIF, and SVG image files are allowed"));
+  if (allowed.get(ext) === file.mimetype) cb(null, true);
+  else cb(new Error("Only PNG, JPG, WEBP, and GIF image files are allowed"));
 };
 
 const profilePhotoUpload = multer({
@@ -1928,13 +1934,19 @@ async function startServer() {
 
   app.use(express.json({ limit: "10mb" }));
   app.use(cookieParser());
+  const setPassiveUploadHeaders = (res: express.Response) => {
+    res.setHeader("Content-Security-Policy", "default-src 'none'; sandbox");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+  };
   app.use("/uploads/branding", express.static(BRANDING_ASSET_DIR, {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
+    setHeaders: setPassiveUploadHeaders,
   }));
   app.use("/uploads/profile-photos", express.static(PROFILE_PHOTO_DIR, {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
+    setHeaders: setPassiveUploadHeaders,
   }));
   app.use("/uploads/homework-media", express.static(HOMEWORK_MEDIA_DIR, {
     maxAge: isProduction ? "30d" : 0,
@@ -1943,6 +1955,7 @@ async function startServer() {
   app.use("/uploads/exam-media", express.static(EXAM_MEDIA_DIR, {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
+    setHeaders: setPassiveUploadHeaders,
   }));
   app.use("/uploads/chat-media", express.static(CHAT_MEDIA_DIR, {
     maxAge: isProduction ? "30d" : 0,
@@ -1951,6 +1964,7 @@ async function startServer() {
   app.use("/uploads/stickers", express.static(STICKER_UPLOAD_DIR, {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
+    setHeaders: setPassiveUploadHeaders,
   }));
   // Social photos may contain minors and class-only activity. Authenticate the
   // native <img> request with a narrowly-scoped httpOnly cookie and enforce the
