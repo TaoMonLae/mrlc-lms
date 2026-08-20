@@ -138,6 +138,7 @@ const definitionOverrides = {
   water: "a clear liquid that people, animals, and plants need to live",
   welcome: "received with pleasure or friendly approval",
   welfare: "the health, happiness, and safety of a person or group",
+  window: "an opening in a wall or roof fitted with glass to admit light or air",
   write: "to form words or symbols on a surface",
   culture: "the shared ideas, customs, and arts of a group",
   history: "the study or record of past events",
@@ -427,7 +428,7 @@ function createChallenge(words, word, index) {
     case 1:
       return { type: "ASSIST", question: `Which word means “${definition}”?`, explanation, options };
     case 2:
-      return { type: "CLOZE", question: `Complete this sentence: “${blankUsageExample(word, usageExample)}”`, explanation, options };
+      return { type: "CLOZE", question: `Complete the example: “${blankUsageExample(word, usageExample)}”`, explanation, options };
     default:
       return { type: "GRAMMAR_TRANSFORM", question: `Choose the most precise word for this sentence: “${blankUsageExample(word, usageExample)}”`, explanation, options };
   }

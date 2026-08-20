@@ -11,9 +11,12 @@ function chooseChinese(
   correctIndex: 0 | 1 | 2,
   type: "SELECT" | "ASSIST" = "SELECT",
 ): OfficialLanguageQuestChallenge {
+  const [correctText] = choices[correctIndex];
   return {
     type,
     question: `Choose the Mandarin translation for “${english}”.`,
+    explanation: `“${english}” is “${correctText}” in Mandarin.`,
+    hint: "Say the English meaning, then compare it with each Mandarin choice before selecting.",
     options: choices.map(([text, emoji], index) => ({
       text,
       correct: index === correctIndex,

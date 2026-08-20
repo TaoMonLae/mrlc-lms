@@ -598,6 +598,8 @@ test("the original Mandarin course has a complete and valid curriculum", () => {
   assert.equal(challenges.length, 36);
   assert.ok(challenges.every((challenge) => challenge.options.filter((option) => option.correct).length === 1));
   assert.ok(challenges.every((challenge) => challenge.options.every((option) => option.audioText)));
+  assert.ok(challenges.every((challenge) => challenge.explanation?.trim()));
+  assert.ok(challenges.every((challenge) => challenge.hint?.trim()));
 });
 
 test("the Chinese Conversation Starter course is complete and classroom-ready", () => {
@@ -617,6 +619,8 @@ test("the Chinese Conversation Starter course is complete and classroom-ready", 
   assert.ok(challenges.every(
     (challenge) => challenge.options.every((option) => option.audioText),
   ));
+  assert.ok(challenges.every((challenge) => challenge.explanation?.trim()));
+  assert.ok(challenges.every((challenge) => challenge.hint?.trim()));
 });
 
 test("Learning Quest groups language courses into a predictable category order", () => {
@@ -907,7 +911,7 @@ test("Boss Battle submissions must match the exact one-time deck", () => {
   assert.equal(bossBattleSubmissionMatchesDeck(deck, ["c1", "c1", "c3", "c4"]), false);
 });
 
-test("reorderChallengeIsCorrect only accepts the exact canonical sequence", () => {
+test("reorderChallengeIsCorrect accepts exact sequences and swaps of visually identical tiles", () => {
   const canonical = ["a", "b", "c"];
 
   assert.equal(reorderChallengeIsCorrect(canonical, ["a", "b", "c"]), true);
@@ -916,6 +920,21 @@ test("reorderChallengeIsCorrect only accepts the exact canonical sequence", () =
   assert.equal(reorderChallengeIsCorrect(canonical, null), false);
   assert.equal(reorderChallengeIsCorrect(canonical, undefined), false);
   assert.equal(reorderChallengeIsCorrect(canonical, []), false);
+
+  const repeatedCanonical = ["the-1", "cat", "the-2"];
+  const optionTextById = new Map([
+    ["the-1", "the"],
+    ["cat", "cat"],
+    ["the-2", "the"],
+  ]);
+  assert.equal(
+    reorderChallengeIsCorrect(repeatedCanonical, ["the-2", "cat", "the-1"], optionTextById),
+    true,
+  );
+  assert.equal(
+    reorderChallengeIsCorrect(repeatedCanonical, ["cat", "the-1", "the-2"], optionTextById),
+    false,
+  );
 });
 
 test("isValidReorderSubmission rejects anything that isn't a genuine permutation", () => {
@@ -1374,6 +1393,33 @@ test("every built-in course produces clue-safe assessment prompts", () => {
   assert.ok(challenges.every((challenge) =>
     !/(?:Pronunciation|Example)\s*:/iu.test(languageQuestPracticePrompt(challenge.question)),
   ));
+});
+
+test("published English vocabulary prompts do not contain their own answer", () => {
+  const courses = [...englishWordCourses, ...linguifyCefrCourses];
+  const excludedTypes = new Set(["REORDER", "MATCHING", "DICTATION", "MINIMAL_PAIR_LISTENING"]);
+
+  for (const course of courses) {
+    for (const unit of course.units) {
+      for (const lesson of unit.lessons) {
+        for (const challenge of lesson.challenges) {
+          if (excludedTypes.has(challenge.type)) continue;
+          const answer = challenge.options.find((option) => option.correct)?.text.trim().toLowerCase();
+          assert.ok(answer, `${course.code} is missing a correct answer`);
+          const prompt = languageQuestAssessmentPrompt(
+            challenge.question,
+            challenge.type,
+            challenge.options.map((option) => option.text),
+          ).toLowerCase();
+          assert.equal(
+            prompt.includes(answer!),
+            false,
+            `${course.code} exposes “${answer}” in: ${prompt}`,
+          );
+        }
+      }
+    }
+  }
 });
 
 test("normalizeChallenge redacts example sentences that give away the answer", () => {

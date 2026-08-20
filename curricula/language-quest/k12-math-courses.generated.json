@@ -8642,7 +8642,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "A tally shows red=9, blue=2, green=9. Which colour has the most?",
+                "question": "A tally shows red=9, blue=2, green=8. Which colour has the most?",
                 "explanation": "The greatest tally identifies the category with the most.",
                 "options": [
                   {

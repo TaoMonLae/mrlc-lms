@@ -2392,7 +2392,10 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           res.status(400).json({ error: "Place every tile before checking your answer" });
           return;
         }
-        isCorrect = reorderChallengeIsCorrect(canonicalIds, orderedOptionIds);
+        const optionTextById = new Map<string, string>(
+          challenge.options.map((option: any): [string, string] => [option.id, option.text]),
+        );
+        isCorrect = reorderChallengeIsCorrect(canonicalIds, orderedOptionIds, optionTextById);
         correctOptionId = canonicalIds[0];
         correctAnswer = challenge.options.map((option: any) => option.text).join(" ");
       } else if (challenge.type === "MATCHING") {
@@ -2858,7 +2861,10 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           res.status(400).json({ error: "That mastery answer is not available" });
           return;
         }
-        isCorrect = reorderChallengeIsCorrect(canonicalIds, orderedOptionIds);
+        const optionTextById = new Map<string, string>(
+          challenge.options.map((option: any): [string, string] => [option.id, option.text]),
+        );
+        isCorrect = reorderChallengeIsCorrect(canonicalIds, orderedOptionIds, optionTextById);
         correctOptionId = canonicalIds[0];
         correctAnswer = challenge.options.map((option: any) => option.text).join(" ");
       } else if (challenge.type === "MATCHING") {

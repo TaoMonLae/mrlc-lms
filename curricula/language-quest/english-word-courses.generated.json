@@ -68,7 +68,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “The _____ became quiet when the lesson began.”",
+                "question": "Complete the example: “The _____ became quiet when the lesson began.”",
                 "explanation": "“classroom” means a room in a school where lessons take place. Example: The classroom became quiet when the lesson began.",
                 "options": [
                   {
@@ -168,7 +168,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “Use a _____ so you can correct your work easily.”",
+                "question": "Complete the example: “Use a _____ so you can correct your work easily.”",
                 "explanation": "“pencil” means a thin cylindrical pointed writing implement. Example: Use a pencil so you can correct your work easily.",
                 "options": [
                   {
@@ -476,7 +476,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “The _____ read the short story aloud.”",
+                "question": "Complete the example: “The _____ read the short story aloud.”",
                 "explanation": "“child” means a young person of either sex. Example: The child read the short story aloud.",
                 "options": [
                   {
@@ -551,8 +551,8 @@
               },
               {
                 "type": "ASSIST",
-                "question": "Which word means “a framework of wood or metal that contains a glass windowpane and is built into a wall or roof to admit light or air”?",
-                "explanation": "“window” means a framework of wood or metal that contains a glass windowpane and is built into a wall or roof to admit light or air. Example: Sunlight came through the classroom window.",
+                "question": "Which word means “an opening in a wall or roof fitted with glass to admit light or air”?",
+                "explanation": "“window” means an opening in a wall or roof fitted with glass to admit light or air. Example: Sunlight came through the classroom window.",
                 "options": [
                   {
                     "text": "garden",
@@ -576,7 +576,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “The students planted herbs in the school _____.”",
+                "question": "Complete the example: “The students planted herbs in the school _____.”",
                 "explanation": "“garden” means a piece of land where flowers, fruit, or vegetables are grown. Example: The students planted herbs in the school garden.",
                 "options": [
                   {
@@ -884,7 +884,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “He made a sandwich with fresh _____.”",
+                "question": "Complete the example: “He made a sandwich with fresh _____.”",
                 "explanation": "“bread” means food made from dough of flour or meal and usually raised with yeast or baking powder and then baked. Example: He made a sandwich with fresh bread.",
                 "options": [
                   {
@@ -984,7 +984,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “Carrots are the _____ in today's soup.”",
+                "question": "Complete the example: “Carrots are the _____ in today's soup.”",
                 "explanation": "“vegetable” means edible seeds or roots or stems or leaves or bulbs or tubers or nonsweet fruits of any of numerous herbaceous plant. Example: Carrots are the vegetable in today's soup.",
                 "options": [
                   {
@@ -1304,7 +1304,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “_____ carefully for the main idea.”",
+                "question": "Complete the example: “_____ carefully for the main idea.”",
                 "explanation": "“listen” means hear with intention. Example: Listen carefully for the main idea.",
                 "options": [
                   {
@@ -1404,7 +1404,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “_____ the door quietly when you leave.”",
+                "question": "Complete the example: “_____ the door quietly when you leave.”",
                 "explanation": "“close” means to shut an opening or bring something to an end. Example: Close the door quietly when you leave.",
                 "options": [
                   {
@@ -1706,7 +1706,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “She felt _____ when the rule was applied unfairly.”",
+                "question": "Complete the example: “She felt _____ when the rule was applied unfairly.”",
                 "explanation": "“angry” means feeling or showing anger. Example: She felt angry when the rule was applied unfairly.",
                 "options": [
                   {
@@ -1806,7 +1806,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “She stayed _____ and followed the safety instructions.”",
+                "question": "Complete the example: “She stayed _____ and followed the safety instructions.”",
                 "explanation": "“calm” means peaceful and not excited, worried, or upset. Example: She stayed calm and followed the safety instructions.",
                 "options": [
                   {
@@ -2114,7 +2114,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “The train arrived at the _____ on time.”",
+                "question": "Complete the example: “The train arrived at the _____ on time.”",
                 "explanation": "“station” means a place where trains or buses regularly stop. Example: The train arrived at the station on time.",
                 "options": [
                   {
@@ -2214,7 +2214,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “The _____ connects the village to the main road.”",
+                "question": "Complete the example: “The _____ connects the village to the main road.”",
                 "explanation": "“bridge” means a structure carrying a path or road over an obstacle. Example: The bridge connects the village to the main road.",
                 "options": [
                   {
@@ -2539,7 +2539,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “The essay will _____ city life with village life.”",
+                "question": "Complete the example: “The essay will _____ city life with village life.”",
                 "explanation": "“contrast” means put in opposition to show or emphasize differences. Example: The essay will contrast city life with village life.",
                 "options": [
                   {
@@ -2639,7 +2639,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “The class will _____ the information shown in the graph.”",
+                "question": "Complete the example: “The class will _____ the information shown in the graph.”",
                 "explanation": "“interpret” means to explain or understand the meaning of something. Example: The class will interpret the information shown in the graph.",
                 "options": [
                   {
@@ -2947,7 +2947,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “Always check whether an online _____ is trustworthy.”",
+                "question": "Complete the example: “Always check whether an online _____ is trustworthy.”",
                 "explanation": "“source” means the place, person, or thing from which information comes. Example: Always check whether an online source is trustworthy.",
                 "options": [
                   {
@@ -3047,7 +3047,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “The evidence supports the _____ presented in the article.”",
+                "question": "Complete the example: “The evidence supports the _____ presented in the article.”",
                 "explanation": "“theory” means a well-substantiated explanation of some aspect of the natural world. Example: The evidence supports the theory presented in the article.",
                 "options": [
                   {
@@ -3355,7 +3355,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “Each _____ should express a complete idea.”",
+                "question": "Complete the example: “Each _____ should express a complete idea.”",
                 "explanation": "“sentence” means a string of words satisfying the grammatical rules of a language. Example: Each sentence should express a complete idea.",
                 "options": [
                   {
@@ -3455,7 +3455,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “Writers _____ their drafts to make the meaning clearer.”",
+                "question": "Complete the example: “Writers _____ their drafts to make the meaning clearer.”",
                 "explanation": "“revise” means make revisions in. Example: Writers revise their drafts to make the meaning clearer.",
                 "options": [
                   {
@@ -3763,7 +3763,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “Oxygen is an _____ found in air and water.”",
+                "question": "Complete the example: “Oxygen is an _____ found in air and water.”",
                 "explanation": "“element” means a pure substance made from one kind of atom. Example: Oxygen is an element found in air and water.",
                 "options": [
                   {
@@ -3863,7 +3863,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “The _____ tests how light affects plant growth.”",
+                "question": "Complete the example: “The _____ tests how light affects plant growth.”",
                 "explanation": "“experiment” means a scientific test used to discover or demonstrate something. Example: The experiment tests how light affects plant growth.",
                 "options": [
                   {
@@ -4171,7 +4171,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “Write one half as the _____ 0.5.”",
+                "question": "Complete the example: “Write one half as the _____ 0.5.”",
                 "explanation": "“decimal” means a number written with a point to show a fraction of ten. Example: Write one half as the decimal 0.5.",
                 "options": [
                   {
@@ -4271,7 +4271,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “Use the measurements to _____ the area of the room.”",
+                "question": "Complete the example: “Use the measurements to _____ the area of the room.”",
                 "explanation": "“calculate” means make a mathematical calculation or computation. Example: Use the measurements to calculate the area of the room.",
                 "options": [
                   {
@@ -4591,7 +4591,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “Small businesses contribute to the local _____.”",
+                "question": "Complete the example: “Small businesses contribute to the local _____.”",
                 "explanation": "“economy” means the system of production and distribution and consumption. Example: Small businesses contribute to the local economy.",
                 "options": [
                   {
@@ -4691,7 +4691,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “The town's _____ has grown over the last decade.”",
+                "question": "Complete the example: “The town's _____ has grown over the last decade.”",
                 "explanation": "“population” means the people who inhabit a territory or state. Example: The town's population has grown over the last decade.",
                 "options": [
                   {
@@ -5010,7 +5010,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “Practice helped her feel _____ during the presentation.”",
+                "question": "Complete the example: “Practice helped her feel _____ during the presentation.”",
                 "explanation": "“confident” means having or marked by confidence or assurance. Example: Practice helped her feel confident during the presentation.",
                 "options": [
                   {
@@ -5110,7 +5110,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “Give an _____ account of what happened.”",
+                "question": "Complete the example: “Give an _____ account of what happened.”",
                 "explanation": "“honest” means not disposed to cheat or defraud. Example: Give an honest account of what happened.",
                 "options": [
                   {
@@ -5418,7 +5418,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “The two classes _____ on a community garden project.”",
+                "question": "Complete the example: “The two classes _____ on a community garden project.”",
                 "explanation": "“collaborate” means to work together toward a shared goal. Example: The two classes collaborate on a community garden project.",
                 "options": [
                   {
@@ -5518,7 +5518,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “The group will _____ the evidence before making a decision.”",
+                "question": "Complete the example: “The group will _____ the evidence before making a decision.”",
                 "explanation": "“discuss” means to consider or examine in speech or writing. Example: The group will discuss the evidence before making a decision.",
                 "options": [
                   {
@@ -5826,7 +5826,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “Students _____ stronger arguments through careful revision.”",
+                "question": "Complete the example: “Students _____ stronger arguments through careful revision.”",
                 "explanation": "“develop” means to grow or change into a more advanced form. Example: Students develop stronger arguments through careful revision.",
                 "options": [
                   {
@@ -5926,7 +5926,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “Engineers _____ when existing solutions no longer work.”",
+                "question": "Complete the example: “Engineers _____ when existing solutions no longer work.”",
                 "explanation": "“innovate” means to introduce new ideas or methods. Example: Engineers innovate when existing solutions no longer work.",
                 "options": [
                   {
@@ -6240,7 +6240,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “Soil erosion can be a _____ of removing too many trees.”",
+                "question": "Complete the example: “Soil erosion can be a _____ of removing too many trees.”",
                 "explanation": "“consequence” means a result or effect of an action. Example: Soil erosion can be a consequence of removing too many trees.",
                 "options": [
                   {
@@ -6340,7 +6340,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “The group tested more than one _____ to the problem.”",
+                "question": "Complete the example: “The group tested more than one _____ to the problem.”",
                 "explanation": "“solution” means an answer to a problem or difficult situation. Example: The group tested more than one solution to the problem.",
                 "options": [
                   {
@@ -6654,7 +6654,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “Her results were _____ across all three trials.”",
+                "question": "Complete the example: “Her results were _____ across all three trials.”",
                 "explanation": "“consistent” means the same throughout in structure or composition. Example: Her results were consistent across all three trials.",
                 "options": [
                   {
@@ -6754,7 +6754,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “A _____ schedule can accommodate unexpected changes.”",
+                "question": "Complete the example: “A _____ schedule can accommodate unexpected changes.”",
                 "explanation": "“flexible” means capable of being changed. Example: A flexible schedule can accommodate unexpected changes.",
                 "options": [
                   {
@@ -7062,7 +7062,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “In a _____, citizens choose representatives through elections.”",
+                "question": "Complete the example: “In a _____, citizens choose representatives through elections.”",
                 "explanation": "“democracy” means the political orientation of those who favor government by the people or by their elected representatives. Example: In a democracy, citizens choose representatives through elections.",
                 "options": [
                   {
@@ -7162,7 +7162,7 @@
               },
               {
                 "type": "CLOZE",
-                "question": "Complete this sentence: “The school chose a _____ design that uses less energy.”",
+                "question": "Complete the example: “The school chose a _____ design that uses less energy.”",
                 "explanation": "“sustainable” means able to continue without using up resources or harming the environment. Example: The school chose a sustainable design that uses less energy.",
                 "options": [
                   {

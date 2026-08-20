@@ -44,6 +44,25 @@ test("K-12 mathematics curricula are structurally valid", () => {
             assert.equal(correct, 1);
           }
           assert.ok(challenge.options.every((option) => option.emoji === null && option.audioText === null));
+
+          const tally = challenge.question.match(
+            /^A tally shows red=(\d+), blue=(\d+), green=(\d+)\. Which colour has the most\?$/,
+          );
+          if (tally) {
+            const labels = ["red", "blue", "green"];
+            const values = tally.slice(1).map(Number);
+            const highest = Math.max(...values);
+            assert.equal(
+              values.filter((value) => value === highest).length,
+              1,
+              `${course.code}: ambiguous highest tally in ${challenge.question}`,
+            );
+            assert.equal(
+              challenge.options.find((option) => option.correct)?.text,
+              labels[values.indexOf(highest)],
+              `${course.code}: incorrect tally answer in ${challenge.question}`,
+            );
+          }
         }
       }
     }

@@ -3310,8 +3310,8 @@
               },
               {
                 "type": "SELECT",
-                "question": "Which noun means “A plastic card used to pay for things”? Pronunciation: /kɑːrd/. Example: “I'll pay by card, please.”",
-                "explanation": "“card” (noun) means “A plastic card used to pay for things”. Pronunciation: /kɑːrd/. Example: “I'll pay by card, please.”",
+                "question": "Which noun means “A small rectangular piece of plastic used to make a payment”? Pronunciation: /kɑːrd/. Example: “I'll pay by card, please.”",
+                "explanation": "“card” (noun) means “A small rectangular piece of plastic used to make a payment”. Pronunciation: /kɑːrd/. Example: “I'll pay by card, please.”",
                 "options": [
                   {
                     "text": "receipt",

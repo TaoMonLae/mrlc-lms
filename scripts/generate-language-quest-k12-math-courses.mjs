@@ -18,6 +18,18 @@ for (const course of courses) {
       for (const challenge of lesson.challenges) {
         challenges += 1;
         if (!challenge.question?.trim() || !challenge.explanation?.trim()) throw new Error("Math challenges require a question and teaching explanation");
+        const tally = challenge.question.match(/^A tally shows red=(\d+), blue=(\d+), green=(\d+)\. Which colour has the most\?$/);
+        if (tally) {
+          const labels = ["red", "blue", "green"];
+          const values = tally.slice(1).map(Number);
+          const highest = Math.max(...values);
+          if (values.filter((value) => value === highest).length !== 1) {
+            throw new Error(`${course.code}: tally question needs one unique highest value: ${challenge.question}`);
+          }
+          const expected = labels[values.indexOf(highest)];
+          const answer = challenge.options.find((option) => option.correct)?.text.trim().toLowerCase();
+          if (answer !== expected) throw new Error(`${course.code}: tally answer should be ${expected}: ${challenge.question}`);
+        }
         if (!allowed.has(challenge.type)) throw new Error(`Unsupported type ${challenge.type}`);
         const optionTexts = challenge.options.map((option) => option.text.trim().toLowerCase());
         if (new Set(optionTexts).size !== optionTexts.length) throw new Error(`${course.code}: duplicate option text in ${challenge.question}`);

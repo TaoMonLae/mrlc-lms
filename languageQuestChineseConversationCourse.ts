@@ -17,6 +17,8 @@ function chooseMandarin(
   return {
     type,
     question: `Choose the Mandarin for “${english}”. Pronunciation: ${correct[1]}.`,
+    explanation: `“${english}” is “${correct[0]}” (${correct[1]}) in Mandarin.`,
+    hint: "Use the meaning and the surrounding lesson topic to eliminate unrelated phrases.",
     options: choices.map(([hanzi, _pinyin, emoji], index) => ({
       text: hanzi,
       correct: index === correctIndex,

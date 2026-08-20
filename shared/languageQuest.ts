@@ -310,9 +310,20 @@ export function bossBattleSubmissionMatchesDeck(
 export function reorderChallengeIsCorrect(
   canonicalOptionIds: readonly string[],
   submittedOptionIds: readonly string[] | null | undefined,
+  optionTextById?: ReadonlyMap<string, string>,
 ): boolean {
   if (!submittedOptionIds || submittedOptionIds.length !== canonicalOptionIds.length) return false;
-  return canonicalOptionIds.every((id, index) => id === submittedOptionIds[index]);
+  if (canonicalOptionIds.every((id, index) => id === submittedOptionIds[index])) return true;
+  if (!optionTextById) return false;
+
+  // Repeated words/characters produce separate draggable tiles with distinct
+  // ids. Swapping two visually identical instances must not turn a visibly
+  // correct sentence into a wrong answer.
+  return canonicalOptionIds.every((id, index) => {
+    const canonicalText = optionTextById.get(id);
+    const submittedText = optionTextById.get(submittedOptionIds[index]);
+    return canonicalText !== undefined && canonicalText === submittedText;
+  });
 }
 
 // A REORDER submission is well-formed only if it's a genuine permutation of
