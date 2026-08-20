@@ -1,4 +1,5 @@
 import type { OfficialLanguageQuestCourse, OfficialLanguageQuestChallenge } from "./languageQuestImportedCourses";
+import { orderLanguageQuestOptions } from "./shared/languageQuestOptionOrder";
 
 export type GedScienceV2Visual =
   | { type: "process"; title: string; steps: string[]; caption?: string }
@@ -38,17 +39,14 @@ const encode = (lesson: GedScienceV2LessonSeed) => PREFIX + JSON.stringify({
 const q = (question: string, correct: string, distractors: string[], explanation: string, hint?: string) => ({ question, correct, distractors, explanation, hint });
 
 function challenges(lesson: GedScienceV2LessonSeed): OfficialLanguageQuestChallenge[] {
-  return lesson.questions.map((item, index) => {
-    const options = [item.correct, ...item.distractors].slice(0, 4);
-    // Deterministic rotation avoids putting the correct answer in the same slot every time.
-    const shift = index % options.length;
-    const rotated = [...options.slice(shift), ...options.slice(0, shift)];
+  return lesson.questions.map((item) => {
+    const options = orderLanguageQuestOptions(item.correct, item.distractors.slice(0, 3), `${lesson.title}|${item.question}`);
     return {
       type: "SELECT",
       question: item.question,
       explanation: item.explanation,
       hint: item.hint || "Use the labels, units, variables, or evidence shown in the learning section before choosing.",
-      options: rotated.map((text) => ({
+      options: options.map((text) => ({
         text,
         correct: text === item.correct,
         emoji: null,
@@ -90,7 +88,7 @@ const lifeScience: GedScienceV2LessonSeed[] = [
     keyTerms: [{ marker: "main idea", text: "the central point of a passage" }, { marker: "supporting detail", text: "a fact or example that develops the main idea" }],
     gedStrategy: "After reading, state the passage in one sentence. Then test whether each major detail fits beneath that sentence.",
     checkpoint: "Would a single unusual example usually be broad enough to serve as the main idea?",
-    questions: [q("Which statement best describes a supporting detail?", "A fact or example that explains the main idea", ["The title of every passage", "Any sentence with a number", "An unrelated conclusion"], "Supporting details develop or support the central point."), q("Which main idea is strongest?", "A statement supported by most major details", ["A statement about one minor example", "A claim absent from the passage", "The longest sentence"], "A main idea should account for the passage's major evidence."), q("Why should you compare a proposed main idea with the details?", "To check that the details actually support it", ["To make it longer", "To remove all evidence", "To avoid reading the passage"], "The relationship between main idea and evidence is the key test.")],
+    questions: [q("Which statement best describes a supporting detail?", "A fact or example that explains the main idea", ["A title that merely announces the passage topic", "Any numbered sentence whether relevant or not", "A conclusion unrelated to the passage's central point"], "Supporting details develop or support the central point."), q("Which main idea is strongest?", "A statement supported by most major details", ["A statement focused on only one minor example", "A claim that is absent from the entire passage", "The longest sentence regardless of its supporting evidence"], "A main idea should account for the passage's major evidence."), q("Why should you compare a proposed main idea with the details?", "To check that the details actually support it", ["To lengthen the statement without checking its accuracy", "To remove evidence that complicates the proposed main idea", "To avoid reading the passage's most important information"], "The relationship between main idea and evidence is the key test.")],
   },
   {
     title: "Interpret Tables",
@@ -186,7 +184,7 @@ const lifeScience: GedScienceV2LessonSeed[] = [
     keyTerms: [{ marker: "representation", text: "a way of showing scientific information" }, { marker: "integrate", text: "combine information from multiple sources" }],
     gedStrategy: "Make a two-column note: 'text says' and 'visual shows.' Then combine them into one answer.",
     checkpoint: "If the text describes heredity but the figure labels base pairs, where does the structural evidence come from?",
-    questions: [q("If text explains DNA function and a figure labels base pairs, what should you do?", "Combine evidence from both sources", ["Use only the text", "Use only the figure", "Ignore the labels"], "The two sources provide complementary information."), q("What do the inner 'rungs' represent in the visual?", "Paired nitrogen bases", ["Cell membranes", "Amino acids", "Ribosomes"], "The layered visual identifies paired bases as the inner rungs."), q("Why are visuals important on GED Science?", "They can contain evidence not repeated in the text", ["They are only decoration", "They replace every passage", "They never include labels"], "GED items often distribute information across multiple formats.")],
+    questions: [q("If text explains DNA function and a figure labels base pairs, what should you do?", "Combine evidence from both sources", ["Use only the text and disregard the labeled figure", "Use only the figure and disregard the explanation", "Ignore labels that add information to the passage"], "The two sources provide complementary information."), q("What do the inner 'rungs' represent in the visual?", "Paired nitrogen bases", ["Layers of cell membrane", "Chains of amino acids", "Rows of ribosomes"], "The layered visual identifies paired bases as the inner rungs."), q("Why are visuals important on GED Science?", "They can contain evidence not repeated in the text", ["They serve as decoration without scientific information", "They always replace the need to read any passage", "They avoid using labels or measured values"], "GED items often distribute information across multiple formats.")],
   },
   {
     title: "Understand Content-Based Tools",
@@ -210,7 +208,7 @@ const lifeScience: GedScienceV2LessonSeed[] = [
     keyTerms: [{ marker: "context clue", text: "nearby information that helps determine meaning" }, { marker: "root", text: "meaningful word part" }],
     gedStrategy: "Substitute your inferred meaning back into the sentence. If the sentence still makes sense, the inference is more likely correct.",
     checkpoint: "In 'thermal energy, or heat energy,' what does 'or' signal?",
-    questions: [q("'Thermal energy, or heat energy' uses which context clue?", "Direct definition or restatement", ["Unrelated example", "Contradiction", "No context clue"], "The phrase after 'or' restates the meaning."), q("What does the root 'bio' usually relate to?", "Life", ["Heat", "Earth", "Light"], "Bio- is a common root associated with life."), q("How can you check an inferred word meaning?", "Substitute it into the sentence and test the meaning", ["Ignore the sentence", "Choose the longest dictionary definition", "Look only at punctuation"], "Context-based inference should fit the surrounding sentence and passage.")],
+    questions: [q("'Thermal energy, or heat energy' uses which context clue?", "Direct definition or restatement", ["An example unrelated to the term's meaning", "A contradiction between two scientific claims", "No contextual clue in the sentence"], "The phrase after 'or' restates the meaning."), q("What does the root 'bio' usually relate to?", "Life", ["Heat", "Earth", "Light"], "Bio- is a common root associated with life."), q("How can you check an inferred word meaning?", "Substitute it into the sentence and test the meaning", ["Ignore the sentence and rely on familiarity", "Choose the longest definition without checking the sentence context", "Use punctuation alone instead of the surrounding ideas"], "Context-based inference should fit the surrounding sentence and passage.")],
   },
   {
     title: "Understand Scientific Evidence",
@@ -222,7 +220,7 @@ const lifeScience: GedScienceV2LessonSeed[] = [
     keyTerms: [{ marker: "evidence", text: "observations or data used to evaluate a claim" }, { marker: "reliability", text: "consistency and dependability of evidence" }],
     gedStrategy: "For each answer choice, ask: 'Which specific data point or observation supports this?'",
     checkpoint: "Does structural similarity alone prove every detail of evolutionary history?",
-    questions: [q("Why can similar limb-bone patterns support common ancestry?", "They are shared structural evidence across different species", ["They prove every species has the same function", "They show organisms never change", "They remove the need for other evidence"], "Shared structural patterns are evidence consistent with common ancestry."), q("Which is strongest evidence?", "Repeated measurements collected with a reliable method", ["A personal preference", "An unsupported statement", "A decorative diagram"], "Reliable, repeated observations provide stronger scientific support."), q("Why are multiple lines of evidence valuable?", "They can independently support the same explanation", ["They guarantee no uncertainty", "They eliminate the need for reasoning", "They make all claims true"], "Converging evidence increases confidence when independent observations align.")],
+    questions: [q("Why can similar limb-bone patterns support common ancestry?", "They are shared structural evidence across different species", ["They prove that every species uses the limbs identically", "They demonstrate that organisms have never changed over time", "They eliminate the need to examine any additional evidence"], "Shared structural patterns are evidence consistent with common ancestry."), q("Which is strongest evidence?", "Repeated measurements collected with a reliable method", ["A researcher's personal preference about the expected result", "A confident statement unsupported by observations or data", "A decorative diagram that presents no measured information"], "Reliable, repeated observations provide stronger scientific support."), q("Why are multiple lines of evidence valuable?", "They can independently support the same explanation", ["They guarantee that no uncertainty remains in the explanation", "They eliminate the need to connect observations through reasoning", "They make every related scientific claim automatically true"], "Converging evidence increases confidence when independent observations align.")],
   },
   {
     title: "Make and Identify Inferences",
@@ -285,7 +283,7 @@ const physicalScience: GedScienceV2LessonSeed[] = [
     keyTerms: [{ marker: "variable", text: "a characteristic that can differ or change" }, { marker: "correlation", text: "association between variables" }],
     gedStrategy: "State the comparison in a sentence including the unit before calculating or choosing an answer.",
     checkpoint: "Which substance in the table has the highest boiling point?",
-    questions: [q("Which substance has the highest listed boiling point?", "C", ["A", "B", "A and B are tied"], "2562 °C is the largest value in the boiling-point column."), q("Which substance conducts electricity as a solid?", "C", ["A", "B", "All three"], "Only C is marked 'yes' in that column."), q("Does this table alone prove bond type causes boiling point differences?", "No, it shows an association but not a controlled causal test", ["Yes, automatically", "Only because the values are numbers", "Yes, if there are three rows"], "Causal conclusions require stronger experimental control than a descriptive table alone.")],
+    questions: [q("Which substance has the highest listed boiling point?", "C", ["A", "B", "A and B are tied"], "2562 °C is the largest value in the boiling-point column."), q("Which substance conducts electricity as a solid?", "C", ["A", "B", "All three"], "Only C is marked 'yes' in that column."), q("Does this table alone prove bond type causes boiling point differences?", "No, it shows an association but not a controlled causal test", ["Yes, because every numerical association establishes a cause", "Only because the values are reported as measured numbers", "Yes, because a table with three rows is a controlled experiment"], "Causal conclusions require stronger experimental control than a descriptive table alone.")],
   },
   {
     title: "Understand Chemical Equations",
@@ -345,7 +343,7 @@ const physicalScience: GedScienceV2LessonSeed[] = [
     keyTerms: [{ marker: "law", text: "description of a consistent natural relationship" }, { marker: "conservation", text: "principle that a quantity remains accounted for in a closed system" }],
     gedStrategy: "Identify which variables change and which remain constant before applying a law.",
     checkpoint: "If distance between two masses increases, what happens to gravitational attraction?",
-    questions: [q("If distance between two masses increases while masses stay the same, gravity becomes…", "Weaker", ["Stronger", "Exactly zero immediately", "Unrelated to distance"], "Gravitational attraction decreases as distance increases."), q("For the same mass, increasing net force causes…", "Greater acceleration", ["Less acceleration", "No change", "Less mass automatically"], "F = ma shows acceleration increases with force when mass is constant."), q("A conservation law means…", "A conserved quantity remains accounted for in the system", ["The quantity disappears", "Every variable stays constant", "No energy transfers occur"], "Conservation tracks a quantity through transformations and transfers.")],
+    questions: [q("If distance between two masses increases while masses stay the same, gravity becomes…", "Weaker", ["Stronger", "Exactly zero immediately", "Unrelated to distance"], "Gravitational attraction decreases as distance increases."), q("For the same mass, increasing net force causes…", "Greater acceleration", ["Less acceleration", "No change", "Less mass automatically"], "F = ma shows acceleration increases with force when mass is constant."), q("A conservation law means…", "A conserved quantity remains accounted for in the system", ["The tracked quantity disappears when the system changes", "Every measured variable stays constant throughout the process", "No transfer or transformation of energy can occur"], "Conservation tracks a quantity through transformations and transfers.")],
   },
   {
     title: "Access Prior Knowledge",
@@ -369,7 +367,7 @@ const physicalScience: GedScienceV2LessonSeed[] = [
     keyTerms: [{ marker: "kinetic energy", text: "energy of motion" }, { marker: "temperature", text: "measure related to average particle kinetic energy" }],
     gedStrategy: "When a visible property changes, ask what particle-level quantity could explain that change.",
     checkpoint: "What generally increases at the particle level when temperature rises?",
-    questions: [q("What generally increases when temperature rises?", "Average particle kinetic energy", ["Atomic number", "Number of protons", "Element identity"], "Higher temperature corresponds to greater average kinetic energy."), q("During a physical phase change, do molecules become a new element?", "No, particle identity can remain the same", ["Yes, always", "Only during melting", "Only for gases"], "Physical changes alter arrangement and energy without necessarily changing chemical identity."), q("Which sample has faster average particle motion?", "The warmer sample", ["The cooler sample", "Both must be identical", "Temperature gives no information"], "The particle model links higher temperature with greater average kinetic energy.")],
+    questions: [q("What generally increases when temperature rises?", "Average particle kinetic energy", ["The atomic number of every particle", "The number of protons in each nucleus", "The identity of the chemical element"], "Higher temperature corresponds to greater average kinetic energy."), q("During a physical phase change, do molecules become a new element?", "No, particle identity can remain the same", ["Yes, every phase change produces a different chemical element", "Only melting changes molecules into a new element", "Only gases can become elements during a phase change"], "Physical changes alter arrangement and energy without necessarily changing chemical identity."), q("Which sample has faster average particle motion?", "The warmer sample", ["The cooler sample regardless of its measured temperature", "Both samples because particle motion must be identical", "Neither sample because temperature gives no motion information"], "The particle model links higher temperature with greater average kinetic energy.")],
   },
   {
     title: "Interpret Observations",
@@ -381,7 +379,7 @@ const physicalScience: GedScienceV2LessonSeed[] = [
     keyTerms: [{ marker: "observation", text: "direct measurement or recorded event" }, { marker: "interpretation", text: "explanation of what evidence means" }],
     gedStrategy: "Underline measured quantities. Treat explanatory language such as 'because' or 'therefore' as reasoning that must be supported.",
     checkpoint: "Is 'speed increased from 2 m/s to 5 m/s' an observation or interpretation?",
-    questions: [q("Which statement is an observation?", "The measured speed increased from 2 m/s to 5 m/s", ["The object wanted to move faster", "Energy was destroyed", "An invisible cause must be responsible"], "The statement reports measured values directly."), q("As an object descends and speeds up, what energy generally increases?", "Kinetic energy", ["Gravitational potential energy", "Atomic energy", "Mass"], "Greater speed corresponds to more kinetic energy."), q("An interpretation should be…", "Supported by observations", ["Independent of data", "Based only on preference", "Automatically accepted"], "Interpretations are scientific only when evidence supports them.")],
+    questions: [q("Which statement is an observation?", "The measured speed increased from 2 m/s to 5 m/s", ["The object accelerated because it wanted to move faster", "Energy was destroyed while the object's speed increased", "An invisible cause must have produced the measured change"], "The statement reports measured values directly."), q("As an object descends and speeds up, what energy generally increases?", "Kinetic energy", ["Gravitational potential energy", "Atomic energy", "Mass"], "Greater speed corresponds to more kinetic energy."), q("An interpretation should be…", "Supported by observations", ["Independent of the collected measurements and other data", "Based only on the researcher's personal preference", "Automatically accepted without review of the evidence"], "Interpretations are scientific only when evidence supports them.")],
   },
   {
     title: "Link Content from Varied Formats",
@@ -492,7 +490,7 @@ const earthSpace: GedScienceV2LessonSeed[] = [
     keyTerms: [{ marker: "producer", text: "organism that captures energy to build organic molecules" }, { marker: "energy conversion", text: "change from one energy form to another" }],
     gedStrategy: "Strip away the story context and name the principle: energy transfer, conservation, force, cycles, or systems interaction.",
     checkpoint: "In a food web, which organisms introduce new chemical energy through photosynthesis?",
-    questions: [q("Which organisms bring new chemical energy into a food web through photosynthesis?", "Producers", ["Top predators", "All consumers equally", "Parasites only"], "Producers capture light energy and store it as chemical energy."), q("What is the first energy input in tidal generation?", "Motion of water", ["Nuclear fusion in the turbine", "Chemical energy in batteries only", "Sound energy"], "The turbine is driven by moving water."), q("Applying a concept means…", "Using the same underlying principle in a new context", ["Memorizing the story wording", "Ignoring scientific relationships", "Changing the law"], "Transfer requires recognizing the common principle beneath different scenarios.")],
+    questions: [q("Which organisms bring new chemical energy into a food web through photosynthesis?", "Producers", ["Top predators", "All consumers equally", "Parasites only"], "Producers capture light energy and store it as chemical energy."), q("What is the first energy input in tidal generation?", "Motion of water", ["Nuclear fusion in the turbine", "Chemical energy in batteries only", "Sound energy"], "The turbine is driven by moving water."), q("Applying a concept means…", "Using the same underlying principle in a new context", ["Memorizing only the wording of the original story", "Ignoring the scientific relationships in the new situation", "Changing the scientific law to fit each example"], "Transfer requires recognizing the common principle beneath different scenarios.")],
   },
   {
     title: "Express Scientific Information",
@@ -504,7 +502,7 @@ const earthSpace: GedScienceV2LessonSeed[] = [
     keyTerms: [{ marker: "axis", text: "reference line on a graph" }, { marker: "proportion", text: "relative amount or fraction" }],
     gedStrategy: "Choose the representation that makes the question's relationship easiest to see: categories → bars, trend over time → line, exact values → table.",
     checkpoint: "Which gas is most abundant in the displayed air composition?",
-    questions: [q("Which gas is most abundant in the chart?", "Nitrogen", ["Oxygen", "Other gases", "All are equal"], "Nitrogen is shown at about 78%, the largest proportion."), q("Which graph feature is essential for a measured axis?", "A clear label and unit when applicable", ["Decorative clip art", "A hidden scale", "Unrelated colors"], "Axis labels and units define the quantitative meaning."), q("Which display is usually best for a trend over time?", "A line graph", ["A random icon list", "An unlabeled picture", "A paragraph with no values"], "Line graphs effectively show how a variable changes across ordered time points.")],
+    questions: [q("Which gas is most abundant in the chart?", "Nitrogen", ["Oxygen", "Other gases", "All are equal"], "Nitrogen is shown at about 78%, the largest proportion."), q("Which graph feature is essential for a measured axis?", "A clear label and unit when applicable", ["A decorative image unrelated to the measured quantity", "A scale whose numerical intervals are hidden from readers", "Colors that do not distinguish variables or categories"], "Axis labels and units define the quantitative meaning."), q("Which display is usually best for a trend over time?", "A line graph", ["A list of icons arranged without an ordered scale", "A picture with no labels or measured values", "A paragraph that reports no values over time"], "Line graphs effectively show how a variable changes across ordered time points.")],
   },
   {
     title: "Identify Problem and Solution",

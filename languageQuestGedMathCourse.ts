@@ -1,4 +1,5 @@
 import type { OfficialLanguageQuestChallenge, OfficialLanguageQuestCourse } from './languageQuestImportedCourses';
+import { orderLanguageQuestOptions } from './shared/languageQuestOptionOrder';
 
 type Question = [prompt: string, correct: string, distractors: [string, string, string], explanation: string];
 
@@ -39,15 +40,14 @@ function concept(seed: LessonSeed): string {
 }
 
 function challenges(seed: LessonSeed): OfficialLanguageQuestChallenge[] {
-  return seed.questions.map(([prompt, correct, distractors, explanation], index) => {
-    const options = [correct, ...distractors];
-    const shift = index % options.length;
+  return seed.questions.map(([prompt, correct, distractors, explanation]) => {
+    const options = orderLanguageQuestOptions(correct, distractors, `${seed.title}|${prompt}`);
     return {
       type: 'SELECT',
       question: prompt,
       explanation,
       hint: 'Write the known values, choose the matching relationship, and estimate before calculating.',
-      options: [...options.slice(shift), ...options.slice(0, shift)].map((text) => ({
+      options: options.map((text) => ({
         text,
         correct: text === correct,
         emoji: null,
@@ -586,7 +586,7 @@ const graphsAndFunctions: LessonSeed[] = [
     questions: [
       ['Which relation is a function?', '$\\{(1,4),(2,4),(3,7)\\}$', ['$\\{(1,4),(1,7),(2,8)\\}$', '$\\{(0,2),(0,3),(0,4)\\}$', '$\\{(-1,5),(-1,5),(-1,8)\\}$'], 'Each input in the correct relation has exactly one output.'],
       ['What is the domain of $\\{(-2,5),(0,7),(4,5)\\}$?', '$\\{-2,0,4\\}$', ['$\\{5,7\\}$', '$\\{-2,0,4,5,7\\}$', '$\\{0,5\\}$'], 'The domain is the set of first coordinates.'],
-      ['A graph fails the vertical line test. What does this mean?', 'At least one input has more than one output', ['Every output has one input', 'The relation is linear', 'The domain contains no values'], 'A vertical line crosses at multiple points when one $x$ has multiple $y$ values.'],
+      ['A graph fails the vertical line test. What does this mean?', 'At least one input has more than one output', ['Every output is paired with exactly one input value', 'The relation must form a straight line on the graph', 'The domain contains no possible input values'], 'A vertical line crosses at multiple points when one $x$ has multiple $y$ values.'],
     ],
   },
   {

@@ -1,4 +1,5 @@
 import type { OfficialLanguageQuestChallenge, OfficialLanguageQuestCourse } from './languageQuestImportedCourses';
+import { orderLanguageQuestOptions } from './shared/languageQuestOptionOrder';
 
 type SourceKind = 'informational' | 'literary' | 'argument' | 'editing';
 type Question = [prompt: string, correct: string, distractors: [string, string, string], explanation: string];
@@ -15,15 +16,6 @@ interface LessonSeed {
 }
 
 const PREFIX = 'RLA_V1::';
-
-function stableOptionIndex(value: string, optionCount: number): number {
-  let hash = 2166136261;
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return (hash >>> 0) % optionCount;
-}
 
 function concept(seed: LessonSeed): string {
   return PREFIX + JSON.stringify({
@@ -52,8 +44,7 @@ function concept(seed: LessonSeed): string {
 
 function challenges(seed: LessonSeed): OfficialLanguageQuestChallenge[] {
   return seed.questions.map(([prompt, correct, distractors, explanation]) => {
-    const options = [...distractors];
-    options.splice(stableOptionIndex(`${seed.title}|${prompt}`, options.length + 1), 0, correct);
+    const options = orderLanguageQuestOptions(correct, distractors, `${seed.title}|${prompt}`);
     return {
       type: 'SELECT',
       question: `${seed.passage}\n\n${prompt}`,

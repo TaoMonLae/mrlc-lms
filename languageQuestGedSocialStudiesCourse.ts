@@ -1,4 +1,5 @@
 import type { OfficialLanguageQuestChallenge, OfficialLanguageQuestCourse } from './languageQuestImportedCourses';
+import { orderLanguageQuestOptions } from './shared/languageQuestOptionOrder';
 
 type Visual =
   | { type: 'process'; title: string; steps: string[]; caption?: string }
@@ -39,16 +40,14 @@ function encode(seed: LessonSeed): string {
 }
 
 function challenges(seed: LessonSeed): OfficialLanguageQuestChallenge[] {
-  return seed.questions.map(([question, correct, distractors, explanation], index) => {
-    const options = [correct, ...distractors];
-    const shift = index % options.length;
-    const rotated = [...options.slice(shift), ...options.slice(0, shift)];
+  return seed.questions.map(([question, correct, distractors, explanation]) => {
+    const options = orderLanguageQuestOptions(correct, distractors, `${seed.title}|${question}`);
     return {
       type: 'SELECT',
       question,
       explanation,
       hint: 'Use the source, labels, timeline, quantities, or civic principle in the learning section before choosing.',
-      options: rotated.map((text) => ({ text, correct: text === correct, emoji: null, audioText: null })),
+      options: options.map((text) => ({ text, correct: text === correct, emoji: null, audioText: null })),
     };
   });
 }
@@ -73,9 +72,9 @@ const civics: LessonSeed[] = [
     gedStrategy: 'Read the attribution line before the passage. Date, author, audience, and source type can explain point of view.',
     checkpoint: 'Would a diary be useful evidence even if it gives only one person’s perspective?',
     questions: [
-      ['Which item is most clearly a primary source?', 'A court ruling issued when the case was decided', ['A modern textbook chapter', 'A documentary made decades later', 'A historian’s journal article'], 'The ruling is an official record created as part of the event being studied.'],
-      ['Why should a firsthand account be corroborated?', 'Its author may have limited knowledge or a particular viewpoint', ['Primary sources are always fictional', 'Old documents contain no evidence', 'Secondary sources never use facts'], 'Firsthand access can be valuable without making the account complete or neutral.'],
-      ['Which detail best helps identify a source’s purpose?', 'Its intended audience and reason for publication', ['Its page color', 'Its paragraph count', 'Its file size'], 'Audience and publication purpose help explain what the author hoped to accomplish.'],
+      ['Which item is most clearly a primary source?', 'A court ruling issued when the case was decided', ['A modern textbook chapter explaining the ruling’s historical significance', 'A documentary produced decades after the court issued its decision', 'A historian’s journal article comparing several later interpretations'], 'The ruling is an official record created as part of the event being studied.'],
+      ['Why should a firsthand account be corroborated?', 'Its author may have limited knowledge or a particular viewpoint', ['Primary sources become fictional whenever the author expresses an opinion', 'Old documents cannot provide evidence about the period that produced them', 'Secondary sources never use facts from firsthand accounts or official records'], 'Firsthand access can be valuable without making the account complete or neutral.'],
+      ['Which detail best helps identify a source’s purpose?', 'Its intended audience and reason for publication', ['The color used for the source’s printed or digital pages', 'The number of paragraphs without considering what they communicate', 'The electronic file size of a downloaded copy'], 'Audience and publication purpose help explain what the author hoped to accomplish.'],
     ],
   },
   {
@@ -88,7 +87,7 @@ const civics: LessonSeed[] = [
     gedStrategy: 'Paraphrase the source in one sentence, then test every answer against at least one specific detail.',
     checkpoint: 'Which is safer: an inference supported by two details or a broad guess based on background knowledge?',
     questions: [
-      ['What makes a central-idea answer strongest?', 'It accounts for most of the source’s important details', ['It repeats one minor example', 'It introduces a new topic', 'It uses the most dramatic wording'], 'A central idea must cover the source broadly without exceeding its evidence.'],
+      ['What makes a central-idea answer strongest?', 'It accounts for most of the source’s important details', ['It repeats one minor example while ignoring the source’s broader focus', 'It introduces a new topic that the source never develops', 'It uses the most dramatic wording among the available choices'], 'A central idea must cover the source broadly without exceeding its evidence.'],
       ['Which statement is evidence rather than a claim?', 'The report records a 12 percent increase in turnout', ['Turnout will always rise', 'The policy was unquestionably successful', 'The campaign caused every voter to participate'], 'A recorded measurement is evidence; the other options make conclusions.'],
       ['When is an inference valid?', 'When source details logically support it', ['When it sounds familiar', 'When it is more specific than the source', 'When no evidence contradicts a guess'], 'Valid inferences follow from the provided evidence.'],
     ],
@@ -119,7 +118,7 @@ const civics: LessonSeed[] = [
     checkpoint: 'Why does majority rule alone not fully define constitutional democracy?',
     questions: [
       ['Which principle says government authority comes from the people?', 'Popular sovereignty', ['Judicial review', 'Hereditary rule', 'Command economy'], 'Popular sovereignty locates ultimate political authority in the people.'],
-      ['Why are minority rights important in a democracy?', 'They limit what a majority may do to protected individuals or groups', ['They eliminate elections', 'They give every policy to courts', 'They require unanimous voting'], 'Constitutional protections prevent majority power from becoming unlimited.'],
+      ['Why are minority rights important in a democracy?', 'They limit what a majority may do to protected individuals or groups', ['They eliminate elections whenever a minority disagrees with the result', 'They transfer every policy decision from elected officials to the courts', 'They require unanimous approval before any government action can occur'], 'Constitutional protections prevent majority power from becoming unlimited.'],
       ['Which statement best reflects natural-rights philosophy?', 'People possess basic rights that government must respect', ['Rulers create every human right', 'Rights exist only during elections', 'Only property owners have legal protection'], 'Natural rights are understood as inherent rather than granted at a ruler’s discretion.'],
     ],
   },
@@ -133,7 +132,7 @@ const civics: LessonSeed[] = [
     gedStrategy: 'Look for whether the scenario limits authority through rules and procedures, not whether you agree with the policy outcome.',
     checkpoint: 'If an official can ignore a published law without review, which principle is weakened?',
     questions: [
-      ['Which situation best demonstrates rule of law?', 'A court applies the same published procedure to officials and citizens', ['A leader changes penalties secretly', 'An agency ignores its legal limits', 'A mayor decides cases personally'], 'Rule of law requires public, consistent rules that bind officials too.'],
+      ['Which situation best demonstrates rule of law?', 'A court applies the same published procedure to officials and citizens', ['A leader secretly changes penalties after learning who has been accused', 'An agency ignores the legal limits placed on its authority', 'A mayor personally decides cases without following established court procedures'], 'Rule of law requires public, consistent rules that bind officials too.'],
       ['What is a central purpose of constitutionalism?', 'To define and limit governmental power', ['To abolish public institutions', 'To guarantee every policy succeeds', 'To remove all disagreement'], 'Constitutionalism structures authority and places enforceable limits on it.'],
       ['Which action is most arbitrary?', 'Punishing conduct under a secret rule created afterward', ['Publishing regulations before enforcement', 'Allowing an appeal', 'Following an established hearing process'], 'Secret, retroactive punishment depends on uncontrolled power rather than known law.'],
     ],
@@ -178,9 +177,9 @@ const civics: LessonSeed[] = [
     gedStrategy: 'Do not assume every issue belongs to only one level; look for shared authority and constitutional limits.',
     checkpoint: 'Taxation by both national and state governments illustrates which kind of power?',
     questions: [
-      ['Which statement best defines federalism?', 'Power is divided and shared between national and state governments', ['All power belongs to cities', 'Courts control every election', 'States conduct foreign treaties independently'], 'Federalism creates two constitutionally significant levels of government.'],
+      ['Which statement best defines federalism?', 'Power is divided and shared between national and state governments', ['All governmental power belongs exclusively to cities and other local governments', 'Federal courts directly administer every national, state, and local election', 'Each state independently conducts foreign relations and signs international treaties'], 'Federalism creates two constitutionally significant levels of government.'],
       ['Which is a concurrent power?', 'Collecting taxes', ['Coining national currency', 'Negotiating treaties', 'Declaring war'], 'Both federal and state governments collect taxes.'],
-      ['Why can federalism increase accountability?', 'Citizens can evaluate officials at more than one level of government', ['It removes state elections', 'It guarantees identical laws everywhere', 'It makes courts unnecessary'], 'Separate levels create distinct lines of political responsibility.'],
+      ['Why can federalism increase accountability?', 'Citizens can evaluate officials at more than one level of government', ['It removes state elections and places every official on one national ballot', 'It guarantees that every jurisdiction adopts exactly the same laws', 'It makes independent courts unnecessary at both levels of government'], 'Separate levels create distinct lines of political responsibility.'],
     ],
   },
   {
@@ -224,7 +223,7 @@ const civics: LessonSeed[] = [
     checkpoint: 'Which court level ordinarily creates the initial factual record?',
     questions: [
       ['What does judicial review allow a court to do?', 'Assess whether government action conflicts with the Constitution', ['Write any law it prefers', 'Conduct elections', 'Command state legislatures to vote'], 'Judicial review addresses the constitutional validity of government action in a case.'],
-      ['What is the primary role of an appellate court?', 'Review claimed legal errors in a lower-court decision', ['Collect federal taxes', 'Create the original census', 'Negotiate treaties'], 'Appellate courts review lower-court proceedings and legal rulings.'],
+      ['What is the primary role of an appellate court?', 'Review claimed legal errors in a lower-court decision', ['Collect federal taxes directly from individuals and businesses', 'Create the original national census by counting every resident', 'Negotiate treaties between the United States and foreign governments'], 'Appellate courts review lower-court proceedings and legal rulings.'],
       ['What does jurisdiction mean?', 'A court’s legal authority to hear a matter', ['A judge’s popularity', 'The length of a statute', 'The number of voters in a district'], 'Jurisdiction defines the matters a court may decide.'],
     ],
   },
@@ -284,7 +283,7 @@ const civics: LessonSeed[] = [
     checkpoint: 'Which action most directly communicates a policy request to an elected representative?',
     questions: [
       ['Which activity is a form of civic participation?', 'Giving evidence at a public hearing', ['Ignoring all public notices', 'Preventing others from voting', 'Spreading an unverified claim'], 'Public hearings provide a structured opportunity to participate in government decisions.'],
-      ['Which is generally a legal civic duty when properly required?', 'Serving on a jury after receiving a valid summons', ['Joining a political party', 'Attending every council meeting', 'Donating to a campaign'], 'Jury service can be legally required; the other activities are voluntary.'],
+      ['Which is generally a legal civic duty when properly required?', 'Serving on a jury after receiving a valid summons', ['Joining and remaining a member of a particular political party', 'Attending every meeting held by a city or county council', 'Donating a fixed amount of money to an election campaign'], 'Jury service can be legally required; the other activities are voluntary.'],
       ['What supports informed participation?', 'Checking the credibility and relevance of evidence', ['Using only anonymous rumors', 'Rejecting every opposing source', 'Assuming correlation proves causation'], 'Source evaluation improves the quality of civic decisions.'],
     ],
   },
@@ -299,7 +298,7 @@ const civics: LessonSeed[] = [
     checkpoint: 'An organization that researches one issue and briefs lawmakers is most likely what kind of group?',
     questions: [
       ['What is a primary goal of a political party?', 'Winning elections and organizing government', ['Deciding court cases', 'Calculating the CPI', 'Drawing every district map'], 'Parties seek office and coordinate political action through elections.'],
-      ['How does an interest group most commonly differ from a party?', 'It focuses on influencing policy rather than electing a full governing team', ['It has no political views', 'It controls the courts', 'It cannot communicate with voters'], 'Interest groups usually organize around issues or constituencies rather than governing broadly.'],
+      ['How does an interest group most commonly differ from a party?', 'It focuses on influencing policy rather than electing a full governing team', ['It is prohibited from taking positions on political or public-policy questions', 'It directly controls court decisions instead of trying to influence public policy', 'It cannot communicate with voters, officeholders, or members of the public'], 'Interest groups usually organize around issues or constituencies rather than governing broadly.'],
       ['What should a reader check in a group’s policy report?', 'Evidence quality and disclosed interests', ['Only the logo', 'Only the report length', 'Whether every reader agrees'], 'Evidence and potential interests help evaluate credibility.'],
     ],
   },
@@ -329,7 +328,7 @@ const civics: LessonSeed[] = [
     checkpoint: 'Which option in the table has the lowest estimated annual cost?',
     questions: [
       ['Which transit option has the lowest estimated annual cost?', 'Fare subsidy', ['Add bus route', 'Bike network', 'All cost the same'], 'The table lists the fare subsidy at $1.1 million, the lowest amount.'],
-      ['What is an unintended consequence?', 'An effect not included among the policy’s stated goals', ['The policy title', 'A required legislative vote', 'The original problem definition'], 'Unintended consequences are effects beyond the intended objectives.'],
+      ['What is an unintended consequence?', 'An effect not included among the policy’s stated goals', ['The official title assigned to the policy before it takes effect', 'A legislative vote required by the established process for adoption', 'The original description of the problem the policy is meant to address'], 'Unintended consequences are effects beyond the intended objectives.'],
       ['What makes a policy comparison fair?', 'Applying the same criteria to every alternative', ['Using cost for one option and popularity for another', 'Ignoring implementation', 'Counting only benefits'], 'Consistent criteria allow meaningful comparison.'],
     ],
   },
@@ -358,8 +357,8 @@ const civics: LessonSeed[] = [
     gedStrategy: 'Build a quick “both / only A / only B” chart before choosing a comparison answer.',
     checkpoint: 'If both sources cite the same total but interpret it differently, do they disagree about data, meaning, or both?',
     questions: [
-      ['What is the best first step when comparing two sources?', 'Identify their common topic and each source’s main claim', ['Count their sentences', 'Assume the newer one is correct', 'Ignore their dates and audiences'], 'Comparison begins with what each source is saying about the shared subject.'],
-      ['In a political cartoon, what does a label usually help identify?', 'The person, institution, or idea represented by a symbol', ['The exact market price', 'The author’s birth date', 'The document’s legal force'], 'Labels connect visual symbols to political subjects or concepts.'],
+      ['What is the best first step when comparing two sources?', 'Identify their common topic and each source’s main claim', ['Count the sentences in each source without examining their meaning', 'Assume the newer source is correct before comparing its evidence', 'Ignore the sources’ dates, intended audiences, and historical contexts'], 'Comparison begins with what each source is saying about the shared subject.'],
+      ['In a political cartoon, what does a label usually help identify?', 'The person, institution, or idea represented by a symbol', ['The exact market price of every object drawn in the cartoon', 'The cartoonist’s birth date and complete personal history', 'The legal force that the cartoon has over government officials'], 'Labels connect visual symbols to political subjects or concepts.'],
       ['Two sources use the same statistic but reach different conclusions. What should a reader compare?', 'Their assumptions and interpretation of the statistic', ['Only their font sizes', 'Only which appears first', 'Whether both contain pictures'], 'Shared data can support different arguments depending on assumptions and reasoning.'],
     ],
   },
@@ -406,8 +405,8 @@ const history: LessonSeed[] = [
     gedStrategy: 'Ask whose benefits and whose costs a source includes; missing perspective can change the historical conclusion.',
     checkpoint: 'Why might two primary sources describe the same removal policy differently?',
     questions: [
-      ['Which factor helped drive westward expansion?', 'Demand for land and access to resources and transportation', ['The end of all migration', 'A ban on new states', 'The absence of federal policy'], 'Land, resources, transport, and policy all encouraged movement west.'],
-      ['What does dispossession mean in this context?', 'Loss of Indigenous land through force, coercion, or policy', ['Voluntary cultural exchange only', 'Creation of a bank account', 'A rise in factory productivity'], 'Expansion often transferred land away from Indigenous nations under unequal conditions.'],
+      ['Which factor helped drive westward expansion?', 'Demand for land and access to resources and transportation', ['The complete end of migration between different parts of the country', 'A permanent national ban on admitting any new western states', 'The absence of federal land, transportation, or Indigenous policy'], 'Land, resources, transport, and policy all encouraged movement west.'],
+      ['What does dispossession mean in this context?', 'Loss of Indigenous land through force, coercion, or policy', ['A voluntary cultural exchange in which no land or authority changes', 'The creation of a bank account for newly arriving settlers', 'A rise in factory productivity caused by improved machinery'], 'Expansion often transferred land away from Indigenous nations under unequal conditions.'],
       ['Why compare settler and Indigenous accounts?', 'They reveal different experiences, interests, and omitted evidence', ['One account will contain no viewpoint', 'Dates become irrelevant', 'Comparison removes the need for evidence'], 'Paired perspectives help construct a fuller, better-corroborated history.'],
     ],
   },
@@ -422,7 +421,7 @@ const history: LessonSeed[] = [
     checkpoint: 'Which institution was central to the sectional conflict?',
     questions: [
       ['What issue was central to sectional conflict before the Civil War?', 'The expansion and protection of slavery', ['The creation of NATO', 'The federal minimum wage', 'The internet'], 'Slavery shaped the major political, territorial, and economic disputes of the era.'],
-      ['What is sectionalism?', 'Prioritizing a region’s interests over the nation as a whole', ['Dividing government into branches', 'Calculating inflation', 'Drawing a physical map'], 'Sectionalism describes intense regional division and loyalty.'],
+      ['What is sectionalism?', 'Prioritizing a region’s interests over the nation as a whole', ['Dividing government responsibilities among legislative, executive, and judicial branches', 'Calculating the change in consumer prices across the entire economy', 'Drawing a physical map that divides land into geographic sections'], 'Sectionalism describes intense regional division and loyalty.'],
       ['Which event immediately followed secession in the causal sequence?', 'Armed conflict between the Union and Confederacy', ['Ratification of the Bill of Rights', 'The Great Depression', 'The Cold War'], 'Secession led directly into the Civil War.'],
     ],
   },
@@ -451,9 +450,9 @@ const history: LessonSeed[] = [
     gedStrategy: 'Use the source date: identical words can carry different implications before and after a major court ruling or law.',
     checkpoint: 'Which case rejected legally segregated public schools?',
     questions: [
-      ['What did Brown v. Board of Education reject?', 'State-mandated racial segregation in public schools', ['Women’s suffrage', 'Federal income taxation', 'The amendment process'], 'Brown held that segregated public education violated equal protection.'],
+      ['What did Brown v. Board of Education reject?', 'State-mandated racial segregation in public schools', ['The constitutional amendment that protects women’s voting rights', 'The federal government’s authority to collect an income tax', 'The process used to propose and ratify constitutional amendments'], 'Brown held that segregated public education violated equal protection.'],
       ['What does suffrage mean?', 'The right to vote', ['The right to hold a patent', 'A measure of inflation', 'A military alliance'], 'Suffrage is political voting eligibility.'],
-      ['Why does historical context matter when reading a civil-rights speech?', 'Current laws and events shaped the speaker’s purpose and audience', ['Context proves every claim true', 'The date replaces textual evidence', 'All speeches have the same purpose'], 'Context helps explain what problem the speaker addressed and why.'],
+      ['Why does historical context matter when reading a civil-rights speech?', 'Current laws and events shaped the speaker’s purpose and audience', ['Historical context proves that every claim in the speech is accurate', 'Knowing the date replaces the need to examine any textual evidence', 'All speeches share the same purpose regardless of audience or events'], 'Context helps explain what problem the speaker addressed and why.'],
     ],
   },
   {
@@ -466,8 +465,8 @@ const history: LessonSeed[] = [
     gedStrategy: 'Treat “contributed to” and “caused by itself” differently; complex wars require multi-cause reasoning.',
     checkpoint: 'Why is the Treaty of Versailles better described as one contributing condition than the sole cause of World War II?',
     questions: [
-      ['What helped turn the 1914 crisis into a wider war?', 'A network of alliances and mobilization plans', ['The internet', 'The Marshall Plan', 'The United Nations'], 'Alliance commitments and military planning widened the conflict.'],
-      ['What was the Holocaust?', 'Nazi Germany’s systematic mass murder of Jews and other targeted groups', ['A postwar trade agreement', 'A U.S. voting amendment', 'A monetary policy'], 'The Holocaust was a state-organized genocide during World War II.'],
+      ['What helped turn the 1914 crisis into a wider war?', 'A network of alliances and mobilization plans', ['Internet communication between governments and their military commanders', 'The post–World War II economic program known as the Marshall Plan', 'Peacekeeping decisions made by the not-yet-created United Nations'], 'Alliance commitments and military planning widened the conflict.'],
+      ['What was the Holocaust?', 'Nazi Germany’s systematic mass murder of Jews and other targeted groups', ['A postwar trade agreement designed to rebuild international commerce', 'A United States constitutional amendment expanding voting eligibility', 'A central-bank monetary policy adopted during the Great Depression'], 'The Holocaust was a state-organized genocide during World War II.'],
       ['Which was an international consequence of World War II?', 'Creation of the United Nations', ['Ratification of the Bill of Rights', 'End of the Revolutionary War', 'Writing of the Magna Carta'], 'The United Nations was established in 1945 after the war.'],
     ],
   },
@@ -483,7 +482,7 @@ const history: LessonSeed[] = [
     questions: [
       ['What was the purpose of containment?', 'Limit expansion of Soviet influence', ['End all international trade', 'Dissolve the Constitution', 'Replace elections with inheritance'], 'Containment was the central U.S. strategy toward Soviet expansion.'],
       ['Which alliance included the United States and Western partners?', 'NATO', ['The Warsaw Pact', 'The Confederacy', 'The League of Nations mandate system'], 'NATO organized the United States, Canada, and Western European allies.'],
-      ['Why is a source’s date especially important in recent foreign-policy analysis?', 'Later evidence may not have been available to the original author', ['Dates prove motives automatically', 'Recent events have no context', 'Every later source is unbiased'], 'Evaluating claims fairly requires knowing the information available at the time.'],
+      ['Why is a source’s date especially important in recent foreign-policy analysis?', 'Later evidence may not have been available to the original author', ['A publication date automatically proves the author’s motives and reliability', 'Recent events can be understood accurately without examining any prior context', 'Every source written later is complete, neutral, and free from bias'], 'Evaluating claims fairly requires knowing the information available at the time.'],
     ],
   },
 ];
@@ -500,7 +499,7 @@ const economics: LessonSeed[] = [
     checkpoint: 'If the library is chosen and park repairs were the next-best option, what is the opportunity cost?',
     questions: [
       ['What is opportunity cost?', 'The value of the next-best alternative given up', ['The price of every possible option combined', 'A benefit with no trade-off', 'Only the cash paid for a choice'], 'Opportunity cost focuses on the best forgone alternative.'],
-      ['Why does scarcity require choice?', 'Resources cannot satisfy all competing uses at once', ['Every resource is illegal', 'Prices never change', 'People have no preferences'], 'Limited time, money, labor, and materials must be allocated.'],
+      ['Why does scarcity require choice?', 'Resources cannot satisfy all competing uses at once', ['Every scarce resource is illegal for households or businesses to use', 'Prices for scarce goods and services are legally unable to change', 'People have no different preferences about how resources should be allocated'], 'Limited time, money, labor, and materials must be allocated.'],
       ['If the city chooses library hours over next-best park repairs, what is forgone?', 'The expected benefit of the park repairs', ['All future library access', 'The cost of all three projects combined', 'The existence of the park'], 'The next-best rejected benefit is the opportunity cost.'],
     ],
   },
@@ -529,8 +528,8 @@ const economics: LessonSeed[] = [
     gedStrategy: 'Do not assume an incentive guarantees behavior; choose the answer describing likely pressure, not certainty.',
     checkpoint: 'How can a tax on pollution change a firm’s incentive?',
     questions: [
-      ['Which feature most clearly indicates monopoly?', 'One seller dominates with major barriers to entry', ['Many similar sellers', 'Easy market entry', 'Strong price comparison'], 'Monopoly is characterized by a dominant seller and limited competition.'],
-      ['What is an incentive?', 'A factor that changes expected costs or benefits of a choice', ['A historical timeline', 'A branch of government', 'A map projection'], 'Incentives make actions more or less attractive.'],
+      ['Which feature most clearly indicates monopoly?', 'One seller dominates with major barriers to entry', ['Many similar sellers compete and none controls the overall market', 'New sellers can enter the market easily and at low cost', 'Consumers readily compare prices offered by many competing firms'], 'Monopoly is characterized by a dominant seller and limited competition.'],
+      ['What is an incentive?', 'A factor that changes expected costs or benefits of a choice', ['A timeline that lists historical events without affecting a current decision', 'A branch of government considered without any policy or enforcement action', 'A map projection that displays location without changing expected outcomes'], 'Incentives make actions more or less attractive.'],
       ['Pollution affecting nearby residents is what kind of economic effect?', 'A negative externality', ['A private benefit only', 'A comparative advantage', 'A budget surplus'], 'The transaction imposes a cost on third parties.'],
     ],
   },
@@ -559,7 +558,7 @@ const economics: LessonSeed[] = [
     gedStrategy: 'Read the denominator. An unemployment rate uses the labor force, not the entire population.',
     checkpoint: 'What percent increase is shown from index 100 to 110?',
     questions: [
-      ['What does GDP primarily measure?', 'The value of final goods and services produced within the economy', ['Every household’s happiness', 'Only stock prices', 'The number of laws passed'], 'GDP is a production measure, not a complete measure of well-being.'],
+      ['What does GDP primarily measure?', 'The value of final goods and services produced within the economy', ['The happiness and overall well-being reported by every individual household', 'Only the market prices of stocks traded on national exchanges', 'The total number of laws passed by all levels of government'], 'GDP is a production measure, not a complete measure of well-being.'],
       ['The index rises from 100 to 110. What is the percent increase?', '10 percent', ['5 percent', '11 percent', '110 percent'], 'The increase is 10 divided by the original 100, or 10 percent.'],
       ['Who is counted as unemployed in the standard rate?', 'A jobless person actively seeking work', ['Every retired person', 'Every full-time student', 'Every child'], 'The standard definition requires joblessness, availability, and active job search.'],
     ],
@@ -576,7 +575,7 @@ const economics: LessonSeed[] = [
     questions: [
       ['Which loan has the lower total repayment?', 'Offer A', ['Offer B', 'Both cost $1,000 total', 'Both cost $1,140 total'], 'Offer A totals $1,120; Offer B totals $1,140 after its fee.'],
       ['Which is an example of fiscal policy?', 'Congress changes federal spending and tax levels', ['The central bank changes its policy interest rate', 'A household opens a savings account', 'A store changes one price'], 'Taxing and spending decisions are fiscal policy.'],
-      ['Why compare total repayment instead of monthly payment alone?', 'A longer term or added fees can make a low payment more expensive overall', ['Monthly payments never use money', 'Fees reduce every loan cost', 'Term length has no effect'], 'Total repayment captures charges that a monthly figure can hide.'],
+      ['Why compare total repayment instead of monthly payment alone?', 'A longer term or added fees can make a low payment more expensive overall', ['Monthly payment amounts never represent money actually paid by the borrower', 'Additional lender fees always reduce the final cost of repaying a loan', 'The length of a loan term has no effect on total repayment'], 'Total repayment captures charges that a monthly figure can hide.'],
     ],
   },
 ];
@@ -594,7 +593,7 @@ const geography: LessonSeed[] = [
     questions: [
       ['Which map element explains symbols and colors?', 'The legend', ['The border', 'The page number', 'The compass alone'], 'The legend or key defines map symbols and shading.'],
       ['Which map best displays population density by county?', 'A thematic map', ['A physical relief map only', 'A road map without data', 'A blank outline map'], 'A thematic map is designed to show one variable across space.'],
-      ['Why do map projections involve distortion?', 'A curved surface cannot be flattened without altering some properties', ['Maps contain no measurements', 'North changes location yearly', 'Legends create distance'], 'Flattening the globe necessarily changes area, shape, distance, or direction.'],
+      ['Why do map projections involve distortion?', 'A curved surface cannot be flattened without altering some properties', ['Maps are unable to contain any measurements of area or distance', 'The geographic location of north changes substantially from year to year', 'A map legend creates physical distance between the places it identifies'], 'Flattening the globe necessarily changes area, shape, distance, or direction.'],
     ],
   },
   {
@@ -609,7 +608,7 @@ const geography: LessonSeed[] = [
     questions: [
       ['Which statement best describes human–environment interaction?', 'People adapt to and also change physical environments', ['Geography determines every decision', 'Technology has no environmental effect', 'Societies never respond to hazards'], 'The relationship runs in both directions and changes over time.'],
       ['What does sustainability consider?', 'Whether present activity preserves capacity for future needs', ['Only immediate profit', 'Only map boundaries', 'Whether a policy has a short title'], 'Sustainability links present choices to long-term environmental and social capacity.'],
-      ['Why is geographic determinism too strong?', 'Human institutions, culture, and technology also shape outcomes', ['Physical geography never matters', 'Maps cannot show resources', 'Climate has no patterns'], 'Geography matters without being the sole cause of social development.'],
+      ['Why is geographic determinism too strong?', 'Human institutions, culture, and technology also shape outcomes', ['Physical geography never affects human settlement, production, or political choices', 'Maps cannot display the location or distribution of natural resources', 'Climate has no observable patterns that influence human activity'], 'Geography matters without being the sole cause of social development.'],
     ],
   },
   {
@@ -623,7 +622,7 @@ const geography: LessonSeed[] = [
     checkpoint: 'A metropolitan commuter zone is what type of region?',
     questions: [
       ['A city and the suburbs linked to it by daily commuting form what kind of region?', 'A functional region', ['A formal climate region', 'A perceptual region only', 'No geographic region'], 'Flows and connections to a central node define a functional region.'],
-      ['What is a state in political geography?', 'A sovereign political entity with territory and government', ['Any cultural group', 'Every city neighborhood', 'A line of latitude'], 'State refers to a political unit with sovereign authority.'],
+      ['What is a state in political geography?', 'A sovereign political entity with territory and government', ['Any cultural group whose members share some customs or traditions', 'Every neighborhood located within the boundaries of a large city', 'A line of latitude used to measure position north or south'], 'State refers to a political unit with sovereign authority.'],
       ['Why can borders become contested?', 'Political boundaries may divide resources, identities, or populations', ['Borders have no effects', 'Every nation and state aligns perfectly', 'Physical maps abolish conflict'], 'Borders can conflict with settlement patterns, identity, or resource claims.'],
     ],
   },
@@ -669,7 +668,7 @@ const geography: LessonSeed[] = [
     questions: [
       ['Which district has the highest transit share?', 'Central', ['North', 'West', 'Rural'], 'Central is shown at 42 percent, the largest bar.'],
       ['What can the chart establish by itself?', 'Transit share differs across the four district categories', ['District type alone causes every travel choice', 'Every central resident uses transit', 'The shares will remain unchanged forever'], 'The display supports a measured difference, not a complete causal explanation.'],
-      ['Why should a long-range trend prediction be cautious?', 'Conditions and relationships may change beyond the observed data', ['Graphs cannot contain numbers', 'Percentages never change', 'Predictions require no assumptions'], 'Extrapolation grows less reliable as it extends beyond the evidence.'],
+      ['Why should a long-range trend prediction be cautious?', 'Conditions and relationships may change beyond the observed data', ['Graphs cannot display numerical measurements or relationships between variables', 'Percentages remain permanently unchanged after they appear in a chart', 'Predictions beyond observed data require no assumptions about future conditions'], 'Extrapolation grows less reliable as it extends beyond the evidence.'],
     ],
   },
 ];
