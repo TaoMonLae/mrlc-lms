@@ -1565,11 +1565,22 @@ const schemas = {
     lockdownInstructions: nullableStr,
     cursorEffect: optStr,
   }),
+  // The TimetableForm frontend (src/components/timetable/TimetableForm.tsx,
+  // handleEnrichedSubmit) deliberately sends `null` -- not just omits the
+  // field -- for every value that doesn't apply to the chosen scheduleType/
+  // recurrence (e.g. eventDate is null for recurring slots, effectiveFrom/
+  // effectiveUntil are null for one-time slots, className/subjectName/
+  // substituteTeacherName are null for non-class schedule types like
+  // "School holiday"). Every field the form can send as null must accept
+  // null here (nullableStr), not just optStr (undefined-only) -- otherwise
+  // Zod rejects the request with "expected string, received null" before it
+  // ever reaches the route handler, even though the handler itself already
+  // normalizes null values correctly downstream.
   timetable: z.object({
     classId: nullableStr,
-    className: optStr,
+    className: nullableStr,
     subjectId: nullableStr,
-    subjectName: optStr,
+    subjectName: nullableStr,
     subjectColor: optStr,
     teacherId: nullableStr,
     teacherName: nullableStr,
@@ -1583,15 +1594,15 @@ const schemas = {
     room: nullableStr,
     scheduleType: z.enum(["CLASS", "HOLIDAY", "SPECIAL_EVENT", "EXAM", "MEETING"]).optional(),
     recurrence: z.enum(["ONCE", "WEEKLY", "BIWEEKLY"]).optional(),
-    effectiveFrom: optStr,
-    effectiveUntil: optStr,
-    eventDate: optStr,
+    effectiveFrom: nullableStr,
+    effectiveUntil: nullableStr,
+    eventDate: nullableStr,
     notes: optStr,
   }),
   timetableUpdate: z.object({
-    classId: optStr,
+    classId: nullableStr,
     className: nullableStr,
-    subjectId: optStr,
+    subjectId: nullableStr,
     subjectName: nullableStr,
     subjectColor: optStr,
     teacherId: nullableStr,
@@ -1606,9 +1617,9 @@ const schemas = {
     room: nullableStr,
     scheduleType: z.enum(["CLASS", "HOLIDAY", "SPECIAL_EVENT", "EXAM", "MEETING"]).optional(),
     recurrence: z.enum(["ONCE", "WEEKLY", "BIWEEKLY"]).optional(),
-    effectiveFrom: optStr,
-    effectiveUntil: optStr,
-    eventDate: optStr,
+    effectiveFrom: nullableStr,
+    effectiveUntil: nullableStr,
+    eventDate: nullableStr,
     status: z.enum(["ACTIVE", "CANCELLED", "SUBSTITUTED"]).optional(),
     cancellationReason: nullableStr,
     notes: optStr,
