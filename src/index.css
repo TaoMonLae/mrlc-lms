@@ -463,13 +463,30 @@ html[lang='mnw'] :is(input, button, select) {
   line-height: 1.7;
 }
 
-/* ── Learning Quest: lightweight 3D depth and playful motion ──────────────── */
+/* ── Learning Quest: Busuu-inspired design system ──────────────────────────
+   Tokens transcribed from docs/language-quest/DESIGN-languagequest.md (kept
+   out of git per instruction -- if that spec doc changes, these values need
+   to be updated here by hand). Everything is scoped to `.lq-mesh`, the
+   wrapper every Language Quest page/route already renders inside
+   (LanguageQuestShell.tsx, LanguageQuestPublic.tsx, LanguageQuestAbout.tsx),
+   so none of it leaks into the rest of the LMS's Inter/teal brand theme. */
 .lq-mesh {
-  background:
-    radial-gradient(circle at 7% 10%, rgba(245, 158, 11, 0.16), transparent 24rem),
-    radial-gradient(circle at 90% 16%, rgba(59, 130, 246, 0.18), transparent 29rem),
-    radial-gradient(circle at 54% 84%, rgba(217, 70, 239, 0.12), transparent 34rem),
-    linear-gradient(135deg, #e8edf5 0%, #edf0f8 48%, #eee8f3 100%);
+  --lq-deep-indigo: #3b1e90;
+  --lq-signal-blue: #116eee;
+  --lq-spring-mint: #11ee92;
+  --lq-hero-sky: #3a6ef0;
+  --lq-charcoal: #252b2f;
+  --lq-canvas-mist: #f2f7fd;
+  --lq-paper-white: #ffffff;
+  --lq-steel-border: #d6dee6;
+  --lq-slate-caption: #666e7e;
+  --lq-shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+  --lq-radius-card: 16px;
+  --lq-radius-button: 45px;
+  --lq-radius-input: 5px;
+  --lq-font: 'Poppins', 'Inter', 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  background: var(--lq-canvas-mist);
+  font-family: var(--lq-font);
   color-scheme: light;
 }
 
@@ -487,6 +504,105 @@ html[lang='mnw'] :is(input, button, select) {
     'Inter', 'Geist Variable', system-ui, sans-serif;
   line-height: 1.75;
   letter-spacing: normal;
+}
+
+/* Hero gradient banner: deep indigo → sky blue, full-bleed, no card chrome. */
+.lq-hero-gradient {
+  background: linear-gradient(90deg, var(--lq-deep-indigo) 0%, #5a3cc4 30%, var(--lq-hero-sky) 100%);
+}
+
+/* Primary CTA: the single chromatic action color in the system (mint pill).
+   Never use this fill for a second, competing action on the same screen. */
+.lq-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--lq-spring-mint);
+  color: var(--lq-charcoal);
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--lq-radius-button);
+  border: none;
+  transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+}
+.lq-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(17, 238, 146, 0.35);
+}
+.lq-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+.lq-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Outlined secondary action: brand-blue border, transparent fill. */
+.lq-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: var(--lq-signal-blue);
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  padding: 0.7rem 1.5rem;
+  border-radius: var(--lq-radius-button);
+  border: 1.5px solid var(--lq-signal-blue);
+  transition: background-color 150ms ease;
+}
+.lq-btn-outline:hover:not(:disabled) {
+  background: rgba(17, 110, 238, 0.08);
+}
+
+/* Ghost tertiary action: text-only pill, no border. */
+.lq-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: var(--lq-charcoal);
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  padding: 0.7rem 1.5rem;
+  border-radius: var(--lq-radius-button);
+  border: none;
+}
+.dark .lq-btn-ghost {
+  color: #f8fafc;
+}
+
+/* Card surface: white on the canvas-mist page background, 16px radius, one
+   subtle 1px shadow -- never stack additional elevation on top of this. */
+.lq-card {
+  background: var(--lq-paper-white);
+  border-radius: var(--lq-radius-card);
+  box-shadow: var(--lq-shadow-subtle);
+}
+.dark .lq-card {
+  background: var(--color-surface-indigo);
+  box-shadow: none;
+}
+
+/* Circular tile: language/avatar/category selector, per the spec's
+   "circles are the structural shape" signature choice. */
+.lq-tile-circle {
+  border-radius: 9999px;
+  background: var(--lq-paper-white);
+  box-shadow: var(--lq-shadow-subtle);
+}
+.dark .lq-tile-circle {
+  background: var(--color-surface-indigo);
+  box-shadow: none;
 }
 
 .lq-hero-scene {

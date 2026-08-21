@@ -828,13 +828,13 @@ export default function LanguageQuestLesson() {
               Back
             </Button>
             {previewIndex + 1 < cards.length ? (
-              <Button style={{ backgroundColor: lesson.course.accentColor }} onClick={() => setPreviewIndex((current) => current + 1)} disabled={!card}>
+              <button type="button" className="lq-btn-primary" onClick={() => setPreviewIndex((current) => current + 1)} disabled={!card}>
                 Next
-              </Button>
+              </button>
             ) : (
-              <Button style={{ backgroundColor: lesson.course.accentColor }} onClick={startPractice} disabled={!card}>
+              <button type="button" className="lq-btn-primary" onClick={startPractice} disabled={!card}>
                 Start practice
-              </Button>
+              </button>
             )}
           </div>
         </footer>
@@ -975,13 +975,14 @@ export default function LanguageQuestLesson() {
                     : lq('startSpelling')}
               </Button>
             ) : (
-              <Button
+              <button
+                type="button"
+                className="lq-btn-primary"
                 onClick={checkVocabulary}
                 disabled={!vocabularySelectedText}
-                style={vocabularySelectedText ? { backgroundColor: lesson.course.accentColor } : undefined}
               >
                 {lq('checkVocabulary')}
-              </Button>
+              </button>
             )}
           </div>
         </footer>
@@ -1106,9 +1107,9 @@ export default function LanguageQuestLesson() {
                     : lq('startQuiz')}
               </Button>
             ) : (
-              <Button onClick={checkSpelling} disabled={!spellingInput.trim()} style={spellingInput.trim() ? { backgroundColor: lesson.course.accentColor } : undefined}>
+              <button type="button" className="lq-btn-primary" onClick={checkSpelling} disabled={!spellingInput.trim()}>
                 {lq('checkSpelling')}
-              </Button>
+              </button>
             )}
           </div>
         </footer>
@@ -1216,7 +1217,7 @@ export default function LanguageQuestLesson() {
                 {sentenceIndex + 1 < sentenceCards.length ? 'Next sentence' : 'Start quiz'}
               </Button>
             ) : (
-              <Button onClick={checkSentence} disabled={!sentenceInput.trim()} style={sentenceInput.trim() ? { backgroundColor: lesson.course.accentColor } : undefined}>Check sentence</Button>
+              <button type="button" className="lq-btn-primary" onClick={checkSentence} disabled={!sentenceInput.trim()}>Check sentence</button>
             )}
           </div>
         </footer>
@@ -1274,9 +1275,9 @@ export default function LanguageQuestLesson() {
           <Button variant="outline" className="flex-1" onClick={practiseAgain}>
             Practise again
           </Button>
-          <Button className="flex-1" style={{ backgroundColor: lesson.course.accentColor }} render={<Link to={`/games/language-quest/courses/${lesson.course.id}`} />} nativeButton={false}>
+          <Link to={`/games/language-quest/courses/${lesson.course.id}`} className="lq-btn-primary flex-1">
             Continue the path
-          </Button>
+          </Link>
         </div>
       </div>
     );
@@ -1298,9 +1299,9 @@ export default function LanguageQuestLesson() {
           <Button className="mb-3 w-full bg-rose-600 text-white hover:bg-rose-700" render={<Link to="/games/language-quest/heart-refill" />} nativeButton={false}>
             <Heart className="mr-2 h-4 w-4 fill-current" /> Take a Heart Refill Quiz
           </Button>
-          <Button className="w-full" style={{ backgroundColor: lesson.course.accentColor }} render={<Link to={`/games/language-quest/courses/${lesson.course.id}`} />} nativeButton={false}>
+          <Link to={`/games/language-quest/courses/${lesson.course.id}`} className="lq-btn-outline w-full">
             Back to course
-          </Button>
+          </Link>
         </div>
       </div>
     );
@@ -1504,9 +1505,9 @@ export default function LanguageQuestLesson() {
               {answer.correct ? 'Continue' : 'Continue — review later'}
             </Button>
           ) : (
-            <Button onClick={checkAnswer} disabled={!canCheck || checking} style={canCheck ? { backgroundColor: lesson.course.accentColor } : undefined}>
+            <button type="button" onClick={checkAnswer} disabled={!canCheck || checking} className="lq-btn-primary">
               {checking ? 'Checking…' : 'Check answer'}
-            </Button>
+            </button>
           )}
         </div>
       </footer>

@@ -452,13 +452,13 @@ export default function LanguageQuestMastery() {
 
           <div className="mt-6 flex justify-end">
             {timedOut ? null : !result ? (
-              <Button onClick={check} disabled={!canCheck || checking} className="rounded-xl bg-violet-700 text-white hover:bg-violet-800">
+              <button type="button" onClick={check} disabled={!canCheck || checking} className="lq-btn-primary">
                 <Sparkles className="mr-2 h-4 w-4" /> {checking ? 'Checking…' : 'Check memory'}
-              </Button>
+              </button>
             ) : (
-              <Button onClick={next} className="rounded-xl">
+              <button type="button" onClick={next} className="lq-btn-primary">
                 <RotateCcw className="mr-2 h-4 w-4" /> Next review
-              </Button>
+              </button>
             )}
           </div>
         </section>

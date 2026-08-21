@@ -77,54 +77,53 @@ function CourseLibrary({ courses, progressSavedText }: { courses: LanguageQuestC
     <section aria-labelledby="language-quest-course-library-title">
       <div className="mb-4 flex items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-600 dark:text-violet-300">Continue learning</p>
-          <h2 id="language-quest-course-library-title" className="mt-1 text-xl font-bold text-slate-900 dark:text-white">Choose a course</h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{progressSavedText}</p>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--lq-signal-blue)]">Continue learning</p>
+          <h2 id="language-quest-course-library-title" className="mt-1 text-xl font-bold text-[var(--lq-charcoal)] dark:text-white">Choose a course</h2>
+          <p className="mt-1 text-sm text-[var(--lq-slate-caption)] dark:text-slate-300">{progressSavedText}</p>
         </div>
       </div>
 
       {courses.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 p-12 text-center dark:border-slate-700">
-          <BookOpen className="mx-auto h-11 w-11 text-slate-300" />
-          <p className="mt-3 font-semibold text-slate-700 dark:text-slate-200">No published courses yet</p>
-          <p className="mt-1 text-sm text-slate-500">A teacher or administrator can create the first course.</p>
+        <div className="lq-card border border-dashed border-[var(--lq-steel-border)] p-12 text-center dark:border-slate-700">
+          <BookOpen className="mx-auto h-11 w-11 text-[var(--lq-signal-blue)]/50" />
+          <p className="mt-3 font-semibold text-[var(--lq-charcoal)] dark:text-slate-200">No published courses yet</p>
+          <p className="mt-1 text-sm text-[var(--lq-slate-caption)]">A teacher or administrator can create the first course.</p>
         </div>
       ) : (
         <LanguageQuestCourseFolders
           groups={courseGroups}
           idPrefix="learner-course-folder"
           renderCourse={(course) => (
-            <article key={course.id} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-surface-raised dark:bg-surface-indigo">
+            <article key={course.id} className="lq-card group overflow-hidden transition hover:-translate-y-1 hover:shadow-lg dark:border dark:border-surface-raised">
               <div className="h-2" style={{ backgroundColor: course.accentColor }} />
               <div className="p-5">
                 <div className="flex items-start gap-4">
-                  <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-3xl" style={{ backgroundColor: `${course.accentColor}18` }}>
+                  <div className="lq-tile-circle grid h-14 w-14 shrink-0 place-items-center text-3xl dark:border dark:border-slate-700">
                     {course.imageEmoji || <BookOpen className="h-6 w-6" aria-hidden="true" />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <Badge variant="outline">{course.language}</Badge>
-                    <h4 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{course.title}</h4>
+                    <Badge variant="outline" className="border-[var(--lq-steel-border)] text-[var(--lq-slate-caption)]">{course.language}</Badge>
+                    <h4 className="mt-2 text-lg font-bold text-[var(--lq-charcoal)] dark:text-white">{course.title}</h4>
                   </div>
                 </div>
-                <p className="mt-3 min-h-10 text-sm leading-5 text-slate-500 dark:text-slate-300">{course.description || 'A new language adventure.'}</p>
-                <div className="mt-4 flex items-center justify-between text-xs font-medium text-slate-500">
+                <p className="mt-3 min-h-10 text-sm leading-5 text-[var(--lq-slate-caption)] dark:text-slate-300">{course.description || 'A new language adventure.'}</p>
+                <div className="mt-4 flex items-center justify-between text-xs font-medium text-[var(--lq-slate-caption)]">
                   <span>{course.lessonCount} lessons</span>
                   <span>{course.progressPercent}% complete</span>
                 </div>
-                <Progress value={course.progressPercent} className="mt-2 [&_[data-slot=progress-track]]:h-2 [&_[data-slot=progress-indicator]]:bg-violet-600" />
+                <Progress value={course.progressPercent} className="mt-2 [&_[data-slot=progress-track]]:h-2 [&_[data-slot=progress-indicator]]:bg-[var(--lq-signal-blue)]" />
                 <div className="mt-5 flex items-center gap-2">
-                  <Button
-                    className="flex-1"
-                    style={{ backgroundColor: course.accentColor }}
-                    render={<Link to={course.completed && !course.certificateEligible && course.finalExam.available ? `/games/language-quest/courses/${course.id}/final-exam` : course.nextLessonId ? `/games/language-quest/lessons/${course.nextLessonId}` : `/games/language-quest/courses/${course.id}`} />}
-                    nativeButton={false}
+                  <Link
+                    to={course.completed && !course.certificateEligible && course.finalExam.available ? `/games/language-quest/courses/${course.id}/final-exam` : course.nextLessonId ? `/games/language-quest/lessons/${course.nextLessonId}` : `/games/language-quest/courses/${course.id}`}
+                    className="lq-btn-primary flex-1"
                   >
                     {course.certificateEligible ? 'Certificate earned' : course.completed && course.finalExam.available ? 'Take final exam' : course.completed ? 'Exam setup required' : course.nextLessonId ? (course.progressPercent > 0 ? 'Resume lesson' : 'Start course') : 'View course'}
-                  </Button>
+                  </Link>
                   {course.progressPercent > 0 && (
                     <Button
                       variant="outline"
                       size="icon"
+                      className="rounded-full border-[var(--lq-steel-border)] text-[var(--lq-signal-blue)]"
                       aria-label="View course path"
                       title="View course path"
                       render={<Link to={`/games/language-quest/courses/${course.id}`} />}
@@ -215,15 +214,15 @@ export default function LanguageQuestHome() {
         <Languages className="mx-auto h-12 w-12 text-slate-300" />
         <h1 className="mt-3 text-xl font-bold text-slate-900 dark:text-white">Learning Quest is taking a break</h1>
         <p className="mt-1 text-sm text-slate-500">Please try loading the courses again.</p>
-        <Button className="mt-5" onClick={load}>Try Again</Button>
+        <button type="button" className="lq-btn-primary mt-5" onClick={load}>Try Again</button>
       </div>
     );
   }
 
   return (
     <div className="min-w-0 max-w-full space-y-4 pb-8 sm:space-y-5 sm:pb-10">
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-700 via-fuchsia-700 to-rose-600 p-4 text-white shadow-xl sm:rounded-3xl sm:p-6">
-        <div className="absolute -right-12 -top-16 h-52 w-52 rounded-full bg-white/10" />
+      <section className="lq-hero-gradient relative overflow-hidden rounded-2xl p-4 text-white shadow-xl sm:rounded-3xl sm:p-6">
+        <div className="absolute -right-12 -top-16 h-52 w-52 rounded-full bg-[var(--lq-spring-mint)]/15" />
         <img
           src="/icons/LanguageQuests_Graphics/Owl School 12.svg"
           alt=""

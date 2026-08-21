@@ -76,69 +76,63 @@ export default function LanguageQuestPublic() {
 
   return (
     <div className="lq-mesh min-h-screen overflow-x-hidden text-slate-950 transition-colors duration-300 dark:text-slate-100">
-      <header className="sticky top-0 z-40 border-b border-white/70 bg-white/75 shadow-sm shadow-violet-900/5 backdrop-blur-xl transition-colors dark:border-slate-800/90 dark:bg-slate-950/85 dark:shadow-black/20">
+      <header className="sticky top-0 z-40 border-b border-[var(--lq-steel-border)] bg-[var(--lq-paper-white)]/90 shadow-[var(--lq-shadow-subtle)] backdrop-blur-xl transition-colors dark:border-slate-800/90 dark:bg-slate-950/85 dark:shadow-black/20">
         <div className="mx-auto flex min-h-18 max-w-7xl items-center justify-between gap-3 px-4 py-2 sm:px-6">
           <MrlcQuestBrand compact />
           <div className="flex items-center gap-2">
-            <Button variant="ghost" className="hidden font-bold text-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 md:inline-flex" render={<Link to="/language-quest/about" />} nativeButton={false}>
+            <Link to="/language-quest/about" className="lq-btn-ghost hidden md:inline-flex dark:text-slate-200">
               <Info className="mr-2 h-4 w-4" /> About
-            </Button>
+            </Link>
             {!user && (
-              <Button
-                variant="ghost"
-                className="h-9 w-9 px-0 font-bold text-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:h-10 sm:w-auto sm:px-4"
-                aria-label="Sign in"
-                render={<Link to="/login" />}
-                nativeButton={false}
-              >
+              <Link to="/login" aria-label="Sign in" className="lq-btn-ghost dark:text-slate-200">
                 <LogIn className="h-4 w-4 sm:hidden" aria-hidden="true" />
                 <span className="hidden sm:inline">Sign in</span>
-              </Button>
+              </Link>
             )}
             <Button
               variant="outline"
               size="icon"
-              className="rounded-xl border-violet-200 bg-white/80 text-violet-700 shadow-sm hover:bg-violet-50 dark:border-slate-700 dark:bg-slate-900/80 dark:text-amber-300 dark:hover:bg-slate-800"
+              className="rounded-full border-[var(--lq-steel-border)] bg-white/80 text-[var(--lq-signal-blue)] shadow-sm hover:bg-sky-50 dark:border-slate-700 dark:bg-slate-900/80 dark:text-amber-300 dark:hover:bg-slate-800"
               onClick={() => setTheme(darkMode ? 'light' : 'dark')}
               aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {darkMode ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
             </Button>
-            <Button className="rounded-xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-4 font-black text-white shadow-lg shadow-violet-600/20 hover:from-violet-800 hover:to-fuchsia-700 sm:px-5" render={<Link to={startHref} />} nativeButton={false}>
+            <Link to={startHref} className="lq-btn-primary">
               {user ? 'Continue learning' : 'Start free'}
-            </Button>
+            </Link>
           </div>
         </div>
       </header>
 
       <main>
-        <section className="relative overflow-hidden px-4 pb-20 pt-12 sm:px-6 sm:pt-20 lg:pb-28">
-          <div className="pointer-events-none absolute -left-16 top-16 h-40 w-40 rounded-full bg-amber-300/50 blur-2xl" />
-          <div className="pointer-events-none absolute -right-24 top-4 h-72 w-72 rounded-full bg-sky-300/40 blur-3xl" />
+        <section className="lq-hero-gradient relative overflow-hidden px-4 pb-20 pt-12 text-white sm:px-6 sm:pt-20 lg:pb-28">
+          <div className="pointer-events-none absolute -left-16 top-16 h-40 w-40 rounded-full bg-[var(--lq-spring-mint)]/25 blur-2xl" />
+          <div className="pointer-events-none absolute -right-24 top-4 h-72 w-72 rounded-full bg-white/15 blur-3xl" />
           <div className="relative mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[1.03fr_.97fr]">
             <div className="relative z-10 text-center lg:text-left">
-              <Badge className="border-violet-200 bg-white/80 px-3 py-1.5 text-violet-700 shadow-sm hover:bg-white/80 dark:border-violet-500/30 dark:bg-slate-900/80 dark:text-violet-300 dark:hover:bg-slate-900/80">
+              <Badge className="border-white/25 bg-white/10 px-3 py-1.5 text-white shadow-sm hover:bg-white/10">
                 <Sparkles className="h-3.5 w-3.5" /> Guided learning for real life
               </Badge>
-              <h1 className="mx-auto mt-6 max-w-3xl text-[clamp(2.65rem,7.2vw,5rem)] font-black leading-[0.98] tracking-[-0.055em] lg:mx-0">
+              <h1 className="mx-auto mt-6 max-w-3xl text-[clamp(2.65rem,7.2vw,5rem)] font-black leading-[0.98] tracking-[-0.055em] text-white lg:mx-0">
                 Learn the idea.
-                <span className="block bg-gradient-to-r from-violet-700 via-fuchsia-600 to-rose-500 bg-clip-text text-transparent">Build the skill.</span>
+                <span className="block text-[var(--lq-spring-mint)]">Build the skill.</span>
                 <span className="block">Grow with confidence.</span>
               </h1>
-              <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300 sm:text-lg sm:leading-8 lg:mx-0">
+              <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-white/85 sm:text-lg sm:leading-8 lg:mx-0">
                 Short guided courses combine languages, K–12 mathematics, worked feedback, and friendly scored practice. Learn at your own pace and keep every achievement in one free account.
               </p>
               <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
-                <Button size="lg" className="h-13 rounded-xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-7 font-black text-white shadow-xl shadow-violet-600/25 transition hover:-translate-y-0.5 hover:from-violet-800 hover:to-fuchsia-700" render={<Link to={startHref} />} nativeButton={false}>
+                <Link to={startHref} className="lq-btn-primary h-13 px-7 text-base">
                   {user ? 'Continue your quest' : 'Create a learner account'} <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button size="lg" variant="outline" className="h-13 rounded-xl border-2 border-violet-200 bg-white/80 px-7 font-black text-violet-800 shadow-sm hover:bg-violet-50 dark:border-violet-500/40 dark:bg-slate-900/80 dark:text-violet-200 dark:hover:bg-slate-800" render={<a href="#courses" />} nativeButton={false}>
+                </Link>
+                <a href="#courses" className="lq-btn-outline h-13 border-white px-7 text-base text-white hover:bg-white/10" style={{ borderColor: '#fff', color: '#fff' }}>
                   Explore courses
-                </Button>
+                </a>
               </div>
-              <p className="mt-4 flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400 lg:justify-start">
-                <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Visitors can browse courses. A free signup is required to begin and save progress.
+              <p className="mt-4 flex items-center justify-center gap-2 text-sm text-white/75 lg:justify-start">
+                <ShieldCheck className="h-4 w-4 text-[var(--lq-spring-mint)]" /> Visitors can browse courses. A free signup is required to begin and save progress.
               </p>
               <div className="mt-7 flex flex-wrap justify-center gap-2 text-xs font-bold lg:justify-start">
                 <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-sky-700 dark:border-sky-500/30 dark:bg-sky-950/60 dark:text-sky-300">🎧 Listen</span>
@@ -160,8 +154,8 @@ export default function LanguageQuestPublic() {
                 <span className="absolute -top-3 left-1/2 grid h-10 w-10 -translate-x-1/2 place-items-center rounded-2xl bg-amber-400 text-white shadow-lg"><Star className="h-5 w-5 fill-current" /></span>
                 <span className="absolute -bottom-3 left-1/2 grid h-10 w-10 -translate-x-1/2 place-items-center rounded-2xl bg-sky-500 text-white shadow-lg"><Globe2 className="h-5 w-5" /></span>
               </div>
-              <div className="lq-hero-card relative rounded-[2rem] border border-white bg-white/75 p-3 shadow-[0_35px_90px_-28px_rgba(76,29,149,.5)] backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/75 sm:p-5">
-                <div className="relative overflow-hidden rounded-[1.6rem] bg-gradient-to-br from-violet-700 via-fuchsia-600 to-rose-500 p-6 text-white sm:p-8">
+              <div className="lq-hero-card relative rounded-[2rem] border border-white bg-white/90 p-3 shadow-[0_35px_90px_-28px_rgba(59,30,144,.45)] backdrop-blur sm:p-5">
+                <div className="lq-hero-gradient relative overflow-hidden rounded-[1.6rem] p-6 text-white sm:p-8">
                   <div className="absolute -right-16 -top-20 h-52 w-52 rounded-full bg-white/15 blur-2xl" />
                   <div className="lq-depth-1 relative flex items-center justify-between">
                     <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">Sentence practice</p>
@@ -174,7 +168,7 @@ export default function LanguageQuestPublic() {
                   </div>
                   <div className="lq-depth-1 relative mt-5 flex items-center justify-between gap-3">
                     <span className="text-sm font-semibold text-white/80">Meaning + form + confidence</span>
-                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-400 shadow-lg shadow-emerald-950/20"><CheckCircle2 className="h-5 w-5" /></span>
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[var(--lq-spring-mint)] text-[var(--lq-charcoal)] shadow-lg"><CheckCircle2 className="h-5 w-5" /></span>
                   </div>
                 </div>
               </div>
@@ -189,12 +183,12 @@ export default function LanguageQuestPublic() {
           </div>
         </section>
 
-        <section className="border-y border-white/80 bg-white/75 px-4 py-16 backdrop-blur transition-colors dark:border-slate-800/80 dark:bg-slate-950/55 sm:px-6 sm:py-20">
+        <section className="border-y border-[var(--lq-steel-border)] bg-[var(--lq-paper-white)]/80 px-4 py-16 backdrop-blur transition-colors dark:border-slate-800/80 dark:bg-slate-950/55 sm:px-6 sm:py-20">
           <div className="mx-auto max-w-7xl">
             <div className="max-w-2xl">
-              <p className="text-sm font-black uppercase tracking-[0.18em] text-violet-700">Your lesson guide</p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">A clear routine in every lesson</h2>
-              <p className="mt-3 leading-7 text-slate-600 dark:text-slate-300">You always know what to do next, why it matters, and how to recover from a mistake.</p>
+              <p className="text-sm font-black uppercase tracking-[0.18em] text-[var(--lq-signal-blue)]">Your lesson guide</p>
+              <h2 className="mt-3 text-3xl font-black tracking-tight text-[var(--lq-charcoal)] dark:text-white sm:text-4xl">A clear routine in every lesson</h2>
+              <p className="mt-3 leading-7 text-[var(--lq-slate-caption)] dark:text-slate-300">You always know what to do next, why it matters, and how to recover from a mistake.</p>
             </div>
             <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
               {[
@@ -222,23 +216,23 @@ export default function LanguageQuestPublic() {
           <div className="mx-auto max-w-7xl">
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
               <div>
-                <p className="text-sm font-black uppercase tracking-[0.18em] text-violet-700">Course library</p>
-                <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Choose your next quest</h2>
+                <p className="text-sm font-black uppercase tracking-[0.18em] text-[var(--lq-signal-blue)]">Course library</p>
+                <h2 className="mt-3 text-3xl font-black tracking-tight text-[var(--lq-charcoal)] dark:text-white sm:text-4xl">Choose your next quest</h2>
               </div>
-              <p className="max-w-md text-sm leading-6 text-slate-600 dark:text-slate-300">Browse freely. Create an account when you are ready to open a lesson and save your progress.</p>
+              <p className="max-w-md text-sm leading-6 text-[var(--lq-slate-caption)] dark:text-slate-300">Browse freely. Create an account when you are ready to open a lesson and save your progress.</p>
             </div>
 
             {catalogStatus === 'loading' ? (
-              <div className="mt-10 rounded-3xl border border-violet-100 bg-white/60 p-12 text-center dark:border-slate-800 dark:bg-slate-900/60" aria-busy="true">
-                <div className="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-violet-200 border-t-violet-700" />
-                <p className="mt-4 font-bold">Loading course previews…</p>
+              <div className="lq-card mt-10 p-12 text-center dark:border dark:border-slate-800" aria-busy="true">
+                <div className="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-[var(--lq-steel-border)] border-t-[var(--lq-signal-blue)]" />
+                <p className="mt-4 font-bold text-[var(--lq-charcoal)] dark:text-white">Loading course previews…</p>
               </div>
             ) : catalogStatus === 'error' ? (
-              <div className="mt-10 rounded-3xl border border-rose-200 bg-rose-50/80 p-10 text-center dark:border-rose-500/30 dark:bg-rose-950/20" role="alert">
+              <div className="lq-card mt-10 p-10 text-center dark:border dark:border-rose-500/30" role="alert">
                 <BookOpen className="mx-auto h-10 w-10 text-rose-400" />
-                <p className="mt-3 font-black">We could not load the course library.</p>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Check your connection and try again.</p>
-                <Button variant="outline" className="mt-5" onClick={() => setCatalogRetry((value) => value + 1)}><RefreshCcw className="mr-2 h-4 w-4" /> Try again</Button>
+                <p className="mt-3 font-black text-[var(--lq-charcoal)] dark:text-white">We could not load the course library.</p>
+                <p className="mt-1 text-sm text-[var(--lq-slate-caption)] dark:text-slate-300">Check your connection and try again.</p>
+                <button type="button" className="lq-btn-outline mt-5" onClick={() => setCatalogRetry((value) => value + 1)}><RefreshCcw className="mr-2 h-4 w-4" /> Try again</button>
               </div>
             ) : courses.length ? (
               <div className="mt-10">
@@ -246,60 +240,63 @@ export default function LanguageQuestPublic() {
                   groups={courseGroups}
                   idPrefix="public-course-folder"
                   renderCourse={(course) => (
-                    <article key={course.id} className="group overflow-hidden rounded-3xl border border-white bg-white shadow-lg shadow-violet-900/5 transition duration-300 hover:-translate-y-2 hover:rotate-[0.4deg] hover:shadow-2xl dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/20">
+                    <article key={course.id} className="lq-card group overflow-hidden transition duration-300 hover:-translate-y-1.5 hover:shadow-lg dark:border dark:border-slate-800">
                       <div className="h-2" style={{ backgroundColor: course.accentColor }} />
                       <div className="p-6">
                         <div className="flex items-start gap-4">
-                          <span className="grid h-14 w-14 place-items-center rounded-2xl text-3xl shadow-inner transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110" style={{ backgroundColor: `${course.accentColor}20` }}>{course.imageEmoji}</span>
+                          <span className="lq-tile-circle grid h-14 w-14 shrink-0 place-items-center text-3xl transition-transform duration-300 group-hover:scale-110 dark:border dark:border-slate-700">{course.imageEmoji}</span>
                           <div>
-                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{course.language}</p>
-                            <h4 className="mt-1 text-xl font-black">{course.title}</h4>
+                            <p className="text-xs font-bold uppercase tracking-wider text-[var(--lq-slate-caption)] dark:text-slate-500">{course.language}</p>
+                            <h4 className="mt-1 text-xl font-black text-[var(--lq-charcoal)] dark:text-white">{course.title}</h4>
                           </div>
                         </div>
-                        <p className="mt-4 min-h-12 text-sm leading-6 text-slate-600 dark:text-slate-300">{course.description || 'A practical language course for everyday learning.'}</p>
-                        <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                          <span className="rounded-full bg-slate-100 px-3 py-1.5 dark:bg-slate-800">{course.unitCount} units</span>
-                          <span className="rounded-full bg-slate-100 px-3 py-1.5 dark:bg-slate-800">{course.lessonCount} lessons</span>
-                          <span className="rounded-full bg-slate-100 px-3 py-1.5 dark:bg-slate-800">{course.challengeCount} practices</span>
+                        <p className="mt-4 min-h-12 text-sm leading-6 text-[var(--lq-slate-caption)] dark:text-slate-300">{course.description || 'A practical language course for everyday learning.'}</p>
+                        <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold text-[var(--lq-slate-caption)] dark:text-slate-400">
+                          <span className="rounded-full bg-[var(--lq-canvas-mist)] px-3 py-1.5 dark:bg-slate-800">{course.unitCount} units</span>
+                          <span className="rounded-full bg-[var(--lq-canvas-mist)] px-3 py-1.5 dark:bg-slate-800">{course.lessonCount} lessons</span>
+                          <span className="rounded-full bg-[var(--lq-canvas-mist)] px-3 py-1.5 dark:bg-slate-800">{course.challengeCount} practices</span>
                         </div>
-                        <Button className="mt-6 w-full rounded-xl font-black text-white shadow-lg transition-transform group-hover:scale-[1.02]" style={{ backgroundColor: course.accentColor }} render={<Link to={user ? `/games/language-quest/courses/${course.id}` : '/signup'} />} nativeButton={false}>
+                        <Link
+                          to={user ? `/games/language-quest/courses/${course.id}` : '/signup'}
+                          className="lq-btn-primary mt-6 w-full transition-transform group-hover:scale-[1.02]"
+                        >
                           {user ? 'Open this course' : 'Sign up to learn'} <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
+                        </Link>
                       </div>
                     </article>
                   )}
                 />
               </div>
             ) : (
-              <div className="mt-10 rounded-3xl border border-dashed border-violet-200 bg-white/60 p-12 text-center dark:border-violet-500/30 dark:bg-slate-900/60">
-                <BookOpen className="mx-auto h-10 w-10 text-violet-300 dark:text-violet-400" />
-                <p className="mt-3 font-bold">No courses are published yet.</p>
+              <div className="lq-card mt-10 border border-dashed border-[var(--lq-steel-border)] p-12 text-center dark:border-slate-700">
+                <BookOpen className="mx-auto h-10 w-10 text-[var(--lq-signal-blue)]/60" />
+                <p className="mt-3 font-bold text-[var(--lq-charcoal)] dark:text-white">No courses are published yet.</p>
               </div>
             )}
           </div>
         </section>
 
         <section className="px-4 pb-16 sm:px-6 sm:pb-20">
-          <div className="relative mx-auto flex max-w-7xl flex-col items-center overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-violet-950 to-fuchsia-950 px-6 py-14 text-center text-white shadow-2xl sm:py-16">
-            <div className="absolute -left-12 -top-14 h-48 w-48 rounded-full bg-sky-500/20 blur-2xl" />
-            <div className="absolute -bottom-16 -right-8 h-56 w-56 rounded-full bg-fuchsia-500/25 blur-2xl" />
-            <span className="relative grid h-16 w-16 place-items-center rounded-2xl bg-white/10 shadow-xl ring-1 ring-white/15"><Languages className="h-8 w-8 text-violet-200" /></span>
-            <h2 className="mt-5 text-3xl font-black tracking-tight">Ready to say more than single words?</h2>
-            <p className="mt-3 max-w-xl text-slate-300">Create your free learner account and turn useful language into complete, confident sentences.</p>
-            <Button size="lg" className="relative mt-7 rounded-xl bg-white font-black text-slate-950 shadow-xl hover:bg-violet-100" render={<Link to={startHref} />} nativeButton={false}>
+          <div className="lq-hero-gradient relative mx-auto flex max-w-7xl flex-col items-center overflow-hidden rounded-[2rem] px-6 py-14 text-center text-white shadow-2xl sm:py-16">
+            <div className="absolute -left-12 -top-14 h-48 w-48 rounded-full bg-[var(--lq-spring-mint)]/20 blur-2xl" />
+            <div className="absolute -bottom-16 -right-8 h-56 w-56 rounded-full bg-white/15 blur-2xl" />
+            <span className="relative grid h-16 w-16 place-items-center rounded-full bg-white/10 shadow-xl ring-1 ring-white/15"><Languages className="h-8 w-8 text-white" /></span>
+            <h2 className="mt-5 text-3xl font-black tracking-tight text-white">Ready to say more than single words?</h2>
+            <p className="mt-3 max-w-xl text-white/80">Create your free learner account and turn useful language into complete, confident sentences.</p>
+            <Link to={startHref} className="lq-btn-primary relative mt-7 h-13 px-7 text-base">
               {user ? 'Continue learning' : 'Start Learning Quest'} <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            </Link>
           </div>
         </section>
       </main>
-      <footer className="border-t border-white/70 bg-white/65 px-4 py-8 backdrop-blur transition-colors dark:border-slate-800 dark:bg-slate-950/70">
+      <footer className="border-t border-[var(--lq-steel-border)] bg-[var(--lq-canvas-mist)]/90 px-4 py-8 backdrop-blur transition-colors dark:border-slate-800 dark:bg-slate-950/70">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 sm:flex-row">
           <MrlcQuestBrand compact />
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <BookMarked className="h-4 w-4 text-violet-600 dark:text-violet-400" /> Learning made with care for every learner.
+          <div className="flex items-center gap-2 text-xs font-semibold text-[var(--lq-slate-caption)] dark:text-slate-400">
+            <BookMarked className="h-4 w-4 text-[var(--lq-signal-blue)]" /> Learning made with care for every learner.
           </div>
           <div className="flex flex-col items-center gap-2 sm:items-end">
-            <Link to="/language-quest/about" className="inline-flex items-center gap-1.5 text-xs font-black text-violet-700 underline-offset-4 hover:underline dark:text-violet-300">
+            <Link to="/language-quest/about" className="inline-flex items-center gap-1.5 text-xs font-black text-[var(--lq-signal-blue)] underline-offset-4 hover:underline">
               <Info className="h-3.5 w-3.5" /> About &amp; course sources
             </Link>
             <TaoMonLaeCredit />
