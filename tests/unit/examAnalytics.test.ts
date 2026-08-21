@@ -2,10 +2,26 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   analyticsSelectedValues,
+  analyticsQuestionConfig,
   analyzeDistractorResponses,
   hasAnalyticsResponse,
   normalizeAnalyticsOptions,
 } from '../../shared/examAnalytics';
+
+test('analytics uses modern option rows and their stable ids', () => {
+  assert.deepEqual(analyticsQuestionConfig({
+    options: null,
+    correctAnswer: null,
+    optionRows: [
+      { id: 'a', text: 'Alpha', isCorrect: true },
+      { id: 'b', text: 'Beta', isCorrect: false },
+    ],
+  }), {
+    options: [{ value: 'a', text: 'Alpha' }, { value: 'b', text: 'Beta' }],
+    correctAnswer: 'a',
+    correctAnswers: ['a'],
+  });
+});
 
 test('analytics treats empty text, arrays, and matching objects as blank', () => {
   assert.equal(hasAnalyticsResponse('', null), false);

@@ -1,4 +1,8 @@
 import express from "express";
+import { dragDropBank, type DragBlank } from "./shared/examScoring";
+
+export { dragDropBank } from "./shared/examScoring";
+export type { DragBankItem, DragBlank } from "./shared/examScoring";
 
 interface JwtPayload { userId: string; role: string; email: string; }
 
@@ -33,20 +37,6 @@ export function seededShuffle<T>(arr: T[], seed: string): T[] {
 // A DRAG_DROP question's `options` JSON is: { text, blanks: [{id, answer}], distractors: [...] }
 // where `text` is the passage with blanks marked as "{{<blankId>}}" tokens.
 // The student drags word chips from a shuffled word bank into those blanks.
-export interface DragBlank { id: string; answer: string }
-export interface DragBankItem { key: string; label: string }
-
-// Canonical (pre-shuffle) bank order: each blank's own answer, in blank
-// order, followed by the extra distractor words. `key` is that item's index
-// in this canonical order — a stable id that lets grading resolve a placed
-// chip back to its word regardless of what shuffled order the student saw.
-export function dragDropBank(options: any): DragBankItem[] {
-  const blanks: DragBlank[] = Array.isArray(options?.blanks) ? options.blanks : [];
-  const distractors: string[] = Array.isArray(options?.distractors) ? options.distractors : [];
-  const labels = [...blanks.map((b) => String(b?.answer ?? "")), ...distractors.map((d) => String(d ?? ""))].filter(Boolean);
-  return labels.map((label, i) => ({ key: String(i), label }));
-}
-
 // Authoring input: a passage with blanked-out words marked as "[[word]]",
 // e.g. "The [[cat]] sat on the [[mat]]." → parsed into the {{id}}-token text
 // plus a blanks list, matching the shape dragDropBank()/scoring expect.
@@ -325,6 +315,7 @@ export function registerExamBankRoutes(deps: Deps): void {
     try {
       const item = await prisma.question.findUnique({ where: { id: req.params.id }, include: { topic: true, optionRows: { orderBy: { orderIndex: "asc" } } } });
       if (!item) { res.status(404).json({ error: "Not found" }); return; }
+      if (!(await canEditSubject(req, item.subjectId))) { res.status(403).json({ error: "Not your subject" }); return; }
       res.json(item);
     } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
@@ -371,6 +362,7 @@ export function registerExamBankRoutes(deps: Deps): void {
       const existing = await prisma.question.findUnique({ where: { id: req.params.id } });
       if (!existing) { res.status(404).json({ error: "Not found" }); return; }
       if (!(await canEditSubject(req, existing.subjectId))) { res.status(403).json({ error: "Not your subject" }); return; }
+      if (b.subjectId !== undefined && !(await canEditSubject(req, b.subjectId || null))) { res.status(403).json({ error: "Not your subject" }); return; }
       if (existing.status === "ARCHIVED" && !isAdmin(req)) { res.status(409).json({ error: "Archived — restore first (admin)" }); return; }
 
       const data: any = {};
@@ -457,14 +449,22 @@ export function registerExamBankRoutes(deps: Deps): void {
 
   app.post("/api/exams/:id/questions", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     const { id } = req.params; const b = req.body || {};
-    const questionIds: string[] = Array.isArray(b.questionIds) ? b.questionIds : (b.questionId ? [b.questionId] : []);
+    const questionIds: string[] = [...new Set(Array.isArray(b.questionIds) ? b.questionIds : (b.questionId ? [b.questionId] : []))]
+      .filter((questionId): questionId is string => typeof questionId === "string" && !!questionId);
     if (!questionIds.length) { res.status(400).json({ error: "questionIds required" }); return; }
     try {
       const exam = await prisma.exam.findUnique({ where: { id } });
       if (!exam) { res.status(404).json({ error: "Exam not found" }); return; }
+      if (b.sectionId) {
+        const section = await prisma.examSection.findUnique({ where: { id: b.sectionId }, select: { examId: true } });
+        if (!section || section.examId !== id) { res.status(400).json({ error: "The selected section does not belong to this exam" }); return; }
+      }
       const requireApproved = ACTIVE_EXAM_STATUSES.includes(exam.status);
-      const qs = await prisma.question.findMany({ where: { id: { in: questionIds } } });
+      const qs = await prisma.question.findMany({ where: { id: { in: questionIds }, examId: null } });
+      if (qs.length !== questionIds.length) { res.status(404).json({ error: "One or more bank questions were not found" }); return; }
+      const subjectIds = await allowedSubjectIds(req);
       for (const q of qs) {
+        if (subjectIds !== null && q.subjectId && !subjectIds.includes(q.subjectId)) { res.status(403).json({ error: "One or more questions are outside your subjects" }); return; }
         if (["RETIRED", "ARCHIVED"].includes(q.status)) { res.status(409).json({ error: `Question ${q.id} is ${q.status}` }); return; }
         if (requireApproved && q.status !== "APPROVED") { res.status(409).json({ error: "Only APPROVED questions may be added to a published exam" }); return; }
       }
@@ -511,7 +511,16 @@ export function registerExamBankRoutes(deps: Deps): void {
   app.post("/api/exams/:id/blueprint", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     const b = req.body || {};
     try {
-      const row = await prisma.examBlueprintRule.create({ data: { examId: req.params.id, sectionId: b.sectionId || null, subjectId: b.subjectId || null, topicId: b.topicId || null, difficulty: DIFFICULTY.includes(b.difficulty) ? b.difficulty : null, type: b.type || null, count: num(b.count) ?? 1, pointsEach: num(b.pointsEach) } });
+      const count = num(b.count) ?? 1;
+      const pointsEach = num(b.pointsEach);
+      if (!Number.isInteger(count) || count < 1 || count > 500) { res.status(400).json({ error: "count must be a whole number between 1 and 500" }); return; }
+      if (pointsEach != null && pointsEach < 0) { res.status(400).json({ error: "pointsEach cannot be negative" }); return; }
+      if (!(await canEditSubject(req, b.subjectId || null))) { res.status(403).json({ error: "Not your subject" }); return; }
+      if (b.sectionId) {
+        const section = await prisma.examSection.findUnique({ where: { id: b.sectionId }, select: { examId: true } });
+        if (!section || section.examId !== req.params.id) { res.status(400).json({ error: "The selected section does not belong to this exam" }); return; }
+      }
+      const row = await prisma.examBlueprintRule.create({ data: { examId: req.params.id, sectionId: b.sectionId || null, subjectId: b.subjectId || null, topicId: b.topicId || null, difficulty: DIFFICULTY.includes(b.difficulty) ? b.difficulty : null, type: b.type || null, count, pointsEach } });
       await audit(req, "BLUEPRINT_CHANGE", "EXAM", req.params.id, `Blueprint rule added (count ${row.count}).`);
       res.status(201).json(row);
     } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }

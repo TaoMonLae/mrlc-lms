@@ -697,7 +697,7 @@ model Question {
   answers      ExamAnswer[]
   rubrics      GradingRubric[]
   manualGrades ManualGrade[]
-  statistic    QuestionStatistic?
+  statistics   QuestionStatistic[]
   optionRows   QuestionOption[]
   examLinks    ExamQuestion[]
 
@@ -2817,7 +2817,7 @@ model ExamResultPolicy {
 
 model QuestionStatistic {
   id         String   @id @default(uuid())
-  questionId String   @unique
+  questionId String
   question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
   examId     String
   exam       Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
@@ -2839,6 +2839,7 @@ model QuestionStatistic {
 
   computedAt DateTime @default(now())
 
+  @@unique([questionId, examId])
   @@index([examId])
 }
 

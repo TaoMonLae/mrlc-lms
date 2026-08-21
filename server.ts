@@ -13958,19 +13958,12 @@ async function startServer() {
           subject: true,
           questions: isStudent
             ? {
-                // No correctAnswer and no explanation: explanations often reveal
-                // the answer and are released post-exam via the result policy.
+                // Student delivery is exclusively through the session-bound
+                // Phase 2 attempt payload. Do not expose question content here
+                // before the availability/access-code checks have run.
                 select: {
                   id: true,
-                  text: true,
-                  type: true,
                   points: true,
-                  options: true,
-                  passageText: true,
-                  imageUrl: true,
-                  examId: true,
-                  createdAt: true,
-                  updatedAt: true,
                 },
               }
             : {
@@ -14623,7 +14616,7 @@ async function startServer() {
           studentCode: attempt.student.studentCode,
           score: attempt.score,
           percent: attempt.score != null && totalMarks > 0 ? round1((Number(attempt.score) / totalMarks) * 100) : null,
-          status: attempt.isCompleted ? (attempt.answers.some((a) => a.answerText && a.pointsAwarded == null) ? "NEEDS_GRADING" : "GRADED") : "IN_PROGRESS",
+          status: attempt.isCompleted ? (attempt.answers.some((answer) => MANUAL_QUESTION_TYPES.has(answer.question.type) && answer.pointsAwarded == null) ? "NEEDS_GRADING" : "GRADED") : "IN_PROGRESS",
           startedAt: attempt.startedAt,
           completedAt: attempt.completedAt,
           securityWarnings: attempt.securityWarnings,
@@ -14665,7 +14658,7 @@ async function startServer() {
           id: true,
           exam: { select: { classId: true } },
           student: { select: { id: true, studentCode: true } },
-          answers: { select: { id: true, pointsAwarded: true, question: { select: { id: true } } } },
+          answers: { select: { id: true, maxPoints: true, pointsAwarded: true, question: { select: { id: true, points: true } } } },
         },
       });
       if (!attempt) {
@@ -14677,13 +14670,18 @@ async function startServer() {
         return;
       }
 
-      const allowedAnswerIds = new Set(attempt.answers.map((a) => a.id));
+      const answersById = new Map(attempt.answers.map((answer) => [answer.id, answer]));
+      if (grades.some((grade) => !answersById.has(grade.answerId))) {
+        res.status(400).json({ error: "One or more answers do not belong to this attempt" });
+        return;
+      }
       const result = await prisma.$transaction(async (tx) => {
         for (const grade of grades) {
-          if (!allowedAnswerIds.has(grade.answerId)) continue;
+          const existingAnswer = answersById.get(grade.answerId)!;
           const points = grade.pointsAwarded == null ? null : Number(grade.pointsAwarded);
-          if (points != null && !Number.isFinite(points)) {
-            throw Object.assign(new Error("pointsAwarded must be a number"), { http: 400 });
+          const maximum = Number(existingAnswer.maxPoints ?? existingAnswer.question.points ?? 0);
+          if (points != null && (!Number.isFinite(points) || points < 0 || points > maximum)) {
+            throw Object.assign(new Error(`pointsAwarded must be between 0 and ${maximum}`), { http: 400 });
           }
           await tx.examAnswer.update({
             where: { id: grade.answerId },
@@ -14695,7 +14693,10 @@ async function startServer() {
         }
         const refreshed = await tx.examAnswer.findMany({ where: { attemptId } });
         const score = refreshed.reduce((sum, answer) => sum + Number(answer.pointsAwarded || 0), 0);
-        return tx.examAttempt.update({ where: { id: attemptId }, data: { score, isCompleted: true } });
+        return tx.examAttempt.update({
+          where: { id: attemptId },
+          data: { score: Math.max(0, score), isCompleted: true, state: "FINALIZED", gradingStatus: "COMPLETE", gradedAt: new Date() },
+        });
       });
 
       await createAuditLog(

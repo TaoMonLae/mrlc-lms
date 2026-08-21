@@ -33,6 +33,28 @@ export function normalizeAnalyticsOptions(options: unknown): AnalyticsOption[] {
   }).filter((option) => option.value || option.label);
 }
 
+export function analyticsQuestionConfig(question: any): {
+  options: unknown;
+  correctAnswer: unknown;
+  correctAnswers: unknown;
+} {
+  if (Array.isArray(question?.optionRows) && question.optionRows.length) {
+    const correctOptionIds = question.optionRows
+      .filter((option: any) => option.isCorrect)
+      .map((option: any) => String(option.id));
+    return {
+      options: question.optionRows.map((option: any) => ({ value: String(option.id), text: String(option.text) })),
+      correctAnswer: correctOptionIds[0] ?? null,
+      correctAnswers: correctOptionIds,
+    };
+  }
+  return {
+    options: question?.options,
+    correctAnswer: question?.correctAnswer,
+    correctAnswers: question?.correctAnswers,
+  };
+}
+
 export function analyzeDistractorResponses(input: {
   options: unknown;
   correctAnswer: unknown;

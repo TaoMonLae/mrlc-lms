@@ -3,7 +3,8 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
 import { composeQuestionSet, freezeAttempt, dragDropBank, seededShuffle } from "./examBank";
-import { analyticsSelectedValues, analyzeDistractorResponses, hasAnalyticsResponse } from "./shared/examAnalytics";
+import { analyticsQuestionConfig, analyticsSelectedValues, analyzeDistractorResponses, hasAnalyticsResponse } from "./shared/examAnalytics";
+import { scoreExamObjective } from "./shared/examScoring";
 import {
   effectiveExamDurationMinutes,
   examAccommodationValidationError,
@@ -178,7 +179,9 @@ export function registerExamPhase2Routes(deps: Deps): void {
       }
       if (Array.isArray(selected)) {
         const selectedValues = selected.filter((v) => typeof v === "string");
-        if (selectedValues.length !== selected.length || selectedValues.length > MAX_SELECTION_COUNT || selectedValues.some((v: string) => v.length > MAX_SELECTION_LENGTH)) {
+        if (selectedValues.length !== selected.length || selectedValues.length > MAX_SELECTION_COUNT
+          || selectedValues.some((v: string) => v.length > MAX_SELECTION_LENGTH)
+          || new Set(selectedValues).size !== selectedValues.length) {
           return true;
         }
         parsed.push({ questionId, answerText: answer.answerText ?? null, selectedOptions: selectedValues, flaggedForReview: !!answer.flaggedForReview, timeSpentSeconds: answer.timeSpentSeconds !== undefined ? num(answer.timeSpentSeconds) : undefined });
@@ -958,96 +961,6 @@ export function registerExamPhase2Routes(deps: Deps): void {
     }
   });
 
-  // ── auto-scoring engine (partial credit, negative marking, tolerances) ───────
-  function scoreObjective(q: any, ans: any): { score: number; correct: boolean | null; manual: boolean } {
-    const max = q.points || 0;
-    // Clamp every result: a wrong answer can go as low as -negativePoints (or
-    // minScore, if configured) and no result may exceed the question's max.
-    const lowerBound = q.minScore != null
-      ? q.minScore
-      : (q.negativePoints ? -Math.abs(q.negativePoints) : 0);
-    const clamp = (s: number) => Math.min(max, Math.max(lowerBound, s));
-    const wrongScore = () => clamp(q.negativePoints ? -Math.abs(q.negativePoints) : 0);
-
-    // Manual types. Short answer is graded manually per the exam design (the
-    // stored correctAnswer is a model answer / rubric note, not an exact key).
-    if (["SHORT_ANSWER", "ESSAY", "WRITTEN", "EXTENDED"].includes(q.type) || q.requiresManualGrading) return { score: 0, correct: null, manual: true };
-
-    // Accepted correct answers (option keys/ids or a single correctAnswer) —
-    // used by both single-choice and multi-select scoring below.
-    const accepted: string[] = Array.isArray(q.correctAnswers) && q.correctAnswers.length
-      ? q.correctAnswers.map((s: any) => String(s))
-      : (q.correctAnswer != null ? [String(q.correctAnswer)] : []);
-    const norm = (s: string) => (q.caseSensitive ? String(s).trim() : String(s).trim().toLowerCase());
-
-    if (q.type === "DRAG_DROP") {
-      // The student's answer is { [blankId]: bankKey } — bankKey is an index
-      // into the canonical (pre-shuffle) word bank built by dragDropBank(),
-      // which resolves back to the word text placed in that blank.
-      const blanks: { id: string; answer: string }[] = q.options && !Array.isArray(q.options) && Array.isArray(q.options.blanks) ? q.options.blanks : [];
-      const bank = dragDropBank(q.options);
-      const bankLabel: Record<string, string> = {};
-      for (const item of bank) bankLabel[item.key] = item.label;
-      const matches = ans?.selectedOptions && !Array.isArray(ans.selectedOptions) && typeof ans.selectedOptions === "object" ? ans.selectedOptions : {};
-      const normalize = (value: unknown) => String(value || "").trim().toLocaleLowerCase();
-      const correctCount = blanks.filter((b) => normalize(bankLabel[matches[b.id]]) === normalize(b.answer)).length;
-      const correct = blanks.length > 0 && correctCount === blanks.length;
-      const score = q.partialCredit && blanks.length ? (max * correctCount) / blanks.length : (correct ? max : 0);
-      return { score: clamp(score), correct, manual: false };
-    }
-
-    // Multi-select answers arrive as an array of chosen option keys.
-    if (Array.isArray(ans?.selectedOptions)) {
-      const chosen = ans.selectedOptions.map((s: any) => String(s));
-
-      // Weighted scoring when per-option weights are configured.
-      if (q.optionWeights) {
-        const weights: Record<string, number> = q.optionWeights as any;
-        let raw = 0;
-        for (const opt of chosen) raw += Number(weights[opt] || 0);
-        const score = q.partialCredit ? raw * max : (raw >= 1 ? max : 0);
-        return { score: clamp(score), correct: score >= max, manual: false };
-      }
-
-      // No weights: score by comparing the chosen set against the correct set.
-      // This is what makes partial-credit / multi-answer questions gradeable
-      // even when the author didn't assign per-option weights (previously such
-      // answers fell through to the text path and always scored 0).
-      if (accepted.length) {
-        const correctSet = new Set(accepted.map(norm));
-        const chosenNorm = chosen.map(norm);
-        const chosenSet = new Set(chosenNorm);
-        const correctChosen = [...correctSet].filter((c) => chosenSet.has(c)).length;
-        const wrongChosen = chosenNorm.filter((c) => !correctSet.has(c)).length;
-        const exact = correctChosen === correctSet.size && wrongChosen === 0;
-        let score: number;
-        if (q.partialCredit) {
-          // +1 per correct pick, -1 per wrong pick, as a fraction of the answer.
-          score = max * Math.max(0, (correctChosen - wrongChosen) / correctSet.size);
-        } else {
-          score = exact ? max : 0;
-        }
-        return { score: clamp(score), correct: exact, manual: false };
-      }
-      return { score: 0, correct: false, manual: false };
-    }
-
-    // Text / numeric / single-choice (stored in answerText).
-    const given = (ans?.answerText ?? "").toString();
-    if (!given.trim()) return { score: 0, correct: false, manual: false }; // blank — never penalised
-
-    // numeric tolerance
-    if (q.numericTolerance != null && q.numericTolerance >= 0 && accepted.length && !isNaN(Number(given))) {
-      const g = Number(given);
-      const hit = accepted.some((a) => !isNaN(Number(a)) && Math.abs(g - Number(a)) <= q.numericTolerance);
-      if (hit) return { score: clamp(max), correct: true, manual: false };
-      return { score: wrongScore(), correct: false, manual: false };
-    }
-    const hit = accepted.some((a) => norm(a) === norm(given));
-    if (hit) return { score: clamp(max), correct: true, manual: false };
-    return { score: wrongScore(), correct: false, manual: false };
-  }
-
   // Shared submission finalizer. Used by manual submit and auto-submit on expiry.
   async function finalizeSubmission(
     attemptId: string,
@@ -1146,7 +1059,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
       for (const q0 of scoringQuestions) {
         const q = prep(q0);
         const a = ansByQ[q.id];
-        const r = scoreObjective(q, a || {});
+        const r = scoreExamObjective(q, a || {});
         if (r.manual) { needsManual = true; }
         else total += r.score;
         // Persist per-answer scoring.
@@ -1435,12 +1348,40 @@ function registerAuthoringRoutes(deps: any) {
       if (!row) { res.status(404).json({ error: "Not found" }); return; }
       const { ok } = await canManageExam(req, row.examId);
       if (!ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      req.managedExamId = row.examId;
       next();
     } catch (err: any) {
       if (err?.code === "P2021" || err?.code === "P2022") { res.status(404).json({ error: "Not found" }); return; }
       logger.error("child exam guard failed", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
+  };
+
+  const sameExamReferenceError = async (examId: string, refs: {
+    sectionId?: unknown;
+    groupId?: unknown;
+    stimulusId?: unknown;
+  }): Promise<string | null> => {
+    const checks: Array<Promise<{ label: string; row: any }> | null> = [
+      refs.sectionId ? prisma.examSection.findUnique({ where: { id: String(refs.sectionId) }, select: { examId: true } }).then((row: any) => ({ label: "section", row })) : null,
+      refs.groupId ? prisma.questionGroup.findUnique({ where: { id: String(refs.groupId) }, select: { examId: true } }).then((row: any) => ({ label: "question group", row })) : null,
+      refs.stimulusId ? prisma.stimulus.findUnique({ where: { id: String(refs.stimulusId) }, select: { examId: true } }).then((row: any) => ({ label: "stimulus", row })) : null,
+    ];
+    const results = await Promise.all(checks.filter(Boolean) as Array<Promise<{ label: string; row: any }>>);
+    const invalid = results.find(({ row }) => !row || row.examId !== examId);
+    return invalid ? `The selected ${invalid.label} does not belong to this exam` : null;
+  };
+
+  const questionBelongsToExam = async (questionId: unknown, examId: string): Promise<boolean> => {
+    if (!questionId) return true;
+    const question = await prisma.question.findFirst({
+      where: {
+        id: String(questionId),
+        OR: [{ examId }, { examLinks: { some: { examId } } }],
+      },
+      select: { id: true },
+    });
+    return !!question;
   };
 
   // ── Teacher question list (full — includes correct answers + structure) ─────
@@ -1455,19 +1396,32 @@ function registerAuthoringRoutes(deps: any) {
   app.patch("/api/questions/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
     // Exam-owned questions are scoped to the teacher's classes; bank questions
     // (examId null) are subject-scoped by the bank routes.
+    let ownerExamId: string;
     try {
       const owner = await prisma.question.findUnique({ where: { id: req.params.id }, select: { examId: true } });
       if (!owner) { res.status(404).json({ error: "Question not found" }); return; }
-      if (owner.examId) {
-        const { ok } = await canManageExam(req, owner.examId);
-        if (!ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
-      }
+      if (!owner.examId) { res.status(409).json({ error: "Use the question-bank editor for reusable questions" }); return; }
+      ownerExamId = owner.examId;
+      const { ok } = await canManageExam(req, ownerExamId);
+      if (!ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
     } catch (err: any) {
       logger.error("question guard failed", err);
       res.status(500).json({ error: "Internal Server Error" });
       return;
     }
     const b = req.body || {};
+    try {
+      const referenceError = await sameExamReferenceError(ownerExamId!, {
+        sectionId: b.sectionId,
+        groupId: b.groupId,
+        stimulusId: b.stimulusId,
+      });
+      if (referenceError) { res.status(400).json({ error: referenceError }); return; }
+    } catch (err) {
+      logger.error("question relationship validation failed", err);
+      res.status(500).json({ error: "Internal Server Error" });
+      return;
+    }
     const data: any = {};
     const passthrough = ["text", "correctAnswer", "explanation"];
     for (const k of passthrough) if (b[k] !== undefined) {
@@ -1557,11 +1511,19 @@ function registerAuthoringRoutes(deps: any) {
   });
   const groupData = (b: any) => ({ sectionId: b.sectionId || null, stimulusId: b.stimulusId || null, title: b.title || null, instructions: b.instructions || null, orderIndex: num(b.orderIndex) ?? 0 });
   app.post("/api/exams/:id/question-groups", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
-    try { const row = await prisma.questionGroup.create({ data: { examId: req.params.id, ...groupData(req.body || {}) } }); await audit(req, "CREATE", "QUESTION_GROUP", row.id, `Question group created.`); res.status(201).json(row); }
+    try {
+      const referenceError = await sameExamReferenceError(req.params.id, req.body || {});
+      if (referenceError) { res.status(400).json({ error: referenceError }); return; }
+      const row = await prisma.questionGroup.create({ data: { examId: req.params.id, ...groupData(req.body || {}) } }); await audit(req, "CREATE", "QUESTION_GROUP", row.id, `Question group created.`); res.status(201).json(row);
+    }
     catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
   app.put("/api/question-groups/:id", authMiddleware, teacherGuard, childExamGuard("questionGroup"), async (req: any, res: any) => {
-    try { const row = await prisma.questionGroup.update({ where: { id: req.params.id }, data: groupData(req.body || {}) }); await audit(req, "UPDATE", "QUESTION_GROUP", row.id, `Question group updated.`); res.json(row); }
+    try {
+      const referenceError = await sameExamReferenceError(req.managedExamId, req.body || {});
+      if (referenceError) { res.status(400).json({ error: referenceError }); return; }
+      const row = await prisma.questionGroup.update({ where: { id: req.params.id }, data: groupData(req.body || {}) }); await audit(req, "UPDATE", "QUESTION_GROUP", row.id, `Question group updated.`); res.json(row);
+    }
     catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
   app.delete("/api/question-groups/:id", authMiddleware, teacherGuard, childExamGuard("questionGroup"), async (req: any, res: any) => {
@@ -1581,6 +1543,9 @@ function registerAuthoringRoutes(deps: any) {
     const criteria: any[] = Array.isArray(b.criteria) ? b.criteria : [];
     const maxScore = criteria.reduce((s, c) => s + (num(c.maxScore) || 0), 0);
     try {
+      if (!(await questionBelongsToExam(b.questionId, req.params.id))) {
+        res.status(400).json({ error: "The selected question does not belong to this exam" }); return;
+      }
       const row = await prisma.gradingRubric.create({
         data: {
           examId: req.params.id, questionId: b.questionId || null, title: b.title || "Rubric", description: b.description || null, maxScore,
@@ -1598,6 +1563,9 @@ function registerAuthoringRoutes(deps: any) {
     const criteria: any[] = Array.isArray(b.criteria) ? b.criteria : [];
     const maxScore = criteria.reduce((s, c) => s + (num(c.maxScore) || 0), 0);
     try {
+      if (b.questionId !== undefined && !(await questionBelongsToExam(b.questionId, req.managedExamId))) {
+        res.status(400).json({ error: "The selected question does not belong to this exam" }); return;
+      }
       const row = await prisma.$transaction(async (tx: any) => {
         await tx.rubricCriterion.deleteMany({ where: { rubricId: req.params.id } });
         return tx.gradingRubric.update({
@@ -1780,6 +1748,7 @@ function registerGradingAndOps(deps: any) {
     try {
       const questions = await prisma.question.findMany({
         where: { OR: [{ examId }, { examLinks: { some: { examId } } }] },
+        include: { optionRows: { orderBy: { orderIndex: "asc" } } },
       });
       const attempts = await prisma.examAttempt.findMany({
         where: { examId, state: { in: ["SUBMITTED", "AUTO_SUBMITTED", "FINALIZED", "RELEASED"] } },
@@ -1832,10 +1801,9 @@ function registerGradingAndOps(deps: any) {
         const difficulty = analyzedResponses ? correct / analyzedResponses : null; // p-value
         const discrimination = upperN && lowerN ? (upperC / upperN) - (lowerC / lowerN) : null;
         const avgScore = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+        const analyticsConfig = analyticsQuestionConfig(q);
         const distractorAnalysis = analyzeDistractorResponses({
-          options: q.options,
-          correctAnswer: q.correctAnswer,
-          correctAnswers: q.correctAnswers,
+          ...analyticsConfig,
           incorrectSelections,
           responseCount,
         });
@@ -1855,7 +1823,11 @@ function registerGradingAndOps(deps: any) {
           avgScore, medianScore: median(scores), stdDev: stddev(scores),
           passRate: null, scoreDistribution: null, flags, computedAt: new Date(),
         };
-        await prisma.questionStatistic.upsert({ where: { questionId: q.id }, create: row, update: row });
+        await prisma.questionStatistic.upsert({
+          where: { questionId_examId: { questionId: q.id, examId } },
+          create: row,
+          update: row,
+        });
         stats.push(row);
       }
       await createAuditLog(user(req).userId, user(req).email, "ANALYZE", "EXAM", examId, `Computed item analysis for ${stats.length} questions.`, ipOf(req), uaOf(req), "SUCCESS");
@@ -1888,11 +1860,10 @@ function registerGradingAndOps(deps: any) {
 
   app.get("/api/exams/:id/questions/:qid/analytics", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try {
-      const stat = await prisma.questionStatistic.findUnique({ where: { questionId: req.params.qid }, include: { question: true } });
-      if (stat && stat.examId !== req.params.id) {
-        res.status(404).json({ error: "Question analytics not found" });
-        return;
-      }
+      const stat = await prisma.questionStatistic.findUnique({
+        where: { questionId_examId: { questionId: req.params.qid, examId: req.params.id } },
+        include: { question: true },
+      });
       res.json(stat || null);
     } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
@@ -1904,10 +1875,24 @@ function registerGradingAndOps(deps: any) {
       const assignments = await prisma.examAssignment.findMany({ where: { examId }, include: { student: { include: { user: true } } } }).catch(() => []);
       const attempts = await prisma.examAttempt.findMany({ where: { examId }, include: { student: { include: { user: true } } } }).catch(() => []);
       const byStudent: Record<string, any> = {};
-      for (const a of attempts) byStudent[a.studentId] = a;
+      const activeStates = new Set(["IN_PROGRESS", "PAUSED"]);
+      for (const attempt of attempts) {
+        const current = byStudent[attempt.studentId];
+        const attemptPriority = activeStates.has(attempt.state) ? 1 : 0;
+        const currentPriority = current && activeStates.has(current.state) ? 1 : 0;
+        if (!current || attemptPriority > currentPriority
+          || (attemptPriority === currentPriority && Number(attempt.attemptNumber || 0) > Number(current.attemptNumber || 0))
+          || (attemptPriority === currentPriority && Number(attempt.attemptNumber || 0) === Number(current.attemptNumber || 0)
+            && new Date(attempt.createdAt).getTime() > new Date(current.createdAt).getTime())) {
+          byStudent[attempt.studentId] = attempt;
+        }
+      }
 
       const now = Date.now();
-      const rows = (assignments.length ? assignments.map((asg: any) => ({ student: asg.student, attempt: byStudent[asg.studentId] })) : attempts.map((a: any) => ({ student: a.student, attempt: a })));
+      const currentAttempts = Object.values(byStudent) as any[];
+      const rows = assignments.length
+        ? assignments.map((assignment: any) => ({ student: assignment.student, attempt: byStudent[assignment.studentId] }))
+        : currentAttempts.map((attempt: any) => ({ student: attempt.student, attempt }));
       const live = await Promise.all(rows.map(async (r: any) => {
         const at = r.attempt;
         let lastEvent: any = null;
@@ -2040,24 +2025,39 @@ function registerGradingAndOps(deps: any) {
         const rand = () => { h = (Math.imul(1103515245, h) + 12345) & 0x7fffffff; return h / 0x7fffffff; };
         for (let i = questions.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [questions[i], questions[j]] = [questions[j], questions[i]]; }
       }
+      const printableOptions = (q: any) => Array.isArray(q.optionRows) && q.optionRows.length
+        ? q.optionRows.map((option: any) => ({ key: String(option.id), text: String(option.text) }))
+        : Array.isArray(q.options) ? q.options : [];
+      const optionLabel = (q: any, answer: unknown) => {
+        const raw = String(answer ?? "");
+        const options = printableOptions(q);
+        const matched = options.find((option: any, index: number) => {
+          if (!option || typeof option !== "object") return String(option) === raw;
+          return String(option.key ?? option.value ?? option.text ?? index) === raw;
+        });
+        if (matched != null) return String(typeof matched === "object" ? matched.text ?? matched.value ?? raw : matched);
+        const index = Number(raw);
+        if (Number.isInteger(index) && options[index] != null) {
+          const option = options[index];
+          return String(typeof option === "object" ? option.text ?? option.value ?? raw : option);
+        }
+        return raw;
+      };
+      const correctValues = (q: any): unknown[] => {
+        if (Array.isArray(q.optionRows) && q.optionRows.length) {
+          return q.optionRows.filter((option: any) => option.isCorrect).map((option: any) => option.id);
+        }
+        if (Array.isArray(q.correctAnswers) && q.correctAnswers.length) return q.correctAnswers;
+        return q.correctAnswer == null ? [] : [q.correctAnswer];
+      };
       // Legacy MCQ stores the correct answer as an option index; show the text.
       const correctText = (q: any) => {
         if (q.type === "DRAG_DROP") {
           const blanks = q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).blanks) ? (q.options as any).blanks : [];
           return blanks.length ? blanks.map((b: any, i: number) => `${i + 1}. ${b.answer}`).join("   ") : null;
         }
-        if (Array.isArray(q.optionRows) && q.optionRows.length) {
-          return q.optionRows.filter((o: any) => o.isCorrect).map((o: any) => o.text).join(", ");
-        }
-        if (q.correctAnswer == null) return q.correctAnswer;
-        if (Array.isArray(q.options) && q.options.length) {
-          const idx = Number(q.correctAnswer);
-          if (Number.isInteger(idx) && q.options[idx] != null) {
-            const o = q.options[idx];
-            return String(typeof o === "object" ? (o.text ?? o.value ?? idx) : o);
-          }
-        }
-        return q.correctAnswer;
+        const answers = correctValues(q);
+        return answers.length ? answers.map((answer) => optionLabel(q, answer)).join(", ") : null;
       };
       res.json({
         version,
@@ -2066,12 +2066,12 @@ function registerGradingAndOps(deps: any) {
         sections: exam.sections.map((s: any) => ({ id: s.id, title: s.title, instructions: s.instructions })),
         stimuli: exam.stimuli.map((s: any) => ({ id: s.id, type: s.type, title: s.title, content: s.content, mediaUrl: s.mediaUrl })),
         questions: questions.map((q: any, i: number) => ({
-          number: i + 1, id: q.id, text: q.text, type: q.type, points: q.points,
-          options: q.type === "DRAG_DROP" ? null : q.options,
+          number: i + 1, id: q.id, text: q.text, type: q.type, points: q.pointsOverride ?? q.defaultPoints ?? q.points,
+          options: q.type === "DRAG_DROP" ? null : printableOptions(q),
           dragText: q.type === "DRAG_DROP" ? String(q.options?.text ?? "") : undefined,
           dragBank: q.type === "DRAG_DROP" ? seededShuffle(dragDropBank(q.options), `print:${version}:${q.id}`).map((item) => item.label) : undefined,
           stimulusId: q.stimulusId, sectionId: q.sectionId,
-          ...(withKey ? { correctAnswer: correctText(q), correctAnswers: q.correctAnswers } : {}),
+          ...(withKey ? { correctAnswer: correctText(q), correctAnswers: correctValues(q).map((answer) => optionLabel(q, answer)) } : {}),
         })),
         answerKey: withKey,
       });
