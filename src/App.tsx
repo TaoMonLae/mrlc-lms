@@ -709,7 +709,6 @@ export default function App() {
                   <Route path="/student/duties" element={<StudentDutyView />} />
                 </Route>
 
-                <Route index element={<Navigate to="/dashboard" replace />} />
               </Route>
             </Route>
             

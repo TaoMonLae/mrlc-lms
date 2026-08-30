@@ -92,7 +92,7 @@ export default function AIAssistantWidget() {
       {!open && !chatOpen && (
         <button
           onClick={() => setOpen(true)}
-          className="group fixed bottom-4 right-[68px] z-50 grid h-11 w-11 place-items-center rounded-full bg-gradient-to-tr from-aubergine-600 to-fuchsia-500 text-white shadow-lg shadow-aubergine-500/30 ring-1 ring-white/20 transition duration-300 hover:scale-105 hover:shadow-aubergine-500/50"
+          className="group fixed bottom-4 right-[68px] z-50 grid size-11 place-items-center rounded-sm border border-academic-navy-deep bg-academic-gold text-academic-navy-deep transition-colors duration-150 hover:bg-academic-coral"
           title="AI School Assistant"
         >
           <Sparkles className="h-5 w-5 transition-transform duration-300 group-hover:rotate-12" />
@@ -107,15 +107,15 @@ export default function AIAssistantWidget() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 400 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-slate-200/70 bg-white shadow-2xl dark:border-slate-800 dark:bg-canvas sm:max-w-[420px]"
+            className="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-border bg-card dark:bg-background sm:max-w-[420px]"
           >
             {/* Top accent bar (app aubergine → pink) */}
-            <div className="h-1 w-full shrink-0 bg-gradient-to-r from-aubergine-600 to-fuchsia-500" />
+            <div className="h-1 w-full shrink-0 bg-academic-gold" />
 
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
-                <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-tr from-aubergine-600 to-fuchsia-500 text-white shadow-sm shadow-aubergine-500/30">
+                <div className="grid size-9 place-items-center rounded-sm bg-academic-gold text-academic-navy-deep">
                   <Sparkles className="h-[18px] w-[18px]" />
                 </div>
                 <div>
@@ -151,7 +151,7 @@ export default function AIAssistantWidget() {
               {messages.length === 0 ? (
                 <div className="flex h-full flex-col justify-center space-y-5 px-1 py-6">
                   <div className="text-center">
-                    <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-tr from-aubergine-600 to-fuchsia-500 text-white shadow-lg shadow-aubergine-500/30">
+                    <div className="mx-auto grid size-14 place-items-center rounded-sm bg-academic-gold text-academic-navy-deep">
                       <Sparkles className="h-7 w-7" />
                     </div>
                     <h4 className="mt-3 text-base font-bold text-slate-900 dark:text-white">Hi {firstName} 👋</h4>
@@ -176,7 +176,7 @@ export default function AIAssistantWidget() {
                 messages.map((m) => (
                   <div key={m.id} className={`flex items-start gap-2.5 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                     {m.role === "assistant" && (
-                      <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-gradient-to-tr from-aubergine-600 to-fuchsia-500 text-white shadow-sm">
+                      <div className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-sm bg-academic-gold text-academic-navy-deep">
                         <Sparkles className="h-3.5 w-3.5" />
                       </div>
                     )}
@@ -215,7 +215,7 @@ export default function AIAssistantWidget() {
 
               {loading && (
                 <div className="flex items-start gap-2.5 justify-start">
-                  <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-gradient-to-tr from-aubergine-600 to-fuchsia-500 text-white shadow-sm">
+                  <div className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-sm bg-academic-gold text-academic-navy-deep">
                     <Sparkles className="h-3.5 w-3.5 animate-pulse" />
                   </div>
                   <div className="flex items-center gap-2 rounded-2xl rounded-tl-md bg-aubergine-50 px-3.5 py-2.5 text-xs text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
@@ -233,7 +233,7 @@ export default function AIAssistantWidget() {
 
             {/* Composer */}
             <div className="border-t border-slate-100 p-3 dark:border-slate-800">
-              <div className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 pl-3 shadow-sm transition-colors focus-within:border-aubergine-400 focus-within:ring-1 focus-within:ring-aubergine-400 dark:border-slate-800 dark:bg-canvas">
+              <div className="flex items-end gap-2 rounded-sm border border-input bg-card p-1.5 pl-3 transition-colors focus-within:border-academic-teal focus-within:ring-2 focus-within:ring-academic-teal/25 dark:bg-background">
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}

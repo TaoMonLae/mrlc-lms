@@ -16,7 +16,7 @@ import {
   useSidebar
 } from "@/components/ui/sidebar";
 import { NAVIGATION_ITEMS, ROLE_NAV, isNavGroup } from "@/src/lib/navigation";
-import { GraduationCap, LogOut, User, ChevronDown } from "lucide-react";
+import { LogOut, User, ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -115,27 +115,27 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="bg-academic-navy-deep text-white/80 border-r border-white/10 [&>[data-slot=sidebar-inner]]:bg-[linear-gradient(180deg,#0c2538_0%,#102d42_55%,#0b2233_100%)] [&>[data-slot=sidebar-inner]]:text-white/80" aria-label="Main application navigation">
-      <SidebarHeader className="h-16 flex items-center px-6 border-b border-white/10 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+    <Sidebar collapsible="icon" className="border-r border-academic-navy bg-academic-navy-deep text-white/75 [&>[data-slot=sidebar-inner]]:bg-academic-navy-deep [&>[data-slot=sidebar-inner]]:text-white/75" aria-label="Main application navigation">
+      <SidebarHeader className="flex h-[72px] items-center border-b border-white/15 px-5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
         <div className="flex items-center gap-3 font-semibold group-data-[collapsible=icon]:gap-0">
           {brandingSettings.logoUrl ? (
-            <img src={brandingSettings.logoUrl} alt={schoolProfile.shortName} className="h-8 w-8 object-contain shrink-0" />
+            <img src={brandingSettings.logoUrl} alt={schoolProfile.shortName} className="size-10 shrink-0 bg-white object-contain p-0.5" />
           ) : (
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white font-bold text-lg" style={{ backgroundColor: brandingSettings.primaryColor }}>
+            <div className="flex size-10 shrink-0 items-center justify-center border border-white/30 bg-white text-base font-bold text-academic-navy-deep">
               {schoolProfile.name.charAt(0)}
             </div>
           )}
-          <div className="flex flex-col gap-0.5 leading-tight transition-all duration-300 overflow-hidden group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0">
-            <span className="text-[10px] font-bold text-white tracking-tight uppercase leading-tight line-clamp-2 max-w-[150px]">{schoolProfile.name}</span>
-            <span className="text-[10px] font-bold text-white/55 tracking-tight uppercase leading-none">{schoolProfile.shortName}</span>
+          <div className="flex flex-col gap-1 overflow-hidden leading-tight transition-all duration-200 group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0">
+            <span className="line-clamp-2 max-w-[155px] text-[11px] font-semibold uppercase leading-[1.12] tracking-[0.035em] text-white">{schoolProfile.name}</span>
+            <span className="text-[10px] font-medium uppercase leading-none tracking-[0.1em] text-academic-gold">{schoolProfile.shortName}</span>
           </div>
         </div>
       </SidebarHeader>
-      <SidebarContent className="px-3 py-4 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:items-center">
+      <SidebarContent className="px-3 py-5 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-2">
         <SidebarGroup className="group-data-[collapsible=icon]:p-0">
-          <SidebarGroupLabel className="group-data-[collapsible=icon]:opacity-0 text-white/50 text-[10px] uppercase font-bold tracking-widest px-3 mb-2">Main Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className="mb-3 px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/45 group-data-[collapsible=icon]:opacity-0">School operations</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
+            <SidebarMenu className="space-y-0.5">
               {groupedNav && (sidebarState === 'expanded' || isMobile) ? (
                 // ── Grouped navigation (admin / teacher / student) ────────
                 groupedNav.map((entry) => {
@@ -146,10 +146,10 @@ export function AppSidebar() {
                           render={<Link to={entry.url} onClick={closeOnMobile} />}
                           isActive={isPathActive(entry.url)}
                           tooltip={entry.title}
-                          className="h-10 rounded-xl hover:bg-white/10 hover:text-white data-[active=true]:bg-white/12 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#f2b84b] transition-colors duration-200"
+                          className="h-10 rounded-sm border border-transparent px-2.5 text-white/72 transition-colors duration-150 hover:border-white/15 hover:bg-white/8 hover:text-white data-[active=true]:border-white data-[active=true]:bg-white data-[active=true]:text-academic-navy-deep"
                         >
-                          <entry.icon className="h-4 w-4 opacity-70" />
-                          <span className="text-sm font-medium">{entry.title}</span>
+                          <entry.icon className="size-4 opacity-75" />
+                          <span className="text-[13px] font-medium">{entry.title}</span>
                           {navBadgeCount(entry.url) > 0 && (
                             <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
                               {navBadgeCount(entry.url) > 99 ? '99+' : navBadgeCount(entry.url)}
@@ -165,24 +165,24 @@ export function AppSidebar() {
                     <SidebarMenuItem key={entry.label}>
                       <SidebarMenuButton
                         onClick={() => toggleGroup(entry.label, containsActive)}
-                        className="h-10 rounded-xl hover:bg-white/10 hover:text-white transition-colors duration-200"
+                        className="h-10 rounded-sm border border-transparent px-2.5 text-white/72 transition-colors duration-150 hover:border-white/15 hover:bg-white/8 hover:text-white"
                         aria-expanded={open}
                       >
-                        <entry.icon className="h-4 w-4 opacity-70" />
-                        <span className="text-sm font-medium">{entry.label}</span>
+                        <entry.icon className="size-4 opacity-75" />
+                        <span className="text-[13px] font-medium">{entry.label}</span>
                         <ChevronDown className={`ml-auto h-4 w-4 opacity-60 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
                       </SidebarMenuButton>
                       {open && (
-                        <SidebarMenuSub className="border-white/15 mx-0 ml-5 pl-2.5 pr-0">
+                        <SidebarMenuSub className="mx-0 ml-5 border-white/15 pl-2.5 pr-0">
                           {entry.items.map((item) => (
                             <SidebarMenuSubItem key={item.url + item.title}>
                               <SidebarMenuSubButton
                                 render={<Link to={item.url} onClick={closeOnMobile} />}
                                 isActive={isPathActive(item.url)}
-                                className="h-9 rounded-lg text-white/70 hover:bg-white/10 hover:text-white data-active:bg-white/12 data-active:text-white data-[active=true]:bg-white/12 data-[active=true]:text-white data-[active=true]:shadow-[inset_2px_0_0_#f2b84b] [&_svg]:text-white/50"
+                                className="h-9 rounded-sm border border-transparent text-white/65 hover:border-white/10 hover:bg-white/8 hover:text-white data-[active=true]:border-white/20 data-[active=true]:bg-white/12 data-[active=true]:text-academic-gold [&_svg]:text-white/45"
                               >
                                 <item.icon className="h-3.5 w-3.5" />
-                                <span className="text-sm font-medium">{item.title}</span>
+                                <span className="text-[13px] font-medium">{item.title}</span>
                                 {navBadgeCount(item.url) > 0 && (
                                   <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
                                     {navBadgeCount(item.url) > 99 ? '99+' : navBadgeCount(item.url)}
@@ -207,10 +207,10 @@ export function AppSidebar() {
                       render={<Link to={item.url} onClick={closeOnMobile} />}
                       isActive={isPathActive(item.url)}
                       tooltip={item.title}
-                      className="h-10 rounded-xl hover:bg-white/10 hover:text-white data-[active=true]:bg-white/12 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#f2b84b] transition-colors duration-200"
+                      className="h-10 rounded-sm border border-transparent px-2.5 text-white/72 transition-colors duration-150 hover:border-white/15 hover:bg-white/8 hover:text-white data-[active=true]:border-white data-[active=true]:bg-white data-[active=true]:text-academic-navy-deep"
                     >
-                      <item.icon className="h-4 w-4 opacity-70" />
-                      <span className="text-sm font-medium">{item.title}</span>
+                      <item.icon className="size-4 opacity-75" />
+                      <span className="text-[13px] font-medium">{item.title}</span>
                       {navBadgeCount(item.url) > 0 && (
                         <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white group-data-[collapsible=icon]:hidden">
                           {navBadgeCount(item.url) > 99 ? '99+' : navBadgeCount(item.url)}
@@ -224,9 +224,9 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-4 border-t border-white/10 group-data-[collapsible=icon]:p-2">
+      <SidebarFooter className="border-t border-white/15 p-3 group-data-[collapsible=icon]:p-2">
         <DropdownMenu>
-          <DropdownMenuTrigger render={<SidebarMenuButton size="lg" className="h-12 w-full justify-start gap-3 px-2 hover:bg-white/10 transition-all duration-200 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:gap-0" aria-label="Open user menu" />} nativeButton={true}>
+          <DropdownMenuTrigger render={<SidebarMenuButton size="lg" className="h-12 w-full justify-start gap-3 rounded-sm border border-transparent px-2 transition-colors duration-150 hover:border-white/15 hover:bg-white/8 group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0" aria-label="Open user menu" />} nativeButton={true}>
               <Avatar className="h-9 w-9 shrink-0 rounded-full border border-white/20 bg-white/15 group-data-[collapsible=icon]:h-7 group-data-[collapsible=icon]:w-7">
                 <AvatarImage src={user?.profilePhotoUrl || undefined} />
                 <AvatarFallback className="bg-white/15 text-white">

@@ -1,41 +1,23 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AlertCircle, Eye, EyeOff, LoaderCircle, ShieldCheck } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { Link, useLocation, useNavigate } from "react-router";
+import * as z from "zod";
+import Auth1 from "@/components/blocks/auth-1";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  GraduationCap,
-  User as UserIcon,
-  Lock,
-  Eye,
-  EyeOff,
-  LogIn,
-  HelpCircle,
-  Users,
-  BookOpen,
-  ShieldCheck,
-  AlertCircle,
-} from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router";
-import { motion } from "motion/react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useAuth } from "../providers/AuthProvider";
-import DotGrid from "@/components/DotGrid";
 import { safeAppReturnPath } from "@/shared/accountAccess";
+import { useAuth } from "../providers/AuthProvider";
 
-// Accepts either an email address or a username so the same field can log
-// people in either way.
 const loginSchema = z.object({
-  identifier: z.string().trim().min(1, "Please enter your email or username"),
-  password: z.string().min(1, "Password is required"),
+  identifier: z.string().trim().min(1, "Enter your email or username."),
+  password: z.string().min(1, "Enter your password."),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-// The login background comes from Settings → Branding (loginHeroUrl). As a
-// fallback, a file at public/login-hero.jpg is used; otherwise a branded
-// gradient is shown.
-const HERO_FALLBACK = "/login-hero.jpg";
+const DEFAULT_HERO = "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=86&w=1800";
 
 export default function LoginPage() {
   const location = useLocation();
@@ -43,365 +25,257 @@ export default function LoginPage() {
   const { login } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [schoolName, setSchoolName] = useState<string>("Mon Refugee Learning Centre");
+  const [schoolName, setSchoolName] = useState("Mon Refugee Learning Centre");
   const [contactEmail, setContactEmail] = useState<string | null>(null);
   const [contactPhone, setContactPhone] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  const [heroUrl, setHeroUrl] = useState<string>(HERO_FALLBACK);
-  const [heroOk, setHeroOk] = useState(false);
+  const [heroUrl, setHeroUrl] = useState(DEFAULT_HERO);
+  const [heroReady, setHeroReady] = useState(false);
   const [mfaRequired, setMfaRequired] = useState(false);
   const [mfaCode, setMfaCode] = useState("");
 
-  // Pull the school's branding (logo + name + contact + login background) from
-  // the public endpoint.
   useEffect(() => {
     fetch(`/api/public/branding?t=${Date.now()}`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
+      .then((response) => (response.ok ? response.json() : null))
       .then((data) => {
         if (data?.logoUrl) setLogoUrl(data.logoUrl);
         if (data?.name) setSchoolName(data.name);
         if (data?.contactEmail) setContactEmail(data.contactEmail);
         if (data?.contactPhone) setContactPhone(data.contactPhone);
-        setHeroUrl(data?.loginHeroUrl || HERO_FALLBACK);
+        setHeroUrl(data?.loginHeroUrl || DEFAULT_HERO);
       })
-      .catch(() => {/* keep defaults */});
+      .catch(() => {
+        setHeroUrl(DEFAULT_HERO);
+      });
   }, []);
 
-  // Probe whichever hero image we ended up with so a 404 doesn't show a broken
-  // graphic — fall back to the gradient if it can't load.
   useEffect(() => {
-    if (!heroUrl) {
-      setHeroOk(false);
-      return;
-    }
-    const img = new Image();
-    img.onload = () => setHeroOk(true);
-    img.onerror = () => setHeroOk(false);
-    img.src = heroUrl;
+    const image = new Image();
+    image.onload = () => setHeroReady(true);
+    image.onerror = () => {
+      setHeroReady(false);
+      if (heroUrl !== DEFAULT_HERO) setHeroUrl(DEFAULT_HERO);
+    };
+    image.src = heroUrl;
   }, [heroUrl]);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-  });
+  } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) });
 
   const onSubmit = async (data: LoginFormValues) => {
     setServerError(null);
+
     if (mfaRequired && mfaCode.trim().length < 6) {
-      setServerError("Enter the 6-digit authentication code or a recovery code.");
+      setServerError("Enter the 6-digit authentication code or an unused recovery code.");
       return;
     }
+
     const result = await login(data.identifier, data.password, rememberMe, mfaCode.trim() || undefined);
+
     if (result.mfaRequired && !result.error) {
       setMfaRequired(true);
       requestAnimationFrame(() => document.getElementById("mfa-code")?.focus());
       return;
     }
+
     if (!result.success) {
       if (result.mfaRequired) setMfaRequired(true);
-      setServerError(result.error ?? "Login failed. Please try again.");
-    } else {
-      const returnPath = safeAppReturnPath((location.state as { from?: unknown } | null)?.from);
-      let destination = returnPath || "/dashboard";
-      try {
-        const stored = JSON.parse(sessionStorage.getItem("auth_user") || "{}");
-        if (!returnPath && stored.isExternalLearner) destination = "/games/language-quest";
-        else if (!returnPath && stored.role === "LIBRARIAN") destination = "/books";
-      } catch {
-        /* fall back to the default destination */
-      }
-      navigate(destination, { replace: true });
+      setServerError(result.error ?? "We could not sign you in. Check your details and try again.");
+      return;
     }
+
+    const returnPath = safeAppReturnPath((location.state as { from?: unknown } | null)?.from);
+    let destination = returnPath || "/dashboard";
+
+    try {
+      const stored = JSON.parse(sessionStorage.getItem("auth_user") || "{}");
+      if (!returnPath && stored.isExternalLearner) destination = "/games/language-quest";
+      else if (!returnPath && stored.role === "LIBRARIAN") destination = "/books";
+    } catch {
+      // Keep the safe default destination.
+    }
+
+    navigate(destination, { replace: true });
   };
 
-  const helpHref = contactEmail
-    ? `mailto:${contactEmail}`
-    : contactPhone
-    ? `tel:${contactPhone}`
-    : "#";
-
-  const Logo = (
-    <div className="flex items-center gap-3">
+  const brand = (
+    <Link
+      to="/"
+      aria-label={`${schoolName} home`}
+      className="flex min-w-0 items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
       {logoUrl ? (
         <img
           src={logoUrl}
-          alt={`${schoolName} logo`}
-          className="h-12 w-12 rounded-xl object-contain bg-white/80 ring-1 ring-slate-200 p-1"
+          alt=""
+          width="44"
+          height="44"
+          className="size-11 shrink-0 border border-border bg-white object-contain p-1"
           onError={() => setLogoUrl(null)}
         />
       ) : (
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-700 text-white shadow-lg shadow-blue-700/20">
-          <GraduationCap className="h-7 w-7" />
-        </div>
+        <span className="grid size-11 shrink-0 place-items-center bg-academic-navy-deep text-base font-semibold text-white">M</span>
       )}
-      <div className="leading-tight">
-        <p className="text-sm font-extrabold uppercase tracking-tight text-slate-900">{schoolName}</p>
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-700">GED School LMS Portal</p>
-      </div>
+      <span className="min-w-0 leading-tight">
+        <span className="block truncate text-sm font-semibold tracking-[-0.01em] text-foreground">{schoolName}</span>
+        <span className="block text-[11px] font-medium tracking-[0.06em] text-academic-teal">GED SCHOOL LMS</span>
+      </span>
+    </Link>
+  );
+
+  const support = contactEmail ? (
+    <a href={`mailto:${contactEmail}`} className="font-semibold text-foreground underline-offset-4 hover:underline">Contact school support</a>
+  ) : contactPhone ? (
+    <a href={`tel:${contactPhone}`} className="font-semibold text-foreground underline-offset-4 hover:underline">Call school support</a>
+  ) : (
+    <Link to="/forgot-password" className="font-semibold text-foreground underline-offset-4 hover:underline">Account help</Link>
+  );
+
+  const footer = (
+    <div className="flex flex-col gap-3 border-t border-border pt-5 text-xs leading-5 text-muted-foreground sm:flex-row sm:items-start sm:justify-between">
+      <p className="flex max-w-[28ch] items-start gap-2">
+        <ShieldCheck className="mt-0.5 size-4 shrink-0 text-academic-teal" aria-hidden="true" />
+        Secure access for MRLC school members and Learning Quest learners.
+      </p>
+      <p>{support}</p>
     </div>
   );
 
   return (
-    <div className="flex min-h-screen w-full bg-slate-100 font-sans lg:h-screen lg:overflow-hidden">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-50">
-        Skip to main content
+    <Auth1
+      brand={brand}
+      footer={footer}
+      heroAlt={`${schoolName} learning community`}
+      heroReady={heroReady}
+      heroSrc={heroUrl}
+    >
+      <a href="#login-form" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-background focus:px-4 focus:py-3 focus:text-foreground focus:shadow-lg">
+        Skip to sign in
       </a>
 
-      {/* Left: hero photo (branded gradient fallback). Hidden on small screens. */}
-      <div className="relative hidden lg:block lg:w-1/2 lg:h-screen">
-        {heroOk ? (
-          <img src={heroUrl} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-blue-200 via-slate-200 to-emerald-100" />
-        )}
-        {/* Subtle darken at the bottom for the overlaid tagline */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-10">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-semibold text-white drop-shadow">
-            <span className="flex items-center gap-2"><GraduationCap className="h-4 w-4" /> Quality Education</span>
-            <span className="hidden h-4 w-px bg-white/40 sm:block" />
-            <span className="flex items-center gap-2"><Users className="h-4 w-4" /> Community Support</span>
-            <span className="hidden h-4 w-px bg-white/40 sm:block" />
-            <span className="flex items-center gap-2"><BookOpen className="h-4 w-4" /> Bright Futures</span>
-          </div>
-        </div>
+      <div className="mb-8">
+        <p className="text-xs font-semibold tracking-[0.08em] text-academic-teal">
+          {mfaRequired ? "ONE MORE STEP" : "SECURE SCHOOL ACCESS"}
+        </p>
+        <h1 className="mt-3 text-balance text-4xl font-semibold leading-[1.03] tracking-[-0.035em] sm:text-5xl">
+          {mfaRequired ? "Check your authenticator." : "Sign in to your school day."}
+        </h1>
+        <p className="mt-4 max-w-md text-pretty text-sm leading-6 text-muted-foreground sm:text-base">
+          {mfaRequired
+            ? "Enter the current code from your authenticator app. You can also use one unused recovery code."
+            : "Use your school email or username to open classes, records and Language Quest."}
+        </p>
       </div>
 
-      {/* Right: scrollable content pane that always fits the viewport */}
-      <main
-        id="main-content"
-        role="main"
-        className="relative flex w-full flex-col lg:w-1/2 lg:h-screen lg:overflow-y-auto"
-      >
-        {/* Decorative interactive background, bounded to this panel only
-            (fixed height on desktop, ordinary form-length content on
-            mobile — not an unbounded/growing feed) so it never has to
-            resize against a runaway height. Sits behind everything and
-            is pointer-events-none so it can't intercept clicks on the
-            form above it. The left-hand photo panel is left untouched
-            since that's the admin-configurable branding image. */}
-        <div className="pointer-events-none absolute inset-0 -z-10 opacity-90">
-          <DotGrid
-            dotSize={4}
-            gap={26}
-            baseColor="#aec2e8"
-            activeColor="#1d4ed8"
-            proximity={140}
-            shockRadius={200}
-            shockStrength={3}
+      <form id="login-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate aria-busy={isSubmitting}>
+        {serverError && (
+          <div className="flex items-start gap-3 border border-destructive/35 bg-destructive/10 px-4 py-3 text-sm leading-5 text-destructive" role="alert" aria-live="polite">
+            <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <span>{serverError}</span>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <label htmlFor="identifier" className="block text-sm font-semibold">Email or username</label>
+          <Input
+            id="identifier"
+            type="text"
+            autoComplete="username"
+            spellCheck={false}
+            placeholder="Enter your school email or username…"
+            aria-invalid={Boolean(errors.identifier)}
+            aria-describedby={errors.identifier ? "identifier-error" : undefined}
+            className="h-12 rounded-sm border-input bg-background px-4 text-base shadow-none focus-visible:border-academic-teal focus-visible:ring-academic-teal/25"
+            {...register("identifier")}
           />
+          {errors.identifier && <p id="identifier-error" className="text-xs font-medium text-destructive" role="alert">{errors.identifier.message}</p>}
         </div>
 
-        {/* Logo */}
-        <header className="flex items-center justify-center px-6 pt-6 sm:justify-end sm:px-10 sm:pt-8">
-          {Logo}
-        </header>
-
-        {/* Centered hero + card */}
-        <div className="flex flex-1 items-center justify-center px-6 py-6 sm:px-10">
-          <div className="w-full max-w-md">
-            {/* Hero text */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="mb-6 hidden sm:block"
-            >
-              <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight xl:text-5xl">
-                <span className="block text-blue-700">Learn.</span>
-                <span className="block text-emerald-700">Grow.</span>
-                <span className="block text-blue-700">Achieve.</span>
-              </h1>
-              <div className="mt-4 h-1 w-12 rounded-full bg-blue-700" />
-              <p className="mt-4 max-w-sm text-sm font-medium text-slate-600">
-                Empowering refugee learners through quality education and accessible
-                learning every day.
-              </p>
-            </motion.div>
-
-            {/* Login card */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.97 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, delay: 0.1 }}
-              className="w-full rounded-2xl border border-slate-200/70 bg-white p-6 shadow-2xl shadow-slate-400/20 sm:p-8"
-            >
-              <div className="text-center">
-                <h2 className="text-2xl font-extrabold text-blue-800">Welcome Back</h2>
-                <p className="mt-1 text-sm font-medium text-slate-600">Access your GED Learning Portal</p>
-              </div>
-
-              <form onSubmit={handleSubmit(onSubmit)} className="mt-5 space-y-4" noValidate>
-                {serverError && (
-                  <div
-                    className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-                    role="alert"
-                    aria-live="polite"
-                  >
-                    <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    <span>{serverError}</span>
-                  </div>
-                )}
-
-                {/* Email or Username */}
-                <div className="space-y-1.5">
-                  <label htmlFor="identifier" className="sr-only">Email or username</label>
-                  <div className="relative">
-                    <UserIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-                    <Input
-                      id="identifier"
-                      type="text"
-                      placeholder="Enter your email or username"
-                      autoComplete="username"
-                      aria-invalid={!!errors.identifier}
-                      aria-describedby={errors.identifier ? "identifier-error" : undefined}
-                      className="h-12 border-slate-200 bg-slate-50/70 pl-10 text-slate-900 placeholder:text-slate-400 focus:bg-white dark:bg-slate-50/70 dark:border-slate-200 dark:text-slate-900"
-                      {...register("identifier")}
-                    />
-                  </div>
-                  {errors.identifier && (
-                    <p id="identifier-error" className="text-xs font-medium text-red-500" role="alert">{errors.identifier.message}</p>
-                  )}
-                </div>
-
-                {/* Password */}
-                <div className="space-y-1.5">
-                  <label htmlFor="password" className="sr-only">Password</label>
-                  <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
-                      autoComplete="current-password"
-                      aria-invalid={!!errors.password}
-                      aria-describedby={errors.password ? "password-error" : undefined}
-                      className="h-12 border-slate-200 bg-slate-50/70 px-10 text-slate-900 placeholder:text-slate-400 focus:bg-white dark:bg-slate-50/70 dark:border-slate-200 dark:text-slate-900"
-                      {...register("password")}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((s) => !s)}
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  {errors.password && (
-                    <p id="password-error" className="text-xs font-medium text-red-500" role="alert">{errors.password.message}</p>
-                  )}
-                </div>
-
-                {mfaRequired && (
-                  <div className="space-y-1.5">
-                    <label htmlFor="mfa-code" className="text-sm font-semibold text-slate-700">Authentication code</label>
-                    <div className="relative">
-                      <ShieldCheck className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
-                      <Input
-                        id="mfa-code"
-                        value={mfaCode}
-                        onChange={(event) => setMfaCode(event.target.value)}
-                        placeholder="6-digit code or recovery code"
-                        autoComplete="one-time-code"
-                        inputMode="text"
-                        className="h-12 border-slate-200 bg-slate-50/70 pl-10 text-slate-900 placeholder:text-slate-500 focus:bg-white dark:bg-slate-50/70 dark:border-slate-200 dark:text-slate-900"
-                      />
-                    </div>
-                    <p className="text-xs text-slate-600">Open your authenticator app, or enter one unused recovery code.</p>
-                  </div>
-                )}
-
-                {/* Remember + Forgot */}
-                <div className="flex items-center justify-between">
-                  <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700 select-none">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="h-4 w-4 rounded border-slate-300 text-blue-700 focus:ring-blue-600"
-                    />
-                    Remember me
-                  </label>
-                  <Link to="/forgot-password" className="text-sm font-semibold text-blue-700 hover:text-blue-800 hover:underline">
-                    Forgot Password?
-                  </Link>
-                </div>
-
-                {/* Sign in */}
-                <Button
-                  type="submit"
-                  id="login-submit-btn"
-                  disabled={isSubmitting}
-                  className="h-12 w-full bg-blue-700 text-sm font-bold text-white transition-all hover:bg-blue-800 disabled:opacity-70"
-                  aria-label="Sign in"
-                >
-                  {isSubmitting ? (
-                    <span className="flex items-center gap-2">
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                      Signing in...
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      <LogIn className="h-4 w-4" />
-                      Sign In
-                    </span>
-                  )}
-                </Button>
-
-                <p className="text-center text-sm text-slate-600">
-                  New to Learning Quest?{" "}
-                  <Link to="/signup" state={location.state} className="font-bold text-violet-700 hover:underline">
-                    Create a free learner account
-                  </Link>
-                </p>
-
-                {/* Divider */}
-                <div className="flex items-center gap-3 py-0.5 text-xs font-medium text-slate-600">
-                  <span className="h-px flex-1 bg-slate-200" />
-                  or
-                  <span className="h-px flex-1 bg-slate-200" />
-                </div>
-
-                {/* Help */}
-                <a
-                  href={helpHref}
-                  className="flex h-12 w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-white text-sm font-bold text-blue-700 transition-colors hover:bg-blue-50"
-                >
-                  <HelpCircle className="h-4 w-4" />
-                  Help &amp; Support
-                </a>
-              </form>
-            </motion.div>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-4">
+            <label htmlFor="password" className="block text-sm font-semibold">Password</label>
+            <Link to="/forgot-password" className="text-sm font-semibold text-academic-teal underline-offset-4 hover:underline">Forgot password?</Link>
           </div>
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              placeholder="Enter your password…"
+              aria-invalid={Boolean(errors.password)}
+              aria-describedby={errors.password ? "password-error" : undefined}
+              className="h-12 rounded-sm border-input bg-background px-4 pr-12 text-base shadow-none focus-visible:border-academic-teal focus-visible:ring-academic-teal/25"
+              {...register("password")}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute right-0 top-1/2 grid size-11 -translate-y-1/2 place-items-center text-muted-foreground transition-colors duration-150 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+            >
+              {showPassword ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
+            </button>
+          </div>
+          {errors.password && <p id="password-error" className="text-xs font-medium text-destructive" role="alert">{errors.password.message}</p>}
         </div>
 
-        {/* Footer note */}
-        <footer className="px-6 pb-6 sm:px-10">
-          <div className="text-center sm:text-right">
-            <p className="flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-600 sm:justify-end">
-              <ShieldCheck className="h-4 w-4" /> Secure access for school members and Learning Quest learners
-            </p>
-            {(contactEmail || contactPhone) && (
-              <p className="mt-1 text-sm text-slate-600">
-                Need help?{" "}
-                {contactEmail && (
-                  <a className="font-bold text-blue-700 hover:underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>
-                )}
-                {contactEmail && contactPhone ? <span className="text-slate-600"> &nbsp;•&nbsp; </span> : null}
-                {contactPhone && (
-                  <a className="font-bold text-slate-600 hover:underline" href={`tel:${contactPhone}`}>{contactPhone}</a>
-                )}
-              </p>
-            )}
-            <p className="mt-2 text-[11px] text-slate-400">Developed by Tao Mon Lae</p>
+        {mfaRequired && (
+          <div className="space-y-2 border-y border-border bg-accent/45 px-4 py-4">
+            <label htmlFor="mfa-code" className="block text-sm font-semibold">Authentication code</label>
+            <Input
+              id="mfa-code"
+              value={mfaCode}
+              onChange={(event) => setMfaCode(event.target.value)}
+              placeholder="6-digit or recovery code…"
+              autoComplete="one-time-code"
+              autoCapitalize="none"
+              spellCheck={false}
+              inputMode="text"
+              className="h-12 rounded-sm border-input bg-background px-4 font-mono text-base tracking-[0.08em] shadow-none focus-visible:border-academic-teal focus-visible:ring-academic-teal/25"
+            />
           </div>
-        </footer>
-      </main>
-    </div>
+        )}
+
+        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(event) => setRememberMe(event.target.checked)}
+            className="size-4 rounded-sm border-border accent-academic-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          />
+          Keep me signed in on this device
+        </label>
+
+        <Button
+          type="submit"
+          id="login-submit-btn"
+          disabled={isSubmitting}
+          className="h-12 w-full rounded-sm bg-academic-navy-deep px-6 text-sm font-semibold tracking-[0.015em] text-white transition-[background-color,transform] duration-150 hover:bg-academic-teal active:scale-[0.99] disabled:opacity-70"
+        >
+          {isSubmitting ? (
+            <span className="flex items-center gap-2"><LoaderCircle className="size-4 animate-spin" aria-hidden="true" />Signing in…</span>
+          ) : mfaRequired ? (
+            "Verify & sign in"
+          ) : (
+            "Sign in to MRLC"
+          )}
+        </Button>
+
+        <p className="text-xs leading-5 text-muted-foreground">Using a shared computer? Leave “Keep me signed in” unchecked and sign out when you finish.</p>
+
+        <div className="border-t border-border pt-5">
+          <p className="text-sm text-muted-foreground">
+            New to Language Quest?{" "}
+            <Link to="/signup" state={location.state} className="font-semibold text-foreground underline decoration-academic-gold decoration-2 underline-offset-4 hover:text-academic-teal">
+              Create a free learner account
+            </Link>
+          </p>
+        </div>
+      </form>
+    </Auth1>
   );
 }

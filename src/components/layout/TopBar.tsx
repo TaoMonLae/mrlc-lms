@@ -120,52 +120,51 @@ export function TopBar() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-card/95 px-4 shadow-[0_1px_0_rgba(25,50,77,0.02)] backdrop-blur-xl sm:px-6 md:px-8 gap-2">
-      <div className="flex flex-1 items-center gap-4">
+    <header className="sticky top-0 z-30 flex h-[72px] w-full items-center justify-between gap-3 border-b border-border bg-card px-4 sm:px-6 xl:px-8">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         {canSearch && (
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="relative hidden w-full max-w-md xl:block text-left"
+            className="relative hidden w-full max-w-lg text-left lg:block"
             aria-label="Open search (Ctrl+K)"
           >
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-600 dark:text-slate-300">
-              <Search className="h-5 w-5" />
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
+              <Search className="size-4" />
             </span>
-            <span className="block w-full rounded-xl border border-border bg-background/80 py-2 pl-10 pr-3 text-sm text-slate-600 shadow-inner shadow-slate-900/[0.02] transition-all hover:border-aubergine-400 dark:text-slate-300">
-              Search students, teachers, classes...
+            <span className="block h-10 w-full rounded-sm border border-border bg-background py-2 pl-10 pr-14 text-sm text-muted-foreground transition-colors hover:border-academic-teal">
+              Search school records…
             </span>
-            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md border border-border bg-card px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 shadow-sm dark:text-slate-300">
+            <kbd className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm border border-border bg-card px-2 py-1 text-[10px] font-semibold tracking-[0.08em] text-muted-foreground">
               ⌘K
             </kbd>
           </button>
         )}
-        <div className="flex items-center gap-2 xl:hidden">
+        <div className="flex items-center gap-1 lg:hidden">
           {canSearch && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10"
+              className="size-10 rounded-sm"
               aria-label="Open search"
               onClick={() => setSearchOpen(true)}
             >
               <Search className="h-5 w-5" />
             </Button>
           )}
-          <SidebarTrigger className="bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-surface-raised dark:text-slate-300 md:hidden" aria-label="Toggle sidebar navigation" />
+          <SidebarTrigger className="size-10 rounded-sm border border-border bg-card text-foreground hover:bg-muted md:hidden" aria-label="Toggle sidebar navigation" />
         </div>
       </div>
 
-      <div className="flex items-center gap-1 sm:gap-3">
+      <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         {/* Time and Date Display */}
-        <div className="hidden xl:flex items-center gap-3 px-3 py-1.5 rounded-xl bg-background/80 border border-border">
-          <Calendar className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+        <div className="hidden h-10 items-center divide-x divide-border border border-border bg-background xl:flex">
+          <span className="flex h-full items-center gap-2 px-3 text-xs font-semibold uppercase tracking-[0.055em] text-foreground">
+          <Calendar className="size-4 text-academic-teal" />
             {format(currentTime, 'EEEE, MMM d, yyyy')}
           </span>
-          <span className="h-1 w-px bg-slate-300 dark:bg-white/20"></span>
-          <Clock className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <span className="flex h-full items-center gap-2 px-3 font-mono text-xs font-semibold text-foreground">
+          <Clock className="size-4 text-academic-teal" />
             {format(currentTime, 'HH:mm:ss')}
           </span>
         </div>
@@ -178,7 +177,7 @@ export function TopBar() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-raised rounded-full transition-colors"
+                className="size-10 rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground"
                 aria-label="Toggle theme between light and dark mode"
               />
             }
@@ -211,7 +210,7 @@ export function TopBar() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative h-10 w-10 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-raised rounded-full transition-colors hidden sm:flex"
+                className="relative hidden size-10 rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground sm:flex"
                 aria-label={`View ${unreadCount} unread notifications`}
               />
             }
@@ -219,7 +218,7 @@ export function TopBar() {
           >
             <Bell className="h-5 w-5" />
             {unreadCount > 0 && (
-              <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
+              <span className="absolute right-2 top-2 size-2 rounded-full bg-academic-coral ring-2 ring-card" />
             )}
           </DropdownMenuTrigger>
 

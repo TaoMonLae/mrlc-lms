@@ -32,9 +32,9 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
-  /* ─── Webflow-inspired brand palette ─────────────────────────────── */
-  /* Existing aubergine utility names are retained for compatibility, but now
-     resolve to the calm teal ramp used for interactive accents. */
+  /* ─── MRLC School Operations Fieldbook ───────────────────────────── */
+  /* Existing aubergine utility names remain as compatibility aliases, but
+     resolve to the fieldbook teal used only for links and active controls. */
   --color-aubergine-50: #eef8f6;
   --color-aubergine-100: #dcefeb;
   --color-aubergine-200: #bde0db;
@@ -53,6 +53,11 @@
   --color-academic-gold: #f2b84b;
   --color-academic-coral: #e97961;
   --color-academic-sky: #4e91bd;
+  --color-fieldbook-paper: #f0f1ec;
+  --color-fieldbook-sheet: #ffffff;
+  --color-fieldbook-rule: #cfd5d2;
+  --color-fieldbook-ink: #101b27;
+  --color-fieldbook-priority: #e97961;
 
   /* Pink — second accent (legacy "magenta" names). 500 = #ed52cb */
   --color-magenta-50: #fdeef9;
@@ -125,26 +130,26 @@
 
 @layer base {
   :root {
-    --background: #f5f7fa;
-    --foreground: #172033;
+    --background: #f0f1ec;
+    --foreground: #101b27;
     --card: #ffffff;
     --card-foreground: #172033;
     --popover: #ffffff;
     --popover-foreground: #172033;
-    --primary: #19324d;
-    --primary-foreground: #ffffff;
-    --secondary: #edf2f5;
+    --primary: #f2b84b;
+    --primary-foreground: #0c2538;
+    --secondary: #e5e8e3;
     --secondary-foreground: #19324d;
-    --muted: #edf2f5;
-    --muted-foreground: #627387;
-    --accent: #e6f3f1;
+    --muted: #e5e8e3;
+    --muted-foreground: #5d6a72;
+    --accent: #dcefeb;
     --accent-foreground: #126a65;
     --destructive: #d65445;
     --destructive-foreground: #ffffff;
-    --border: #dce3ea;
-    --input: #d5dee7;
+    --border: #cfd5d2;
+    --input: #c4cbc8;
     --ring: #168c83;
-    --radius: 0.75rem;
+    --radius: 0.25rem;
   }
 
   .dark {
@@ -287,6 +292,7 @@
 
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "@fontsource-variable/ibm-plex-sans";
 @import "@fontsource-variable/geist";
 /* Inter is loaded via a <link> in index.html (a remote @import here is invalid
    because it would not precede the other CSS statements). */
@@ -295,7 +301,7 @@
 
 @theme inline {
     --font-heading: var(--font-sans);
-    --font-sans: 'Inter', 'Geist Variable', system-ui, -apple-system, sans-serif;
+    --font-sans: 'IBM Plex Sans Variable', 'Geist Variable', system-ui, -apple-system, sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -337,31 +343,31 @@
 }
 
 :root {
-    /* Light mode — warm, low-glare academic canvas with navy ink. */
-    --background: #f5f7fa;
-    --foreground: #172033;
+    /* Light mode — the Refero-locked school operations fieldbook. */
+    --background: #f0f1ec;
+    --foreground: #101b27;
     --card: #ffffff;
     --card-foreground: #172033;
     --popover: #ffffff;
     --popover-foreground: #172033;
-    --primary: #19324d;
-    --primary-foreground: #ffffff;
-    --secondary: #edf2f5;
+    --primary: #f2b84b;
+    --primary-foreground: #0c2538;
+    --secondary: #e5e8e3;
     --secondary-foreground: #19324d;
-    --muted: #edf2f5;
-    --muted-foreground: #627387;
-    --accent: #e6f3f1;
+    --muted: #e5e8e3;
+    --muted-foreground: #5d6a72;
+    --accent: #dcefeb;
     --accent-foreground: #126a65;
     --destructive: #d65445;
-    --border: #dce3ea;
-    --input: #d5dee7;
+    --border: #cfd5d2;
+    --input: #c4cbc8;
     --ring: #168c83;
     --chart-1: #168c83;
     --chart-2: #4e91bd;
     --chart-3: #19324d;
     --chart-4: #f2b84b;
     --chart-5: #e97961;
-    --radius: 0.75rem;
+    --radius: 0.25rem;
     --sidebar: #0c2538;
     --sidebar-foreground: #ffffff;
     --sidebar-primary: #168c83;
@@ -370,6 +376,17 @@
     --sidebar-accent-foreground: #ffffff;
     --sidebar-border: rgba(255, 255, 255, 0.12);
     --sidebar-ring: #f2b84b;
+    --rb-accent: #f2b84b;
+    --rb-accent-fg: #0c2538;
+    --rb-radius: 4px;
+    --rb-r-xs: max(0px, calc(var(--rb-radius) - 6px));
+    --rb-r-sm: max(0px, calc(var(--rb-radius) - 4px));
+    --rb-r-md: max(0px, calc(var(--rb-radius) - 2px));
+    --rb-r-lg: var(--rb-radius);
+    --rb-r-xl: calc(var(--rb-radius) + min(2px, var(--rb-radius)));
+    --rb-r-2xl: calc(var(--rb-radius) + min(4px, var(--rb-radius)));
+    --rb-r-3xl: calc(var(--rb-radius) + min(6px, var(--rb-radius)));
+    --rb-r-4xl: calc(var(--rb-radius) + min(8px, var(--rb-radius)));
 }
 
 .dark {
@@ -380,7 +397,7 @@
     --card-foreground: #f4f7fa;
     --popover: #18232f;
     --popover-foreground: #f4f7fa;
-    --primary: #55b7ae;
+    --primary: #f4c86e;
     --primary-foreground: #071c1b;
     --secondary: #22313f;
     --secondary-foreground: #f4f7fa;
@@ -405,6 +422,8 @@
     --sidebar-accent-foreground: #ffffff;
     --sidebar-border: rgba(255, 255, 255, 0.12);
     --sidebar-ring: #f4c86e;
+    --rb-accent: #f4c86e;
+    --rb-accent-fg: #071c1b;
 }
 
 @layer base {
@@ -414,24 +433,42 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-variant-numeric: tabular-nums;
     }
   html {
     @apply font-sans;
     }
 }
 
-/* Subtle depth for the LMS shell without adding visual noise behind content. */
+/* Flat ruled canvas: depth comes from dividers and hierarchy, never blobs. */
 .academic-workspace {
   background-color: var(--background);
-  background-image:
-    radial-gradient(circle at 8% 4%, color-mix(in srgb, #168c83 7%, transparent) 0, transparent 25rem),
-    radial-gradient(circle at 96% 0%, color-mix(in srgb, #f2b84b 8%, transparent) 0, transparent 22rem);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 47px,
+    color-mix(in srgb, var(--border) 28%, transparent) 48px
+  );
 }
 
 .dark .academic-workspace {
-  background-image:
-    radial-gradient(circle at 8% 4%, color-mix(in srgb, #55b7ae 8%, transparent) 0, transparent 28rem),
-    radial-gradient(circle at 96% 0%, color-mix(in srgb, #f2b84b 4%, transparent) 0, transparent 24rem);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 47px,
+    color-mix(in srgb, var(--border) 22%, transparent) 48px
+  );
+}
+
+/* App-wide surface normalization. Legacy pages inherit the fieldbook's flat,
+   ruled geometry while interactive game scenes keep their authored color art. */
+.mrlc-app-shell [data-slot='card'],
+.mrlc-app-shell :is(.shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl) {
+  box-shadow: none;
+}
+
+.mrlc-app-shell :is(.rounded-xl, .rounded-2xl, .rounded-3xl) {
+  border-radius: var(--radius);
 }
 /* ── Myanmar / Mon script support ─────────────────────────────────────────────
    Myanmar script stacks vowel signs and medials above and below the baseline.
