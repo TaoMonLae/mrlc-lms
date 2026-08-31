@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -10,14 +10,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { getTimezones, getCurrencies } from '../../lib/locale';
+import { getCurrencies } from '../../lib/locale';
 import { useSettings } from '../../providers/SettingsProvider';
 import { LANGUAGES } from '../../i18n/catalog';
 import { useI18n } from '../../i18n/I18nProvider';
 
 const systemSchema = z.object({
-  timezone: z.string(),
-  dateFormat: z.string(),
   currency: z.string(),
   defaultLanguage: z.string(),
   fileUploadLimitMb: z.number().min(1).max(100),
@@ -36,7 +34,6 @@ const systemSchema = z.object({
 type FormValues = z.infer<typeof systemSchema>;
 
 export default function SystemSettings() {
-  const timezones = useMemo(() => getTimezones(), []);
   const currencies = useMemo(() => getCurrencies(), []);
   const { systemSettings, updateSystem } = useSettings();
   const { setLang } = useI18n();
@@ -77,41 +74,13 @@ export default function SystemSettings() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         
-        {/* Localization */}
+        {/* Language and currency */}
         <div className="space-y-6">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-             Localization
+             Language & currency
           </h3>
           
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Timezone</Label>
-              <Select value={watch('timezone')} onValueChange={(v: any) => setValue('timezone', v, { shouldDirty: true })}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="max-h-72 min-w-[24rem]">
-                  {timezones.map((tz) => (
-                    <SelectItem key={tz.value} value={tz.value}>{tz.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Date Format</Label>
-              <Select value={watch('dateFormat')} onValueChange={(v: any) => setValue('dateFormat', v, { shouldDirty: true })}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MM/DD/YYYY">MM/DD/YYYY (12/31/2025)</SelectItem>
-                  <SelectItem value="DD/MM/YYYY">DD/MM/YYYY (31/12/2025)</SelectItem>
-                  <SelectItem value="YYYY-MM-DD">YYYY-MM-DD (2025-12-31)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
                <div className="space-y-2">
                  <Label>Currency</Label>

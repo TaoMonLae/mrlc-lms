@@ -1552,7 +1552,11 @@ const schemas = {
     logoUrl: nullableStr, signatureUrl: nullableStr, loginHeroUrl: nullableStr, primaryColor: optStr, accentColor: optStr,
     darkModeDefault: z.union([z.boolean(), z.string()]).optional(),
     reportHeaderStyle: optStr,
-    timezone: optStr, dateFormat: optStr, currency: optStr, defaultLanguage: optStr,
+    timezone: optStr,
+    dateFormat: z.enum(["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"]).optional(),
+    timeFormat: z.enum(["12", "24"]).optional(),
+    clockShowSeconds: z.union([z.boolean(), z.string()]).optional(),
+    currency: optStr, defaultLanguage: optStr,
     fileUploadLimitMb: optNum,
     backupEnabled: z.union([z.boolean(), z.string()]).optional(),
     lockdownBrowserEnabled: z.union([z.boolean(), z.string()]).optional(),
@@ -15266,6 +15270,8 @@ async function startServer() {
     // System / localization
     if (b.timezone !== undefined) data.timezone = b.timezone;
     if (b.dateFormat !== undefined) data.dateFormat = b.dateFormat;
+    if (b.timeFormat !== undefined) data.timeFormat = b.timeFormat;
+    if (b.clockShowSeconds !== undefined) data.clockShowSeconds = parseBoolean(b.clockShowSeconds);
     if (b.currency !== undefined) data.currency = b.currency;
     if (b.defaultLanguage !== undefined) data.defaultLanguage = b.defaultLanguage;
     if (b.fileUploadLimitMb !== undefined) data.fileUploadLimitMb = Number(b.fileUploadLimitMb);

@@ -171,6 +171,7 @@ const SettingsLayout = lazy(() => import("./pages/settings/SettingsLayout"));
 const SchoolSettings = lazy(() => import("./pages/settings/SchoolSettings"));
 const BrandingSettings = lazy(() => import("./pages/settings/BrandingSettings"));
 const SystemSettings = lazy(() => import("./pages/settings/SystemSettings"));
+const ClockDateSettings = lazy(() => import("./pages/settings/ClockDateSettings"));
 const BackupAndRestore = lazy(() => import("./pages/settings/BackupAndRestore"));
 const SystemHealth = lazy(() => import("./pages/settings/SystemHealth"));
 const ExamDataManagement = lazy(() => import("./pages/settings/ExamDataManagement"));
@@ -548,6 +549,7 @@ export default function App() {
                     <Route index element={<Navigate to="/settings/school" replace />} />
                     <Route path="school" element={<SchoolSettings />} />
                     <Route path="branding" element={<BrandingSettings />} />
+                    <Route path="clock-date" element={<ClockDateSettings />} />
                     <Route path="system" element={<SystemSettings />} />
                     <Route path="roles" element={<RolesPermissions />} />
                     <Route path="news-sources" element={<NewsSources />} />

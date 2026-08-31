@@ -1,11 +1,12 @@
 import { Outlet, useLocation, Navigate } from 'react-router';
-import { Activity, Building2, Palette, Settings as SettingsIcon, Shield, DatabaseBackup, Rss, Trash2 } from 'lucide-react';
+import { Activity, Building2, CalendarClock, Palette, Settings as SettingsIcon, Shield, DatabaseBackup, Rss, Trash2 } from 'lucide-react';
 import FieldbookSettingsFrame from '../../../components/blocks/settings-form-1';
 import { usePermissions } from '../../lib/permissions';
 
 const navItems = [
   { label: 'School profile', path: '/settings/school', icon: Building2 },
   { label: 'Branding', path: '/settings/branding', icon: Palette },
+  { label: 'Clock & date', path: '/settings/clock-date', icon: CalendarClock },
   { label: 'System preferences', path: '/settings/system', icon: SettingsIcon },
   { label: 'Roles & permissions', path: '/settings/roles', icon: Shield },
   { label: 'News sources', path: '/settings/news-sources', icon: Rss },

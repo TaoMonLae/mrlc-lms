@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentType, ReactNode } from "react";
+import { useEffect, useRef, type ComponentType, type ReactNode } from "react";
 import { ChevronRight, SlidersHorizontal } from "lucide-react";
 import { Link } from "react-router";
 
@@ -22,6 +22,12 @@ export default function FieldbookSettingsFrame({
   children,
   items,
 }: FieldbookSettingsFrameProps) {
+  const activeItemRef = useRef<HTMLAnchorElement | null>(null);
+
+  useEffect(() => {
+    activeItemRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [activePath]);
+
   return (
     <section className="border border-border bg-card" aria-labelledby="settings-heading">
       <header className="grid border-b border-foreground lg:grid-cols-[minmax(0,1fr)_280px]">
@@ -54,6 +60,7 @@ export default function FieldbookSettingsFrame({
               return (
                 <Link
                   key={item.path}
+                  ref={active ? activeItemRef : undefined}
                   to={item.path}
                   aria-current={active ? "page" : undefined}
                   className={`group flex min-h-11 items-center gap-3 border px-3 py-2 text-left text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:w-full ${

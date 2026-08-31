@@ -53,6 +53,20 @@ The authenticated `@reactbits-pro` registry supplied three starting patterns:
 - `app-sidebar-5` informed the nested, compact navigation hierarchy and active-row behavior; the registry demo was removed after adaptation.
 - `settings-form-1` became the routed fieldbook settings frame and sticky save-state pattern; demo workspace/billing data was removed.
 
+## Clock & date extension
+
+The clock and date control desk extends the same reference lock instead of introducing a second settings aesthetic.
+
+| Decision | Source | Preserved role | MRLC adaptation |
+| --- | --- | --- | --- |
+| Flat, connected settings rows | PostHog + mono | Dividers create hierarchy; cards and shadows do not | Four numbered rows for timezone, time notation, date order and precision |
+| Live proof beside the settings title | Acuity timezone settings | Show the operational consequence of the selected zone | Navy live school-time panel updates as controls change |
+| One regional group for time and date | Skiff Format settings | Related calendar formats stay together with short explanations | Dedicated Clock & date route rather than duplicate fields in System preferences |
+| Account-wide language | DocuSign Regional Settings | Make the scope explicit | Copy states that schedules, attendance, reports and the top bar share the standard |
+| Gold action / teal selection | Existing Fieldbook token lock | Gold is CTA-only; teal marks selection/navigation | Save stays gold; selected date order uses the restrained teal active surface |
+
+Rejected patterns: generic statistic cards, an ornamental analog clock, gradients, oversized toggle tiles, and controls that change only a preview without persisting to the product.
+
 ## System decisions
 
 - Canvas: paper `#f0f1ec` with a restrained 48px horizontal rule.

@@ -1,3 +1,5 @@
+import type { SchoolDateFormat, SchoolTimeFormat } from '../lib/dateTime';
+
 export interface SchoolProfile {
   name: string;
   shortName: string;
@@ -23,7 +25,9 @@ export interface BrandingSettings {
 
 export interface SystemSettings {
   timezone: string;
-  dateFormat: string;
+  dateFormat: SchoolDateFormat;
+  timeFormat: SchoolTimeFormat;
+  clockShowSeconds: boolean;
   currency: string;
   defaultLanguage: string;
   fileUploadLimitMb: number;

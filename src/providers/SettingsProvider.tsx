@@ -37,6 +37,8 @@ const DEFAULT_BRANDING: BrandingSettings = {
 const DEFAULT_SYSTEM: SystemSettings = {
   timezone: 'Asia/Bangkok',
   dateFormat: 'DD/MM/YYYY',
+  timeFormat: '24',
+  clockShowSeconds: true,
   currency: 'MYR',
   defaultLanguage: 'en',
   fileUploadLimitMb: 10,
@@ -97,6 +99,8 @@ function applyServerData(
     ...prev,
     timezone: data.timezone !== undefined ? data.timezone : prev.timezone,
     dateFormat: data.dateFormat !== undefined ? data.dateFormat : prev.dateFormat,
+    timeFormat: data.timeFormat !== undefined ? data.timeFormat : prev.timeFormat,
+    clockShowSeconds: data.clockShowSeconds !== undefined ? data.clockShowSeconds : prev.clockShowSeconds,
     currency: data.currency !== undefined ? data.currency : prev.currency,
     defaultLanguage: data.defaultLanguage !== undefined ? data.defaultLanguage : prev.defaultLanguage,
     fileUploadLimitMb: data.fileUploadLimitMb !== undefined ? data.fileUploadLimitMb : prev.fileUploadLimitMb,
@@ -219,6 +223,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     save({
       timezone: data.timezone,
       dateFormat: data.dateFormat,
+      timeFormat: data.timeFormat,
+      clockShowSeconds: data.clockShowSeconds,
       currency: data.currency,
       defaultLanguage: data.defaultLanguage,
       fileUploadLimitMb: data.fileUploadLimitMb,

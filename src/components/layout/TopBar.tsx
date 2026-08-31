@@ -18,12 +18,15 @@ import { SearchDialog } from "../SearchDialog";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useUser } from "@/src/lib/permissions";
 import { apiGet, apiSend } from "@/src/lib/api";
+import { useSettings } from "@/src/providers/SettingsProvider";
+import { formatSchoolDate, formatSchoolTime, formatSchoolWeekday } from "@/src/lib/dateTime";
 
 type NotificationRow = { id: string; type: string; title: string; message: string; href?: string | null; readAt?: string | null; createdAt: string };
 
 export function TopBar() {
   const { setTheme } = useTheme();
   const { user } = useUser();
+  const { systemSettings } = useSettings();
   const [notifOpen, setNotifOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   // Search covers students/teachers/classes — records only these roles may see.
@@ -161,11 +164,11 @@ export function TopBar() {
         <div className="hidden h-10 items-center divide-x divide-border border border-border bg-background xl:flex">
           <span className="flex h-full items-center gap-2 px-3 text-xs font-semibold uppercase tracking-[0.055em] text-foreground">
           <Calendar className="size-4 text-academic-teal" />
-            {format(currentTime, 'EEEE, MMM d, yyyy')}
+            {formatSchoolWeekday(currentTime, systemSettings.timezone).toUpperCase()} · {formatSchoolDate(currentTime, systemSettings.timezone, systemSettings.dateFormat)}
           </span>
           <span className="flex h-full items-center gap-2 px-3 font-mono text-xs font-semibold text-foreground">
           <Clock className="size-4 text-academic-teal" />
-            {format(currentTime, 'HH:mm:ss')}
+            {formatSchoolTime(currentTime, systemSettings.timezone, systemSettings.timeFormat, systemSettings.clockShowSeconds)}
           </span>
         </div>
 

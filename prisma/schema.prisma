@@ -339,6 +339,8 @@ model SchoolProfile {
   // System / localization
   timezone                      String? @default("Asia/Bangkok")
   dateFormat                    String? @default("DD/MM/YYYY")
+  timeFormat                    String? @default("24")
+  clockShowSeconds              Boolean @default(true)
   currency                      String? @default("THB")
   defaultLanguage               String? @default("en")
   fileUploadLimitMb             Int     @default(10)
