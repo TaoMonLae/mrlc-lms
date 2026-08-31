@@ -10444,11 +10444,11 @@ msgstr "အမှား"
 msgid "Cursor Effects"
 msgstr "မောက်စ်ညွှန်တံ အကျိုးသက်ရောက်မှုများ"
 # Extracted string
-msgid "A fun, purely decorative effect that follows the mouse across the whole app."
-msgstr "အက်ပ်တစ်ခုလုံးတွင် မောက်စ်နောက်သို့ လိုက်ပါသော ပျော်စရာကောင်းပြီး အလှဆင်သက်သက်ဖြစ်သည့် အကျိုးသက်ရောက်မှု။"
+msgid "Official React Bits effects adapted to follow the pointer across the whole app."
+msgstr "အက်ပ်တစ်ခုလုံးတွင် pointer နောက်သို့လိုက်ရန် ပြင်ဆင်ထားသော တရားဝင် React Bits effect များ။"
 # Extracted string
-msgid "Rainbow Trail"
-msgstr "သက်တံရောင်လမ်းကြောင်း"
+msgid "Blob Cursor"
+msgstr "Blob Cursor"
 # Extracted string
 msgid "Splash Cursor (fluid)"
 msgstr "ရေစင်မောက်စ်ပုံစံ (အရည်)"

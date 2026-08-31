@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { TimetableForm } from '@/src/components/timetable/TimetableForm';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, CalendarDays } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
 
@@ -64,25 +64,24 @@ export default function TimetableNew() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
+    <div className="mx-auto max-w-6xl space-y-5 pb-12">
+      <header className="flex items-start gap-4 border-b border-foreground pb-5">
         <Button
-          variant="ghost"
-          size="icon"
+          variant="outline"
+          size="icon-sm"
           render={<Link to={backUrl} />}
           nativeButton={false}
-          className="rounded-full hover:bg-slate-100 dark:hover:bg-surface-raised"
+          className="mt-1 rounded-none border-foreground"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className="h-4 w-4" />
+          <span className="sr-only">Back to timetable</span>
         </Button>
         <div>
-          <div className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-aubergine-600" />
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">New Schedule Item</h1>
-          </div>
-          <p className="text-sm text-slate-500">Add a new subject slot to the weekly timetable.</p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-academic-teal">Timetable / New field entry</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">Publish a schedule item</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Assign the people, place, teaching period, and effective date window.</p>
         </div>
-      </div>
+      </header>
 
       <TimetableForm onSubmit={handleSubmit} isLoading={isLoading} defaultClassId={classId} />
     </div>

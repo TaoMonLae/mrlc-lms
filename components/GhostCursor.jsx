@@ -16,7 +16,7 @@ const GhostCursor = ({
   bloomThreshold = 0.025,
 
   brightness = 1,
-  color = '#B497CF',
+  color = '#B19EEF',
   mixBlendMode = 'screen',
   edgeIntensity = 0,
 
@@ -196,9 +196,9 @@ const GhostCursor = ({
           varying vec2 vUv;
           void main(){
             vec4 c = texture2D(tDiffuse, vUv);
-            float a = max(c.a, 1e-5);
-            vec3 straight = c.rgb / a;
-            gl_FragColor = vec4(clamp(straight, 0.0, 1.0), c.a);
+            float coverage = clamp(max(c.r, max(c.g, c.b)), 0.0, 1.0);
+            vec3 straight = coverage > 1e-5 ? c.rgb / coverage : vec3(0.0);
+            gl_FragColor = vec4(clamp(straight, 0.0, 1.0), coverage);
           }
         `
       }),

@@ -20,7 +20,7 @@ import { MfaSettings } from '@/src/components/profile/MfaSettings';
 const CURSOR_EFFECT_OPTIONS: { value: string; label: string }[] = [
   { value: 'SCHOOL_DEFAULT', label: "Use school default" },
   { value: 'NONE', label: 'None' },
-  { value: 'RAINBOW_TRAIL', label: 'Rainbow Trail' },
+  { value: 'RAINBOW_TRAIL', label: 'Blob Cursor' },
   { value: 'SPLASH_CURSOR', label: 'Splash Cursor (fluid)' },
   { value: 'RIBBONS', label: 'Ribbons' },
   { value: 'GHOST_CURSOR', label: 'Ghost Cursor (smoke trail)' },

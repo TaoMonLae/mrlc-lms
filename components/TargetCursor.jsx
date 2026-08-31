@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { gsap } from 'gsap';
 
 // A position: fixed element is positioned relative to the viewport UNLESS an
@@ -340,6 +341,12 @@ const TargetCursor = ({
       if (activeTarget) {
         cleanupTarget(activeTarget);
       }
+      if (resumeTimeout) {
+        clearTimeout(resumeTimeout);
+      }
+      gsap.killTweensOf(cursor);
+      gsap.killTweensOf(Array.from(cornersRef.current ?? []));
+      if (dotRef.current) gsap.killTweensOf(dotRef.current);
       spinTl.current?.kill();
       document.body.style.cursor = originalCursor;
       isActiveRef.current = false;
@@ -369,38 +376,43 @@ const TargetCursor = ({
     }
   }, [spinDuration, isMobile]);
 
-  if (isMobile) {
+  if (isMobile || typeof document === 'undefined') {
     return null;
   }
 
-  return (
-    <div
-      ref={cursorRef}
-      className="fixed top-0 left-0 w-0 h-0 pointer-events-none z-[9999]"
-      style={{ willChange: 'transform' }}
-    >
+  return createPortal(
+    <>
+      {hideDefaultCursor && <style>{'body, body * { cursor: none !important; }'}</style>}
       <div
-        ref={dotRef}
-        className="absolute top-1/2 left-1/2 w-1 h-1 rounded-full -translate-x-1/2 -translate-y-1/2"
-        style={{ willChange: 'transform', backgroundColor: cursorColor }}
-      />
-      <div
-        className="target-cursor-corner absolute top-1/2 left-1/2 w-3 h-3 border-[3px] -translate-x-[150%] -translate-y-[150%] border-r-0 border-b-0"
-        style={{ willChange: 'transform', borderColor: cursorColor }}
-      />
-      <div
-        className="target-cursor-corner absolute top-1/2 left-1/2 w-3 h-3 border-[3px] translate-x-1/2 -translate-y-[150%] border-l-0 border-b-0"
-        style={{ willChange: 'transform', borderColor: cursorColor }}
-      />
-      <div
-        className="target-cursor-corner absolute top-1/2 left-1/2 w-3 h-3 border-[3px] translate-x-1/2 translate-y-1/2 border-l-0 border-t-0"
-        style={{ willChange: 'transform', borderColor: cursorColor }}
-      />
-      <div
-        className="target-cursor-corner absolute top-1/2 left-1/2 w-3 h-3 border-[3px] -translate-x-[150%] translate-y-1/2 border-r-0 border-t-0"
-        style={{ willChange: 'transform', borderColor: cursorColor }}
-      />
-    </div>
+        ref={cursorRef}
+        aria-hidden="true"
+        className="fixed top-0 left-0 w-0 h-0 pointer-events-none z-[2147483647]"
+        style={{ willChange: 'transform' }}
+      >
+        <div
+          ref={dotRef}
+          className="absolute top-1/2 left-1/2 w-1 h-1 rounded-full -translate-x-1/2 -translate-y-1/2"
+          style={{ willChange: 'transform', backgroundColor: cursorColor }}
+        />
+        <div
+          className="target-cursor-corner absolute top-1/2 left-1/2 w-3 h-3 border-[3px] -translate-x-[150%] -translate-y-[150%] border-r-0 border-b-0"
+          style={{ willChange: 'transform', borderColor: cursorColor }}
+        />
+        <div
+          className="target-cursor-corner absolute top-1/2 left-1/2 w-3 h-3 border-[3px] translate-x-1/2 -translate-y-[150%] border-l-0 border-b-0"
+          style={{ willChange: 'transform', borderColor: cursorColor }}
+        />
+        <div
+          className="target-cursor-corner absolute top-1/2 left-1/2 w-3 h-3 border-[3px] translate-x-1/2 translate-y-1/2 border-l-0 border-t-0"
+          style={{ willChange: 'transform', borderColor: cursorColor }}
+        />
+        <div
+          className="target-cursor-corner absolute top-1/2 left-1/2 w-3 h-3 border-[3px] -translate-x-[150%] translate-y-1/2 border-r-0 border-t-0"
+          style={{ willChange: 'transform', borderColor: cursorColor }}
+        />
+      </div>
+    </>,
+    document.body
   );
 };
 

@@ -1,169 +1,49 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import {
-  BookOpen,
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  Edit,
-  Filter,
-  MapPin,
-  MoreVertical,
-  Plus,
-  Printer,
-  Trash2,
-  User,
+  BookOpen, CalendarDays, ChevronLeft, ChevronRight, Edit, Filter, MapPin,
+  MoreVertical, Plus, Printer, RefreshCw, Trash2, User,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import { usePermissions } from '@/src/lib/permissions';
 import { qs } from '../../lib/api';
+import {
+  TIMETABLE_DAYS, addCalendarDays, formatTimetableDay, formatTimetableRange,
+  isSameLocalDate, layoutTimetableDay, mondayOfWeek, occursOn,
+  timetableEntryTitle, toMinutes, type TimetableEntry,
+} from '../../lib/timetable';
 
-export type DayOfWeek = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
+export type { DayOfWeek, TimetableEntry } from '../../lib/timetable';
 
-export interface TimetableEntry {
-  id: string;
-  classId: string | null;
-  className: string | null;
-  subjectId: string | null;
-  subjectName: string | null;
-  subjectColor: string | null;
-  teacherId: string | null;
-  teacherName: string | null;
-  substituteTeacherId?: string | null;
-  substituteTeacherName?: string | null;
-  academicYear?: string | null;
-  term?: string | null;
-  dayOfWeek: DayOfWeek;
-  startTime: string;
-  endTime: string;
-  room: string | null;
-  scheduleType?: 'CLASS' | 'HOLIDAY' | 'SPECIAL_EVENT' | 'EXAM' | 'MEETING';
-  recurrence?: 'ONCE' | 'WEEKLY' | 'BIWEEKLY';
-  status?: 'ACTIVE' | 'CANCELLED' | 'SUBSTITUTED';
-  cancellationReason?: string | null;
-  effectiveFrom?: string | null;
-  effectiveUntil?: string | null;
-  eventDate?: string | null;
-  notes?: string | null;
+const PX_PER_MINUTE = 1.05;
+
+function scheduleTypeLabel(entry: TimetableEntry) {
+  return (entry.scheduleType || 'CLASS').replaceAll('_', ' ');
 }
 
-const DAYS: DayOfWeek[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-const entryTitle = (entry: TimetableEntry) => {
-  if (entry.scheduleType === 'HOLIDAY') return entry.notes || 'School Holiday';
-  if (entry.scheduleType === 'SPECIAL_EVENT') return entry.notes || 'Special Event';
-  return entry.subjectName || 'Scheduled Period';
-};
-
-const colorClass = (entry: TimetableEntry) => {
-  if (entry.status === 'CANCELLED') return 'bg-slate-500';
-  if (entry.scheduleType === 'HOLIDAY') return 'bg-rose-500';
-  if (entry.scheduleType === 'SPECIAL_EVENT') return 'bg-amber-500';
-  if (entry.scheduleType === 'EXAM') return 'bg-purple-500';
-  if (entry.scheduleType === 'MEETING') return 'bg-cyan-500';
-  return entry.subjectColor || 'bg-blue-500';
-};
-
-const borderPrintClass = (entry: TimetableEntry) => {
-  const bg = colorClass(entry);
-  return bg.replace('bg-', 'print:border-l-') + ' print:border-l-4';
-};
-
-// ── date/time helpers ─────────────────────────────────────────────────────────
-
-/** Minutes since midnight from "HH:mm". */
-const toMin = (t: string) => {
-  const [h, m] = t.split(':').map(Number);
-  return (h || 0) * 60 + (m || 0);
-};
-
-/** Monday of the week containing d (local time). */
-const mondayOf = (d: Date) => {
-  const out = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const dow = (out.getDay() + 6) % 7; // Monday = 0
-  out.setDate(out.getDate() - dow);
-  return out;
-};
-
-const addDays = (d: Date, n: number) => {
-  const out = new Date(d);
-  out.setDate(out.getDate() + n);
-  return out;
-};
-
-const parseLocalDate = (dateVal: string | Date | null | undefined) => {
-  if (!dateVal) return null;
-  const str = typeof dateVal === 'string' ? dateVal : dateVal.toISOString();
-  const [y, m, d] = str.slice(0, 10).split('-').map(Number);
-  return new Date(y, m - 1, d);
-};
-
-const sameLocalDate = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-
-const fmtDay = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-const fmtRange = (a: Date, b: Date) =>
-  `${a.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${b.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-
-/** Should this entry appear on the given calendar date? */
-function occursOn(entry: TimetableEntry, date: Date): boolean {
-  // One-off entries pinned to a date show only on that date.
-  if (entry.eventDate) {
-    const evDate = parseLocalDate(entry.eventDate);
-    return evDate ? sameLocalDate(evDate, date) : false;
-  }
-  if (entry.recurrence === 'ONCE') return true; // legacy one-offs without a date
-
-  // Recurring entries respect their effective window.
-  const from = parseLocalDate(entry.effectiveFrom);
-  const until = parseLocalDate(entry.effectiveUntil);
-  if (from && date < from) return false;
-  if (until && date > until) return false;
-
-  if (entry.recurrence === 'BIWEEKLY' && from) {
-    const diffDays = Math.round((mondayOf(date).getTime() - mondayOf(from).getTime()) / 86_400_000);
-    const weeks = Math.floor(diffDays / 7);
-    return weeks % 2 === 0;
-  }
-  return true;
+function eventTone(entry: TimetableEntry) {
+  if (entry.status === 'CANCELLED') return 'border-academic-coral bg-academic-coral/10 text-foreground';
+  if (entry.status === 'SUBSTITUTED') return 'border-academic-gold bg-academic-gold/14 text-foreground';
+  return 'border-academic-teal bg-card text-foreground';
 }
 
-// ── overlap layout: assign side-by-side lanes to overlapping entries ─────────
-type Positioned = { entry: TimetableEntry; lane: number; lanes: number };
-
-function layoutDay(entries: TimetableEntry[]): Positioned[] {
-  const sorted = [...entries].sort((a, b) => toMin(a.startTime) - toMin(b.startTime) || toMin(a.endTime) - toMin(b.endTime));
-  const out: Positioned[] = [];
-  let cluster: { entry: TimetableEntry; lane: number }[] = [];
-  let clusterEnd = -1;
-
-  const flush = () => {
-    const lanes = cluster.length ? Math.max(...cluster.map((c) => c.lane)) + 1 : 1;
-    for (const c of cluster) out.push({ entry: c.entry, lane: c.lane, lanes });
-    cluster = [];
-  };
-
-  for (const entry of sorted) {
-    const start = toMin(entry.startTime);
-    if (cluster.length && start >= clusterEnd) { flush(); clusterEnd = -1; }
-    // First free lane whose last entry has ended.
-    const laneEnds: number[] = [];
-    for (const c of cluster) laneEnds[c.lane] = Math.max(laneEnds[c.lane] ?? 0, toMin(c.entry.endTime));
-    let lane = 0;
-    while ((laneEnds[lane] ?? 0) > start) lane++;
-    cluster.push({ entry, lane });
-    clusterEnd = Math.max(clusterEnd, toMin(entry.endTime));
-  }
-  flush();
-  return out;
+function currentTimeTop(minHour: number, maxHour: number) {
+  const now = new Date();
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  if (minutes < minHour * 60 || minutes > maxHour * 60) return null;
+  return (minutes - minHour * 60) * PX_PER_MINUTE;
 }
 
 export default function TimetablePage() {
@@ -175,22 +55,27 @@ export default function TimetablePage() {
   const [scheduleType, setScheduleType] = useState('all');
   const [timetable, setTimetable] = useState<TimetableEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [weekStart, setWeekStart] = useState<Date>(() => mondayOf(new Date()));
+  const [weekStart, setWeekStart] = useState(() => mondayOfWeek(new Date()));
+  const [deleteTarget, setDeleteTarget] = useState<TimetableEntry | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const { isAdmin, hasPermission, isTeacher, isStudent } = usePermissions();
 
   const canManage = isAdmin || hasPermission('manage_timetable');
-  const weekDates = useMemo(() => DAYS.map((_, i) => addDays(weekStart, i)), [weekStart]);
-  const isCurrentWeek = sameLocalDate(weekStart, mondayOf(new Date()));
+  const weekDates = useMemo(
+    () => TIMETABLE_DAYS.map((_, index) => addCalendarDays(weekStart, index)),
+    [weekStart],
+  );
+  const isCurrentWeek = isSameLocalDate(weekStart, mondayOfWeek(new Date()));
 
   const loadTimetable = async () => {
     setLoading(true);
     try {
       const token = sessionStorage.getItem('auth_token');
-      const res = await fetch(`/api/timetable${qs({ academicYear, term, status, scheduleType })}`, {
+      const response = await fetch(`/api/timetable${qs({ academicYear, term, status, scheduleType })}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error('Failed to fetch timetable');
-      const data: TimetableEntry[] = await res.json();
+      if (!response.ok) throw new Error('Failed to fetch timetable');
+      const data: TimetableEntry[] = await response.json();
       setTimetable(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching timetable:', error);
@@ -201,23 +86,24 @@ export default function TimetablePage() {
   };
 
   useEffect(() => {
-    loadTimetable();
+    void loadTimetable();
+    // Filters are deliberately applied with the Apply button.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Selector options keyed by stable IDs (names can be missing or duplicated).
   const identifierOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const entry of timetable) {
-      if (viewType === 'teacher') {
-        if (entry.teacherId) map.set(entry.teacherId, entry.teacherName || map.get(entry.teacherId) || 'Unnamed teacher');
-      } else if (viewType === 'room') {
-        if (entry.room) map.set(entry.room, entry.room);
-      } else if (entry.classId) {
-        map.set(entry.classId, entry.className || map.get(entry.classId) || 'Unnamed class');
+    const options = new Map<string, string>();
+    timetable.forEach((entry) => {
+      if (viewType === 'teacher' && entry.teacherId) {
+        options.set(entry.teacherId, entry.teacherName || options.get(entry.teacherId) || 'Unnamed teacher');
+      } else if (viewType === 'room' && entry.room) {
+        options.set(entry.room, entry.room);
+      } else if (viewType === 'class' && entry.classId) {
+        options.set(entry.classId, entry.className || options.get(entry.classId) || 'Unnamed class');
       }
-    }
-    return Array.from(map, ([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label));
+    });
+    return Array.from(options, ([value, label]) => ({ value, label }))
+      .sort((first, second) => first.label.localeCompare(second.label));
   }, [timetable, viewType]);
 
   const filteredTimetable = useMemo(() => {
@@ -227,287 +113,260 @@ export default function TimetablePage() {
       if (viewType === 'room') return entry.room === selectedIdentifier;
       return entry.classId === selectedIdentifier;
     });
-  }, [timetable, selectedIdentifier, viewType, isTeacher, isStudent]);
+  }, [isStudent, isTeacher, selectedIdentifier, timetable, viewType]);
 
-  /** Entries visible on each date of the selected week. */
-  const weekEntries = useMemo(() =>
-    DAYS.map((day, i) =>
-      filteredTimetable.filter((entry) => entry.dayOfWeek === day && occursOn(entry, weekDates[i]))
-    ), [filteredTimetable, weekDates]);
+  const weekEntries = useMemo(
+    () => TIMETABLE_DAYS.map((day, index) => filteredTimetable.filter(
+      (entry) => entry.dayOfWeek === day && occursOn(entry, weekDates[index]),
+    )),
+    [filteredTimetable, weekDates],
+  );
 
-  // Time axis bounds (floor/ceil to the hour, sensible defaults for empty views).
   const allVisible = weekEntries.flat();
-  const minHour = allVisible.length ? Math.floor(Math.min(...allVisible.map((e) => toMin(e.startTime))) / 60) : 8;
-  const maxHour = allVisible.length ? Math.ceil(Math.max(...allVisible.map((e) => toMin(e.endTime))) / 60) : 16;
-  const PX_PER_MIN = 1.2;
-  const gridHeight = Math.max(1, maxHour - minHour) * 60 * PX_PER_MIN;
-  const hours = Array.from({ length: Math.max(1, maxHour - minHour) + 1 }, (_, i) => minHour + i);
+  const minHour = allVisible.length
+    ? Math.max(0, Math.floor(Math.min(...allVisible.map((entry) => toMinutes(entry.startTime))) / 60))
+    : 8;
+  const maxHour = allVisible.length
+    ? Math.min(24, Math.ceil(Math.max(...allVisible.map((entry) => toMinutes(entry.endTime))) / 60))
+    : 16;
+  const gridHeight = Math.max(1, maxHour - minHour) * 60 * PX_PER_MINUTE;
+  const hours = Array.from({ length: Math.max(1, maxHour - minHour) + 1 }, (_, index) => minHour + index);
+  const nowTop = currentTimeTop(minHour, maxHour);
+  const activeCount = allVisible.filter((entry) => entry.status !== 'CANCELLED').length;
+  const exceptionCount = allVisible.filter(
+    (entry) => entry.status !== 'ACTIVE' || (entry.scheduleType && entry.scheduleType !== 'CLASS'),
+  ).length;
+  const classCount = new Set(allVisible.map((entry) => entry.classId).filter(Boolean)).size;
+  const staffCount = new Set(allVisible.flatMap((entry) => [entry.teacherId, entry.substituteTeacherId]).filter(Boolean)).size;
 
-  const handleDelete = async (entryId: string) => {
-    if (!confirm('Delete this timetable slot?')) return;
+  const deleteEntry = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
       const token = sessionStorage.getItem('auth_token');
-      const res = await fetch(`/api/timetable/${entryId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await fetch(`/api/timetable/${deleteTarget.id}`, {
+        method: 'DELETE', headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error('Failed to delete');
-      setTimetable((prev) => prev.filter((entry) => entry.id !== entryId));
+      if (!response.ok) throw new Error('Failed to delete');
+      setTimetable((current) => current.filter((entry) => entry.id !== deleteTarget.id));
+      setDeleteTarget(null);
       toast.success('Timetable slot deleted');
     } catch {
       toast.error('Failed to delete slot');
+    } finally {
+      setDeleting(false);
     }
   };
 
   return (
-    <div className="space-y-6 print:bg-white">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between print:hidden">
+    <div className="mx-auto max-w-[1600px] space-y-5 pb-12 print:max-w-none print:bg-white">
+      <header className="flex flex-col gap-5 border-b border-foreground pb-5 lg:flex-row lg:items-end lg:justify-between print:hidden">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            <CalendarDays className="h-6 w-6 text-aubergine-600" />
-            School Timetable
-          </h1>
-          <p className="text-sm text-slate-500">
-            Weekly class periods, teacher assignments, rooms, holidays, events, substitutions, and cancellations.
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-academic-teal">Academics / Weekly field plan</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">Timetable control desk</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+            Read teaching load, room use, substitutions, and school exceptions on one ruled weekly canvas.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => window.print()}>
-            <Printer className="mr-2 h-4 w-4" />
-            Print / PDF
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button variant="outline" className="rounded-none border-foreground" onClick={() => window.print()}>
+            <Printer className="h-4 w-4" /> Print evidence
           </Button>
           {canManage && (
-            <Button render={<Link to="/timetable/new" />} nativeButton={false}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Slot
+            <Button className="rounded-none" render={<Link to="/timetable/new" />} nativeButton={false}>
+              <Plus className="h-4 w-4" /> Add schedule item
             </Button>
           )}
         </div>
-      </div>
+      </header>
 
       <div className="hidden print:block">
-        <h1 className="text-xl font-bold">MRLC Weekly Timetable</h1>
-        <p className="text-sm">{fmtRange(weekDates[0], weekDates[6])} · {academicYear || 'All years'} · {term || 'All terms'}</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-slate-600">MRLC / Weekly timetable evidence</p>
+        <h1 className="mt-1 text-xl font-semibold">{formatTimetableRange(weekDates[0], weekDates[6])}</h1>
+        <p className="mt-1 text-xs text-slate-600">{academicYear || 'All academic years'} · {term || 'All terms'}</p>
       </div>
 
-      {/* Filters */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-surface-raised dark:bg-surface-indigo print:hidden">
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[auto_1fr_140px_130px_150px_auto]">
-          {!isTeacher && !isStudent && (
-            <div className="flex items-center gap-2 rounded-lg bg-slate-100 p-1 dark:bg-surface-raised">
+      <section className="border border-foreground bg-card print:hidden" aria-label="Timetable controls">
+        {!isTeacher && !isStudent && (
+          <div className="grid border-b border-foreground sm:grid-cols-[180px_1fr]">
+            <div className="flex items-center border-b border-foreground bg-academic-navy-deep px-4 py-3 text-white sm:border-b-0 sm:border-r">
+              <p className="font-mono text-[10px] uppercase tracking-[0.13em] text-[#6dd4cb]">Arrange the week by</p>
+            </div>
+            <div className="grid grid-cols-3">
               {(['class', 'teacher', 'room'] as const).map((mode) => (
-                <Button
-                  key={mode}
-                  variant={viewType === mode ? 'secondary' : 'ghost'}
-                  size="sm"
-                  onClick={() => {
-                    setViewType(mode);
-                    setSelectedIdentifier('');
-                  }}
-                  className="h-8 px-3 text-xs capitalize"
+                <button
+                  key={mode} type="button" aria-pressed={viewType === mode}
+                  onClick={() => { setViewType(mode); setSelectedIdentifier(''); }}
+                  className={`min-h-11 border-r border-border px-3 text-left text-xs font-semibold uppercase tracking-[0.08em] transition-colors last:border-r-0 ${viewType === mode ? 'bg-academic-gold text-academic-navy-deep' : 'bg-card text-muted-foreground hover:bg-muted/45 hover:text-foreground'}`}
                 >
                   {mode}
-                </Button>
+                </button>
               ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {!isTeacher && !isStudent && (
-            <select
-              className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-surface-raised dark:bg-surface-indigo dark:text-white"
-              value={selectedIdentifier}
-              onChange={(event) => setSelectedIdentifier(event.target.value)}
-            >
-              <option value="">All {viewType}s</option>
-              {identifierOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          )}
-
-          <input
-            value={academicYear}
-            onChange={(event) => setAcademicYear(event.target.value)}
-            placeholder="Academic year"
-            className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-surface-raised dark:bg-surface-indigo dark:text-white"
-          />
-          <input
-            value={term}
-            onChange={(event) => setTerm(event.target.value)}
-            placeholder="Term"
-            className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-surface-raised dark:bg-surface-indigo dark:text-white"
-          />
-          <select value={status} onChange={(event) => setStatus(event.target.value)} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-surface-raised dark:bg-surface-indigo dark:text-white">
-            <option value="ACTIVE">Active</option>
-            <option value="SUBSTITUTED">Substituted</option>
-            <option value="CANCELLED">Cancelled</option>
-            <option value="all">All statuses</option>
-          </select>
-          <select value={scheduleType} onChange={(event) => setScheduleType(event.target.value)} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-surface-raised dark:bg-surface-indigo dark:text-white">
-            <option value="all">All types</option>
-            <option value="CLASS">Class periods</option>
-            <option value="EXAM">Exams</option>
-            <option value="MEETING">Meetings</option>
-            <option value="HOLIDAY">Holidays</option>
-            <option value="SPECIAL_EVENT">Special events</option>
-          </select>
-          <Button type="button" variant="outline" onClick={loadTimetable} disabled={loading}>
-            <Filter className="mr-2 h-4 w-4" />
-            Apply
-          </Button>
-        </div>
-      </div>
-
-      {/* Week navigation */}
-      <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-2.5 shadow-sm dark:border-surface-raised dark:bg-surface-indigo print:hidden">
-        <Button variant="ghost" size="sm" onClick={() => setWeekStart(addDays(weekStart, -7))}>
-          <ChevronLeft className="mr-1 h-4 w-4" /> Previous week
-        </Button>
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-slate-900 dark:text-white">{fmtRange(weekDates[0], weekDates[6])}</span>
-          {!isCurrentWeek && (
-            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setWeekStart(mondayOf(new Date()))}>
-              Today
+        <div className="grid gap-px bg-border lg:grid-cols-[minmax(180px,1.15fr)_minmax(150px,.8fr)_minmax(130px,.7fr)_minmax(160px,.9fr)_minmax(170px,1fr)_auto]">
+          {!isTeacher && !isStudent ? (
+            <FilterSelect label={`${viewType} focus`} value={selectedIdentifier || 'all'} onValueChange={(value) => setSelectedIdentifier(value === 'all' ? '' : value)} options={identifierOptions} allLabel={`All ${viewType}s`} />
+          ) : <div className="hidden bg-card lg:block" />}
+          <FilterInput label="Academic year" value={academicYear} onChange={setAcademicYear} placeholder="2026-2027" />
+          <FilterInput label="Term" value={term} onChange={setTerm} placeholder="Term 1" />
+          <FilterSelect label="Status" value={status} onValueChange={setStatus} allLabel="All statuses" options={[
+            { value: 'ACTIVE', label: 'Active' }, { value: 'SUBSTITUTED', label: 'Substituted' }, { value: 'CANCELLED', label: 'Cancelled' },
+          ]} />
+          <FilterSelect label="Schedule type" value={scheduleType} onValueChange={setScheduleType} allLabel="All types" options={[
+            { value: 'CLASS', label: 'Class periods' }, { value: 'EXAM', label: 'Exams' },
+            { value: 'MEETING', label: 'Meetings' }, { value: 'HOLIDAY', label: 'Holidays' },
+            { value: 'SPECIAL_EVENT', label: 'Special events' },
+          ]} />
+          <div className="flex items-end bg-card p-3">
+            <Button className="w-full rounded-none" onClick={() => void loadTimetable()} disabled={loading}>
+              {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Filter className="h-4 w-4" />} Apply records
             </Button>
-          )}
+          </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => setWeekStart(addDays(weekStart, 7))}>
-          Next week <ChevronRight className="ml-1 h-4 w-4" />
-        </Button>
-      </div>
+      </section>
 
-      {/* Desktop: proportional week grid */}
-      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo lg:block print:block print:border-slate-300">
-        <div className="grid grid-cols-[64px_repeat(7,1fr)] border-b border-slate-200 bg-slate-50 text-center text-xs font-bold uppercase tracking-wider text-slate-500 dark:border-surface-raised dark:bg-surface-raised/50">
-          <div className="border-r border-slate-200 p-3 dark:border-surface-raised">Time</div>
-          {DAYS.map((day, i) => {
-            const isToday = sameLocalDate(weekDates[i], new Date());
-            return (
-              <div key={day} className={`border-r border-slate-200 p-2 last:border-r-0 dark:border-surface-raised ${isToday ? 'bg-aubergine-50 dark:bg-aubergine-900/20' : ''}`}>
-                <div className={isToday ? 'text-aubergine-700 dark:text-aubergine-300' : ''}>{day.slice(0, 3)}</div>
-                <div className={`mt-0.5 text-[10px] font-semibold normal-case ${isToday ? 'text-aubergine-600 dark:text-aubergine-400' : 'text-slate-400'}`}>{fmtDay(weekDates[i])}</div>
-              </div>
-            );
-          })}
-        </div>
+      <section className="grid border border-foreground bg-card sm:grid-cols-2 xl:grid-cols-4" aria-label="Week summary">
+        <WeekMeasure label="Published sessions" value={String(activeCount)} note="Active in this date window" />
+        <WeekMeasure label="Classes in view" value={String(classCount)} note={`Grouped by ${viewType}`} />
+        <WeekMeasure label="Teaching staff" value={String(staffCount)} note="Primary and substitute" />
+        <WeekMeasure label="Exceptions" value={String(exceptionCount)} note="Events, exams, substitutions, or cancellations" attention={exceptionCount > 0} />
+      </section>
 
-        {loading ? (
-          <div className="p-10 text-center text-sm text-slate-500">Loading timetable...</div>
-        ) : allVisible.length === 0 ? (
-          <div className="p-10 text-center text-sm text-slate-500">No timetable entries for this week.</div>
-        ) : (
-          <div className="grid grid-cols-[64px_repeat(7,1fr)]">
-            {/* Hour labels */}
-            <div className="relative border-r border-slate-200 dark:border-surface-raised" style={{ height: gridHeight }}>
-              {hours.map((h) => (
-                <div key={h} className="absolute right-2 -translate-y-1/2 text-[10px] font-bold text-slate-400" style={{ top: (h - minHour) * 60 * PX_PER_MIN }}>
-                  {String(h).padStart(2, '0')}:00
-                </div>
-              ))}
+      <section className="timetable-print-area border border-foreground bg-card">
+        <header className="grid border-b border-foreground lg:grid-cols-[1fr_auto]">
+          <div className="flex min-w-0 items-center gap-2 px-3 py-3 sm:px-4">
+            <Button variant="ghost" size="icon-sm" aria-label="Previous week" onClick={() => setWeekStart(addCalendarDays(weekStart, -7))} className="print:hidden"><ChevronLeft /></Button>
+            <div className="min-w-0 flex-1 text-center lg:text-left">
+              <p className="truncate font-mono text-sm font-semibold tabular-nums">{formatTimetableRange(weekDates[0], weekDates[6])}</p>
+              <p className="mt-0.5 hidden text-xs text-muted-foreground sm:block">Monday start · local school time</p>
             </div>
-            {/* Day columns */}
-            {DAYS.map((day, i) => (
-              <div key={day} className="relative border-r border-slate-100 last:border-r-0 dark:border-surface-raised/50" style={{ height: gridHeight }}>
-                {/* hour gridlines */}
-                {hours.slice(1).map((h) => (
-                  <div key={h} className="absolute left-0 right-0 border-t border-slate-100 dark:border-surface-raised/40" style={{ top: (h - minHour) * 60 * PX_PER_MIN }} />
-                ))}
-                {layoutDay(weekEntries[i]).map(({ entry, lane, lanes }) => {
-                  const top = (toMin(entry.startTime) - minHour * 60) * PX_PER_MIN;
-                  const height = Math.max(34, (toMin(entry.endTime) - toMin(entry.startTime)) * PX_PER_MIN);
-                  const width = 100 / lanes;
+            <Button variant="ghost" size="icon-sm" aria-label="Next week" onClick={() => setWeekStart(addCalendarDays(weekStart, 7))} className="print:hidden lg:hidden"><ChevronRight /></Button>
+          </div>
+          <div className="hidden items-center border-l border-foreground lg:flex print:hidden">
+            {!isCurrentWeek && <Button variant="ghost" className="h-full rounded-none border-r border-foreground px-4" onClick={() => setWeekStart(mondayOfWeek(new Date()))}>Current week</Button>}
+            <Button variant="ghost" size="icon" aria-label="Next week" onClick={() => setWeekStart(addCalendarDays(weekStart, 7))}><ChevronRight /></Button>
+          </div>
+        </header>
+
+        <div className="hidden overflow-x-auto lg:block print:block" tabIndex={0} role="region" aria-label="Weekly timetable grid">
+          <div className="min-w-[1120px] print:min-w-0">
+            <div className="grid grid-cols-[70px_repeat(7,minmax(0,1fr))] border-b border-foreground bg-muted/35">
+              <div className="flex items-end border-r border-foreground px-3 py-3 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Time</div>
+              {TIMETABLE_DAYS.map((day, index) => {
+                const isToday = isSameLocalDate(weekDates[index], new Date());
+                return (
+                  <div key={day} className={`border-r border-border px-3 py-3 last:border-r-0 ${isToday ? 'bg-academic-gold/22' : ''}`}>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{day.slice(0, 3)}</span>
+                      <span className={`font-mono text-sm font-semibold tabular-nums ${isToday ? 'text-academic-gold-foreground' : ''}`}>{formatTimetableDay(weekDates[index])}</span>
+                    </div>
+                    <p className="mt-2 text-[10px] text-muted-foreground">{weekEntries[index].length} item{weekEntries[index].length === 1 ? '' : 's'}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {loading ? (
+              <div className="grid min-h-96 place-items-center"><div className="text-center"><RefreshCw className="mx-auto h-5 w-5 animate-spin text-academic-teal" /><p className="mt-3 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Reading timetable ledger</p></div></div>
+            ) : allVisible.length === 0 ? <EmptyWeek canManage={canManage} /> : (
+              <div className="grid grid-cols-[70px_repeat(7,minmax(0,1fr))]">
+                <div className="relative border-r border-foreground" style={{ height: gridHeight }}>
+                  {hours.map((hour) => <div key={hour} className="absolute right-3 -translate-y-1/2 font-mono text-[10px] tabular-nums text-muted-foreground" style={{ top: (hour - minHour) * 60 * PX_PER_MINUTE }}>{String(hour).padStart(2, '0')}:00</div>)}
+                </div>
+                {TIMETABLE_DAYS.map((day, index) => {
+                  const isToday = isSameLocalDate(weekDates[index], new Date());
                   return (
-                    <div
-                      key={entry.id}
-                      className="absolute px-0.5 py-px"
-                      style={{ top, height, left: `${lane * width}%`, width: `${width}%` }}
-                    >
-                      <ScheduleCard entry={entry} viewType={viewType} canManage={canManage} onDelete={handleDelete} compact={height < 76} />
+                    <div key={day} className={`relative border-r border-border last:border-r-0 ${isToday ? 'bg-academic-gold/[0.045]' : ''}`} style={{ height: gridHeight }}>
+                      {hours.slice(1).map((hour) => <div key={hour} className="pointer-events-none absolute inset-x-0 border-t border-border/65" style={{ top: (hour - minHour) * 60 * PX_PER_MINUTE }} />)}
+                      {isToday && nowTop !== null && <div className="pointer-events-none absolute inset-x-0 z-20 flex items-center" style={{ top: nowTop }} aria-hidden="true"><span className="h-2 w-2 -translate-x-1/2 bg-academic-coral" /><span className="h-px flex-1 bg-academic-coral" /></div>}
+                      {layoutTimetableDay(weekEntries[index]).map(({ entry, lane, lanes }) => {
+                        const top = (toMinutes(entry.startTime) - minHour * 60) * PX_PER_MINUTE;
+                        const height = Math.max(38, (toMinutes(entry.endTime) - toMinutes(entry.startTime)) * PX_PER_MINUTE - 2);
+                        const width = 100 / lanes;
+                        return <div key={entry.id} className="absolute px-0.5 py-px" style={{ top, height, left: `${lane * width}%`, width: `${width}%` }}><ScheduleBlock entry={entry} viewType={viewType} canManage={canManage} compact={height < 72} onDelete={setDeleteTarget} /></div>;
+                      })}
                     </div>
                   );
                 })}
               </div>
-            ))}
+            )}
           </div>
-        )}
+        </div>
+
+        <div className="lg:hidden print:hidden">
+          {loading ? <div className="px-5 py-12 text-center text-sm text-muted-foreground">Reading timetable ledger…</div> : allVisible.length === 0 ? <EmptyWeek canManage={canManage} /> : TIMETABLE_DAYS.map((day, index) => {
+            const entries = [...weekEntries[index]].sort((a, b) => a.startTime.localeCompare(b.startTime));
+            if (!entries.length) return null;
+            const isToday = isSameLocalDate(weekDates[index], new Date());
+            return (
+              <section key={day} className="border-b border-foreground last:border-b-0">
+                <header className={`flex items-center justify-between px-4 py-3 ${isToday ? 'bg-academic-gold/22' : 'bg-muted/35'}`}>
+                  <div><p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{day}</p><p className="mt-0.5 text-sm font-semibold">{formatTimetableDay(weekDates[index])}</p></div>
+                  <span className="font-mono text-xs text-muted-foreground">{entries.length} scheduled</span>
+                </header>
+                <div className="divide-y divide-border">{entries.map((entry) => <ScheduleBlock key={entry.id} entry={entry} viewType={viewType} canManage={canManage} mobile onDelete={setDeleteTarget} />)}</div>
+              </section>
+            );
+          })}
+        </div>
+      </section>
+
+      <div className="grid border border-foreground bg-card text-xs sm:grid-cols-3 print:hidden">
+        <LegendItem marker="border-academic-teal" label="Published teaching or school item" />
+        <LegendItem marker="border-academic-gold" label="Substitute or changed assignment" />
+        <LegendItem marker="border-academic-coral" label="Cancelled — requires attention" />
       </div>
 
-      {/* Mobile: per-day lists */}
-      <div className="space-y-4 lg:hidden print:hidden">
-        {DAYS.map((day, i) => {
-          const entries = weekEntries[i].sort((a, b) => a.startTime.localeCompare(b.startTime));
-          if (entries.length === 0) return null;
-          const isToday = sameLocalDate(weekDates[i], new Date());
-          return (
-            <section key={day} className="space-y-3">
-              <h2 className={`border-l-4 pl-2 text-sm font-bold uppercase tracking-widest ${isToday ? 'border-aubergine-500 text-aubergine-600' : 'border-slate-300 text-slate-500'}`}>
-                {day} <span className="font-semibold normal-case text-slate-400">· {fmtDay(weekDates[i])}</span>
-              </h2>
-              {entries.map((entry) => <ScheduleCard key={entry.id} entry={entry} viewType={viewType} canManage={canManage} onDelete={handleDelete} mobile />)}
-            </section>
-          );
-        })}
-        {!loading && allVisible.length === 0 && (
-          <p className="rounded-xl border border-dashed border-slate-200 py-14 text-center text-sm text-slate-400 dark:border-surface-raised">No timetable entries for this week.</p>
-        )}
-      </div>
+      <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && !deleting && setDeleteTarget(null)}>
+        <DialogContent className="rounded-none border-foreground" showCloseButton={!deleting}>
+          <DialogHeader>
+            <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-academic-coral">Permanent timetable change</p>
+            <DialogTitle>Delete this schedule item?</DialogTitle>
+            <DialogDescription>{deleteTarget ? `${timetableEntryTitle(deleteTarget)} · ${deleteTarget.dayOfWeek} ${deleteTarget.startTime}–${deleteTarget.endTime}` : ''}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" className="rounded-none" disabled={deleting} />}>Keep item</DialogClose>
+            <Button variant="destructive" className="rounded-none" onClick={() => void deleteEntry()} disabled={deleting}>{deleting ? 'Deleting…' : 'Delete item'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function ScheduleCard({ entry, viewType, canManage, onDelete, mobile = false, compact = false }: {
-  entry: TimetableEntry;
-  viewType: 'class' | 'teacher' | 'room';
-  canManage: boolean;
-  onDelete: (id: string) => void;
-  mobile?: boolean;
-  compact?: boolean;
-}) {
-  const counterpart = viewType === 'teacher' ? (entry.className || 'No class') : (entry.teacherName || 'Unassigned');
-  return (
-    <div className={`${colorClass(entry)} ${borderPrintClass(entry)} relative h-full overflow-hidden rounded-lg text-white shadow-sm ${mobile ? 'flex gap-3 p-3' : compact ? 'p-1.5' : 'p-2.5'} print:bg-white print:text-slate-900 print:shadow-none print:ring-1 print:ring-slate-300`}>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-1">
-          <p className={`font-bold uppercase tracking-wider opacity-85 ${compact ? 'text-[9px]' : 'text-[10px]'}`}>{entry.startTime}–{entry.endTime}</p>
-          {!compact && (
-            <Badge variant="outline" className="h-4 border-white/40 bg-white/10 px-1 text-[9px] text-white print:border-slate-300 print:text-slate-700">
-              {entry.status || 'ACTIVE'}
-            </Badge>
-          )}
-        </div>
-        <h3 className={`truncate font-bold ${compact ? 'text-xs' : 'mt-0.5 text-sm'} ${entry.status === 'CANCELLED' ? 'line-through opacity-70' : ''}`}>{entryTitle(entry)}</h3>
-        {!compact && (
-          <div className="mt-1 space-y-0.5 text-[11px] opacity-90">
-            <p className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3 shrink-0" />{entry.room || 'No room'}</p>
-            <p className="flex items-center gap-1 truncate">
-              {viewType === 'teacher' ? <BookOpen className="h-3 w-3 shrink-0" /> : <User className="h-3 w-3 shrink-0" />}
-              {counterpart}
-            </p>
-            {entry.substituteTeacherName && <p className="truncate">Sub: {entry.substituteTeacherName}</p>}
-            {entry.scheduleType && entry.scheduleType !== 'CLASS' && <p>{entry.scheduleType.replaceAll('_', ' ')}</p>}
-            {entry.cancellationReason && <p className="truncate">Reason: {entry.cancellationReason}</p>}
-          </div>
-        )}
-      </div>
-      {canManage && (
-        <div className={mobile ? 'print:hidden' : 'absolute right-1 top-1 print:hidden'}>
-          <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className={`text-white hover:bg-white/20 ${compact ? 'h-5 w-5' : 'h-6 w-6'}`} />} nativeButton={true}>
-              <MoreVertical className="h-3.5 w-3.5" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-36">
-              <DropdownMenuItem render={<Link to={`/timetable/${entry.id}/edit`} className="flex w-full items-center" />}>
-                <Edit className="mr-2 h-3.5 w-3.5" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-rose-600" onClick={() => onDelete(entry.id)}>
-                <Trash2 className="mr-2 h-3.5 w-3.5" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )}
-    </div>
-  );
+function FilterInput({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (value: string) => void; placeholder: string }) {
+  return <label className="block bg-card p-3"><span className="font-mono text-[9px] uppercase tracking-[0.11em] text-muted-foreground">{label}</span><Input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="mt-1 h-8 rounded-none border-0 border-b border-input bg-transparent px-0 shadow-none focus-visible:border-academic-teal focus-visible:ring-0" /></label>;
+}
+
+function FilterSelect({ label, value, onValueChange, options, allLabel }: { label: string; value: string; onValueChange: (value: string) => void; options: { value: string; label: string }[]; allLabel: string }) {
+  return <div className="bg-card p-3"><p className="font-mono text-[9px] uppercase tracking-[0.11em] text-muted-foreground">{label}</p><Select value={value} onValueChange={onValueChange}><SelectTrigger className="mt-1 h-8 w-full rounded-none border-0 border-b border-input px-0 shadow-none focus-visible:ring-0"><SelectValue /></SelectTrigger><SelectContent className="rounded-none"><SelectItem value="all">{allLabel}</SelectItem>{options.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>;
+}
+
+function WeekMeasure({ label, value, note, attention = false }: { label: string; value: string; note: string; attention?: boolean }) {
+  return <div className="border-b border-border px-4 py-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"><p className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">{label}</p><p className={`mt-2 font-mono text-2xl font-semibold tabular-nums ${attention ? 'text-academic-coral' : 'text-foreground'}`}>{value}</p><p className="mt-1 text-[11px] text-muted-foreground">{note}</p></div>;
+}
+
+function EmptyWeek({ canManage }: { canManage: boolean }) {
+  return <div className="grid min-h-80 place-items-center px-6 py-12 text-center"><div className="max-w-sm"><CalendarDays className="mx-auto h-7 w-7 text-academic-teal" /><h2 className="mt-4 text-lg font-semibold">The weekly field is clear</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">No records match this date window and filter set. Change the focus or publish a schedule item.</p>{canManage && <Button className="mt-5 rounded-none" render={<Link to="/timetable/new" />} nativeButton={false}><Plus className="h-4 w-4" /> Add first item</Button>}</div></div>;
+}
+
+function ScheduleBlock({ entry, viewType, canManage, onDelete, mobile = false, compact = false }: { entry: TimetableEntry; viewType: 'class' | 'teacher' | 'room'; canManage: boolean; onDelete: (entry: TimetableEntry) => void; mobile?: boolean; compact?: boolean }) {
+  const counterpart = viewType === 'teacher' ? entry.className || 'No class' : entry.teacherName || 'Unassigned';
+  const DetailIcon = viewType === 'teacher' ? BookOpen : User;
+  const cancelled = entry.status === 'CANCELLED';
+  if (mobile) {
+    return <article className={`grid grid-cols-[74px_minmax(0,1fr)_auto] border-l-4 px-4 py-4 ${eventTone(entry)}`}><div><p className="font-mono text-xs font-semibold tabular-nums">{entry.startTime}</p><p className="mt-1 font-mono text-[10px] text-muted-foreground">{entry.endTime}</p></div><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className="font-mono text-[9px] uppercase tracking-[0.1em] text-academic-teal">{scheduleTypeLabel(entry)}</span>{entry.status && entry.status !== 'ACTIVE' && <span className={cancelled ? 'text-academic-coral' : 'text-academic-gold-foreground'}>· {entry.status}</span>}</div><h3 className={`mt-1 truncate text-sm font-semibold ${cancelled ? 'line-through opacity-70' : ''}`}>{timetableEntryTitle(entry)}</h3><p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground"><span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{entry.room || 'No room'}</span><span className="inline-flex items-center gap-1"><DetailIcon className="h-3.5 w-3.5" />{counterpart}</span></p></div>{canManage && <ScheduleMenu entry={entry} onDelete={onDelete} />}</article>;
+  }
+  return <article className={`group relative h-full overflow-hidden border-l-[3px] border-y border-r px-2 py-1.5 transition-colors hover:bg-accent/45 ${eventTone(entry)}`}><div className="flex items-start justify-between gap-1"><p className="font-mono text-[9px] font-semibold uppercase tracking-[0.06em] tabular-nums text-muted-foreground">{entry.startTime}–{entry.endTime}</p>{canManage && !compact && <ScheduleMenu entry={entry} onDelete={onDelete} compact />}</div><h3 className={`truncate font-semibold leading-tight ${compact ? 'mt-0.5 text-[11px]' : 'mt-1 text-xs'} ${cancelled ? 'line-through opacity-65' : ''}`}>{timetableEntryTitle(entry)}</h3>{!compact && <div className="mt-1.5 space-y-1 text-[10px] leading-tight text-muted-foreground"><p className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3 shrink-0" />{entry.room || 'No room'}</p><p className="flex items-center gap-1 truncate"><DetailIcon className="h-3 w-3 shrink-0" />{counterpart}</p><p className="truncate font-mono text-[8px] uppercase tracking-[0.08em] text-academic-teal">{scheduleTypeLabel(entry)}{entry.status && entry.status !== 'ACTIVE' ? ` · ${entry.status}` : ''}</p></div>}</article>;
+}
+
+function ScheduleMenu({ entry, onDelete, compact = false }: { entry: TimetableEntry; onDelete: (entry: TimetableEntry) => void; compact?: boolean }) {
+  return <DropdownMenu><DropdownMenuTrigger render={<Button variant="ghost" size="icon-xs" className={`${compact ? 'opacity-0 group-hover:opacity-100 focus:opacity-100' : ''} print:hidden`} />} nativeButton={true}><MoreVertical className="h-3.5 w-3.5" /><span className="sr-only">Actions for {timetableEntryTitle(entry)}</span></DropdownMenuTrigger><DropdownMenuContent align="end" className="w-40 rounded-none"><DropdownMenuItem render={<Link to={`/timetable/${entry.id}/edit`} className="flex w-full items-center" />}><Edit className="mr-2 h-3.5 w-3.5" /> Edit item</DropdownMenuItem><DropdownMenuItem className="text-academic-coral" onClick={() => onDelete(entry)}><Trash2 className="mr-2 h-3.5 w-3.5" /> Delete item</DropdownMenuItem></DropdownMenuContent></DropdownMenu>;
+}
+
+function LegendItem({ marker, label }: { marker: string; label: string }) {
+  return <div className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"><span className={`h-5 w-3 border-l-4 ${marker}`} aria-hidden="true" /><span className="text-muted-foreground">{label}</span></div>;
 }

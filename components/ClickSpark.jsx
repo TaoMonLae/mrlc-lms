@@ -119,7 +119,9 @@ const ClickSpark = ({
   }, [sparkColor, sparkSize, sparkRadius, sparkCount, duration, easeFunc, extraScale]);
 
   useEffect(() => {
-    const handlePointerDown = e => {
+    const handleClick = e => {
+      // Keyboard-generated clicks do not have a meaningful pointer position.
+      if (e.detail === 0) return;
       const x = e.clientX;
       const y = e.clientY;
 
@@ -134,8 +136,8 @@ const ClickSpark = ({
       sparksRef.current.push(...newSparks);
     };
 
-    window.addEventListener('pointerdown', handlePointerDown, { passive: true });
-    return () => window.removeEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('click', handleClick, { passive: true });
+    return () => window.removeEventListener('click', handleClick);
   }, [sparkCount]);
 
   return (

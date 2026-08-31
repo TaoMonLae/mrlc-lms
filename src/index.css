@@ -470,6 +470,16 @@
 .mrlc-app-shell :is(.rounded-xl, .rounded-2xl, .rounded-3xl) {
   border-radius: var(--radius);
 }
+
+/* Timetable records use the MONO/Refero fieldbook treatment: ruled inputs,
+   planar selectors, and no soft form chrome. */
+.timetable-form :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger']) {
+  border-radius: 0;
+}
+
+.timetable-form [data-slot='select-content'] {
+  border-radius: 0;
+}
 /* ── Myanmar / Mon script support ─────────────────────────────────────────────
    Myanmar script stacks vowel signs and medials above and below the baseline.
    The Latin-tuned tight line-heights (leading-tight etc.) clip those stacks so

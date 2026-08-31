@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { useSettings } from '../providers/SettingsProvider';
 import { useAuth } from '../providers/AuthProvider';
 
-const RainbowMouseTrail = lazy(() => import('./RainbowMouseTrail'));
+const BlobCursor = lazy(() => import('@/components/BlobCursor'));
 const SplashCursor = lazy(() => import('@/components/SplashCursor'));
 const Ribbons = lazy(() => import('@/components/Ribbons'));
 const GhostCursor = lazy(() => import('@/components/GhostCursor'));
@@ -18,7 +18,9 @@ const TargetCursor = lazy(() => import('@/components/TargetCursor'));
 export default function CursorEffect() {
   const { systemSettings } = useSettings();
   const { user } = useAuth();
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true
+  );
 
   useEffect(() => {
     const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
@@ -36,12 +38,14 @@ export default function CursorEffect() {
   let visual: React.ReactNode;
   switch (effect) {
     case 'SPLASH_CURSOR':
-      visual = <SplashCursor />;
+      // Keep the published fluid simulation while using its documented
+      // resolution control at a safe full-app cost.
+      visual = <SplashCursor SIM_RESOLUTION={64} DYE_RESOLUTION={256} CAPTURE_RESOLUTION={256} SHADING={false} />;
       break;
     case 'RIBBONS':
       visual = (
         <div className="fixed inset-0 z-40 pointer-events-none overflow-hidden">
-          <Ribbons colors={['#7a3dff', '#3b89ff', '#ff6ec7']} />
+          <Ribbons />
         </div>
       );
       break;
@@ -56,19 +60,23 @@ export default function CursorEffect() {
       );
       break;
     case 'CLICK_SPARK':
-      visual = <ClickSpark sparkColor="#7a3dff" />;
+      visual = <ClickSpark sparkColor="#5227FF" />;
       break;
     case 'TARGET_CURSOR':
-      // Corners only "lock on" to elements with a .cursor-target class;
-      // without any on the page yet it's still a fully functional custom
-      // spinning-reticle cursor on its own.
-      visual = <TargetCursor cursorColor="#7a3dff" />;
+      visual = (
+        <TargetCursor
+          cursorColor="#5227FF"
+          targetSelector="a, button, input, select, textarea, summary, [role='button'], [role='link'], [role='tab']"
+        />
+      );
       break;
     case 'NONE':
       return null;
     case 'RAINBOW_TRAIL':
     default:
-      visual = <RainbowMouseTrail />;
+      // Preserve the stored legacy enum while rendering the official React
+      // Bits effect represented by this setting.
+      visual = <BlobCursor />;
   }
 
   return <Suspense fallback={null}>{visual}</Suspense>;

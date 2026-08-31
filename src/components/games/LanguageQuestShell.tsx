@@ -41,8 +41,8 @@ class LanguageQuestRouteErrorBoundary extends Component<
 
     return (
       <div className="mx-auto grid min-h-[420px] max-w-xl place-items-center px-4 text-center">
-        <div className="w-full rounded-3xl border border-amber-300 bg-amber-50/95 p-8 shadow-xl dark:border-amber-500/30 dark:bg-amber-950/30">
-          <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-amber-500 text-white shadow-lg">
+        <div className="w-full border-y border-amber-300 bg-amber-50/95 p-8 dark:border-amber-500/30 dark:bg-amber-950/30">
+          <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-amber-500 text-white">
             <TriangleAlert className="h-7 w-7" aria-hidden="true" />
           </span>
           <h1 className="mt-5 text-2xl font-black text-slate-950 dark:text-white">This page could not open</h1>
@@ -106,21 +106,21 @@ function LanguageQuestShellContent() {
 
   return (
     <div className="lq-mesh flex min-h-screen min-w-0 flex-col overflow-x-hidden text-slate-900 transition-colors duration-300 dark:text-slate-100">
-      <header className="sticky top-0 z-40 border-b border-white/70 bg-white/85 shadow-sm shadow-violet-900/5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90">
+      <header className="sticky top-0 z-40 border-b border-[var(--lq-steel-border)] bg-white/92 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/92">
         <div className="mx-auto flex min-h-18 max-w-[1600px] items-center gap-2 px-3 py-2 sm:px-5">
           <div className="shrink-0"><MrlcQuestBrand to="/games/language-quest" compact /></div>
           <div className="ml-auto flex min-w-0 items-center gap-1">
             <nav aria-label="Learning Quest" className="hidden shrink-0 items-center gap-1 lg:flex">
-              <Button variant="ghost" size="sm" className={`h-10 gap-2 rounded-xl px-3 font-bold text-sky-700 ${pathIs('/games/language-quest/words') ? 'bg-sky-50 dark:bg-sky-500/10' : ''}`} title="My learned words" render={<Link to="/games/language-quest/words" aria-current={pathIs('/games/language-quest/words') ? 'page' : undefined} />} nativeButton={false}>
+              <Button variant="ghost" size="sm" className={`h-10 gap-2 rounded-full px-3 font-bold text-[var(--lq-slate-caption)] ${pathIs('/games/language-quest/words') ? 'bg-sky-50 text-[var(--lq-signal-blue)] dark:bg-sky-500/10 dark:text-sky-300' : ''}`} title="My learned words" render={<Link to="/games/language-quest/words" aria-current={pathIs('/games/language-quest/words') ? 'page' : undefined} />} nativeButton={false}>
                 <BookOpenText className="h-4 w-4" /><span className="hidden 2xl:inline">My Words</span>
               </Button>
-              <Button variant="ghost" size="sm" className={`h-10 gap-2 rounded-xl px-3 font-bold text-fuchsia-700 ${pathIs('/games/language-quest/mastery') ? 'bg-fuchsia-50 dark:bg-fuchsia-500/10' : ''}`} title="Mastery reviews" render={<Link to="/games/language-quest/mastery" aria-current={pathIs('/games/language-quest/mastery') ? 'page' : undefined} />} nativeButton={false}>
+              <Button variant="ghost" size="sm" className={`h-10 gap-2 rounded-full px-3 font-bold text-[var(--lq-slate-caption)] ${pathIs('/games/language-quest/mastery') ? 'bg-sky-50 text-[var(--lq-signal-blue)] dark:bg-sky-500/10 dark:text-sky-300' : ''}`} title="Mastery reviews" render={<Link to="/games/language-quest/mastery" aria-current={pathIs('/games/language-quest/mastery') ? 'page' : undefined} />} nativeButton={false}>
                 <Brain className="h-4 w-4" /><span className="hidden 2xl:inline">Mastery</span>
               </Button>
-              <Button variant="ghost" size="sm" className={`h-10 gap-2 rounded-xl px-3 font-bold text-violet-700 ${pathIs('/games/language-quest/leaderboard') ? 'bg-violet-50 dark:bg-violet-500/10' : ''}`} title="Leaderboard" render={<Link to="/games/language-quest/leaderboard" aria-current={pathIs('/games/language-quest/leaderboard') ? 'page' : undefined} />} nativeButton={false}>
+              <Button variant="ghost" size="sm" className={`h-10 gap-2 rounded-full px-3 font-bold text-[var(--lq-slate-caption)] ${pathIs('/games/language-quest/leaderboard') ? 'bg-sky-50 text-[var(--lq-signal-blue)] dark:bg-sky-500/10 dark:text-sky-300' : ''}`} title="Leaderboard" render={<Link to="/games/language-quest/leaderboard" aria-current={pathIs('/games/language-quest/leaderboard') ? 'page' : undefined} />} nativeButton={false}>
                 <Trophy className="h-4 w-4" /><span className="hidden 2xl:inline">Leaderboard</span>
               </Button>
-              <Button variant="ghost" size="sm" className={`h-10 gap-2 rounded-xl px-3 font-bold text-indigo-700 ${pathIs('/games/language-quest/classrooms') ? 'bg-indigo-50 dark:bg-indigo-500/10' : ''}`} title="Classrooms" render={<Link to={classroomsHref} aria-current={pathIs('/games/language-quest/classrooms') ? 'page' : undefined} />} nativeButton={false}>
+              <Button variant="ghost" size="sm" className={`h-10 gap-2 rounded-full px-3 font-bold text-[var(--lq-slate-caption)] ${pathIs('/games/language-quest/classrooms') ? 'bg-sky-50 text-[var(--lq-signal-blue)] dark:bg-sky-500/10 dark:text-sky-300' : ''}`} title="Classrooms" render={<Link to={classroomsHref} aria-current={pathIs('/games/language-quest/classrooms') ? 'page' : undefined} />} nativeButton={false}>
                 <GraduationCap className="h-4 w-4" /><span className="hidden 2xl:inline">Classrooms</span>
               </Button>
             </nav>
@@ -181,19 +181,19 @@ function LanguageQuestShellContent() {
 
             <Link
               to="/games/language-quest/profile"
-              className={`shrink-0 rounded-2xl outline-none ring-offset-2 transition hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-violet-500 ${pathIs('/games/language-quest/profile') ? 'ring-2 ring-violet-400' : ''}`}
+              className={`shrink-0 rounded-full outline-none ring-offset-2 transition hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-[var(--lq-signal-blue)] ${pathIs('/games/language-quest/profile') ? 'ring-2 ring-[var(--lq-signal-blue)]' : ''}`}
               aria-label="Open my profile"
               aria-current={pathIs('/games/language-quest/profile') ? 'page' : undefined}
               title={`My profile${user?.name ? ` — ${user.name}` : ''}`}
             >
-              <LanguageQuestAvatar avatarId={user?.languageQuestAvatar} name={user?.name} className="h-10 w-10 text-lg shadow-sm" />
+              <LanguageQuestAvatar avatarId={user?.languageQuestAvatar} name={user?.name} className="h-10 w-10 rounded-full text-lg shadow-sm" />
             </Link>
             <LanguageQuestDictionary />
             <LanguageQuestExplanationToggle />
             <Button
               variant="outline"
               size="icon"
-              className="shrink-0 rounded-xl border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-violet-50 hover:text-violet-700 dark:border-slate-700 dark:bg-slate-900 dark:text-amber-300 dark:hover:bg-slate-800"
+              className="shrink-0 rounded-full border-slate-200 bg-white text-[var(--lq-signal-blue)] shadow-sm hover:bg-sky-50 dark:border-slate-700 dark:bg-slate-900 dark:text-amber-300 dark:hover:bg-slate-800"
               onClick={() => setTheme(darkMode ? 'light' : 'dark')}
               aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
               title={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
@@ -218,9 +218,9 @@ function LanguageQuestShellContent() {
       </main>
       <footer className="border-t border-white/70 bg-white/65 px-4 py-6 backdrop-blur dark:border-slate-800 dark:bg-slate-950/75">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 sm:flex-row">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400"><Languages className="h-4 w-4 text-violet-600" /> Learn • Practise • Grow</div>
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400"><Languages className="h-4 w-4 text-[var(--lq-signal-blue)]" /> Learn • Practise • Grow</div>
           <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-4">
-            <Link to="/language-quest/about" className="inline-flex items-center gap-1.5 text-xs font-black text-violet-700 underline-offset-4 hover:underline dark:text-violet-300">
+            <Link to="/language-quest/about" className="inline-flex items-center gap-1.5 text-xs font-black text-[var(--lq-signal-blue)] underline-offset-4 hover:underline dark:text-sky-300">
               <Info className="h-3.5 w-3.5" /> About &amp; course sources
             </Link>
             <TaoMonLaeCredit />

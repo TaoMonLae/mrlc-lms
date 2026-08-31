@@ -10453,10 +10453,10 @@ msgstr ""
 msgid "Cursor Effects"
 msgstr ""
 # Extracted string
-msgid "A fun, purely decorative effect that follows the mouse across the whole app."
+msgid "Official React Bits effects adapted to follow the pointer across the whole app."
 msgstr ""
 # Extracted string
-msgid "Rainbow Trail"
+msgid "Blob Cursor"
 msgstr ""
 # Extracted string
 msgid "Splash Cursor (fluid)"

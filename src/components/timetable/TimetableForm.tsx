@@ -21,21 +21,17 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
 import { Clock, MapPin, User, BookOpen, CalendarDays } from 'lucide-react';
-import { TimetableEntry, DayOfWeek } from '@/src/pages/timetable/TimetablePage';
+import type { TimetableEntry } from '@/src/lib/timetable';
 
 type Option = { id: string; name: string };
 
 const DAY_VALUES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as const;
 
-const SUBJECT_COLORS = ['bg-blue-500', 'bg-purple-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-indigo-500'];
-const colorForSubject = (subjectId: string) => {
-  let hash = 0;
-  for (let i = 0; i < subjectId.length; i++) hash = (hash * 31 + subjectId.charCodeAt(i)) >>> 0;
-  return SUBJECT_COLORS[hash % SUBJECT_COLORS.length];
-};
+// Retained for legacy API compatibility. The redesigned timetable intentionally
+// uses one published-record color; schedule type is expressed with text.
+const colorForSubject = (_subjectId: string) => 'bg-academic-teal';
 
 const timetableSchema = z.object({
   classId: z.string().optional(),
@@ -147,6 +143,13 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
   const scheduleType = form.watch('scheduleType') || 'CLASS';
   const recurrence = form.watch('recurrence') || 'WEEKLY';
   const status = form.watch('status') || 'ACTIVE';
+  const selectedDays = form.watch('daysOfWeek') || [];
+  const selectedSubject = form.watch('subjectId');
+  const selectedClass = form.watch('classId');
+  const selectedTeacher = form.watch('teacherId');
+  const startTime = form.watch('startTime');
+  const endTime = form.watch('endTime');
+  const room = form.watch('room');
 
   const isClassOrExam = ['CLASS', 'EXAM'].includes(scheduleType);
   const hasTeacher = ['CLASS', 'EXAM', 'MEETING'].includes(scheduleType);
@@ -182,19 +185,38 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleEnrichedSubmit)} className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <form onSubmit={form.handleSubmit(handleEnrichedSubmit)} className="timetable-form space-y-5">
+        <section className="grid border border-foreground bg-card lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,.65fr)]">
+          <div className="border-b border-foreground px-5 py-5 lg:border-b-0 lg:border-r">
+            <p className="font-mono text-[10px] uppercase tracking-[0.13em] text-academic-teal">Schedule record</p>
+            <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em]">{initialData ? 'Revise the field entry' : 'Build the field entry'}</h2>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">Complete the teaching assignment and timing. The slot proof updates as you work.</p>
+          </div>
+          <div className="bg-academic-navy-deep px-5 py-5 text-white">
+            <p className="font-mono text-[10px] uppercase tracking-[0.13em] text-[#6dd4cb]">Slot proof</p>
+            <p className="mt-3 text-lg font-semibold">{subjectOptions.find((option) => option.id === selectedSubject)?.name || scheduleType.replaceAll('_', ' ')}</p>
+            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
+              <div><dt className="text-white/55">When</dt><dd className="mt-1 font-mono tabular-nums">{startTime || '—'}–{endTime || '—'}</dd></div>
+              <div><dt className="text-white/55">Where</dt><dd className="mt-1 truncate">{room || 'Not set'}</dd></div>
+              <div><dt className="text-white/55">Class</dt><dd className="mt-1 truncate">{classOptions.find((option) => option.id === selectedClass)?.name || 'Not set'}</dd></div>
+              <div><dt className="text-white/55">Teacher</dt><dd className="mt-1 truncate">{teacherOptions.find((option) => option.id === selectedTeacher)?.name || 'Not set'}</dd></div>
+            </dl>
+            <p className="mt-4 border-t border-white/25 pt-3 font-mono text-[10px] uppercase tracking-[0.1em] text-white/65">{selectedDays.length ? selectedDays.join(' · ') : 'No day selected'}</p>
+          </div>
+        </section>
+
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           {/* Assignment Settings */}
           <div className="space-y-6">
             {(isClassOrExam || hasTeacher) && (
-              <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
-                <div className="bg-slate-50 dark:bg-surface-raised/50 px-4 py-3 border-b border-slate-200 dark:border-surface-raised">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <User className="h-4 w-4 text-aubergine-600" />
+              <section className="overflow-hidden border border-foreground bg-card">
+                <div className="border-b border-foreground bg-academic-navy-deep px-4 py-3 text-white">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold">
+                    <User className="h-4 w-4 text-[#6dd4cb]" />
                     Primary Assignment
                   </h3>
                 </div>
-                <CardContent className="pt-6 space-y-5">
+                <div className="space-y-5 p-5">
                   {isClassOrExam && (
                     <FormField
                       control={form.control}
@@ -300,18 +322,18 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
                       )}
                     />
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </section>
             )}
 
-            <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
-              <div className="bg-slate-50 dark:bg-surface-raised/50 px-4 py-3 border-b border-slate-200 dark:border-surface-raised">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-aubergine-600" />
+            <section className="overflow-hidden border border-foreground bg-card">
+              <div className="border-b border-foreground bg-muted/35 px-4 py-3">
+                <h3 className="flex items-center gap-2 text-sm font-semibold">
+                  <MapPin className="h-4 w-4 text-academic-teal" />
                   Location & Notes
                 </h3>
               </div>
-              <CardContent className="pt-6 space-y-5">
+              <div className="space-y-5 p-5">
                 <FormField
                   control={form.control}
                   name="room"
@@ -368,20 +390,20 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
                     </FormItem>
                   )}
                 />
-              </CardContent>
-            </Card>
+              </div>
+            </section>
           </div>
 
           {/* Time Settings */}
           <div className="space-y-6">
-            <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
-              <div className="bg-slate-50 dark:bg-surface-raised/50 px-4 py-3 border-b border-slate-200 dark:border-surface-raised">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-aubergine-600" />
+            <section className="overflow-hidden border border-foreground bg-card">
+              <div className="border-b border-foreground bg-muted/35 px-4 py-3">
+                <h3 className="flex items-center gap-2 text-sm font-semibold">
+                  <Clock className="h-4 w-4 text-academic-teal" />
                   Schedule Timing
                 </h3>
               </div>
-              <CardContent className="pt-6 space-y-6">
+              <div className="space-y-6 p-5">
                 <FormField
                   control={form.control}
                   name="daysOfWeek"
@@ -394,7 +416,7 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
                       );
                     };
                     const quick =
-                      "rounded-md border border-aubergine-200 bg-aubergine-50 px-2 py-1 text-[11px] font-semibold text-aubergine-700 hover:bg-aubergine-100 dark:border-aubergine-900/40 dark:bg-aubergine-900/20 dark:text-aubergine-300";
+                      "border-b border-foreground/35 px-1 py-1 font-mono text-[9px] uppercase tracking-[0.08em] text-muted-foreground hover:border-academic-teal hover:text-academic-teal";
                     return (
                       <FormItem>
                         <div className="flex items-center justify-between gap-2">
@@ -418,10 +440,10 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
                                 type="button"
                                 aria-pressed={on}
                                 onClick={() => toggle(day)}
-                                className={`rounded-lg border px-2 py-2.5 text-xs font-semibold transition ${
+                                className={`border px-2 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] transition ${
                                   on
-                                    ? 'border-aubergine-600 bg-aubergine-600 text-white shadow-sm'
-                                    : 'border-slate-200 bg-white text-slate-600 hover:border-aubergine-300 hover:bg-aubergine-50 dark:border-surface-raised dark:bg-canvas dark:text-slate-300'
+                                    ? 'border-academic-gold bg-academic-gold text-academic-navy-deep'
+                                    : 'border-border bg-card text-muted-foreground hover:border-foreground hover:text-foreground'
                                 }`}
                               >
                                 {day.slice(0, 3)}
@@ -555,22 +577,22 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
                   )}
                 </div>
 
-                <div className="bg-aubergine-50 dark:bg-aubergine-900/20 p-4 rounded-lg flex gap-3 text-[11px] text-aubergine-700 dark:text-aubergine-400">
-                  <Clock className="h-4 w-4 shrink-0" />
-                  <p>Check for scheduling conflicts before publishing. The system will alert you if the room or teacher is already occupied at this time.</p>
+                <div className="flex gap-3 border-l-4 border-academic-teal bg-accent/35 p-4 text-[11px] text-accent-foreground">
+                  <Clock className="h-4 w-4 shrink-0 text-academic-teal" />
+                  <p>The server checks teacher and room conflicts when you publish. A conflicting day is skipped and reported with its evidence.</p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </section>
 
             {initialData && (
-              <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
-                <div className="bg-slate-50 dark:bg-surface-raised/50 px-4 py-3 border-b border-slate-200 dark:border-surface-raised">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <CalendarDays className="h-4 w-4 text-aubergine-600" />
+              <section className="overflow-hidden border border-foreground bg-card">
+                <div className="border-b border-foreground bg-muted/35 px-4 py-3">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold">
+                    <CalendarDays className="h-4 w-4 text-academic-coral" />
                     Status & Cancellation
                   </h3>
                 </div>
-                <CardContent className="pt-6 space-y-5">
+                <div className="space-y-5 p-5">
                   <FormField
                     control={form.control}
                     name="status"
@@ -609,14 +631,14 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
                       )}
                     />
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </section>
             )}
 
-            <div className="flex flex-col gap-3">
+            <div className="grid gap-2 border border-foreground bg-card p-3 sm:grid-cols-[1fr_auto]">
               <Button 
                 type="submit" 
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-11"
+                className="h-11 w-full rounded-none"
                 disabled={isLoading}
               >
                 {isLoading ? 'Saving...' : initialData ? 'Update Schedule' : 'Create Schedule Slot'}
@@ -624,7 +646,7 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
               <Button 
                 type="button" 
                 variant="outline" 
-                className="w-full h-11 border-slate-200 dark:border-surface-raised" 
+                className="h-11 w-full rounded-none border-foreground sm:w-auto"
                 disabled={isLoading}
                 onClick={() => window.history.back()}
               >

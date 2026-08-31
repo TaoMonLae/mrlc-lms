@@ -176,7 +176,7 @@ export default function SystemSettings() {
             <MousePointerClick className="h-4 w-4" /> Cursor Effects
           </h3>
           <p className="text-sm text-slate-500 mt-1">
-            A fun, purely decorative effect that follows the mouse across the whole app.
+            Official React Bits effects adapted to follow the pointer across the whole app.
           </p>
         </div>
 
@@ -188,7 +188,7 @@ export default function SystemSettings() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="NONE">None</SelectItem>
-              <SelectItem value="RAINBOW_TRAIL">Rainbow Trail</SelectItem>
+              <SelectItem value="RAINBOW_TRAIL">Blob Cursor</SelectItem>
               <SelectItem value="SPLASH_CURSOR">Splash Cursor (fluid)</SelectItem>
               <SelectItem value="RIBBONS">Ribbons</SelectItem>
               <SelectItem value="GHOST_CURSOR">Ghost Cursor (smoke trail)</SelectItem>

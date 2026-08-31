@@ -83,6 +83,22 @@ Rejected finance patterns: equal-weight KPI card collages, duplicate cash-flow s
 
 The finance audit also corrected the reporting contract: fee collections and donations are both included in revenue; partial fee balances cannot become negative; selected-year receivables and commitments are date-scoped; pending commitments and budget actuals include tax; report ranges reject malformed or partial dates; stale year requests are aborted; API failures no longer render as plausible zero totals; exports use the configured currency and escape CSV cells.
 
+## Timetable module reference lock
+
+Research sources: Refero style systems MONO (`4b3c372c-aff6-4608-bafb-1dde853c4805`), Goodnotes (`20a06982-45ea-4df0-ae36-7cb6de2b6a4b`), and Cron Calendar (`0528b40d-d5ef-4783-9206-d42fa97ad1d2`); Refero product screens Rise Calendar (`bc9dff96-d4b1-445f-9bcc-c9509b6a4956`), Google Classroom (`ede86745-aea2-4d30-b5e3-deca21aefb93`), Missive week calendar (`63c25d8d-1c22-4060-93b2-ce08e51ab76b`), and Luma event creation (`5cbfca17-3479-429f-90df-ca9ffe3ebc39`); React Bits Pro `scheduling-6`, `scheduling-3`, and `scheduling-1`.
+
+| Decision | Source | MRLC adaptation |
+| --- | --- | --- |
+| Architectural weekly grid | MONO + Rise Calendar | A visible hour rail, sharp rules, date headers, proportional sessions, and side-by-side overlap lanes replace floating day cards |
+| Academic orientation | Google Classroom | Class/person/room focus remains at the top of the week; the current date is marked without turning every category into a new color |
+| Operational calendar behavior | React Bits Pro `scheduling-6` | Week navigation, current-time line, compact event density, keyboard-reachable actions, and responsive agenda treatment |
+| Form plus evidence | Luma + React Bits Pro `scheduling-3` | Create/edit uses a split field-entry sheet with a live slot proof instead of disconnected generic cards |
+| Mobile agenda | React Bits Pro `scheduling-1` | Narrow screens become a date-led chronological ledger rather than a squeezed seven-column grid |
+
+Timetable color roles are fixed: navy carries structure; teal marks published records and links; gold marks the current date, changed assignment, and primary publish action; coral is reserved for cancellations and destructive actions. Schedule type is communicated with text labels, not a rainbow palette.
+
+Rejected timetable patterns: duplicate page titles, soft floating filter cards, native unlabelled selects, rainbow subject blocks, decorative empty-state icons behind every day, equal-height day stacks that ignore clock time, and week controls that change the label without changing one-off/effective-date records.
+
 ## System decisions
 
 - Canvas: paper `#f0f1ec` with a restrained 48px horizontal rule.

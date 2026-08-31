@@ -1,489 +1,229 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useNavigate } from 'react-router';
 import {
-  Calendar as CalendarIcon,
-  Clock,
-  MapPin,
-  MoreHorizontal,
-  Download,
-  Printer,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-  Plus,
-  Users
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { useNavigate } from "react-router";
-import { toast } from "sonner";
-import { apiGet } from "../../lib/api";
+  CalendarDays, ChevronLeft, ChevronRight, Clock3, Download, Filter,
+  MapPin, Plus, Printer, RefreshCw, Users,
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import { apiGet } from '../../lib/api';
+import {
+  TIMETABLE_DAYS, addCalendarDays, csvCell, formatTimetableDay,
+  formatTimetableRange, isSameLocalDate, layoutTimetableDay, mondayOfWeek,
+  occursOn, timetableEntryTitle, toMinutes, type DayOfWeek, type TimetableEntry,
+} from '../../lib/timetable';
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const DAY_FROM_API: Record<string, string> = {
+const TEACHING_DAYS = TIMETABLE_DAYS.slice(0, 6);
+const PX_PER_MINUTE = 1;
+const API_DAY: Record<string, DayOfWeek> = {
   MONDAY: 'Monday', TUESDAY: 'Tuesday', WEDNESDAY: 'Wednesday',
   THURSDAY: 'Thursday', FRIDAY: 'Friday', SATURDAY: 'Saturday', SUNDAY: 'Sunday',
 };
 
-interface TimetableEntry {
-  id: string;
-  classId: string | null;
-  className: string | null;
-  subjectName: string | null;
-  subjectColor: string | null;
-  dayOfWeek: string;
-  startTime: string;
-  endTime: string;
-  room: string | null;
-  status: string;
-  scheduleType: string;
-  notes: string | null;
+function normalizeEntry(entry: TimetableEntry): TimetableEntry {
+  return { ...entry, dayOfWeek: API_DAY[String(entry.dayOfWeek).toUpperCase()] || entry.dayOfWeek };
 }
 
-interface ScheduleSession {
-  id: string;
-  day: string;
-  time: string;
-  startTime: string;
-  endTime: string;
-  subject: string;
-  room: string;
-  classId: string | null;
-  color: string;
-  status: string;
-  scheduleType: string;
-}
-
-/** Parse "HH:MM" into minutes for sorting/duration math. */
-function toMinutes(t: string): number {
-  const [h, m] = t.split(':').map(Number);
-  return (h || 0) * 60 + (m || 0);
-}
-
-/** Returns the Monday of the week containing `date`. */
-function getWeekStart(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay(); // 0=Sun
-  const diff = (day === 0 ? -6 : 1 - day); // shift to Monday
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function formatWeekLabel(weekStart: Date): string {
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 5); // Saturday
-  const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-  return `${weekStart.toLocaleDateString('en-US', opts)} – ${weekEnd.toLocaleDateString('en-US', opts)}`;
+function teachingTone(entry: TimetableEntry) {
+  if (entry.status === 'CANCELLED') return 'border-academic-coral bg-academic-coral/10';
+  if (entry.status === 'SUBSTITUTED') return 'border-academic-gold bg-academic-gold/14';
+  return 'border-academic-teal bg-card';
 }
 
 export default function TeacherTimetable() {
   const [view, setView] = useState<'week' | 'day'>('week');
-  const [weekOffset, setWeekOffset] = useState(0); // 0 = current week
-  const [showFilters, setShowFilters] = useState(false);
+  const [weekStart, setWeekStart] = useState(() => mondayOfWeek(new Date()));
+  const [selectedDay, setSelectedDay] = useState<DayOfWeek>(() => {
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }) as DayOfWeek;
+    return TEACHING_DAYS.includes(today) ? today : 'Monday';
+  });
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [selectedDay, setSelectedDay] = useState(() => {
-    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-    return DAYS.includes(today) ? today : DAYS[0];
-  });
-  const [teacherSchedule, setTeacherSchedule] = useState<ScheduleSession[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [schedule, setSchedule] = useState<TimetableEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    // /api/timetable auto-filters to the signed-in teacher's entries.
+    let active = true;
+    setLoading(true);
     apiGet<TimetableEntry[]>('/api/timetable')
       .then((rows) => {
-        const sessions = (rows ?? [])
-          .map<ScheduleSession>((e) => {
-            let subject = e.subjectName || e.className || 'Scheduled Period';
-            if (e.scheduleType === 'HOLIDAY') subject = e.notes || 'School Holiday';
-            else if (e.scheduleType === 'SPECIAL_EVENT') subject = e.notes || 'Special Event';
-            
-            let color = e.subjectColor || 'bg-blue-500';
-            if (e.status === 'CANCELLED') color = 'bg-slate-500';
-            else if (e.scheduleType === 'HOLIDAY') color = 'bg-rose-500';
-            else if (e.scheduleType === 'SPECIAL_EVENT') color = 'bg-amber-500';
-            else if (e.scheduleType === 'EXAM') color = 'bg-purple-500';
-            else if (e.scheduleType === 'MEETING') color = 'bg-cyan-500';
-
-            return {
-              id: e.id,
-              day: DAY_FROM_API[e.dayOfWeek] || e.dayOfWeek,
-              time: `${e.startTime} - ${e.endTime}`,
-              startTime: e.startTime,
-              endTime: e.endTime,
-              subject,
-              room: e.room || '—',
-              classId: e.classId,
-              color,
-              status: e.status || 'ACTIVE',
-              scheduleType: e.scheduleType || 'CLASS',
-            };
-          })
-          .sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime));
-        setTeacherSchedule(sessions);
+        if (!active) return;
+        setSchedule((rows || []).map(normalizeEntry));
+        setError('');
       })
-      .catch(() => setTeacherSchedule([]));
+      .catch(() => {
+        if (!active) return;
+        setSchedule([]);
+        setError('Your teaching schedule could not be read.');
+      })
+      .finally(() => active && setLoading(false));
+    return () => { active = false; };
   }, []);
 
-  // Derived summary stats from the real schedule.
-  const weeklyHours = useMemo(
-    () => teacherSchedule
-      .filter((s) => s.status !== 'CANCELLED' && ['CLASS', 'EXAM'].includes(s.scheduleType))
-      .reduce((acc, s) => acc + (toMinutes(s.endTime) - toMinutes(s.startTime)) / 60, 0),
-    [teacherSchedule]
+  const weekDates = useMemo(
+    () => TEACHING_DAYS.map((_, index) => addCalendarDays(weekStart, index)),
+    [weekStart],
   );
-  const activeModules = useMemo(
-    () => new Set(
-      teacherSchedule
-        .filter((s) => s.status !== 'CANCELLED' && s.classId)
-        .map((s) => s.classId)
-    ).size,
-    [teacherSchedule]
+
+  const weekEntries = useMemo(
+    () => TEACHING_DAYS.map((day, index) => schedule.filter((entry) => (
+      entry.dayOfWeek === day
+      && occursOn(entry, weekDates[index])
+      && (typeFilter === 'ALL' || (entry.scheduleType || 'CLASS') === typeFilter)
+      && (statusFilter === 'ALL' || (entry.status || 'ACTIVE') === statusFilter)
+    ))),
+    [schedule, statusFilter, typeFilter, weekDates],
   );
-  const filteredSchedule = useMemo(() => teacherSchedule.filter((session) => (
-    (typeFilter === 'ALL' || session.scheduleType === typeFilter)
-    && (statusFilter === 'ALL' || session.status === statusFilter)
-  )), [teacherSchedule, typeFilter, statusFilter]);
-  const displayedDays = view === 'day' ? [selectedDay] : DAYS;
-  // Next upcoming session: today's remaining sessions, else the next day's first.
-  const upcomingSession = useMemo(() => {
-    const now = new Date();
-    const todayName = now.toLocaleDateString('en-US', { weekday: 'long' });
-    const nowMin = now.getHours() * 60 + now.getMinutes();
-    const todayLater = teacherSchedule
-      .filter((s) => s.day === todayName && s.status !== 'CANCELLED' && toMinutes(s.startTime) >= nowMin)
-      .sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime));
-    if (todayLater.length) return { session: todayLater[0], label: `Today, ${todayLater[0].startTime}` };
-    const order = DAYS;
-    const todayIdx = order.indexOf(todayName);
-    for (let i = 1; i <= order.length; i++) {
-      const dayName = order[(todayIdx + i) % order.length];
-      const next = teacherSchedule
-        .filter((s) => s.day === dayName && s.status !== 'CANCELLED')
-        .sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime));
-      if (next.length) return { session: next[0], label: `${dayName}, ${next[0].startTime}` };
+  const allVisible = weekEntries.flat();
+  const displayedDays = view === 'day' ? [selectedDay] : TEACHING_DAYS;
+  const displayedIndexes = displayedDays.map((day) => TEACHING_DAYS.indexOf(day));
+  const displayedEntries = displayedIndexes.map((index) => weekEntries[index]);
+
+  const minHour = allVisible.length ? Math.floor(Math.min(...allVisible.map((entry) => toMinutes(entry.startTime))) / 60) : 8;
+  const maxHour = allVisible.length ? Math.ceil(Math.max(...allVisible.map((entry) => toMinutes(entry.endTime))) / 60) : 16;
+  const gridHeight = Math.max(1, maxHour - minHour) * 60 * PX_PER_MINUTE;
+  const hours = Array.from({ length: Math.max(1, maxHour - minHour) + 1 }, (_, index) => minHour + index);
+  const weeklyHours = allVisible
+    .filter((entry) => entry.status !== 'CANCELLED' && ['CLASS', 'EXAM'].includes(entry.scheduleType || 'CLASS'))
+    .reduce((sum, entry) => sum + Math.max(0, toMinutes(entry.endTime) - toMinutes(entry.startTime)) / 60, 0);
+  const activeClasses = new Set(allVisible.map((entry) => entry.classId).filter(Boolean)).size;
+  const exceptionCount = allVisible.filter((entry) => entry.status !== 'ACTIVE' || (entry.scheduleType && entry.scheduleType !== 'CLASS')).length;
+
+  const upcoming = useMemo(() => {
+    const today = new Date();
+    const todayIndex = TEACHING_DAYS.indexOf(today.toLocaleDateString('en-US', { weekday: 'long' }) as DayOfWeek);
+    const currentWeek = isSameLocalDate(weekStart, mondayOfWeek(today));
+    const firstDay = currentWeek && todayIndex >= 0 ? todayIndex : 0;
+    const nowMinutes = today.getHours() * 60 + today.getMinutes();
+    for (let index = firstDay; index < TEACHING_DAYS.length; index += 1) {
+      const candidate = weekEntries[index]
+        .filter((entry) => entry.status !== 'CANCELLED' && (!currentWeek || index !== todayIndex || toMinutes(entry.startTime) >= nowMinutes))
+        .sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime))[0];
+      if (candidate) return { entry: candidate, date: weekDates[index] };
     }
     return null;
-  }, [teacherSchedule]);
+  }, [weekEntries, weekDates, weekStart]);
 
-  const baseWeekStart = getWeekStart(new Date());
-  const currentWeekStart = new Date(baseWeekStart);
-  currentWeekStart.setDate(baseWeekStart.getDate() + weekOffset * 7);
-  const weekLabel = formatWeekLabel(currentWeekStart);
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleExportCsv = () => {
-    const header = 'Day,Time,Subject,Room\n';
-    const rows = filteredSchedule
-      .map(s => `${s.day},"${s.time}","${s.subject}","${s.room}"`)
-      .join('\n');
-    const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
+  const exportCsv = () => {
+    const rows = allVisible.map((entry) => {
+      const dayIndex = TEACHING_DAYS.indexOf(entry.dayOfWeek);
+      return [
+        csvCell(weekDates[dayIndex]?.toLocaleDateString('en-CA')),
+        csvCell(entry.dayOfWeek), csvCell(entry.startTime), csvCell(entry.endTime),
+        csvCell(timetableEntryTitle(entry)), csvCell(entry.className), csvCell(entry.room), csvCell(entry.status || 'ACTIVE'),
+      ].join(',');
+    });
+    const header = ['Date', 'Day', 'Start', 'End', 'Session', 'Class', 'Room', 'Status'].map(csvCell).join(',');
+    const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'teaching-schedule.csv';
-    a.click();
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `teaching-schedule-${weekStart.toLocaleDateString('en-CA')}.csv`;
+    anchor.click();
     URL.revokeObjectURL(url);
-    toast.success('Schedule exported as CSV!');
-  };
-
-  const handleViewHistory = () => {
-    navigate('/teacher/reports');
+    toast.success('Visible teaching week exported');
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="mx-auto max-w-[1500px] space-y-5 pb-12">
+      <header className="flex flex-col gap-5 border-b border-foreground pb-5 lg:flex-row lg:items-end lg:justify-between print:hidden">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight dark:text-white uppercase tracking-tighter">Teaching Schedule</h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">Your assigned teaching sessions and availability across the week.</p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-academic-teal">Teacher desk / Personal field plan</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">Teaching timetable</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">A date-true view of your classes, rooms, changes, and the next roll call.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-            <Button
-              id="print-schedule-btn"
-              variant="outline"
-              size="sm"
-              className="h-10 px-4 font-bold text-[10px] uppercase tracking-widest border-slate-200 dark:border-surface-raised"
-              onClick={handlePrint}
-            >
-                <Printer className="h-4 w-4 mr-2" /> Print Schedule
-            </Button>
-            <Button
-              id="export-calendar-btn"
-              variant="outline"
-              size="sm"
-              className="h-10 px-4 font-bold text-[10px] uppercase tracking-widest border-slate-200 dark:border-surface-raised"
-              onClick={handleExportCsv}
-            >
-                <Download className="h-4 w-4 mr-2" /> Export
-            </Button>
-            <Button
-              id="schedule-session-btn"
-              className="h-10 px-6 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[10px] uppercase tracking-widest shadow-lg"
-              onClick={() => navigate('/timetable/new')}
-            >
-                <Plus className="h-4 w-4 mr-2" /> Schedule Session
-            </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button variant="outline" className="rounded-none border-foreground" onClick={() => window.print()}><Printer /> Print week</Button>
+          <Button variant="outline" className="rounded-none border-foreground" onClick={exportCsv} disabled={!allVisible.length}><Download /> Export visible</Button>
+          <Button className="rounded-none" onClick={() => navigate('/timetable/new')}><Plus /> Schedule session</Button>
         </div>
-      </div>
+      </header>
 
-      {teacherSchedule.length === 0 && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-dashed border-aubergine-200 dark:border-surface-raised bg-aubergine-50/40 dark:bg-surface-raised/20 px-6 py-5 print:hidden">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 shrink-0 rounded-xl bg-white dark:bg-surface-indigo border border-aubergine-100 dark:border-surface-raised flex items-center justify-center text-aubergine-600">
-              <CalendarIcon className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-slate-800 dark:text-white">No sessions scheduled yet</p>
-              <p className="text-xs text-slate-500 dark:text-slate-300 font-medium">Add your class periods so they appear on the weekly grid.</p>
-            </div>
+      <section className="grid border border-foreground bg-card sm:grid-cols-2 xl:grid-cols-4" aria-label="Teaching week summary">
+        <Measure label="Teaching load" value={`${weeklyHours.toFixed(1)}h`} note="Classes and exams in view" />
+        <Measure label="Sessions" value={String(allVisible.length)} note="Matching this date window" />
+        <Measure label="Active classes" value={String(activeClasses)} note="Distinct class groups" />
+        <Measure label="Exceptions" value={String(exceptionCount)} note="Changes or non-class items" attention={exceptionCount > 0} />
+      </section>
+
+      {error && <div className="border border-academic-coral bg-card px-5 py-4 text-sm text-academic-coral" role="alert">{error}</div>}
+
+      <section className="timetable-print-area border border-foreground bg-card">
+        <div className="hidden print:block border-b border-slate-900 px-4 py-3"><p className="text-lg font-semibold">Teaching timetable</p><p className="text-xs">{formatTimetableRange(weekDates[0], weekDates[5])}</p></div>
+        <header className="grid border-b border-foreground lg:grid-cols-[auto_1fr_auto] print:hidden">
+          <div className="grid grid-cols-2 border-b border-foreground lg:border-b-0 lg:border-r">
+            {(['week', 'day'] as const).map((option) => <button key={option} type="button" aria-pressed={view === option} onClick={() => setView(option)} className={`min-h-11 px-5 font-mono text-[10px] uppercase tracking-[0.1em] ${view === option ? 'bg-academic-gold text-academic-navy-deep' : 'hover:bg-muted/45'}`}>{option}</button>)}
           </div>
-          <Button
-            className="h-10 px-6 bg-aubergine-600 hover:bg-aubergine-700 text-white font-bold text-[10px] uppercase tracking-widest shadow-sm shrink-0"
-            onClick={() => navigate('/timetable/new')}
-          >
-            <Plus className="h-4 w-4 mr-2" /> Schedule a Session
-          </Button>
-        </div>
-      )}
-
-      <Card className="timetable-print-area border-slate-200 dark:border-surface-raised overflow-hidden bg-white dark:bg-surface-indigo shadow-sm">
-        <div className="hidden print:block px-4 pt-4 text-lg font-bold text-slate-900">Teaching Schedule — {weekLabel}</div>
-        <div className="p-4 border-b border-slate-100 dark:border-surface-raised flex items-center justify-between bg-slate-50/50 dark:bg-surface-raised/30 print:hidden">
-            <div className="flex items-center gap-1 bg-white dark:bg-surface-indigo p-1 rounded-lg border border-slate-200 dark:border-surface-raised">
-                <Button 
-                    variant={view === 'week' ? 'secondary' : 'ghost'} 
-                    size="sm" 
-                    onClick={() => setView('week')}
-                    className="font-bold text-[10px] uppercase tracking-widest h-8 px-4"
-                >
-                    Week
-                </Button>
-                <Button 
-                    variant={view === 'day' ? 'secondary' : 'ghost'} 
-                    size="sm" 
-                    onClick={() => setView('day')}
-                    className="font-bold text-[10px] uppercase tracking-widest h-8 px-4"
-                >
-                    Day
-                </Button>
-            </div>
-            <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                    <Button
-                      id="prev-week-btn"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-slate-400 hover:text-slate-700"
-                      onClick={() => setWeekOffset(prev => prev - 1)}
-                      title="Previous week"
-                    >
-                        <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-widest min-w-[160px] text-center">
-                      {weekLabel}
-                    </span>
-                    <Button
-                      id="next-week-btn"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-slate-400 hover:text-slate-700"
-                      onClick={() => setWeekOffset(prev => prev + 1)}
-                      title="Next week"
-                    >
-                        <ChevronRight className="h-4 w-4" />
-                    </Button>
-                </div>
-                <div className="h-4 w-px bg-slate-200 dark:bg-surface-raised hidden sm:block" />
-                <Button
-                  id="timetable-filter-btn"
-                  variant="outline"
-                  size="sm"
-                  className="flex h-8 px-3 font-bold text-[10px] uppercase tracking-widest border-slate-200 dark:border-surface-raised"
-                  onClick={() => setShowFilters((open) => !open)}
-                  aria-expanded={showFilters}
-                  aria-controls="timetable-filters"
-                >
-                    <Filter className="h-3.5 w-3.5 mr-2" /> Filters
-                </Button>
-            </div>
-        </div>
+          <div className="flex items-center justify-center gap-2 px-3 py-2">
+            <Button variant="ghost" size="icon-sm" aria-label="Previous week" onClick={() => setWeekStart(addCalendarDays(weekStart, -7))}><ChevronLeft /></Button>
+            <p className="min-w-0 flex-1 truncate text-center font-mono text-sm font-semibold tabular-nums">{formatTimetableRange(weekDates[0], weekDates[5])}</p>
+            <Button variant="ghost" size="icon-sm" aria-label="Next week" onClick={() => setWeekStart(addCalendarDays(weekStart, 7))}><ChevronRight /></Button>
+          </div>
+          <Button variant="ghost" className="h-full rounded-none border-t border-foreground px-4 lg:border-l lg:border-t-0" onClick={() => setShowFilters((value) => !value)} aria-expanded={showFilters}><Filter /> Filters</Button>
+        </header>
 
         {(showFilters || view === 'day') && (
-          <div id="timetable-filters" className="flex flex-wrap items-end gap-3 border-b border-slate-100 bg-white px-4 py-3 dark:border-surface-raised dark:bg-surface-indigo print:hidden">
-            {view === 'day' && (
-              <label className="space-y-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
-                <span className="block">Day</span>
-                <select value={selectedDay} onChange={(event) => setSelectedDay(event.target.value)} className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-surface-raised dark:bg-surface-raised">
-                  {DAYS.map((day) => <option key={day} value={day}>{day}</option>)}
-                </select>
-              </label>
-            )}
-            {showFilters && (
-              <>
-                <label className="space-y-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  <span className="block">Session type</span>
-                  <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-surface-raised dark:bg-surface-raised">
-                    <option value="ALL">All types</option>
-                    {[...new Set(teacherSchedule.map((session) => session.scheduleType))].sort().map((type) => <option key={type} value={type}>{type.replaceAll('_', ' ')}</option>)}
-                  </select>
-                </label>
-                <label className="space-y-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  <span className="block">Status</span>
-                  <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-surface-raised dark:bg-surface-raised">
-                    <option value="ALL">All statuses</option>
-                    {[...new Set(teacherSchedule.map((session) => session.status))].sort().map((status) => <option key={status} value={status}>{status.replaceAll('_', ' ')}</option>)}
-                  </select>
-                </label>
-                {(typeFilter !== 'ALL' || statusFilter !== 'ALL') && (
-                  <Button variant="ghost" size="sm" onClick={() => { setTypeFilter('ALL'); setStatusFilter('ALL'); }}>Clear filters</Button>
-                )}
-                <span className="pb-2 text-xs text-slate-600 dark:text-slate-300" role="status">{filteredSchedule.length} session{filteredSchedule.length === 1 ? '' : 's'}</span>
-              </>
-            )}
+          <div className="grid gap-px border-b border-foreground bg-border sm:grid-cols-3 print:hidden">
+            {view === 'day' && <FieldSelect label="Day focus" value={selectedDay} onValueChange={(value) => setSelectedDay(value as DayOfWeek)} options={TEACHING_DAYS.map((day) => ({ value: day, label: day }))} />}
+            {showFilters && <FieldSelect label="Schedule type" value={typeFilter} onValueChange={setTypeFilter} options={[{ value: 'ALL', label: 'All types' }, ...Array.from(new Set(schedule.map((entry) => entry.scheduleType || 'CLASS'))).sort().map((type) => ({ value: type, label: type.replaceAll('_', ' ') }))]} />}
+            {showFilters && <FieldSelect label="Status" value={statusFilter} onValueChange={setStatusFilter} options={[{ value: 'ALL', label: 'All statuses' }, ...Array.from(new Set(schedule.map((entry) => entry.status || 'ACTIVE'))).sort().map((status) => ({ value: status, label: status }))]} />}
           </div>
         )}
 
-        <div className="p-0 overflow-x-auto" tabIndex={0} role="region" aria-label="Teaching schedule grid">
-            <div className={view === 'week' ? 'min-w-[1000px]' : 'min-w-0'}>
-                <div className="grid border-b border-slate-100 dark:border-surface-raised" style={{ gridTemplateColumns: `repeat(${displayedDays.length}, minmax(0, 1fr))` }}>
-                    {displayedDays.map(day => (
-                        <div key={day} className="px-4 py-3 text-center border-r border-slate-100 dark:border-surface-raised last:border-r-0">
-                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{day}</span>
-                        </div>
-                    ))}
-                </div>
-                <div className="grid h-[600px]" style={{ gridTemplateColumns: `repeat(${displayedDays.length}, minmax(0, 1fr))` }}>
-                    {displayedDays.map(day => (
-                        <div key={day} className="border-r border-slate-100 dark:border-surface-raised last:border-r-0 p-3 space-y-3 relative bg-slate-50/20 dark:bg-surface-indigo/10">
-                            {filteredSchedule
-                                .filter(session => session.day === day)
-                                .map((session) => (
-                                    <div
-                                      key={session.id}
-                                      className={`group relative p-3 rounded-xl bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised shadow-sm hover:border-aubergine-300 hover:shadow-md transition-all ${session.classId ? 'cursor-pointer' : 'cursor-default'}`}
-                                      onClick={() => session.classId && navigate(`/teacher/classes/${session.classId}`)}
-                                      title={session.classId ? `Open ${session.subject}` : undefined}
-                                    >
-                                        <div className={`absolute left-0 top-3 bottom-3 w-1 ${session.color} rounded-r-full`} />
-                                        <div className="space-y-1.5 ml-2">
-                                            <div className="flex items-center gap-1 text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
-                                                <Clock className="h-2.5 w-2.5" /> {session.time}
-                                            </div>
-                                            <h5 className={`text-xs font-bold text-slate-900 dark:text-white uppercase leading-tight group-hover:text-aubergine-600 transition-colors ${session.status === 'CANCELLED' ? 'line-through opacity-70' : ''}`}>
-                                                {session.subject}
-                                            </h5>
-                                            <div className="flex items-center gap-1.5 pt-1">
-                                                <Badge variant="outline" className="text-[8px] font-bold tracking-widest py-0 px-1.5 h-4 border-slate-200 dark:border-surface-raised">
-                                                    {session.room}
-                                                </Badge>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
-                            }
-                            {/* Empty space filler */}
-                            <div className="h-full flex items-center justify-center pointer-events-none opacity-5">
-                                <CalendarIcon className="h-24 w-24 text-slate-400" />
-                            </div>
-                        </div>
-                    ))}
-                </div>
+        {loading ? (
+          <div className="grid min-h-96 place-items-center"><div className="text-center"><RefreshCw className="mx-auto h-5 w-5 animate-spin text-academic-teal" /><p className="mt-3 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Reading teaching ledger</p></div></div>
+        ) : allVisible.length === 0 ? (
+          <div className="grid min-h-80 place-items-center px-6 py-12 text-center"><div className="max-w-sm"><CalendarDays className="mx-auto h-7 w-7 text-academic-teal" /><h2 className="mt-4 text-lg font-semibold">No sessions in this week</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">The date window and filters contain no teaching records.</p></div></div>
+        ) : (
+          <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Teaching timetable grid">
+            <div className={view === 'week' ? 'min-w-[980px] print:min-w-0' : 'min-w-0'}>
+              <div className="grid border-b border-foreground bg-muted/35" style={{ gridTemplateColumns: `70px repeat(${displayedDays.length}, minmax(0, 1fr))` }}>
+                <div className="border-r border-foreground px-3 py-3 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Time</div>
+                {displayedDays.map((day, position) => {
+                  const index = displayedIndexes[position];
+                  const today = isSameLocalDate(weekDates[index], new Date());
+                  return <div key={day} className={`border-r border-border px-3 py-3 last:border-r-0 ${today ? 'bg-academic-gold/22' : ''}`}><div className="flex items-baseline justify-between"><span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">{day.slice(0, 3)}</span><span className="font-mono text-sm font-semibold">{formatTimetableDay(weekDates[index])}</span></div><p className="mt-2 text-[10px] text-muted-foreground">{displayedEntries[position].length} sessions</p></div>;
+                })}
+              </div>
+              <div className="grid" style={{ gridTemplateColumns: `70px repeat(${displayedDays.length}, minmax(0, 1fr))` }}>
+                <div className="relative border-r border-foreground" style={{ height: gridHeight }}>{hours.map((hour) => <span key={hour} className="absolute right-3 -translate-y-1/2 font-mono text-[10px] text-muted-foreground" style={{ top: (hour - minHour) * 60 }}>{String(hour).padStart(2, '0')}:00</span>)}</div>
+                {displayedDays.map((day, position) => <div key={day} className="relative border-r border-border last:border-r-0" style={{ height: gridHeight }}>{hours.slice(1).map((hour) => <span key={hour} className="absolute inset-x-0 border-t border-border/65" style={{ top: (hour - minHour) * 60 }} />)}{layoutTimetableDay(displayedEntries[position]).map(({ entry, lane, lanes }) => { const top = (toMinutes(entry.startTime) - minHour * 60) * PX_PER_MINUTE; const height = Math.max(40, (toMinutes(entry.endTime) - toMinutes(entry.startTime)) * PX_PER_MINUTE - 2); return <button key={entry.id} type="button" onClick={() => entry.classId && navigate(`/teacher/classes/${entry.classId}`)} disabled={!entry.classId} className={`absolute overflow-hidden border-l-[3px] border-y border-r px-2 py-1.5 text-left transition-colors hover:bg-accent/45 disabled:cursor-default ${teachingTone(entry)}`} style={{ top, height, left: `${lane * (100 / lanes)}%`, width: `${100 / lanes}%` }}><p className="font-mono text-[9px] text-muted-foreground">{entry.startTime}–{entry.endTime}</p><p className={`mt-1 truncate text-xs font-semibold ${entry.status === 'CANCELLED' ? 'line-through opacity-65' : ''}`}>{timetableEntryTitle(entry)}</p>{height >= 70 && <><p className="mt-1 truncate text-[10px] text-muted-foreground">{entry.className || 'School item'}</p><p className="mt-1 flex items-center gap-1 truncate text-[10px] text-muted-foreground"><MapPin className="h-3 w-3" />{entry.room || 'No room'}</p></>}</button>; })}</div>)}
+              </div>
             </div>
-        </div>
-      </Card>
+          </div>
+        )}
+      </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="md:col-span-1 border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
-            <CardHeader className="p-5 border-b border-slate-100 dark:border-surface-raised">
-                <CardTitle className="text-sm font-bold uppercase tracking-widest text-slate-800 dark:text-white flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-aubergine-600" /> Upcoming Session
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="p-5">
-                <div className="space-y-4">
-                    {upcomingSession ? (
-                      <div className="p-4 rounded-xl bg-slate-900 text-white shadow-xl dark:bg-slate-100 dark:text-slate-900 relative overflow-hidden group">
-                          <div className="absolute right-0 top-0 h-full w-24 bg-aubergine-600/20 translate-x-8 -skew-x-12 group-hover:translate-x-4 transition-transform duration-500" />
-                          <div className="relative z-10 space-y-2">
-                              <Badge className="bg-aubergine-600 text-white border-none font-black text-[8px] uppercase tracking-widest h-5">{upcomingSession.label}</Badge>
-                              <h4 className="text-lg font-bold tracking-tight uppercase">{upcomingSession.session.subject}</h4>
-                              <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest opacity-70">
-                                  <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {upcomingSession.session.room}</span>
-                                  <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {upcomingSession.session.time}</span>
-                              </div>
-                              <Button
-                                size="sm"
-                                className="w-full mt-4 bg-white text-slate-900 hover:bg-slate-100 dark:bg-surface-indigo dark:text-white font-bold text-[10px] uppercase tracking-widest h-9"
-                                onClick={() => navigate('/teacher/attendance')}
-                              >
-                                  Start Session Roll Call
-                              </Button>
-                          </div>
-                      </div>
-                    ) : (
-                      <div className="p-6 rounded-xl border border-dashed border-slate-200 dark:border-surface-raised text-center text-slate-400">
-                          <CalendarIcon className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                          <p className="text-xs font-semibold">No upcoming sessions scheduled.</p>
-                      </div>
-                    )}
-                </div>
-            </CardContent>
-          </Card>
-
-          <Card className="md:col-span-2 border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
-              <CardHeader className="p-5 border-b border-slate-100 dark:border-surface-raised">
-                  <CardTitle className="text-sm font-bold uppercase tracking-widest text-slate-800 dark:text-white">Teaching Hours Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-                    <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Weekly Load</p>
-                        <p className="text-2xl font-black text-slate-900 dark:text-white">{Math.round(weeklyHours)} Hours</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Modules</p>
-                        <p className="text-2xl font-black text-slate-900 dark:text-white">{activeModules} {activeModules === 1 ? 'Class' : 'Classes'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sessions</p>
-                        <p className="text-2xl font-black text-emerald-600">{teacherSchedule.length} / Week</p>
-                    </div>
-                    <div className="space-y-1 text-right">
-                        <Button
-                          id="teaching-history-btn"
-                          className="bg-slate-100 hover:bg-slate-200 dark:bg-surface-raised dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold text-[9px] uppercase tracking-widest h-10 px-4"
-                          onClick={handleViewHistory}
-                        >
-                            History
-                        </Button>
-                    </div>
-                </div>
-              </CardContent>
-          </Card>
+      <div className="grid gap-5 lg:grid-cols-[minmax(300px,.65fr)_minmax(0,1.35fr)] print:hidden">
+        <section className="border border-foreground bg-academic-navy-deep text-white">
+          <header className="border-b border-white/30 px-5 py-4"><p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#6dd4cb]">Next field action</p><h2 className="mt-1 text-lg font-semibold">Upcoming session</h2></header>
+          {upcoming ? <div className="px-5 py-5"><p className="font-mono text-xs text-academic-gold">{formatTimetableDay(upcoming.date)} · {upcoming.entry.startTime}</p><h3 className="mt-3 text-xl font-semibold">{timetableEntryTitle(upcoming.entry)}</h3><p className="mt-3 flex flex-wrap gap-4 text-xs text-white/65"><span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" />{upcoming.entry.className || 'School item'}</span><span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{upcoming.entry.room || 'No room'}</span></p><Button className="mt-5 w-full rounded-none" onClick={() => navigate('/teacher/attendance')}>Open roll call</Button></div> : <p className="px-5 py-8 text-sm text-white/65">No upcoming session in this date window.</p>}
+        </section>
+        <section className="border border-foreground bg-card">
+          <header className="border-b border-foreground px-5 py-4"><p className="font-mono text-[10px] uppercase tracking-[0.12em] text-academic-teal">Workload reading</p><h2 className="mt-1 text-lg font-semibold">What this week means</h2></header>
+          <div className="grid sm:grid-cols-3"><Interpretation label="Teaching days" value={String(weekEntries.filter((entries) => entries.some((entry) => entry.status !== 'CANCELLED')).length)} note="Days with active duty" /><Interpretation label="Earliest start" value={allVisible.length ? allVisible.reduce((earliest, entry) => entry.startTime < earliest ? entry.startTime : earliest, allVisible[0].startTime) : '—'} note="Across visible records" /><Interpretation label="Latest finish" value={allVisible.length ? allVisible.reduce((latest, entry) => entry.endTime > latest ? entry.endTime : latest, allVisible[0].endTime) : '—'} note="Across visible records" /></div>
+        </section>
       </div>
 
-      <style>{`
-        @media print {
-          /* Print only the weekly schedule, not the app shell. */
-          body * { visibility: hidden; }
-          .timetable-print-area, .timetable-print-area * { visibility: visible; }
-          .timetable-print-area {
-            position: absolute; left: 0; top: 0; width: 100%;
-            box-shadow: none !important; border: none !important;
-          }
-          /* Let the grid expand so the whole week fits on the page. */
-          .timetable-print-area .min-w-\\[1000px\\] { min-width: 0 !important; }
-          .timetable-print-area .overflow-x-auto { overflow: visible !important; }
-          .timetable-print-area .h-\\[600px\\] { height: auto !important; }
-          @page { size: A4 landscape; margin: 12mm; }
-        }
-      `}</style>
+      <style>{`@media print { body * { visibility: hidden; } .timetable-print-area, .timetable-print-area * { visibility: visible; } .timetable-print-area { position: absolute; inset: 0; width: 100%; } @page { size: A4 landscape; margin: 10mm; } }`}</style>
     </div>
   );
+}
+
+function Measure({ label, value, note, attention = false }: { label: string; value: string; note: string; attention?: boolean }) {
+  return <div className="border-b border-border px-4 py-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"><p className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">{label}</p><p className={`mt-2 font-mono text-2xl font-semibold tabular-nums ${attention ? 'text-academic-coral' : ''}`}>{value}</p><p className="mt-1 text-[11px] text-muted-foreground">{note}</p></div>;
+}
+
+function FieldSelect({ label, value, onValueChange, options }: { label: string; value: string; onValueChange: (value: string) => void; options: { value: string; label: string }[] }) {
+  return <div className="bg-card p-3"><p className="font-mono text-[9px] uppercase tracking-[0.11em] text-muted-foreground">{label}</p><Select value={value} onValueChange={onValueChange}><SelectTrigger className="mt-1 h-8 w-full rounded-none border-0 border-b border-input px-0 focus-visible:ring-0"><SelectValue /></SelectTrigger><SelectContent className="rounded-none">{options.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>;
+}
+
+function Interpretation({ label, value, note }: { label: string; value: string; note: string }) {
+  return <div className="border-b border-border px-5 py-5 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"><p className="font-mono text-[9px] uppercase tracking-[0.11em] text-muted-foreground">{label}</p><p className="mt-2 font-mono text-xl font-semibold tabular-nums">{value}</p><p className="mt-1 text-xs text-muted-foreground">{note}</p></div>;
 }

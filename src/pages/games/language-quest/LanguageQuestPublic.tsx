@@ -6,16 +6,20 @@ import {
   BookMarked,
   CheckCircle2,
   Globe2,
+  Headphones,
   Heart,
   Info,
+  Keyboard,
   Languages,
   LogIn,
+  MessageCircle,
   Moon,
   RefreshCcw,
   ShieldCheck,
   Sparkles,
   Star,
   Sun,
+  Sigma,
   Zap,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +29,7 @@ import { MrlcQuestBrand, TaoMonLaeCredit } from '@/src/components/games/MrlcQues
 import { LanguageQuestCourseFolders } from '@/src/components/games/LanguageQuestCourseFolder';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { orderedLanguageQuestCategories } from '@/shared/languageQuestCourseCategories';
+import { QuestDepthStage, QuestStaggeredText } from '@/src/components/games/LanguageQuestMotion';
 
 interface PublicCourse {
   id: string;
@@ -115,11 +120,10 @@ export default function LanguageQuestPublic() {
               <Badge className="border-white/25 bg-white/10 px-3 py-1.5 text-white shadow-sm hover:bg-white/10">
                 <Sparkles className="h-3.5 w-3.5" /> Guided learning for real life
               </Badge>
-              <h1 className="mx-auto mt-6 max-w-3xl text-[clamp(2.65rem,7.2vw,5rem)] font-black leading-[0.98] tracking-[-0.055em] text-white lg:mx-0">
-                Learn the idea.
-                <span className="block text-[var(--lq-spring-mint)]">Build the skill.</span>
-                <span className="block">Grow with confidence.</span>
-              </h1>
+              <QuestStaggeredText
+                text="Learn the idea. Build the skill. Grow with confidence."
+                className="mx-auto mt-6 max-w-3xl text-balance text-[clamp(2.65rem,7.2vw,5rem)] font-extrabold leading-[0.98] tracking-[-0.055em] text-white lg:mx-0"
+              />
               <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-white/85 sm:text-lg sm:leading-8 lg:mx-0">
                 Short guided courses combine languages, K–12 mathematics, worked feedback, and friendly scored practice. Learn at your own pace and keep every achievement in one free account.
               </p>
@@ -134,16 +138,15 @@ export default function LanguageQuestPublic() {
               <p className="mt-4 flex items-center justify-center gap-2 text-sm text-white/75 lg:justify-start">
                 <ShieldCheck className="h-4 w-4 text-[var(--lq-spring-mint)]" /> Visitors can browse courses. A free signup is required to begin and save progress.
               </p>
-              <div className="mt-7 flex flex-wrap justify-center gap-2 text-xs font-bold lg:justify-start">
-                <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-sky-700 dark:border-sky-500/30 dark:bg-sky-950/60 dark:text-sky-300">🎧 Listen</span>
-                <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/60 dark:text-amber-300">🔤 Spell</span>
-                <span className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-950/60 dark:text-indigo-300">🧮 Solve</span>
-                <span className="rounded-full border border-fuchsia-200 bg-fuchsia-50 px-3 py-1.5 text-fuchsia-700 dark:border-fuchsia-500/30 dark:bg-fuchsia-950/60 dark:text-fuchsia-300">✍️ Write</span>
-                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/60 dark:text-emerald-300">💬 Speak</span>
+              <div className="mt-7 flex flex-wrap justify-center gap-x-5 gap-y-3 text-xs font-bold text-white/78 lg:justify-start">
+                <span className="inline-flex items-center gap-1.5"><Headphones className="h-4 w-4" /> Listen</span>
+                <span className="inline-flex items-center gap-1.5"><Keyboard className="h-4 w-4" /> Spell</span>
+                <span className="inline-flex items-center gap-1.5"><Sigma className="h-4 w-4" /> Solve</span>
+                <span className="inline-flex items-center gap-1.5"><MessageCircle className="h-4 w-4" /> Speak in sentences</span>
               </div>
             </div>
 
-            <div className="lq-hero-scene relative mx-auto w-full max-w-xl py-8 sm:px-6">
+            <QuestDepthStage className="relative mx-auto w-full max-w-xl py-8 sm:px-6">
               <img
                 src="/icons/LanguageQuests_Graphics/Owl School 8.svg"
                 alt=""
@@ -154,7 +157,7 @@ export default function LanguageQuestPublic() {
                 <span className="absolute -top-3 left-1/2 grid h-10 w-10 -translate-x-1/2 place-items-center rounded-2xl bg-amber-400 text-white shadow-lg"><Star className="h-5 w-5 fill-current" /></span>
                 <span className="absolute -bottom-3 left-1/2 grid h-10 w-10 -translate-x-1/2 place-items-center rounded-2xl bg-sky-500 text-white shadow-lg"><Globe2 className="h-5 w-5" /></span>
               </div>
-              <div className="lq-hero-card relative rounded-[2rem] border border-white bg-white/90 p-3 shadow-[0_35px_90px_-28px_rgba(59,30,144,.45)] backdrop-blur sm:p-5">
+              <div className="relative rounded-[2rem] border border-white bg-white/90 p-3 shadow-[0_35px_90px_-28px_rgba(59,30,144,.45)] backdrop-blur sm:p-5">
                 <div className="lq-hero-gradient relative overflow-hidden rounded-[1.6rem] p-6 text-white sm:p-8">
                   <div className="absolute -right-16 -top-20 h-52 w-52 rounded-full bg-white/15 blur-2xl" />
                   <div className="lq-depth-1 relative flex items-center justify-between">
@@ -179,7 +182,7 @@ export default function LanguageQuestPublic() {
               <div className="lq-float-delayed absolute -right-1 top-0 grid h-14 w-14 place-items-center rounded-2xl bg-rose-500 text-white shadow-xl sm:-right-2">
                 <Heart className="h-7 w-7 fill-current" />
               </div>
-            </div>
+            </QuestDepthStage>
           </div>
         </section>
 
@@ -190,21 +193,21 @@ export default function LanguageQuestPublic() {
               <h2 className="mt-3 text-3xl font-black tracking-tight text-[var(--lq-charcoal)] dark:text-white sm:text-4xl">A clear routine in every lesson</h2>
               <p className="mt-3 leading-7 text-[var(--lq-slate-caption)] dark:text-slate-300">You always know what to do next, why it matters, and how to recover from a mistake.</p>
             </div>
-            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-10 grid overflow-hidden border-y border-l border-[var(--lq-steel-border)] bg-[var(--lq-steel-border)] md:grid-cols-2 xl:grid-cols-4 dark:border-slate-700 dark:bg-slate-700">
               {[
-                { art: '/icons/optimized/LanguageLearning/V1/Listening.png', step: '01', title: 'Learn and listen', copy: 'Meet the key phrase, hear its pronunciation, and connect it to a real situation.', tone: 'from-sky-500 to-blue-600', shadow: 'shadow-sky-500/15' },
-                { art: '/icons/optimized/LanguageLearning/V1/Notes.png', step: '02', title: 'Listen and spell', copy: 'Hear the word without seeing its letters, then type it from memory.', tone: 'from-amber-400 to-orange-600', shadow: 'shadow-amber-500/15' },
-                { art: '/icons/optimized/LanguageLearning/V1/Conversation.png', step: '03', title: 'Build the sentence', copy: 'Type the complete phrase from memory. Punctuation and capital letters will not block you.', tone: 'from-fuchsia-500 to-violet-700', shadow: 'shadow-fuchsia-500/15' },
-                { art: '/icons/optimized/LanguageLearning/V1/Dictionary.png', step: '04', title: 'Check understanding', copy: 'Choose from a clue-safe prompt, read a clear correction, and retry immediately when needed.', tone: 'from-emerald-400 to-teal-600', shadow: 'shadow-emerald-500/15' },
-              ].map(({ art, step, title, copy, tone, shadow }) => (
-                <article key={step} className={`group rounded-3xl border border-white bg-white p-6 shadow-xl ${shadow} transition duration-300 hover:-translate-y-2 dark:border-slate-800 dark:bg-slate-900/90`}>
+                { art: '/icons/optimized/LanguageLearning/V1/Listening.png', step: '01', title: 'Learn and listen', copy: 'Meet the key phrase, hear its pronunciation, and connect it to a real situation.' },
+                { art: '/icons/optimized/LanguageLearning/V1/Notes.png', step: '02', title: 'Listen and spell', copy: 'Hear the word without seeing its letters, then type it from memory.' },
+                { art: '/icons/optimized/LanguageLearning/V1/Conversation.png', step: '03', title: 'Build the sentence', copy: 'Type the complete phrase from memory. Punctuation and capital letters will not block you.' },
+                { art: '/icons/optimized/LanguageLearning/V1/Dictionary.png', step: '04', title: 'Check understanding', copy: 'Read a clear correction and retry immediately when needed.' },
+              ].map(({ art, step, title, copy }) => (
+                <article key={step} className="group border-b border-r border-[var(--lq-steel-border)] bg-white p-6 transition-colors hover:bg-sky-50/70 dark:border-slate-700 dark:bg-slate-900/90 dark:hover:bg-slate-800">
                   <div className="flex items-center justify-between">
-                    <span className={`grid h-14 w-14 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br ${tone} shadow-lg transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110`}>
+                    <span className="grid h-14 w-14 place-items-center overflow-hidden rounded-full border-2 border-[var(--lq-signal-blue)] bg-sky-50 transition-transform duration-200 group-hover:-translate-y-1 dark:bg-sky-950">
                       <img src={art} alt="" aria-hidden="true" loading="lazy" decoding="async" className="h-12 w-12 object-contain drop-shadow-md" />
                     </span>
-                    <span className="text-2xl font-black text-slate-200 dark:text-slate-700">{step}</span>
+                    <span className="text-2xl font-extrabold text-[var(--lq-signal-blue)]/25 dark:text-sky-300/30">{step}</span>
                   </div>
-                  <h3 className="mt-5 text-xl font-black">{title}</h3>
+                  <h3 className="mt-5 text-xl font-extrabold">{title}</h3>
                   <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{copy}</p>
                 </article>
               ))}
@@ -240,11 +243,12 @@ export default function LanguageQuestPublic() {
                   groups={courseGroups}
                   idPrefix="public-course-folder"
                   renderCourse={(course) => (
-                    <article key={course.id} className="lq-card group overflow-hidden transition duration-300 hover:-translate-y-1.5 hover:shadow-lg dark:border dark:border-slate-800">
-                      <div className="h-2" style={{ backgroundColor: course.accentColor }} />
-                      <div className="p-6">
+                    <article key={course.id} className="group min-w-0 bg-white p-6 transition-colors hover:bg-sky-50/70 dark:bg-slate-900 dark:hover:bg-slate-800/85">
                         <div className="flex items-start gap-4">
-                          <span className="lq-tile-circle grid h-14 w-14 shrink-0 place-items-center text-3xl transition-transform duration-300 group-hover:scale-110 dark:border dark:border-slate-700">{course.imageEmoji}</span>
+                          <span className="lq-tile-circle relative grid h-14 w-14 shrink-0 place-items-center border border-[var(--lq-steel-border)] text-3xl transition-transform duration-200 group-hover:-translate-y-1 dark:border-slate-700">
+                            <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900" style={{ backgroundColor: course.accentColor }} aria-hidden="true" />
+                            {course.imageEmoji}
+                          </span>
                           <div>
                             <p className="text-xs font-bold uppercase tracking-wider text-[var(--lq-slate-caption)] dark:text-slate-500">{course.language}</p>
                             <h4 className="mt-1 text-xl font-black text-[var(--lq-charcoal)] dark:text-white">{course.title}</h4>
@@ -256,13 +260,9 @@ export default function LanguageQuestPublic() {
                           <span className="rounded-full bg-[var(--lq-canvas-mist)] px-3 py-1.5 dark:bg-slate-800">{course.lessonCount} lessons</span>
                           <span className="rounded-full bg-[var(--lq-canvas-mist)] px-3 py-1.5 dark:bg-slate-800">{course.challengeCount} practices</span>
                         </div>
-                        <Link
-                          to={user ? `/games/language-quest/courses/${course.id}` : '/signup'}
-                          className="lq-btn-primary mt-6 w-full transition-transform group-hover:scale-[1.02]"
-                        >
-                          {user ? 'Open this course' : 'Sign up to learn'} <ArrowRight className="ml-2 h-4 w-4" />
+                        <Link to={user ? `/games/language-quest/courses/${course.id}` : '/signup'} className="mt-6 flex min-h-11 items-center justify-between border-t border-[var(--lq-steel-border)] pt-4 text-sm font-extrabold text-[var(--lq-signal-blue)] outline-none focus-visible:ring-4 focus-visible:ring-[var(--lq-signal-blue)]/20 dark:border-slate-700">
+                          {user ? 'Open this course' : 'Sign up to learn'} <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </Link>
-                      </div>
                     </article>
                   )}
                 />
@@ -276,14 +276,14 @@ export default function LanguageQuestPublic() {
           </div>
         </section>
 
-        <section className="px-4 pb-16 sm:px-6 sm:pb-20">
-          <div className="lq-hero-gradient relative mx-auto flex max-w-7xl flex-col items-center overflow-hidden rounded-[2rem] px-6 py-14 text-center text-white shadow-2xl sm:py-16">
-            <div className="absolute -left-12 -top-14 h-48 w-48 rounded-full bg-[var(--lq-spring-mint)]/20 blur-2xl" />
-            <div className="absolute -bottom-16 -right-8 h-56 w-56 rounded-full bg-white/15 blur-2xl" />
-            <span className="relative grid h-16 w-16 place-items-center rounded-full bg-white/10 shadow-xl ring-1 ring-white/15"><Languages className="h-8 w-8 text-white" /></span>
-            <h2 className="mt-5 text-3xl font-black tracking-tight text-white">Ready to say more than single words?</h2>
-            <p className="mt-3 max-w-xl text-white/80">Create your free learner account and turn useful language into complete, confident sentences.</p>
-            <Link to={startHref} className="lq-btn-primary relative mt-7 h-13 px-7 text-base">
+        <section className="lq-hero-gradient border-y border-white/10 px-4 py-14 text-white sm:px-6 sm:py-16">
+          <div className="relative mx-auto grid max-w-7xl items-center gap-7 sm:grid-cols-[auto_1fr_auto]">
+            <span className="grid h-16 w-16 place-items-center rounded-full border border-white/25 bg-white/10"><Languages className="h-8 w-8 text-white" /></span>
+            <div>
+              <h2 className="text-balance text-3xl font-extrabold tracking-tight text-white">Ready to turn useful words into confident sentences?</h2>
+              <p className="mt-2 max-w-2xl text-white/75">Create your learner account, start a course, and keep every achievement in one place.</p>
+            </div>
+            <Link to={startHref} className="lq-btn-primary min-h-13 shrink-0 px-7 text-base">
               {user ? 'Continue learning' : 'Start Learning Quest'} <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </div>
