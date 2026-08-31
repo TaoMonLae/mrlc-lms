@@ -1570,7 +1570,7 @@ const schemas = {
     lockdownAutoSubmitOnViolation: z.union([z.boolean(), z.string()]).optional(),
     lockdownMaxWarnings: optNum,
     lockdownInstructions: nullableStr,
-    cursorEffect: optStr,
+    cursorEffect: z.enum(["NONE", "RAINBOW_TRAIL", "SPLASH_CURSOR", "RIBBONS", "GHOST_CURSOR", "CLICK_SPARK", "TARGET_CURSOR"]).optional(),
   }),
   // The TimetableForm frontend (src/components/timetable/TimetableForm.tsx,
   // handleEnrichedSubmit) deliberately sends `null` -- not just omits the

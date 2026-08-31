@@ -41,6 +41,8 @@ export default function BlobCursor({
       const point = 'clientX' in event ? event : event.touches?.[0];
       if (!point) return;
 
+      if (containerRef.current) containerRef.current.style.opacity = '1';
+
       const { left, top } = updateOffset();
       blobsRef.current.forEach((element, index) => {
         if (!element) return;
@@ -60,13 +62,11 @@ export default function BlobCursor({
   useEffect(() => {
     const onResize = () => updateOffset();
     window.addEventListener('resize', onResize);
-    window.addEventListener('mousemove', handleMove, { passive: true });
-    window.addEventListener('touchmove', handleMove, { passive: true });
+    window.addEventListener('pointermove', handleMove, { passive: true });
 
     return () => {
       window.removeEventListener('resize', onResize);
-      window.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('pointermove', handleMove);
       gsap.killTweensOf(blobsRef.current.filter(Boolean));
     };
   }, [handleMove, updateOffset]);
@@ -77,7 +77,7 @@ export default function BlobCursor({
       aria-hidden="true"
       data-cursor-effect="blob"
       className="pointer-events-none fixed inset-0 overflow-hidden"
-      style={{ zIndex }}
+      style={{ zIndex, opacity: 0, transition: 'opacity 120ms ease-out' }}
     >
       {useFilter && (
         <svg aria-hidden="true" className="absolute h-0 w-0">

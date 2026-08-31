@@ -1,6 +1,9 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSettings } from '../providers/SettingsProvider';
 import { useAuth } from '../providers/AuthProvider';
+import { lazyWithRetry as lazy } from '../lib/lazyWithRetry';
+import { CURSOR_PREVIEW_EVENT, isCursorEffect, resolveCursorEffect } from '../lib/cursorEffects';
+import type { CursorEffect as CursorEffectName } from '../types/settings';
 
 const BlobCursor = lazy(() => import('@/components/BlobCursor'));
 const SplashCursor = lazy(() => import('@/components/SplashCursor'));
@@ -18,6 +21,7 @@ const TargetCursor = lazy(() => import('@/components/TargetCursor'));
 export default function CursorEffect() {
   const { systemSettings } = useSettings();
   const { user } = useAuth();
+  const [previewEffect, setPreviewEffect] = useState<CursorEffectName | null>(null);
   const [reducedMotion, setReducedMotion] = useState(
     () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true
   );
@@ -31,9 +35,18 @@ export default function CursorEffect() {
     return () => mq.removeEventListener?.('change', onChange);
   }, []);
 
+  useEffect(() => {
+    const onPreview = (event: Event) => {
+      const value = (event as CustomEvent<CursorEffectName | null>).detail;
+      setPreviewEffect(isCursorEffect(value) ? value : null);
+    };
+    window.addEventListener(CURSOR_PREVIEW_EVENT, onPreview);
+    return () => window.removeEventListener(CURSOR_PREVIEW_EVENT, onPreview);
+  }, []);
+
   if (reducedMotion) return null;
 
-  const effect = user?.cursorEffect || systemSettings.cursorEffect;
+  const effect = previewEffect ?? resolveCursorEffect(user?.cursorEffect, systemSettings.cursorEffect);
 
   let visual: React.ReactNode;
   switch (effect) {

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { SchoolProfile, BrandingSettings, SystemSettings } from '../types/settings';
+import { isCursorEffect } from '../lib/cursorEffects';
 
 interface SettingsContextType {
   schoolProfile: SchoolProfile;
@@ -113,7 +114,7 @@ function applyServerData(
     lockdownAutoSubmitOnViolation: data.lockdownAutoSubmitOnViolation !== undefined ? data.lockdownAutoSubmitOnViolation : prev.lockdownAutoSubmitOnViolation,
     lockdownMaxWarnings: data.lockdownMaxWarnings !== undefined ? data.lockdownMaxWarnings : prev.lockdownMaxWarnings,
     lockdownInstructions: data.lockdownInstructions !== undefined ? data.lockdownInstructions || '' : prev.lockdownInstructions,
-    cursorEffect: data.cursorEffect !== undefined ? data.cursorEffect : prev.cursorEffect,
+    cursorEffect: isCursorEffect(data.cursorEffect) ? data.cursorEffect : prev.cursorEffect,
   }));
 }
 

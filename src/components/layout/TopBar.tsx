@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Search, Moon, Sun, Monitor, Bell, Megaphone, Pin, Calendar, Clock, Settings } from "lucide-react";
+import { Search, Moon, Sun, Monitor, Bell, Pin, Calendar, Clock, Settings, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import { useUser } from "@/src/lib/permissions";
 import { apiGet, apiSend } from "@/src/lib/api";
 import { useSettings } from "@/src/providers/SettingsProvider";
 import { formatSchoolDate, formatSchoolTime, formatSchoolWeekday } from "@/src/lib/dateTime";
+import { useReleaseUpdates } from "@/src/providers/ReleaseUpdatesProvider";
 
 type NotificationRow = { id: string; type: string; title: string; message: string; href?: string | null; readAt?: string | null; createdAt: string };
 
@@ -27,6 +28,7 @@ export function TopBar() {
   const { setTheme } = useTheme();
   const { user } = useUser();
   const { systemSettings } = useSettings();
+  const { hasUnseenRelease, openUpdates } = useReleaseUpdates();
   const [notifOpen, setNotifOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   // Search covers students/teachers/classes — records only these roles may see.
@@ -205,6 +207,20 @@ export function TopBar() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="relative size-10 rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+          aria-label={hasUnseenRelease ? "Open What’s New — new update available" : "Open What’s New"}
+          onClick={openUpdates}
+        >
+          <Sparkles className="size-5" />
+          {hasUnseenRelease && (
+            <span className="absolute right-2 top-2 size-2 rounded-full bg-[#2727e6] ring-2 ring-card" aria-hidden="true" />
+          )}
+        </Button>
 
         {/* Notification Bell */}
         <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>

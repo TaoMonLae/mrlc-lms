@@ -287,6 +287,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { SettingsProvider } from "./providers/SettingsProvider";
 import { AuthProvider } from "./providers/AuthProvider";
+import { ReleaseUpdatesProvider } from "./providers/ReleaseUpdatesProvider";
 import { I18nProvider } from "./i18n/I18nProvider";
 
 const LandingPage = lazy(() => import("./pages/Landing"));
@@ -299,6 +300,7 @@ export default function App() {
       <I18nProvider>
       <AuthProvider>
         <SettingsProvider>
+        <ReleaseUpdatesProvider>
         <TooltipProvider>
           <BrowserRouter>
           <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-slate-500">Loading page…</div>}>
@@ -723,6 +725,7 @@ export default function App() {
           <DynamicFavicon />
         </BrowserRouter>
         </TooltipProvider>
+        </ReleaseUpdatesProvider>
       </SettingsProvider>
       </AuthProvider>
       </I18nProvider>

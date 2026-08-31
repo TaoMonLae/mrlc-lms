@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { MousePointerClick, KeyRound, Mail, ShieldCheck } from 'lucide-react';
+import { MousePointerClick, KeyRound, Mail, ShieldCheck, AlertTriangle, Eye } from 'lucide-react';
+import { useReducedMotion } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -16,8 +17,13 @@ import { ProfilePhotoUploader } from '@/src/components/profile/ProfilePhotoUploa
 import { NotificationPreferences } from '@/src/components/profile/NotificationPreferences';
 import { SessionManagement } from '@/src/components/profile/SessionManagement';
 import { MfaSettings } from '@/src/components/profile/MfaSettings';
+import { useSettings } from '../providers/SettingsProvider';
+import { CURSOR_EFFECT_LABELS, previewCursorEffect } from '../lib/cursorEffects';
+import type { CursorEffect } from '../types/settings';
 
-const CURSOR_EFFECT_OPTIONS: { value: string; label: string }[] = [
+type CursorSelection = CursorEffect | 'SCHOOL_DEFAULT';
+
+const CURSOR_EFFECT_OPTIONS: { value: CursorSelection; label: string }[] = [
   { value: 'SCHOOL_DEFAULT', label: "Use school default" },
   { value: 'NONE', label: 'None' },
   { value: 'RAINBOW_TRAIL', label: 'Blob Cursor' },
@@ -30,10 +36,18 @@ const CURSOR_EFFECT_OPTIONS: { value: string; label: string }[] = [
 
 export default function MyProfile() {
   const { user, updateUser } = useAuth();
-  const [cursorEffect, setCursorEffect] = useState(user?.cursorEffect || 'SCHOOL_DEFAULT');
+  const { systemSettings } = useSettings();
+  const reduceMotion = useReducedMotion();
+  const [cursorEffect, setCursorEffect] = useState<CursorSelection>((user?.cursorEffect as CursorEffect | null) || 'SCHOOL_DEFAULT');
   const [saving, setSaving] = useState(false);
 
   const isDirty = cursorEffect !== (user?.cursorEffect || 'SCHOOL_DEFAULT');
+
+  useEffect(() => {
+    const effect = cursorEffect === 'SCHOOL_DEFAULT' ? systemSettings.cursorEffect : cursorEffect;
+    previewCursorEffect(effect);
+    return () => previewCursorEffect(null);
+  }, [cursorEffect, systemSettings.cursorEffect]);
 
   const handleSaveCursorEffect = async () => {
     setSaving(true);
@@ -86,7 +100,7 @@ export default function MyProfile() {
         </div>
 
         <div className="pt-4 border-t border-slate-200 dark:border-surface-raised">
-          <Button variant="outline" size="sm" render={<Link to="/change-password" />}>
+          <Button variant="outline" size="sm" render={<Link to="/change-password" />} nativeButton={false}>
             <KeyRound className="mr-2 h-4 w-4" /> Change Password
           </Button>
         </div>
@@ -104,7 +118,7 @@ export default function MyProfile() {
 
         <div className="max-w-sm space-y-2">
           <Label>Effect</Label>
-          <Select value={cursorEffect} onValueChange={setCursorEffect}>
+          <Select value={cursorEffect} onValueChange={(value) => setCursorEffect(value as CursorSelection)}>
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
@@ -115,9 +129,25 @@ export default function MyProfile() {
             </SelectContent>
           </Select>
           <p className="text-xs text-slate-500">
-            Automatically disabled for anyone with "reduce motion" enabled in their OS.
+            Your selection previews across this screen before you save it.
           </p>
         </div>
+
+        {reduceMotion ? (
+          <div className="border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200" role="status">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+              <p><span className="font-semibold">Preview paused by Reduce Motion.</span> The preference will still save, but continuous pointer animation stays off while Reduce Motion is enabled on this device.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-200" role="status">
+            <div className="flex items-start gap-3">
+              <Eye className="mt-0.5 size-4 shrink-0" />
+              <p><span className="font-semibold">Live preview:</span> {cursorEffect === 'SCHOOL_DEFAULT' ? `${CURSOR_EFFECT_LABELS[systemSettings.cursorEffect]} (school default)` : CURSOR_EFFECT_LABELS[cursorEffect]}.</p>
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-end pt-2">
           <Button

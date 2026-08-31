@@ -2,7 +2,8 @@ import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Save, HardDrive, Shield, MonitorCheck, MousePointerClick } from 'lucide-react';
+import { Save, HardDrive, Shield, MonitorCheck, MousePointerClick, AlertTriangle, Eye } from 'lucide-react';
+import { useReducedMotion } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -14,6 +15,8 @@ import { getCurrencies } from '../../lib/locale';
 import { useSettings } from '../../providers/SettingsProvider';
 import { LANGUAGES } from '../../i18n/catalog';
 import { useI18n } from '../../i18n/I18nProvider';
+import { useAuth } from '../../providers/AuthProvider';
+import { CURSOR_EFFECT_LABELS, previewCursorEffect } from '../../lib/cursorEffects';
 
 const systemSchema = z.object({
   currency: z.string(),
@@ -36,7 +39,9 @@ type FormValues = z.infer<typeof systemSchema>;
 export default function SystemSettings() {
   const currencies = useMemo(() => getCurrencies(), []);
   const { systemSettings, updateSystem } = useSettings();
+  const { user } = useAuth();
   const { setLang } = useI18n();
+  const reduceMotion = useReducedMotion();
 
   const {
     register,
@@ -54,6 +59,15 @@ export default function SystemSettings() {
   useEffect(() => {
     reset(systemSettings);
   }, [systemSettings, reset]);
+
+  const selectedCursorEffect = watch('cursorEffect');
+
+  // Preview the school-wide choice even when this admin has a personal
+  // override. Clearing on unmount restores the actual effective preference.
+  useEffect(() => {
+    previewCursorEffect(selectedCursorEffect);
+    return () => previewCursorEffect(null);
+  }, [selectedCursorEffect]);
 
   const onSubmit = async (data: FormValues) => {
     try {
@@ -182,7 +196,7 @@ export default function SystemSettings() {
 
         <div className="max-w-sm space-y-2">
           <Label>Effect</Label>
-          <Select value={watch('cursorEffect')} onValueChange={(v: any) => setValue('cursorEffect', v, { shouldDirty: true })}>
+          <Select value={selectedCursorEffect} onValueChange={(v: any) => setValue('cursorEffect', v, { shouldDirty: true })}>
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
@@ -197,9 +211,30 @@ export default function SystemSettings() {
             </SelectContent>
           </Select>
           <p className="text-xs text-slate-500">
-            Applies for every user across the whole app. Automatically disabled for anyone with "reduce motion" enabled in their OS.
+            Applies for users who have not chosen a personal override. Your selection previews across this screen before you save.
           </p>
         </div>
+
+        {reduceMotion ? (
+          <div className="max-w-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200" role="status">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+              <p><span className="font-semibold">Preview paused by Reduce Motion.</span> Your cursor choice is saved correctly, but continuous pointer animation stays off while Reduce Motion is enabled in your device settings.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="max-w-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-200" role="status">
+            <div className="flex items-start gap-3">
+              <Eye className="mt-0.5 size-4 shrink-0" />
+              <p>
+                <span className="font-semibold">Previewing {CURSOR_EFFECT_LABELS[selectedCursorEffect]} now.</span>
+                {user?.cursorEffect
+                  ? ` Your account normally uses the personal “${CURSOR_EFFECT_LABELS[user.cursorEffect as keyof typeof CURSOR_EFFECT_LABELS] || user.cursorEffect}” override; other users will receive this school default.`
+                  : ' Your account follows the school default, so this is also what you will use after saving.'}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="space-y-6 border-t border-slate-200 dark:border-surface-raised pt-8">
