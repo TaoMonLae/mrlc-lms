@@ -15,7 +15,7 @@ interface SettingsContextType {
 const DEFAULT_SCHOOL: SchoolProfile = {
   name: 'Mon Refugee Learning Centre',
   shortName: 'MRLC',
-  address: 'Mae Sot, Tak Province, Thailand',
+  address: 'Malaysia',
   phone: '',
   email: 'admin@mrlc.edu',
   website: '',
@@ -36,7 +36,7 @@ const DEFAULT_BRANDING: BrandingSettings = {
 };
 
 const DEFAULT_SYSTEM: SystemSettings = {
-  timezone: 'Asia/Bangkok',
+  timezone: 'Asia/Kuala_Lumpur',
   dateFormat: 'DD/MM/YYYY',
   timeFormat: '24',
   clockShowSeconds: true,

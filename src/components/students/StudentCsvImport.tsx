@@ -21,7 +21,7 @@ const TEMPLATE_COLUMNS = [
 ];
 
 const SAMPLE_ROWS = [
-  ['STU-001', 'Aung', 'Ko', 'aung.ko@example.com', '', 'MALE', '2007-04-15', 'Grade 10', 'Daw Hla', '09-123456789', 'Mae Sot', 'ACTIVE', ''],
+  ['STU-001', 'Aung', 'Ko', 'aung.ko@example.com', '', 'MALE', '2007-04-15', 'Grade 10', 'Daw Hla', '09-123456789', 'Kuala Lumpur', 'ACTIVE', ''],
   ['STU-002', 'Mya', 'Win', 'mya.win@example.com', 'Welcome2026', 'FEMALE', '2008-09-02', 'Grade 9', 'U Tun', '09-987654321', '', 'ACTIVE', 'Transferred in'],
 ];
 

@@ -60,7 +60,7 @@ export default function Auth1({ brand, children, footer, heroAlt, heroReady, her
           <img src={heroSrc} alt={heroAlt} width="1800" height="1200" fetchPriority="high" className="absolute inset-0 h-full w-full object-cover" />
         ) : (
           <div className="absolute inset-0 grid content-between bg-[#112d40] p-8 text-white xl:p-12" aria-hidden="true">
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/60">Mae Sot · school community</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/60">Malaysia · school community</p>
             <p className="max-w-[8ch] text-[clamp(5rem,11vw,10rem)] font-black uppercase leading-[0.72] tracking-[-0.07em] text-white/10">MRLC</p>
           </div>
         )}

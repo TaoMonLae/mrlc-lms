@@ -337,11 +337,11 @@ model SchoolProfile {
   reportHeaderStyle String? @default("standard")
 
   // System / localization
-  timezone                      String? @default("Asia/Bangkok")
+  timezone                      String? @default("Asia/Kuala_Lumpur")
   dateFormat                    String? @default("DD/MM/YYYY")
   timeFormat                    String? @default("24")
   clockShowSeconds              Boolean @default(true)
-  currency                      String? @default("THB")
+  currency                      String? @default("MYR")
   defaultLanguage               String? @default("en")
   fileUploadLimitMb             Int     @default(10)
   backupEnabled                 Boolean @default(true)
