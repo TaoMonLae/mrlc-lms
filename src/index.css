@@ -543,9 +543,105 @@ html[lang='mnw'] :is(input, button, select) {
   letter-spacing: normal;
 }
 
+/* Authentication stays deliberately flat and legible: Busuu-style compact
+   fields plus one tactile, game-like primary action. */
+.lq-auth-input {
+  height: 3.25rem;
+  border: 1.5px solid var(--lq-steel-border);
+  border-radius: var(--lq-radius-input);
+  background: var(--lq-paper-white);
+  color: var(--lq-charcoal);
+  font-size: 1rem;
+  box-shadow: none;
+}
+
+.lq-auth-input::placeholder {
+  color: #8a94a3;
+}
+
+.lq-auth-input:hover:not(:disabled) {
+  border-color: #aebdcd;
+}
+
+.lq-auth-input:focus-visible {
+  border-color: var(--lq-signal-blue);
+  box-shadow: 0 0 0 3px rgba(17, 110, 238, 0.15);
+}
+
+.lq-auth-input[aria-invalid='true'] {
+  border-color: #dc2626;
+}
+
+.lq-btn-primary.lq-auth-action {
+  box-shadow: 0 4px 0 #0aa96a;
+}
+
+.lq-btn-primary.lq-auth-action:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 #0aa96a;
+}
+
+.lq-btn-primary.lq-auth-action:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #0aa96a;
+}
+
+.lq-btn-primary.lq-auth-action:focus-visible,
+.lq-btn-outline:focus-visible {
+  outline: 3px solid rgba(17, 110, 238, 0.28);
+  outline-offset: 3px;
+}
+
 /* Hero gradient banner: deep indigo → sky blue, full-bleed, no card chrome. */
 .lq-hero-gradient {
-  background: linear-gradient(90deg, var(--lq-deep-indigo) 0%, #5a3cc4 30%, var(--lq-hero-sky) 100%);
+  background: linear-gradient(112deg, var(--lq-deep-indigo) 0%, #2947b9 48%, var(--lq-hero-sky) 100%);
+}
+
+.lq-hero-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: linear-gradient(90deg, black, transparent 80%);
+}
+
+.lq-depth-stage {
+  perspective: 1000px;
+}
+
+.lq-depth-stage__surface {
+  position: relative;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.lq-depth-stage__spotlight {
+  position: absolute;
+  z-index: 2;
+  width: 13rem;
+  height: 13rem;
+  pointer-events: none;
+  translate: -50% -50%;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 68%);
+  filter: blur(8px);
+}
+
+.lq-category-rail,
+.lq-mode-rail {
+  scrollbar-width: thin;
+  scrollbar-color: var(--lq-steel-border) transparent;
+}
+
+.lq-category-rail::-webkit-scrollbar,
+.lq-mode-rail::-webkit-scrollbar {
+  height: 4px;
+}
+
+.lq-category-rail::-webkit-scrollbar-thumb,
+.lq-mode-rail::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: var(--lq-steel-border);
 }
 
 /* Primary CTA: the single chromatic action color in the system (mint pill).

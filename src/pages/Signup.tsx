@@ -1,167 +1,242 @@
 import { useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, LoaderCircle, ShieldCheck } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router';
-import { ArrowLeft, CheckCircle2, Eye, EyeOff, Headphones, Keyboard, LockKeyhole, Mail, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import * as z from 'zod';
 import { Input } from '@/components/ui/input';
-import { MrlcQuestBrand, TaoMonLaeCredit } from '@/src/components/games/MrlcQuestBrand';
+import { LanguageQuestAuthShell } from '@/src/components/games/LanguageQuestAuthShell';
 import { LanguageQuestAvatar } from '@/src/components/games/LanguageQuestAvatar';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { LANGUAGE_QUEST_AVATARS } from '@/shared/languageQuestAvatars';
 import { safeAppReturnPath } from '@/shared/accountAccess';
 
+const accountSchema = z.object({
+  firstName: z.string().trim().min(1, 'Enter your first name.').max(80, 'First name must be 80 characters or fewer.'),
+  lastName: z.string().trim().min(1, 'Enter your last name.').max(80, 'Last name must be 80 characters or fewer.'),
+  email: z.string().trim().email('Enter a valid email address.'),
+  password: z.string().min(8, 'Use at least 8 characters.').max(128, 'Password must be 128 characters or fewer.'),
+});
+
+type AccountField = keyof z.infer<typeof accountSchema>;
+
+const initialForm = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  password: '',
+  avatarId: 'owl',
+};
+
 export default function SignupPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const reduceMotion = useReducedMotion();
   const { login } = useAuth();
+  const [step, setStep] = useState<1 | 2>(1);
   const [showPassword, setShowPassword] = useState(false);
+  const [showAllAvatars, setShowAllAvatars] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', avatarId: 'owl' });
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<AccountField, string>>>({});
+  const [form, setForm] = useState(initialForm);
 
-  const update = (field: keyof typeof form, value: string) => setForm((current) => ({ ...current, [field]: value }));
+  const update = (field: keyof typeof form, value: string) => {
+    setForm((current) => ({ ...current, [field]: value }));
+    setError('');
+    if (field in fieldErrors) {
+      setFieldErrors((current) => ({ ...current, [field]: undefined }));
+    }
+  };
+
+  const validateAccount = () => {
+    const result = accountSchema.safeParse(form);
+    if (result.success) {
+      setFieldErrors({});
+      return true;
+    }
+
+    const nextErrors: Partial<Record<AccountField, string>> = {};
+    for (const issue of result.error.issues) {
+      const field = issue.path[0] as AccountField;
+      if (!nextErrors[field]) nextErrors[field] = issue.message;
+    }
+    setFieldErrors(nextErrors);
+    const firstInvalidField = result.error.issues[0]?.path[0];
+    requestAnimationFrame(() => document.getElementById(`learner-${String(firstInvalidField)}`)?.focus());
+    return false;
+  };
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
-    if (form.password.length < 8) {
-      setError('Use at least 8 characters for your password.');
+
+    if (step === 1) {
+      if (validateAccount()) setStep(2);
       return;
     }
+
+    if (!validateAccount()) {
+      setStep(1);
+      return;
+    }
+
     setSubmitting(true);
+    const normalizedForm = {
+      ...form,
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim(),
+      email: form.email.trim().toLowerCase(),
+    };
+
     try {
       const response = await fetch('/api/auth/public-learner-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(normalizedForm),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || 'Could not create your account.');
-      // Public devices are common in learning environments. Keep new accounts
-      // session-only unless the learner explicitly opts in on the login page.
-      const result = await login(form.email.trim().toLowerCase(), form.password, false);
-      if (!result.success) throw new Error(result.error || 'Account created. Please sign in.');
+
+      // New public learner sessions stay device-local and temporary by default.
+      const result = await login(normalizedForm.email, normalizedForm.password, false);
+      if (!result.success) {
+        const previousState = location.state && typeof location.state === 'object' ? location.state : {};
+        navigate('/login', {
+          replace: true,
+          state: { ...previousState, accountCreated: true, identifier: normalizedForm.email },
+        });
+        return;
+      }
+
       const returnPath = safeAppReturnPath((location.state as { from?: unknown } | null)?.from);
       navigate(returnPath || '/games/language-quest', { replace: true });
-    } catch (caught: any) {
-      setError(caught?.message || 'Could not create your account.');
+    } catch (caught: unknown) {
+      setError(caught instanceof Error ? caught.message : 'Could not create your account.');
     } finally {
       setSubmitting(false);
     }
   };
 
+  const visibleAvatars = showAllAvatars ? LANGUAGE_QUEST_AVATARS : LANGUAGE_QUEST_AVATARS.slice(0, 12);
+  const selectedAvatar = LANGUAGE_QUEST_AVATARS.find((avatar) => avatar.id === form.avatarId) ?? LANGUAGE_QUEST_AVATARS[0];
+  const transition = reduceMotion ? { duration: 0 } : { duration: 0.28, ease: [0.22, 1, 0.36, 1] as const };
+
+  const footer = (
+    <div className="flex flex-col gap-3 border-t border-[var(--lq-steel-border)] pt-5 text-xs leading-5 text-[var(--lq-slate-caption)] sm:flex-row sm:items-start sm:justify-between">
+      <p className="flex max-w-[36ch] items-start gap-2">
+        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--lq-signal-blue)]" aria-hidden="true" />
+        Learning Quest accounts cannot open private school records.
+      </p>
+      <p>Never share your password.</p>
+    </div>
+  );
+
   return (
-    <div className="lq-mesh flex min-h-screen flex-col overflow-x-hidden px-3 py-4 sm:px-6 sm:py-7">
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
-        <MrlcQuestBrand compact />
-        <Link to="/language-quest" className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-bold text-slate-600 transition hover:bg-white/70 hover:text-violet-700">
-          <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Back to Learning Quest</span><span className="sm:hidden">Back</span>
-        </Link>
+    <LanguageQuestAuthShell mode="signup" footer={footer}>
+      <div className="mb-7 flex items-center justify-between gap-5">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--lq-signal-blue)]">Free learner account</p>
+          <p className="mt-1 text-sm font-bold text-[var(--lq-slate-caption)]">Step {step} of 2</p>
+        </div>
+        <ol className="flex items-center" aria-label="Account creation progress">
+          {[1, 2].map((item) => (
+            <li key={item} className="flex items-center" aria-current={step === item ? 'step' : undefined}>
+              {item > 1 && <span className={`h-0.5 w-8 sm:w-12 ${step >= item ? 'bg-[var(--lq-signal-blue)]' : 'bg-[var(--lq-steel-border)]'}`} aria-hidden="true" />}
+              <span className={`grid h-9 w-9 place-items-center rounded-full border-2 text-xs font-black transition-colors ${step >= item ? 'border-[var(--lq-signal-blue)] bg-[var(--lq-signal-blue)] text-white' : 'border-[var(--lq-steel-border)] bg-white text-[var(--lq-slate-caption)]'}`}>
+                {step > item ? <Check className="h-4 w-4" aria-hidden="true" /> : item}
+                <span className="sr-only">{item === 1 ? 'Account details' : 'Choose a guide'}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
       </div>
 
-      <div className="mx-auto my-4 grid w-full max-w-6xl flex-1 overflow-hidden rounded-[1.75rem] border border-white bg-white shadow-[0_35px_90px_-35px_rgba(76,29,149,.45)] sm:my-7 lg:grid-cols-[.92fr_1.08fr] lg:rounded-[2.25rem]">
-          <section className="relative overflow-hidden bg-gradient-to-br from-violet-800 via-fuchsia-700 to-rose-500 p-6 text-white sm:p-8 lg:flex lg:flex-col lg:justify-between lg:p-12">
-            <div className="absolute -left-20 -top-24 h-72 w-72 rounded-full bg-sky-400/20 blur-3xl" />
-            <div className="absolute -bottom-32 -right-24 h-80 w-80 rounded-full bg-amber-300/20 blur-3xl" />
-            <div className="relative">
-              <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-white/70"><Sparkles className="h-4 w-4 text-amber-300" /> A colorful learning journey</p>
-              <h1 className="mt-4 max-w-xl text-3xl font-black leading-[1.05] tracking-[-0.04em] sm:text-4xl lg:mt-8 lg:text-5xl">Your sentences get stronger one short lesson at a time.</h1>
-              <p className="mt-4 max-w-lg text-sm leading-6 text-white/75 sm:text-base sm:leading-7">A learner account saves your course path, streak, points, and completed practices.</p>
-            </div>
+      <form onSubmit={submit} noValidate aria-busy={submitting}>
+        {error && (
+          <div role="alert" aria-live="polite" className="mb-5 border-l-4 border-red-500 bg-red-50 px-4 py-3 text-sm font-semibold leading-5 text-red-700">
+            {error}
+          </div>
+        )}
 
-            <div className="lq-hero-scene relative mx-auto my-8 hidden h-48 w-full max-w-sm sm:block lg:my-12">
-              <div className="lq-hero-card absolute inset-x-4 top-0 rounded-3xl border border-white/25 bg-white/15 p-5 shadow-2xl backdrop-blur-md">
-                <div className="flex items-center justify-between">
-                  <span className="grid h-11 w-11 place-items-center rounded-2xl bg-sky-400 text-white shadow-lg"><Headphones className="h-5 w-5" /></span>
-                  <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-black">Lesson 01</span>
-                </div>
-                <p className="mt-5 text-sm text-white/70">Listen, remember, then write:</p>
-                <p className="mt-1 text-2xl font-black">“Good morning!”</p>
+        <AnimatePresence mode="wait" initial={false}>
+          {step === 1 ? (
+            <motion.div key="account" initial={reduceMotion ? false : { opacity: 0, x: -18 }} animate={{ opacity: 1, x: 0 }} exit={reduceMotion ? undefined : { opacity: 0, x: -18 }} transition={transition}>
+              <h1 className="text-balance text-4xl font-black leading-[1.02] tracking-[-0.045em] text-[var(--lq-charcoal)] sm:text-5xl">Create your account.</h1>
+              <p className="mt-3 max-w-lg text-sm leading-6 text-[var(--lq-slate-caption)] sm:text-base">Four details now, then choose the character that will travel with you.</p>
+
+              <div className="mt-7 grid gap-5 sm:grid-cols-2">
+                <AccountFieldInput id="learner-firstName" label="First name" value={form.firstName} onChange={(value) => update('firstName', value)} error={fieldErrors.firstName} autoComplete="given-name" placeholder="Your first name" maxLength={80} />
+                <AccountFieldInput id="learner-lastName" label="Last name" value={form.lastName} onChange={(value) => update('lastName', value)} error={fieldErrors.lastName} autoComplete="family-name" placeholder="Your last name" maxLength={80} />
               </div>
-              <span className="lq-float absolute -bottom-3 -left-1 grid h-14 w-14 place-items-center rounded-2xl bg-amber-400 text-amber-950 shadow-xl"><Keyboard className="h-6 w-6" /></span>
-              <span className="lq-float-delayed absolute -right-1 top-6 grid h-14 w-14 place-items-center rounded-2xl bg-emerald-400 text-emerald-950 shadow-xl"><CheckCircle2 className="h-6 w-6" /></span>
-            </div>
 
-            <div className="relative hidden space-y-3 text-sm font-semibold lg:block">
-              {['Listen before you answer', 'Practise complete sentences', 'Get clear corrections and retry', 'Keep your learning separate from private school data'].map((item) => (
-                <p key={item} className="flex items-center gap-3"><span className="grid h-6 w-6 place-items-center rounded-full bg-emerald-400 text-emerald-950"><CheckCircle2 className="h-4 w-4" /></span> {item}</p>
-              ))}
-            </div>
-          </section>
+              <div className="mt-5 space-y-5">
+                <AccountFieldInput id="learner-email" label="Email address" type="email" value={form.email} onChange={(value) => update('email', value)} error={fieldErrors.email} autoComplete="email" placeholder="you@example.com" />
 
-          <main className="flex flex-col justify-center p-5 sm:p-9 lg:p-12 xl:p-14">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-700 sm:text-sm">Free learner account</p>
-            <h2 className="mt-3 text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl">Start your Learning Quest</h2>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">Join learners building useful language, mathematics, and GED skills one lesson at a time. Your account opens Learning Quest only; private school areas stay separate.</p>
-
-            <form onSubmit={submit} className="mt-7 space-y-5" noValidate>
-              {error && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">{error}</div>}
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label htmlFor="learner-first-name" className="block space-y-2 text-sm font-bold text-slate-700">
-                  <span>First name</span>
-                  <span className="relative block">
-                    <UserRound className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-violet-500" />
-                    <Input id="learner-first-name" required maxLength={80} autoComplete="given-name" value={form.firstName} onChange={(event) => update('firstName', event.target.value)} className="h-13 appearance-none rounded-xl border-2 border-slate-300 bg-white pl-11 text-base text-slate-950 shadow-sm placeholder:text-slate-400 focus-visible:border-violet-600 focus-visible:ring-violet-200 dark:bg-white dark:text-slate-950" placeholder="Your first name" />
-                  </span>
-                </label>
-                <label htmlFor="learner-last-name" className="block space-y-2 text-sm font-bold text-slate-700">
-                  <span>Last name</span>
-                  <span className="relative block">
-                    <UserRound className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-fuchsia-500" />
-                    <Input id="learner-last-name" required maxLength={80} autoComplete="family-name" value={form.lastName} onChange={(event) => update('lastName', event.target.value)} className="h-13 appearance-none rounded-xl border-2 border-slate-300 bg-white pl-11 text-base text-slate-950 shadow-sm placeholder:text-slate-400 focus-visible:border-fuchsia-600 focus-visible:ring-fuchsia-200 dark:bg-white dark:text-slate-950" placeholder="Your last name" />
-                  </span>
-                </label>
-              </div>
-              <fieldset>
-                <legend className="text-sm font-bold text-slate-700">Choose a learner avatar</legend>
-                <p className="mt-1 text-xs text-slate-500">Built-in characters only—profile-photo uploads are not used in Learning Quest.</p>
-                <div className="mt-3 grid grid-cols-6 gap-2">
-                  {LANGUAGE_QUEST_AVATARS.map((avatar) => (
-                    <button
-                      key={avatar.id}
-                      type="button"
-                      onClick={() => update('avatarId', avatar.id)}
-                      aria-label={avatar.label}
-                      aria-pressed={form.avatarId === avatar.id}
-                      className={`rounded-xl p-1.5 transition hover:-translate-y-0.5 ${form.avatarId === avatar.id ? 'bg-violet-100 ring-2 ring-violet-500' : 'bg-slate-50 ring-1 ring-slate-200'}`}
-                    >
-                      <LanguageQuestAvatar avatarId={avatar.id} className="mx-auto h-9 w-9 rounded-xl text-lg shadow-sm" />
+                <div className="space-y-2">
+                  <label htmlFor="learner-password" className="block text-sm font-bold text-[var(--lq-charcoal)]">Password</label>
+                  <div className="relative">
+                    <Input id="learner-password" type={showPassword ? 'text' : 'password'} value={form.password} onChange={(event) => update('password', event.target.value)} autoComplete="new-password" placeholder="At least 8 characters" maxLength={128} aria-invalid={Boolean(fieldErrors.password)} aria-describedby={fieldErrors.password ? 'learner-password-error' : 'learner-password-hint'} className="lq-auth-input pr-12" />
+                    <button type="button" onClick={() => setShowPassword((current) => !current)} className="absolute right-0 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center text-[var(--lq-slate-caption)] transition hover:text-[var(--lq-signal-blue)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--lq-signal-blue)]" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                      {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
                     </button>
-                  ))}
+                  </div>
+                  {fieldErrors.password ? <p id="learner-password-error" className="text-xs font-semibold text-red-600" role="alert">{fieldErrors.password}</p> : <p id="learner-password-hint" className="text-xs text-[var(--lq-slate-caption)]">Use 8–128 characters.</p>}
+                </div>
+              </div>
+
+              <button type="submit" className="lq-btn-primary lq-auth-action mt-7 h-13 w-full text-base">Choose my guide <ArrowRight className="h-4 w-4" aria-hidden="true" /></button>
+            </motion.div>
+          ) : (
+            <motion.div key="avatar" initial={reduceMotion ? false : { opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={reduceMotion ? undefined : { opacity: 0, x: 18 }} transition={transition}>
+              <div className="flex items-start gap-4">
+                <LanguageQuestAvatar avatarId={form.avatarId} className="h-16 w-16 rounded-full text-3xl shadow-none ring-4 ring-[#ddebff]" />
+                <div>
+                  <h1 className="text-balance text-4xl font-black leading-[1.02] tracking-[-0.045em] text-[var(--lq-charcoal)] sm:text-5xl">Choose your guide.</h1>
+                  <p className="mt-2 text-sm leading-6 text-[var(--lq-slate-caption)]">{selectedAvatar.label} will cheer on your practice. You can change this later.</p>
+                </div>
+              </div>
+
+              <fieldset className="mt-7">
+                <legend className="sr-only">Choose a learner avatar</legend>
+                <div className="grid grid-cols-4 gap-3 sm:grid-cols-6">
+                  {visibleAvatars.map((avatar) => {
+                    const selected = form.avatarId === avatar.id;
+                    return (
+                      <button key={avatar.id} type="button" onClick={() => update('avatarId', avatar.id)} aria-label={avatar.label} aria-pressed={selected} className={`group relative grid aspect-square place-items-center rounded-full border-2 transition-[border-color,background-color,transform] hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lq-signal-blue)] focus-visible:ring-offset-2 ${selected ? 'border-[var(--lq-signal-blue)] bg-[#eaf2ff]' : 'border-[var(--lq-steel-border)] bg-white hover:border-[#87b6f6]'}`}>
+                        <LanguageQuestAvatar avatarId={avatar.id} className="h-[72%] w-[72%] rounded-full text-2xl shadow-none ring-0" />
+                        {selected && <span className="absolute -right-0.5 -top-0.5 grid h-6 w-6 place-items-center rounded-full bg-[var(--lq-signal-blue)] text-white ring-2 ring-white"><Check className="h-3.5 w-3.5" aria-hidden="true" /></span>}
+                      </button>
+                    );
+                  })}
                 </div>
               </fieldset>
-              <label htmlFor="learner-email" className="block space-y-2 text-sm font-bold text-slate-700">
-                <span>Email address</span>
-                <span className="relative block">
-                  <Mail className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-sky-600" />
-                  <Input id="learner-email" required type="email" autoComplete="email" value={form.email} onChange={(event) => update('email', event.target.value)} className="h-13 appearance-none rounded-xl border-2 border-slate-300 bg-white pl-11 text-base text-slate-950 shadow-sm placeholder:text-slate-400 focus-visible:border-sky-600 focus-visible:ring-sky-200 dark:bg-white dark:text-slate-950" placeholder="you@example.com" />
-                </span>
-              </label>
-              <label htmlFor="learner-password" className="block space-y-2 text-sm font-bold text-slate-700">
-                <span>Password</span>
-                <span className="relative block">
-                  <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-rose-500" />
-                  <Input id="learner-password" required minLength={8} maxLength={128} type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={form.password} onChange={(event) => update('password', event.target.value)} className="h-13 appearance-none rounded-xl border-2 border-slate-300 bg-white px-11 text-base text-slate-950 shadow-sm placeholder:text-slate-400 focus-visible:border-rose-500 focus-visible:ring-rose-200 dark:bg-white dark:text-slate-950" placeholder="At least 8 characters" />
-                  <button type="button" onClick={() => setShowPassword((current) => !current)} className="absolute right-3 top-1/2 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-lg text-slate-400 hover:bg-violet-50 hover:text-violet-700" aria-label={showPassword ? 'Hide password' : 'Show password'}>
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </span>
-                <span className="flex items-center gap-1.5 text-xs font-normal text-slate-500"><ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Use at least 8 characters.</span>
-              </label>
-              <Button type="submit" disabled={submitting} className="h-13 w-full rounded-xl bg-gradient-to-r from-violet-700 via-fuchsia-600 to-rose-500 font-black text-white shadow-xl shadow-violet-600/20 transition hover:-translate-y-0.5 hover:from-violet-800 hover:via-fuchsia-700 hover:to-rose-600">
-                {submitting ? 'Creating your account…' : 'Create account and start'}
-              </Button>
-            </form>
 
-            <p className="mt-6 text-center text-sm text-slate-600">Already have an account? <Link to="/login" state={location.state} className="font-bold text-violet-700 hover:underline">Sign in</Link></p>
-            <p className="mt-5 flex items-start gap-2 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3 text-xs leading-5 text-slate-600">
-              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> By continuing, you agree to use the learning experience respectfully. Never share your password.
-            </p>
-          </main>
-      </div>
+              <button type="button" onClick={() => setShowAllAvatars((current) => !current)} className="mt-4 min-h-11 text-sm font-bold text-[var(--lq-signal-blue)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lq-signal-blue)]">
+                {showAllAvatars ? 'Show fewer guides' : `See all ${LANGUAGE_QUEST_AVATARS.length} guides`}
+              </button>
 
-      <footer className="mx-auto w-full max-w-7xl py-2">
-        <TaoMonLaeCredit />
-      </footer>
+              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row">
+                <button type="button" onClick={() => setStep(1)} className="lq-btn-outline h-13 flex-1 text-base"><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back</button>
+                <button type="submit" disabled={submitting} className="lq-btn-primary lq-auth-action h-13 flex-[1.55] text-base">
+                  {submitting ? <><LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> Creating account…</> : <>Start Learning Quest <ArrowRight className="h-4 w-4" aria-hidden="true" /></>}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </form>
+
+      <p className="mt-6 text-center text-sm text-[var(--lq-slate-caption)]">Already have an account?{' '}<Link to="/login" state={location.state} className="font-black text-[var(--lq-signal-blue)] underline-offset-4 hover:underline">Sign in</Link></p>
+    </LanguageQuestAuthShell>
+  );
+}
+function AccountFieldInput({ id, label, type = 'text', value, onChange, error, autoComplete, placeholder, maxLength }: { id: string; label: string; type?: string; value: string; onChange: (value: string) => void; error?: string; autoComplete: string; placeholder: string; maxLength?: number }) {
+  const errorId = `${id}-error`;
+  return (
+    <div className="space-y-2">
+      <label htmlFor={id} className="block text-sm font-bold text-[var(--lq-charcoal)]">{label}</label>
+      <Input id={id} type={type} value={value} onChange={(event) => onChange(event.target.value)} autoComplete={autoComplete} placeholder={placeholder} maxLength={maxLength} aria-invalid={Boolean(error)} aria-describedby={error ? errorId : undefined} className="lq-auth-input" />
+      {error && <p id={errorId} className="text-xs font-semibold text-red-600" role="alert">{error}</p>}
     </div>
   );
 }
