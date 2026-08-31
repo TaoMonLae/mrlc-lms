@@ -1,446 +1,421 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router';
-import { DollarSign, TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, Calendar, Users, AlertTriangle, CheckCircle2, PiggyBank, FileBarChart, BarChart3 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router';
+import {
+  AlertTriangle,
+  ArrowRight,
+  BarChart3,
+  Calendar,
+  DollarSign,
+  FileBarChart,
+  PiggyBank,
+  ReceiptText,
+  RefreshCw,
+  Users,
+  Wallet,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MetricCard, FinancialMetricCard, CountMetricCard, PercentageMetricCard } from '@/src/components/financial/MetricCard';
-import { TrendChart } from '@/src/components/financial/TrendChart';
-import { BudgetProgress, BudgetComparisonCard } from '@/src/components/financial/BudgetProgress';
+import { FinanceFlowChart, type FinanceFlowPoint } from '@/src/components/financial/FinanceFlowChart';
 import { usePermissions } from '../../lib/permissions';
 import { formatMoney } from '../../lib/locale';
 import { useSettings } from '../../providers/SettingsProvider';
-import { toast } from 'sonner';
+
+interface FinancialSummary {
+  income: { total: number; fees: number; donations: number; feePayments: number; donationCount: number };
+  expenses: { total: number; paidExpenses: number; pendingAmount: number; pendingCount: number };
+  budget: { total: number; spent: number; remaining: number; utilization: number };
+  cashFlow: { net: number; positive: boolean };
+  accountsReceivable: { outstanding: number; count: number };
+}
+
+interface MonthlyCashFlow {
+  month: number;
+  inflow: { total: number };
+  outflow: { total: number };
+  netFlow: number;
+  cumulative: number;
+}
+
+interface CashFlowResponse {
+  monthlyCashFlow: MonthlyCashFlow[];
+  summary: { totalInflow: number; totalOutflow: number; netCashFlow: number; endingBalance: number };
+}
+
+interface BudgetRow {
+  id: string;
+  name: string;
+  allocatedAmount: number;
+  spentAmount: number;
+  remainingAmount: number;
+  status: string;
+}
+
+interface PendingExpense {
+  id: string;
+  title: string;
+  category: string;
+  amount: number;
+  taxAmount?: number | null;
+  totalAmount?: number | null;
+}
+
+interface PendingExpenseResponse {
+  data: PendingExpense[];
+  pagination: { total: number };
+}
+
+interface DashboardData {
+  summary: FinancialSummary;
+  cashFlow: CashFlowResponse;
+  budgets: BudgetRow[];
+  pendingExpenses: PendingExpense[];
+  pendingExpenseCount: number;
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+async function fetchJson<T>(url: string, signal: AbortSignal): Promise<T> {
+  const token = sessionStorage.getItem('auth_token');
+  const response = await fetch(url, {
+    signal,
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(body?.error || `Request failed (${response.status})`);
+  }
+  return response.json() as Promise<T>;
+}
+
+function MetricCell({ label, value, note, tone = 'default' }: {
+  label: string;
+  value: string;
+  note: string;
+  tone?: 'default' | 'teal' | 'coral';
+}) {
+  const valueTone = tone === 'teal' ? 'text-academic-teal' : tone === 'coral' ? 'text-academic-coral' : 'text-foreground';
+  return (
+    <div className="min-w-0 border-t border-foreground px-5 py-5 first:border-t-0 sm:border-l sm:border-t-0 sm:first:border-l-0">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
+      <p className={`mt-2 truncate font-mono text-xl font-semibold tabular-nums tracking-[-0.03em] ${valueTone}`}>{value}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{note}</p>
+    </div>
+  );
+}
+
+function LedgerLink({ to, icon: Icon, title, detail }: {
+  to: string;
+  icon: typeof DollarSign;
+  title: string;
+  detail: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className="group grid grid-cols-[36px_1fr_auto] items-center gap-3 border-t border-border px-4 py-4 first:border-t-0 hover:bg-muted/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-academic-teal"
+    >
+      <span className="grid h-9 w-9 place-items-center border border-foreground bg-background" aria-hidden="true">
+        <Icon className="h-4 w-4" />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold">{title}</span>
+        <span className="mt-0.5 block truncate text-xs text-muted-foreground">{detail}</span>
+      </span>
+      <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+    </Link>
+  );
+}
+
+function LoadingLedger() {
+  return (
+    <div className="space-y-5" aria-label="Loading financial dashboard" aria-busy="true">
+      <div className="grid animate-pulse border border-foreground bg-card sm:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="h-28 border-t border-foreground first:border-t-0 sm:border-l sm:border-t-0 sm:first:border-l-0" />
+        ))}
+      </div>
+      <div className="h-[430px] animate-pulse border border-foreground bg-card" />
+    </div>
+  );
+}
 
 export default function FinancialDashboard() {
-  const navigate = useNavigate();
   const { hasPermission } = usePermissions();
   const { systemSettings } = useSettings();
-  const [loading, setLoading] = useState(true);
-
-  // Dashboard data
-  const [feeStats, setFeeStats] = useState({ total: 0, paid: 0, outstanding: 0, overdue: 0 });
-  const [expenseStats, setExpenseStats] = useState({ total: 0, pending: 0, approved: 0, paid: 0 });
-  const [budgetStats, setBudgetStats] = useState({ allocated: 0, spent: 0, remaining: 0, utilization: 0 });
-  const [recentPayments, setRecentPayments] = useState<any[]>([]);
-  const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
-  const [cashFlow, setCashFlow] = useState({ inflow: 0, outflow: 0, net: 0 });
-
-  // Enhanced dashboard data
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [summaryData, setSummaryData] = useState<any>(null);
-  const [monthlyTrends, setMonthlyTrends] = useState<any>(null);
-
-  const currency = systemSettings.currency || 'MYR';
   const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: Math.max(4, currentYear - 2023 + 2) }, (_, index) => currentYear + 1 - index);
+  const [year, setYear] = useState(currentYear);
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const currency = systemSettings.currency || 'MYR';
+  const yearOptions = Array.from({ length: 6 }, (_, index) => currentYear + 1 - index);
 
-  useEffect(() => {
-    const token = sessionStorage.getItem('auth_token');
-    const headers = { Authorization: `Bearer ${token}` };
+  const loadDashboard = useCallback(async (signal: AbortSignal) => {
     const yearStart = `${year}-01-01`;
     const yearEnd = `${year}-12-31`;
-
-    // Fetch both legacy and new financial data
-    Promise.all([
-      fetch(`/api/fees?year=${year}`, { headers }).then(r => r.json()),
-      // The expenses list is paginated; totals come from its `summary`, which
-      // is computed server-side over ALL matching rows (not just one page).
-      fetch(`/api/expenses?limit=1&startDate=${yearStart}&endDate=${yearEnd}`, { headers }).then(r => r.json()),
-      // Pending approvals fetched separately so the count/list are complete.
-      fetch(`/api/expenses?status=PENDING_APPROVAL&limit=5&startDate=${yearStart}&endDate=${yearEnd}`, { headers }).then(r => r.json()),
-      fetch(`/api/budgets?fiscalYear=${year}`, { headers }).then(r => r.json()),
-      // New enhanced data (server expects `fiscalYear`, not `year`)
-      fetch(`/api/financial-reports/summary?fiscalYear=${year}`, { headers }).then(r => r.ok ? r.json() : null),
-      fetch(`/api/financial-reports/cash-flow?startDate=${yearStart}&endDate=${yearEnd}`, { headers }).then(r => r.ok ? r.json() : null),
-    ])
-      .then(([feesData, expensesData, pendingData, budgetsData, financialSummary, cashFlowData]) => {
-        // Process fee statistics
-        const fees = Array.isArray(feesData) ? feesData : [];
-        const paidForFee = (f: any) => f.totalPaid ?? f.paidAmount ?? (f.status === 'PAID' ? f.amount : 0);
-        const balanceForFee = (f: any) => f.balance ?? Math.max(0, (f.amount || 0) - paidForFee(f));
-        const feeTotal = fees.reduce((sum, f) => sum + (f.amount || 0), 0);
-        const feePaid = fees.reduce((sum, f) => sum + paidForFee(f), 0);
-        const feeOverdue = fees.filter(f => f.status === 'OVERDUE').reduce((sum, f) => sum + balanceForFee(f), 0);
-
-        setFeeStats({
-          total: feeTotal,
-          paid: feePaid,
-          outstanding: Math.max(0, feeTotal - feePaid),
-          overdue: feeOverdue,
-        });
-
-        // Set recent payments (last 5)
-        setRecentPayments(fees.slice(0, 5).map(f => ({
-          id: f.id,
-          type: 'FEE_PAYMENT',
-          studentId: f.studentId,
-          studentName: f.student
-            ? `${f.student.user?.firstName ?? ''} ${f.student.user?.lastName ?? ''}`.trim() || f.student.studentCode || 'Student'
-            : 'Student',
-          amount: paidForFee(f),
-          date: f.paidDate || f.createdAt,
-          status: f.status,
-        })));
-
-        // Process expense statistics from the server-side summary
-        const expenseSummary = expensesData?.summary || {};
-        const expenseTotal = expenseSummary.totalAmount || 0;
-        const expensePaid = expenseSummary.paidAmount || 0;
-        const expensePending = pendingData?.pagination?.total || 0;
-
-        setExpenseStats({
-          total: expenseTotal,
-          paid: expensePaid,
-          pending: expensePending,
-          approved: 0,
-        });
-
-        // Set pending approvals
-        setPendingApprovals(pendingData?.data || []);
-
-        // Build real monthly trend series from the cash-flow report
-        if (cashFlowData?.monthlyCashFlow) {
-          const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-          setMonthlyTrends({
-            income: cashFlowData.monthlyCashFlow.map((m: any) => ({
-              date: MONTHS[m.month - 1],
-              value: m.inflow.total,
-            })),
-            expenses: cashFlowData.monthlyCashFlow.map((m: any) => ({
-              date: MONTHS[m.month - 1],
-              value: m.outflow.total,
-            })),
-            cashFlow: cashFlowData.monthlyCashFlow.map((m: any) => ({
-              date: MONTHS[m.month - 1],
-              value: m.netFlow,
-            })),
-          });
-        } else {
-          setMonthlyTrends(null);
-        }
-
-        // Process budget statistics
-        const budgets = budgetsData || [];
-        const totalAllocated = budgets.reduce((sum, b) => sum + (b.allocatedAmount || 0), 0);
-        const totalSpent = budgets.reduce((sum, b) => sum + (b.spentAmount || 0), 0);
-        const utilization = totalAllocated > 0 ? (totalSpent / totalAllocated) * 100 : 0;
-
-        setBudgetStats({
-          allocated: totalAllocated,
-          spent: totalSpent,
-          remaining: totalAllocated - totalSpent,
-          utilization,
-        });
-
-        // Calculate cash flow
-        const reportIncome = financialSummary?.income?.total;
-        const reportOutflow = financialSummary?.expenses?.total;
-        setCashFlow({
-          inflow: reportIncome ?? feePaid,
-          outflow: reportOutflow ?? expensePaid,
-          net: (reportIncome ?? feePaid) - (reportOutflow ?? expensePaid),
-        });
-
-        // Set enhanced summary data
-        setSummaryData(financialSummary);
-
-        setLoading(false);
-      })
-      .catch(() => {
-        toast.error('Failed to load financial data');
-        setLoading(false);
-      });
+    const [summary, cashFlow, budgets, pending] = await Promise.all([
+      fetchJson<FinancialSummary>(`/api/financial-reports/summary?fiscalYear=${year}`, signal),
+      fetchJson<CashFlowResponse>(`/api/financial-reports/cash-flow?startDate=${yearStart}&endDate=${yearEnd}`, signal),
+      fetchJson<BudgetRow[]>(`/api/budgets?fiscalYear=${year}`, signal),
+      fetchJson<PendingExpenseResponse>(`/api/expenses?status=PENDING_APPROVAL&limit=5&startDate=${yearStart}&endDate=${yearEnd}`, signal),
+    ]);
+    return {
+      summary,
+      cashFlow,
+      budgets,
+      pendingExpenses: pending.data || [],
+      pendingExpenseCount: pending.pagination?.total || 0,
+    };
   }, [year]);
 
-  const trends = monthlyTrends;
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+    loadDashboard(controller.signal)
+      .then((nextData) => {
+        if (!controller.signal.aborted) setData(nextData);
+      })
+      .catch((loadError: unknown) => {
+        if (!controller.signal.aborted) {
+          setData(null);
+          setError(loadError instanceof Error ? loadError.message : 'Financial records could not be loaded.');
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [loadDashboard, reloadKey]);
 
-  const netCashFlow = cashFlow.inflow - cashFlow.outflow;
-  const isPositiveCashFlow = netCashFlow >= 0;
+  const chartData = useMemo<FinanceFlowPoint[]>(() => {
+    const rows = data?.cashFlow.monthlyCashFlow || [];
+    const byMonth = new Map(rows.map((row) => [row.month, row]));
+    return MONTHS.map((label, index) => {
+      const row = byMonth.get(index + 1);
+      return {
+        label,
+        income: row?.inflow.total || 0,
+        expenses: row?.outflow.total || 0,
+        net: row?.netFlow || 0,
+      };
+    });
+  }, [data]);
+
+  const budgetRows = useMemo(() => {
+    return [...(data?.budgets || [])]
+      .sort((a, b) => {
+        const aUse = a.allocatedAmount > 0 ? a.spentAmount / a.allocatedAmount : 0;
+        const bUse = b.allocatedAmount > 0 ? b.spentAmount / b.allocatedAmount : 0;
+        return bUse - aUse;
+      })
+      .slice(0, 4);
+  }, [data]);
+
+  const summary = data?.summary;
+  const net = summary?.cashFlow.net || 0;
+  const movementTotal = (summary?.income.total || 0) + (summary?.expenses.total || 0);
+  const inflowShare = movementTotal > 0 ? ((summary?.income.total || 0) / movementTotal) * 100 : 0;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
+    <div className="mx-auto max-w-[1500px] space-y-6 pb-12">
+      <header className="flex flex-col gap-5 border-b border-foreground pb-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Financial Dashboard</h1>
-          <p className="text-sm text-slate-500">Overview of fees, expenses, and budgets for fiscal year {year}</p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-academic-teal">Finance / Operating ledger</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">Financial control desk</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+            Cash movement, fee exposure, commitments, and budget pressure for fiscal year {year}.
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Select value={year.toString()} onValueChange={(value) => setYear(parseInt(value))}>
-            <SelectTrigger className="w-32">
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Select value={String(year)} onValueChange={(value) => setYear(Number(value))}>
+            <SelectTrigger className="h-10 min-w-36 rounded-none border-foreground bg-background font-mono text-xs">
+              <Calendar className="mr-2 h-4 w-4" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {yearOptions.map(y => (
-                <SelectItem key={y} value={y.toString()}>
-                  {y}
-                </SelectItem>
-              ))}
+              {yearOptions.map((option) => <SelectItem key={option} value={String(option)}>FY {option}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button variant="outline" render={<Link to="/financial/reports/monthly" />} nativeButton={false}>
-              <Calendar className="h-4 w-4 mr-2" />
-              Monthly Report
-            </Button>
+          <Button variant="outline" className="h-10 rounded-none border-foreground" render={<Link to="/financial/reports/monthly" />} nativeButton={false}>
+            Monthly evidence <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </div>
-      </div>
+      </header>
 
-      {loading ? (
-        <div className="flex justify-center items-center h-64">Loading financial data...</div>
-      ) : (
+      {loading && <LoadingLedger />}
+
+      {!loading && error && (
+        <section className="border border-academic-coral bg-card px-6 py-10 text-center">
+          <AlertTriangle className="mx-auto h-6 w-6 text-academic-coral" />
+          <h2 className="mt-3 text-lg font-semibold">The financial ledger is unavailable</h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">{error}</p>
+          <Button className="mt-5 rounded-none" onClick={() => setReloadKey((key) => key + 1)}>
+            <RefreshCw className="mr-2 h-4 w-4" /> Retry records
+          </Button>
+        </section>
+      )}
+
+      {!loading && !error && summary && data && (
         <>
-          {/* Enhanced KPI Cards with new visual components */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <FinancialMetricCard
-              title="Total Revenue"
-              amount={feeStats.paid}
-              description="Fees collected"
-              icon={<DollarSign className="w-4 h-4 text-green-600" />}
-            />
-            <FinancialMetricCard
-              title="Total Expenses"
-              amount={expenseStats.total}
-              description={`${formatMoney(expenseStats.paid, currency)} paid, ${expenseStats.pending} pending`}
-              icon={<Wallet className="w-4 h-4 text-red-600" />}
-            />
-            <FinancialMetricCard
-              title="Outstanding Fees"
-              amount={feeStats.outstanding}
-              description={`${feeStats.overdue > 0 ? 'Some overdue' : 'All current'}`}
-              icon={<AlertTriangle className="w-4 h-4 text-yellow-600" />}
-            />
-            <PercentageMetricCard
-              title="Budget Utilization"
-              value={budgetStats.utilization}
-              description={`${formatMoney(budgetStats.remaining, currency)} remaining`}
-              threshold={90}
-              icon={<PiggyBank className="w-4 h-4 text-blue-600" />}
-            />
+          <section className="grid border border-foreground bg-card sm:grid-cols-2 xl:grid-cols-4" aria-label="Financial position">
+            <MetricCell label="Cash received" value={formatMoney(summary.income.total, currency)} note={`${summary.income.feePayments + summary.income.donationCount} recorded receipts`} tone="teal" />
+            <MetricCell label="Paid out" value={formatMoney(summary.expenses.total, currency)} note={`${summary.expenses.paidExpenses} settled payments`} />
+            <MetricCell label="Fees receivable" value={formatMoney(summary.accountsReceivable.outstanding, currency)} note={`${summary.accountsReceivable.count} open fee accounts`} tone={summary.accountsReceivable.outstanding > 0 ? 'coral' : 'default'} />
+            <MetricCell label="Budget used" value={`${summary.budget.utilization.toFixed(1)}%`} note={`${formatMoney(summary.budget.remaining, currency)} uncommitted`} tone={summary.budget.utilization >= 100 ? 'coral' : 'default'} />
+          </section>
+
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.85fr)_minmax(320px,0.75fr)]">
+            <FinanceFlowChart data={chartData} currency={currency} year={year} />
+
+            <aside className="border border-foreground bg-[#0c2538] text-white">
+              <div className="border-b border-white/35 px-5 py-5">
+                <p className="font-mono text-[10px] uppercase tracking-[0.13em] text-[#6dd4cb]">Operating position</p>
+                <p className={`mt-3 font-mono text-3xl font-semibold tabular-nums tracking-[-0.04em] ${net < 0 ? 'text-[#ff9b86]' : 'text-white'}`}>
+                  {net >= 0 ? '+' : ''}{formatMoney(net, currency)}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-white/65">Cash received less settled expense payments. Commitments are listed separately below.</p>
+              </div>
+
+              <div className="px-5 py-5">
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.1em] text-white/55">Movement split</p>
+                    <p className="mt-1 font-mono text-sm tabular-nums">{inflowShare.toFixed(0)}% in / {(100 - inflowShare).toFixed(0)}% out</p>
+                  </div>
+                  <p className="font-mono text-xs text-white/55">FY {year}</p>
+                </div>
+                <div className="mt-3 flex h-2 bg-white/15" aria-hidden="true">
+                  <span className="bg-[#48b9af]" style={{ width: `${inflowShare}%` }} />
+                  <span className="bg-[#e97961]" style={{ width: `${100 - inflowShare}%` }} />
+                </div>
+              </div>
+
+              <dl className="border-t border-white/35">
+                {[
+                  ['Fee collections', summary.income.fees],
+                  ['Donations received', summary.income.donations],
+                  ['Pending commitments', summary.expenses.pendingAmount],
+                ].map(([label, value], index) => (
+                  <div key={String(label)} className={`flex items-center justify-between gap-4 px-5 py-4 ${index ? 'border-t border-white/20' : ''}`}>
+                    <dt className="text-xs text-white/65">{label}</dt>
+                    <dd className="font-mono text-sm font-semibold tabular-nums">{formatMoney(Number(value), currency)}</dd>
+                  </div>
+                ))}
+              </dl>
+            </aside>
           </div>
 
-          {/* Enhanced Cash Flow with visual components */}
-          {trends && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Cash Flow Analysis</CardTitle>
-              <CardDescription>Monthly income and expense trends for {year}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <TrendChart
-                  data={trends.income}
-                  title="Income Trend"
-                  type="area"
-                  color="#10b981"
-                  showTrend
-                  height={200}
-                />
-                <TrendChart
-                  data={trends.expenses}
-                  title="Expense Trend"
-                  type="bar"
-                  color="#ef4444"
-                  showTrend
-                  height={200}
-                />
-                <TrendChart
-                  data={trends.cashFlow}
-                  title="Net Cash Flow"
-                  type="line"
-                  color="#3b82f6"
-                  showTrend
-                  height={200}
-                />
-              </div>
-            </CardContent>
-          </Card>
-          )}
-
-          {/* Legacy Cash Flow Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Cash Flow Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)]">
+            <section className="border border-foreground bg-card" aria-labelledby="action-ledger-heading">
+              <header className="flex items-start justify-between gap-4 border-b border-foreground px-5 py-5">
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-slate-500">Cash Inflow</span>
-                    <span className="text-sm font-semibold text-green-600">{formatMoney(cashFlow.inflow, currency)}</span>
-                  </div>
-                  <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500" style={{ width: `${Math.min(100, (cashFlow.inflow / (cashFlow.inflow + cashFlow.outflow || 1)) * 100)}%` }}></div>
-                  </div>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-academic-coral">Needs attention</p>
+                  <h2 id="action-ledger-heading" className="mt-1 text-lg font-semibold">Finance action ledger</h2>
                 </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-slate-500">Cash Outflow</span>
-                    <span className="text-sm font-semibold text-red-600">{formatMoney(cashFlow.outflow, currency)}</span>
-                  </div>
-                  <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-red-500" style={{ width: `${Math.min(100, (cashFlow.outflow / (cashFlow.inflow + cashFlow.outflow || 1)) * 100)}%` }}></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-slate-500">Net Cash Flow</span>
-                    <span className={`text-sm font-semibold ${isPositiveCashFlow ? 'text-green-600' : 'text-red-600'}`}>
-                      {isPositiveCashFlow ? '+' : ''}{formatMoney(netCashFlow, currency)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {isPositiveCashFlow ? (
-                      <ArrowUpRight className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <ArrowDownRight className="h-4 w-4 text-red-500" />
-                    )}
-                    <span className="text-xs text-slate-500">
-                      {isPositiveCashFlow ? 'Positive cash flow' : 'Negative cash flow'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                <span className="border border-foreground px-2 py-1 font-mono text-[10px] uppercase tracking-[0.08em]">Live</span>
+              </header>
 
-          {/* Enhanced Budget Overview */}
-          <Card>
-            <CardHeader className="flex justify-between items-center">
-              <CardTitle>Budget Utilization Overview</CardTitle>
-              <Button variant="outline" size="sm" render={<Link to="/budgets" />} nativeButton={false}>View All Budgets</Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <BudgetProgress
-                  name="Overall Budget"
-                  allocated={budgetStats.allocated}
-                  spent={budgetStats.spent}
-                  remaining={budgetStats.remaining}
-                  utilization={budgetStats.utilization}
-                  status={budgetStats.utilization > 80 ? "WARNING" : "ACTIVE"}
-                  currency={currency}
-                  size="compact"
-                />
-
-                {budgetStats.utilization > 80 && budgetStats.utilization < 100 && (
-                  <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                    <AlertTriangle className="h-4 w-4 text-amber-600" />
-                    <span className="text-sm text-amber-800 dark:text-amber-200">
-                      Budget utilization is at {budgetStats.utilization.toFixed(1)}%
-                    </span>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Action Required */}
-          {(pendingApprovals.length > 0 || feeStats.overdue > 0) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-amber-500" />
-                  Action Required
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {pendingApprovals.length > 0 && (
+              <div className="divide-y divide-border">
+                <Link to="/expenses" className="group grid gap-3 px-5 py-4 hover:bg-muted/45 sm:grid-cols-[1fr_auto] sm:items-center">
                   <div>
-                    <div className="text-sm font-medium mb-2">Pending Expense Approvals ({pendingApprovals.length})</div>
-                    <div className="space-y-2">
-                      {pendingApprovals.slice(0, 3).map((expense: any) => (
-                        <div key={expense.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                          <div className="flex-1">
-                            <div className="font-medium text-slate-900 dark:text-white">{expense.title}</div>
-                            <div className="text-sm text-slate-500">{expense.category}</div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <span className="font-semibold">{formatMoney(expense.totalAmount || expense.amount || 0, currency)}</span>
-                            <Button variant="outline" size="sm" render={<Link to={`/expenses/${expense.id}`} />} nativeButton={false}>Review</Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="text-sm font-semibold">Expense approvals</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{data.pendingExpenseCount ? `${data.pendingExpenseCount} submissions await a decision` : 'No submissions waiting for approval'}</p>
                   </div>
-                )}
-                {feeStats.overdue > 0 && (
-                  <div className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
-                      <div>
-                        <div className="font-medium text-red-900 dark:text-red-200">Overdue Fees</div>
-                        <div className="text-sm text-red-700 dark:text-red-300">{formatMoney(feeStats.overdue, currency)} in overdue payments</div>
-                      </div>
-                    </div>
-                    <Button variant="outline" size="sm" render={<Link to="/fees" />} nativeButton={false}>View Fees</Button>
+                  <span className="inline-flex items-center gap-2 font-mono text-sm font-semibold tabular-nums">
+                    {data.pendingExpenseCount} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </Link>
+                <Link to="/fees" className="group grid gap-3 px-5 py-4 hover:bg-muted/45 sm:grid-cols-[1fr_auto] sm:items-center">
+                  <div>
+                    <p className="text-sm font-semibold">Open fee balances</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Follow up on unpaid and partially paid charges due in {year}</p>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {hasPermission('manage_fees') && (
-                  <Button variant="outline" className="h-20 flex-col" render={<Link to="/fees/payments/new" />} nativeButton={false}>
-                      <DollarSign className="h-6 w-6 mb-2" />
-                      Record Payment
-                    </Button>
-                )}
-                {hasPermission('manage_expenses') && (
-                  <Button variant="outline" className="h-20 flex-col" render={<Link to="/expenses/new" />} nativeButton={false}>
-                      <Wallet className="h-6 w-6 mb-2" />
-                      New Expense
-                    </Button>
-                )}
-                {hasPermission('view_budgets') && (
-                  <Button variant="outline" className="h-20 flex-col" render={<Link to="/budgets" />} nativeButton={false}>
-                      <TrendingUp className="h-6 w-6 mb-2" />
-                      View Budgets
-                    </Button>
-                )}
-                {hasPermission('view_fee_structures') && (
-                  <Button variant="outline" className="h-20 flex-col" render={<Link to="/fee-structures" />} nativeButton={false}>
-                      <Users className="h-6 w-6 mb-2" />
-                      Fee Structures
-                    </Button>
-                )}
+                  <span className="inline-flex items-center gap-2 font-mono text-sm font-semibold tabular-nums text-academic-coral">
+                    {formatMoney(summary.accountsReceivable.outstanding, currency)} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </Link>
               </div>
-            </CardContent>
-          </Card>
 
-          {hasPermission('view_financial_reports') && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Financial Reports</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Button variant="outline" className="h-20 flex-col" render={<Link to="/financial/reports/monthly" />} nativeButton={false}>
-                      <Calendar className="h-6 w-6 mb-2" />
-                      Monthly Report
-                    </Button>
-                  <Button variant="outline" className="h-20 flex-col" render={<Link to="/financial/reports/income-expense" />} nativeButton={false}>
-                      <FileBarChart className="h-6 w-6 mb-2" />
-                      Income &amp; Expense
-                    </Button>
-                  <Button variant="outline" className="h-20 flex-col" render={<Link to="/financial/reports/budget-vs-actual" />} nativeButton={false}>
-                      <BarChart3 className="h-6 w-6 mb-2" />
-                      Budget vs Actual
-                    </Button>
+              {data.pendingExpenses.length > 0 && (
+                <div className="border-t border-foreground">
+                  <div className="grid grid-cols-[1fr_auto] bg-muted/35 px-5 py-2 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+                    <span>Latest expense submissions</span><span>Gross amount</span>
+                  </div>
+                  {data.pendingExpenses.slice(0, 3).map((expense) => {
+                    const gross = expense.totalAmount ?? (expense.amount + (expense.taxAmount || 0));
+                    return (
+                      <Link key={expense.id} to={`/expenses/${expense.id}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-4 border-t border-border px-5 py-3 hover:bg-muted/45">
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-medium">{expense.title}</span>
+                          <span className="mt-0.5 block text-xs text-muted-foreground">{expense.category}</span>
+                        </span>
+                        <span className="font-mono text-sm font-semibold tabular-nums">{formatMoney(gross, currency)}</span>
+                      </Link>
+                    );
+                  })}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </section>
+
+            <section className="border border-foreground bg-card" aria-labelledby="budget-watch-heading">
+              <header className="flex items-start justify-between gap-4 border-b border-foreground px-5 py-5">
+                <div>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-academic-teal">Allocation pressure</p>
+                  <h2 id="budget-watch-heading" className="mt-1 text-lg font-semibold">Budget watch</h2>
+                </div>
+                <Link to="/budgets" className="inline-flex items-center gap-1 text-xs font-semibold text-academic-teal hover:underline">All budgets <ArrowRight className="h-3.5 w-3.5" /></Link>
+              </header>
+              {budgetRows.length ? (
+                <div>
+                  {budgetRows.map((budget, index) => {
+                    const used = budget.allocatedAmount > 0 ? (budget.spentAmount / budget.allocatedAmount) * 100 : 0;
+                    const barTone = used >= 100 ? 'bg-academic-coral' : used >= 80 ? 'bg-academic-gold' : 'bg-academic-teal';
+                    return (
+                      <Link key={budget.id} to={`/budgets/${budget.id}`} className={`block px-5 py-4 hover:bg-muted/45 ${index ? 'border-t border-border' : ''}`}>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold">{budget.name}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">{formatMoney(budget.remainingAmount, currency)} remaining</p>
+                          </div>
+                          <p className={`font-mono text-sm font-semibold tabular-nums ${used >= 100 ? 'text-academic-coral' : ''}`}>{used.toFixed(1)}%</p>
+                        </div>
+                        <div className="mt-3 h-1.5 bg-muted" aria-hidden="true"><div className={`h-full ${barTone}`} style={{ width: `${Math.min(100, Math.max(0, used))}%` }} /></div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : <p className="px-5 py-8 text-sm text-muted-foreground">No budgets are registered for {year}.</p>}
+            </section>
+          </div>
+
+          <section className="grid border border-foreground bg-card lg:grid-cols-2" aria-label="Finance workspace shortcuts">
+            <div className="border-b border-foreground lg:border-b-0 lg:border-r">
+              <header className="px-4 py-4">
+                <p className="text-sm font-semibold">Record and manage</p>
+                <p className="mt-1 text-xs text-muted-foreground">Enter source documents and maintain finance registers.</p>
+              </header>
+              <div className="border-t border-foreground">
+                {hasPermission('manage_fees') && <LedgerLink to="/fees/payments/new" icon={DollarSign} title="Record a fee payment" detail="Post a receipt against a student balance" />}
+                {hasPermission('manage_expenses') && <LedgerLink to="/expenses/new" icon={ReceiptText} title="Enter an expense" detail="Capture an invoice and approval trail" />}
+                {hasPermission('manage_donations') && <LedgerLink to="/donations/new" icon={Wallet} title="Record a donation" detail="Add a donor receipt or campaign gift" />}
+                {hasPermission('view_budgets') && <LedgerLink to="/budgets" icon={PiggyBank} title="Budget register" detail="Review allocations, commitments, and headroom" />}
+              </div>
+            </div>
+            <div>
+              <header className="px-4 py-4">
+                <p className="text-sm font-semibold">Reports and evidence</p>
+                <p className="mt-1 text-xs text-muted-foreground">Trace movement from summary to report-ready detail.</p>
+              </header>
+              <div className="border-t border-foreground">
+                <LedgerLink to="/financial/reports/monthly" icon={Calendar} title="Monthly finance report" detail="Cash, fees, donations, and commitments by month" />
+                <LedgerLink to="/financial/reports/income-expense" icon={BarChart3} title="Income and expense" detail="Source and category analysis with transaction detail" />
+                <LedgerLink to="/financial/reports/budget-vs-actual" icon={FileBarChart} title="Budget versus actual" detail="Variance and utilization by approved budget" />
+                {hasPermission('view_fee_structures') && <LedgerLink to="/fee-structures" icon={Users} title="Fee structures" detail="Inspect the charging rules behind receivables" />}
+              </div>
+            </div>
+          </section>
         </>
       )}
     </div>

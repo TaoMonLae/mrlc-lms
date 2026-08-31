@@ -84,6 +84,13 @@ import { extractRarEntry, listRarImageEntries } from "./lib/portableRar";
 import { cleanEbookTitle, findDuplicateEbookSeriesVolume, findDuplicateEbookTitle, normalizedTitleForColumn } from "./lib/ebookTitles";
 import { feeMonthRange, feeYearRange, normalizeFeeMonth } from "./shared/feePeriods";
 import { buildMonthlyFinanceRows } from "./shared/monthlyFinance";
+import {
+  getExpenseGrossAmount,
+  ReportRangeError,
+  resolveUtcReportRange,
+  sumExpenseGrossAmounts,
+  sumOutstandingFeeBalance,
+} from "./shared/financialReports";
 import { inferStudentCardExpiry, personnelCardStatus } from "./shared/studentCardValidity";
 import {
   GRADE_CATEGORIES,
@@ -663,10 +670,6 @@ async function processEmailOutbox() {
   } finally {
     emailBatchRunning = false;
   }
-}
-
-function getExpenseGrossAmount(expense: { amount: number; taxAmount?: number | null }): number {
-  return expense.amount + (expense.taxAmount ?? 0);
 }
 
 async function createAuditLog(
@@ -11596,7 +11599,9 @@ async function startServer() {
     try {
       const { fiscalYear, status, departmentId } = req.query;
       const where: any = {};
-      if (fiscalYear) where.fiscalYear = parseInt(fiscalYear as string);
+      if (fiscalYear) {
+        where.fiscalYear = resolveUtcReportRange(undefined, undefined, String(fiscalYear)).gte.getUTCFullYear();
+      }
       if (status) where.status = status;
       if (departmentId) where.departmentId = departmentId;
 
@@ -11609,6 +11614,10 @@ async function startServer() {
       });
       res.json(budgets);
     } catch (error) {
+      if (error instanceof ReportRangeError) {
+        res.status(400).json({ error: error.message });
+        return;
+      }
       logger.error("Error fetching budgets:", error);
       res.status(500).json({ error: "Internal server error" });
     }
@@ -11818,23 +11827,6 @@ async function startServer() {
   }
 
   // ---- Financial Reports ----
-  // Resolves a report period from query params. The end of the range is pushed
-  // to 23:59:59.999 so records dated on the final day (which carry a time
-  // component) aren't silently excluded — `lte: new Date("2026-12-31")` is
-  // midnight and used to drop everything that happened during Dec 31.
-  function resolveReportRange(startDate?: string, endDate?: string, fiscalYear?: string): { gte: Date; lte: Date } {
-    if (startDate && endDate) {
-      const lte = new Date(endDate);
-      lte.setUTCHours(23, 59, 59, 999);
-      return { gte: new Date(startDate), lte };
-    }
-    const year = fiscalYear ? parseInt(fiscalYear) : new Date().getFullYear();
-    return {
-      gte: new Date(Date.UTC(year, 0, 1)),
-      lte: new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999)),
-    };
-  }
-
   app.get("/api/financial-reports/summary", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (!expenseCanView(jwtUser.role)) {
@@ -11845,7 +11837,7 @@ async function startServer() {
       const { startDate, endDate, fiscalYear, year: yearParam } = req.query;
 
       // Determine date range (accept both `fiscalYear` and `year` for the year shortcut)
-      const dateFilter = resolveReportRange(
+      const dateFilter = resolveUtcReportRange(
         startDate as string | undefined,
         endDate as string | undefined,
         (fiscalYear || yearParam) as string | undefined
@@ -11900,22 +11892,23 @@ async function startServer() {
       // Get outstanding fees. Includes PARTIAL charges, and nets out
       // paidAmount so the outstanding figure is the real remaining balance
       // (for PENDING/OVERDUE, paidAmount is 0, so this is unchanged there).
-      const outstandingFees = await prisma.feePayment.aggregate({
+      const outstandingFees = await prisma.feePayment.findMany({
         where: {
           status: { in: ['PENDING', 'OVERDUE', 'PARTIAL'] },
+          dueDate: dateFilter,
         },
-        _sum: { amount: true, paidAmount: true },
-        _count: true,
-      } as any);
-      const outstandingBalance = Math.max(0, ((outstandingFees._sum as any).amount || 0) - ((outstandingFees._sum as any).paidAmount || 0));
+        select: { amount: true, paidAmount: true },
+      });
+      const outstandingBalance = sumOutstandingFeeBalance(outstandingFees);
 
-      // Get pending expenses
-      const pendingExpenses = await prisma.expense.aggregate({
+      // Pending commitments belong to the selected reporting period and use
+      // gross invoice value so tax is not silently omitted.
+      const pendingExpenses = await prisma.expense.findMany({
         where: {
           status: { in: ['DRAFT', 'PENDING_APPROVAL'] },
+          expenseDate: dateFilter,
         },
-        _sum: { amount: true },
-        _count: true,
+        select: { amount: true, taxAmount: true },
       });
 
       const totalIncome = (feeCollections._sum.amount || 0) + (donations._sum.amount || 0);
@@ -11937,8 +11930,8 @@ async function startServer() {
         expenses: {
           total: totalExpenses,
           paidExpenses: billPayments._count,
-          pendingAmount: pendingExpenses._sum.amount || 0,
-          pendingCount: pendingExpenses._count,
+          pendingAmount: sumExpenseGrossAmounts(pendingExpenses),
+          pendingCount: pendingExpenses.length,
         },
         budget: {
           total: totalBudget,
@@ -11952,10 +11945,14 @@ async function startServer() {
         },
         accountsReceivable: {
           outstanding: outstandingBalance,
-          count: outstandingFees._count,
+          count: outstandingFees.length,
         },
       });
     } catch (error: any) {
+      if (error instanceof ReportRangeError) {
+        res.status(400).json({ error: error.message });
+        return;
+      }
       if (error?.code === "P2007" || error?.code === "P2021" || error?.code === "P2022") {
         res.status(503).json({ error: "Database is out of date — run `npx prisma migrate deploy` then restart the server." });
         return;
@@ -11974,7 +11971,7 @@ async function startServer() {
     try {
       const { startDate, endDate, groupBy = 'month' } = req.query;
 
-      const dateFilter = resolveReportRange(
+      const dateFilter = resolveUtcReportRange(
         startDate as string | undefined,
         endDate as string | undefined
       );
@@ -12141,6 +12138,10 @@ async function startServer() {
         },
       });
     } catch (error: any) {
+      if (error instanceof ReportRangeError) {
+        res.status(400).json({ error: error.message });
+        return;
+      }
       if (error?.code === "P2007" || error?.code === "P2021" || error?.code === "P2022") {
         res.status(503).json({ error: "Database is out of date — run `npx prisma migrate deploy` then restart the server." });
         return;
@@ -12163,7 +12164,7 @@ async function startServer() {
       if (budgetId) {
         where.id = budgetId;
       } else if (fiscalYear) {
-        where.fiscalYear = parseInt(fiscalYear as string);
+        where.fiscalYear = resolveUtcReportRange(undefined, undefined, String(fiscalYear)).gte.getUTCFullYear();
       } else {
         // Default to current year budgets
         where.fiscalYear = new Date().getFullYear();
@@ -12180,7 +12181,7 @@ async function startServer() {
       });
 
       const budgetComparison = budgets.map(budget => {
-        const actualExpenses = budget.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+        const actualExpenses = sumExpenseGrossAmounts(budget.expenses);
         const variance = budget.allocatedAmount - actualExpenses;
         const variancePercent = budget.allocatedAmount > 0 ? (variance / budget.allocatedAmount) * 100 : 0;
 
@@ -12226,6 +12227,10 @@ async function startServer() {
         },
       });
     } catch (error: any) {
+      if (error instanceof ReportRangeError) {
+        res.status(400).json({ error: error.message });
+        return;
+      }
       if (error?.code === "P2007" || error?.code === "P2021" || error?.code === "P2022") {
         res.status(503).json({ error: "Database is out of date — run `npx prisma migrate deploy` then restart the server." });
         return;
@@ -12244,7 +12249,7 @@ async function startServer() {
     try {
       const { startDate, endDate } = req.query;
 
-      const dateFilter = resolveReportRange(
+      const dateFilter = resolveUtcReportRange(
         startDate as string | undefined,
         endDate as string | undefined
       );
@@ -12317,6 +12322,10 @@ async function startServer() {
         },
       });
     } catch (error: any) {
+      if (error instanceof ReportRangeError) {
+        res.status(400).json({ error: error.message });
+        return;
+      }
       if (error?.code === "P2007" || error?.code === "P2021" || error?.code === "P2022") {
         res.status(503).json({ error: "Database is out of date — run `npx prisma migrate deploy` then restart the server." });
         return;

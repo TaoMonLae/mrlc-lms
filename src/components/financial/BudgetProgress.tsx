@@ -1,8 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertTriangle, Check, Clock3 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatMoney } from "@/src/lib/locale";
 
 interface BudgetProgressProps {
   name: string;
@@ -17,6 +16,20 @@ interface BudgetProgressProps {
   className?: string;
 }
 
+function money(value: number, currency: string) {
+  return /^[A-Z]{3}$/.test(currency) ? formatMoney(value, currency) : `${currency}${value.toLocaleString()}`;
+}
+
+function budgetTone(utilization: number) {
+  if (utilization >= 100) {
+    return { label: "Exceeded", text: "text-academic-coral", bar: "[&>div]:bg-academic-coral", Icon: AlertTriangle };
+  }
+  if (utilization >= 80) {
+    return { label: "Watch", text: "text-academic-gold-foreground", bar: "[&>div]:bg-academic-gold", Icon: Clock3 };
+  }
+  return { label: "On track", text: "text-academic-teal", bar: "[&>div]:bg-academic-teal", Icon: Check };
+}
+
 export function BudgetProgress({
   name,
   allocated,
@@ -24,106 +37,70 @@ export function BudgetProgress({
   remaining,
   utilization,
   status,
-  currency = "RM",
+  currency = "MYR",
   size = "default",
   showLabels = true,
   className,
 }: BudgetProgressProps) {
-  // `??` not `||`: a legitimate 0% utilization must not trigger recomputation,
-  // and dividing by a zero allocation would produce NaN/Infinity.
   const calculatedUtilization = utilization ?? (allocated > 0 ? (spent / allocated) * 100 : 0);
-
-  const getStatusColor = () => {
-    if (calculatedUtilization >= 100) return "text-red-600 bg-red-100";
-    if (calculatedUtilization >= 80) return "text-yellow-600 bg-yellow-100";
-    return "text-green-600 bg-green-100";
-  };
-
-  const getStatusIcon = () => {
-    if (calculatedUtilization >= 100) return <AlertTriangle className="w-3 h-3" />;
-    if (calculatedUtilization >= 80) return <Clock className="w-3 h-3" />;
-    return <CheckCircle className="w-3 h-3" />;
-  };
-
-  const getProgressColor = () => {
-    if (calculatedUtilization >= 100) return "bg-red-500";
-    if (calculatedUtilization >= 80) return "bg-yellow-500";
-    return "bg-green-500";
-  };
+  const tone = budgetTone(calculatedUtilization);
 
   if (size === "compact") {
     return (
       <div className={cn("space-y-2", className)}>
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">{name}</span>
-          <Badge variant="outline" className={cn("text-xs", getStatusColor())}>
-            {calculatedUtilization.toFixed(1)}%
-          </Badge>
+        <div className="flex items-baseline justify-between gap-4">
+          <span className="truncate text-sm font-semibold">{name}</span>
+          <span className={cn("font-mono text-xs font-semibold tabular-nums", tone.text)}>{calculatedUtilization.toFixed(1)}%</span>
         </div>
-        <Progress value={Math.min(calculatedUtilization, 100)} className="h-2" />
+        <Progress
+          value={Math.min(calculatedUtilization, 100)}
+          className={cn("h-1.5 rounded-none bg-muted [&>div]:rounded-none", tone.bar)}
+          aria-label={`${name}: ${calculatedUtilization.toFixed(1)} percent utilized`}
+        />
       </div>
     );
   }
 
   return (
-    <Card className={className}>
-      <CardHeader className={cn("pb-3", size === "default" ? "" : "pb-2")}>
-        <div className="flex items-center justify-between">
-          <CardTitle className={cn(size === "default" ? "" : "text-sm")}>{name}</CardTitle>
-          {status && (
-            <Badge variant="outline" className="text-xs">
-              {status}
-            </Badge>
-          )}
+    <section className={cn("border border-foreground bg-card", className)} aria-label={`${name} budget position`}>
+      <header className="flex items-start justify-between gap-4 border-b border-foreground px-5 py-4">
+        <div>
+          <p className="text-sm font-semibold">{name}</p>
+          {status && <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">{status}</p>}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Progress
-            value={Math.min(calculatedUtilization, 100)}
-            className={cn("h-3", getProgressColor())}
-          />
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              {getStatusIcon()}
-              <span className={cn("font-medium", getStatusColor())}>
-                {calculatedUtilization.toFixed(1)}% utilized
-              </span>
-            </div>
-            <span className="text-gray-500">
-              of {currency}{allocated.toLocaleString()}
-            </span>
-          </div>
+        <div className={cn("flex items-center gap-1.5 text-xs font-semibold", tone.text)}>
+          <tone.Icon className="h-3.5 w-3.5" aria-hidden="true" />
+          {tone.label}
         </div>
-
-        {showLabels && (
-          <div className="grid grid-cols-3 gap-4 pt-2 border-t">
-            <div>
-              <p className="text-xs text-gray-500">Allocated</p>
-              <p className="text-sm font-semibold">
-                {currency}{allocated.toLocaleString()}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Spent</p>
-              <p className="text-sm font-semibold text-red-600">
-                {currency}{spent.toLocaleString()}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Remaining</p>
-              <p className="text-sm font-semibold text-green-600">
-                {currency}{remaining.toLocaleString()}
-              </p>
-            </div>
+      </header>
+      <div className="px-5 py-5">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="font-mono text-2xl font-semibold tabular-nums tracking-[-0.03em]">{calculatedUtilization.toFixed(1)}%</p>
+            <p className="mt-1 text-xs text-muted-foreground">of {money(allocated, currency)} allocated</p>
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <p className="font-mono text-xs text-muted-foreground">{money(remaining, currency)} remaining</p>
+        </div>
+        <Progress value={Math.min(calculatedUtilization, 100)} className={cn("mt-4 h-2 rounded-none bg-muted [&>div]:rounded-none", tone.bar)} />
+      </div>
+      {showLabels && (
+        <dl className="grid grid-cols-3 border-t border-foreground">
+          {[
+            ["Allocated", allocated, "text-foreground"],
+            ["Spent", spent, "text-foreground"],
+            ["Remaining", remaining, remaining < 0 ? "text-academic-coral" : "text-academic-teal"],
+          ].map(([label, value, valueClass], index) => (
+            <div key={String(label)} className={cn("min-w-0 px-4 py-3", index && "border-l border-border")}>
+              <dt className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">{label}</dt>
+              <dd className={cn("mt-1 truncate font-mono text-xs font-semibold tabular-nums", String(valueClass))}>{money(Number(value), currency)}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </section>
   );
 }
 
-// Budget comparison card for showing budget vs actual
 interface BudgetComparisonCardProps {
   name: string;
   budget: number;
@@ -141,79 +118,40 @@ export function BudgetComparisonCard({
   actual,
   variance,
   fiscalYear,
-  currency = "RM",
+  currency = "MYR",
   showVariance = true,
   className,
 }: BudgetComparisonCardProps) {
   const utilization = budget > 0 ? (actual / budget) * 100 : 0;
-  const isOverBudget = actual > budget;
-  const isUnderBudget = actual < budget;
-
-  const getVarianceColor = () => {
-    if (isOverBudget) return "text-red-600";
-    if (isUnderBudget) return "text-green-600";
-    return "text-gray-600";
-  };
-
-  const getVarianceIcon = () => {
-    if (isOverBudget) return "↑";
-    if (isUnderBudget) return "↓";
-    return "=";
-  };
+  const tone = budgetTone(utilization);
+  const favorable = variance >= 0;
 
   return (
-    <Card className={className}>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm">{name}</CardTitle>
-          {fiscalYear && (
-            <Badge variant="outline" className="text-xs">
-              {fiscalYear}
-            </Badge>
-          )}
+    <section className={cn("border border-foreground bg-card", className)}>
+      <header className="flex items-start justify-between gap-4 border-b border-foreground px-5 py-4">
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-semibold">{name}</h3>
+          {fiscalYear && <p className="mt-1 font-mono text-[10px] text-muted-foreground">FY {fiscalYear}</p>}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500">Budget</span>
-            <span className="font-semibold">
-              {currency}{budget.toLocaleString()}
-            </span>
+        <span className={cn("font-mono text-sm font-semibold tabular-nums", tone.text)}>{utilization.toFixed(1)}%</span>
+      </header>
+      <dl>
+        {[
+          ["Approved budget", budget, "text-foreground"],
+          ["Actual expenses", actual, actual > budget ? "text-academic-coral" : "text-foreground"],
+          ...(showVariance ? [[favorable ? "Headroom" : "Over budget", Math.abs(variance), favorable ? "text-academic-teal" : "text-academic-coral"]] : []),
+        ].map(([label, value, valueClass], index) => (
+          <div key={String(label)} className={cn("flex items-center justify-between gap-4 px-5 py-3 text-sm", index && "border-t border-border")}>
+            <dt className="text-muted-foreground">{label}</dt>
+            <dd className={cn("font-mono font-semibold tabular-nums", String(valueClass))}>{money(Number(value), currency)}</dd>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500">Actual</span>
-            <span className={cn("font-semibold", isOverBudget ? "text-red-600" : "text-green-600")}>
-              {currency}{actual.toLocaleString()}
-            </span>
-          </div>
-          {showVariance && (
-            <div className="flex items-center justify-between text-sm pt-2 border-t">
-              <span className="text-gray-500">Variance</span>
-              <div className={cn("flex items-center gap-1 font-semibold", getVarianceColor())}>
-                <span>{getVarianceIcon()}</span>
-                <span>{currency}{Math.abs(variance).toLocaleString()}</span>
-                <span className="text-xs text-gray-500">
-                  ({budget > 0 ? Math.abs((variance / budget) * 100).toFixed(1) : "0.0"}%)
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <Progress
-          value={Math.min(utilization, 100)}
-          className={cn(
-            "h-2",
-            isOverBudget ? "bg-red-500" : utilization > 80 ? "bg-yellow-500" : "bg-green-500"
-          )}
-        />
-      </CardContent>
-    </Card>
+        ))}
+      </dl>
+      <Progress value={Math.min(utilization, 100)} className={cn("h-1.5 rounded-none bg-muted [&>div]:rounded-none", tone.bar)} />
+    </section>
   );
 }
 
-// Budget health indicator
 interface BudgetHealthIndicatorProps {
   utilization: number;
   threshold?: number;
@@ -227,37 +165,19 @@ export function BudgetHealthIndicator({
   threshold = 100,
   warningThreshold = 80,
   showLabel = true,
-  size = "default"
+  size = "default",
 }: BudgetHealthIndicatorProps) {
-  const getHealthStatus = () => {
-    if (utilization >= threshold) return { status: "exceeded", color: "red", icon: "⚠️" };
-    if (utilization >= warningThreshold) return { status: "warning", color: "yellow", icon: "⚡" };
-    return { status: "healthy", color: "green", icon: "✓" };
-  };
-
-  const health = getHealthStatus();
-
-  if (size === "small") {
-    return (
-      <div className="flex items-center gap-1">
-        <span className={`w-2 h-2 rounded-full bg-${health.color}-500`} />
-        {showLabel && (
-          <span className={`text-xs text-${health.color}-600 capitalize`}>
-            {health.status}
-          </span>
-        )}
-      </div>
-    );
-  }
+  const health = utilization >= threshold
+    ? { status: "Exceeded", dot: "bg-academic-coral", text: "text-academic-coral" }
+    : utilization >= warningThreshold
+      ? { status: "Watch", dot: "bg-academic-gold", text: "text-academic-gold-foreground" }
+      : { status: "On track", dot: "bg-academic-teal", text: "text-academic-teal" };
 
   return (
-    <div className={cn("flex items-center gap-2", `text-${health.color}-600`)}>
-      <span className={`w-3 h-3 rounded-full bg-${health.color}-500`} />
-      <span className="text-lg">{health.icon}</span>
-      {showLabel && (
-        <span className="font-medium capitalize">{health.status}</span>
-      )}
-      <span className="text-sm text-gray-500">({utilization.toFixed(1)}%)</span>
+    <div className={cn("flex items-center gap-2", health.text, size === "small" ? "text-xs" : "text-sm")}>
+      <span className={cn("shrink-0", health.dot, size === "small" ? "h-2 w-2" : "h-2.5 w-2.5")} aria-hidden="true" />
+      {showLabel && <span className="font-semibold">{health.status}</span>}
+      {size !== "small" && <span className="font-mono text-xs text-muted-foreground">{utilization.toFixed(1)}%</span>}
     </div>
   );
 }

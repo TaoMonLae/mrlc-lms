@@ -67,6 +67,22 @@ The clock and date control desk extends the same reference lock instead of intro
 
 Rejected patterns: generic statistic cards, an ornamental analog clock, gradients, oversized toggle tiles, and controls that change only a preview without persisting to the product.
 
+## Finance control desk extension
+
+The finance module extends the fieldbook into a digital operating ledger. Research focused on high-trust financial dashboards rather than generic analytics galleries.
+
+| Decision | Source | MRLC adaptation |
+| --- | --- | --- |
+| One dominant movement chart with supporting controls | Stripe Revenue Recognition (`5f9b93d3-6315-4656-8f74-cd26b07f1069`) | A single 12-month receipts-versus-paid-expenses plot replaces three disconnected mini charts |
+| Flat, dense financial hierarchy | PostHog + Operate (`13bc10c0-3cf9-4feb-8bf8-bfdd123931fc`, `a0f473eb-0310-4df5-b5f6-5bc124ad5954`) | Connected metric strip, ruled action ledger, budget watch, and rectangular register links |
+| Restrained trust-oriented palette | N26 (`59911817-9d14-445a-9f1b-617418001061`) | Navy carries structure, teal denotes cash received/healthy position, and coral is reserved for outflow or exceptions |
+| Precise chart inspection | React Bits Pro `dashboard-2` + `analytics-2` | Pointer crosshair, arrow/Home/End keyboard inspection, a period summary strip, and a reduced-motion-aware reveal |
+| Evidence follows the summary | Squarespace Revenue + OpenAI Usage (`92bca338-acae-46bb-8b26-88f554f11e91`, `b9307fdb-d0a9-4259-8273-66e5f1d7aa08`) | Finance actions and report links sit beside the overview so staff can trace a number into its register |
+
+Rejected finance patterns: equal-weight KPI card collages, duplicate cash-flow summaries, pie charts for two income sources, rainbow category palettes, oversized quick-action tiles, gradients, and decorative chart animation without inspection value.
+
+The finance audit also corrected the reporting contract: fee collections and donations are both included in revenue; partial fee balances cannot become negative; selected-year receivables and commitments are date-scoped; pending commitments and budget actuals include tax; report ranges reject malformed or partial dates; stale year requests are aborted; API failures no longer render as plausible zero totals; exports use the configured currency and escape CSV cells.
+
 ## System decisions
 
 - Canvas: paper `#f0f1ec` with a restrained 48px horizontal rule.

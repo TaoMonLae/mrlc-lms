@@ -6,13 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Download, Printer, TrendingUp, TrendingDown, FileSpreadsheet } from "lucide-react";
-import { BudgetComparisonCard, BudgetProgress, BudgetHealthIndicator } from "@/src/components/financial/BudgetProgress";
+import { Download, Printer, FileSpreadsheet } from "lucide-react";
+import { BudgetComparisonCard, BudgetHealthIndicator } from "@/src/components/financial/BudgetProgress";
 import { cn } from "@/lib/utils";
 import { exportReportToExcel } from "@/src/lib/exportReport";
 import { PrintLayout } from "../../components/reports/PrintLayout";
+import { formatMoney } from "../../lib/locale";
+import { useSettings } from "../../providers/SettingsProvider";
 
 const REPORT_YEARS = Array.from({ length: 6 }, (_, index) => new Date().getFullYear() + 1 - index);
+
+const csvCell = (value: string | number) => {
+  const text = String(value);
+  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
 
 interface BudgetComparison {
   id: string;
@@ -47,6 +54,7 @@ interface Summary {
 
 export default function BudgetVsActualReport() {
   const { hasPermission } = usePermissions();
+  const { systemSettings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<{
     budgets: BudgetComparison[];
@@ -54,6 +62,7 @@ export default function BudgetVsActualReport() {
   } | null>(null);
   const [year, setYear] = useState(new Date().getFullYear());
   const [error, setError] = useState<string | null>(null);
+  const currency = systemSettings.currency || "MYR";
 
   useEffect(() => {
     if (!hasPermission("view_financial_reports") && !hasPermission("view_budgets")) {
@@ -115,7 +124,7 @@ export default function BudgetVsActualReport() {
       ["Total Actual Expenses", data.summary.totalActualExpenses.toFixed(2)],
       ["Total Variance", data.summary.totalVariance.toFixed(2)],
       ["Overall Utilization", data.summary.overallUtilization.toFixed(1) + "%"]
-    ].map(row => row.join(",")).join("\n");
+    ].map(row => row.map(csvCell).join(",")).join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -134,11 +143,11 @@ export default function BudgetVsActualReport() {
       subtitle: `Fiscal Year ${year}`,
       filename: `budget-vs-actual-${year}`,
       summary: [
-        { label: "Total Allocated", value: `RM${data.summary.totalAllocated.toLocaleString()}` },
-        { label: "Total Actual Expenses", value: `RM${data.summary.totalActualExpenses.toLocaleString()}` },
+        { label: "Total Allocated", value: formatMoney(data.summary.totalAllocated, currency) },
+        { label: "Total Actual Expenses", value: formatMoney(data.summary.totalActualExpenses, currency) },
         {
           label: "Total Variance",
-          value: `${data.summary.totalVariance >= 0 ? "+" : ""}RM${data.summary.totalVariance.toLocaleString()}`,
+          value: `${data.summary.totalVariance >= 0 ? "+" : ""}${formatMoney(data.summary.totalVariance, currency)}`,
         },
         { label: "Overall Utilization", value: `${data.summary.overallUtilization.toFixed(1)}%` },
       ],
@@ -149,10 +158,10 @@ export default function BudgetVsActualReport() {
           rows: data.budgets.map((budget) => [
             budget.name,
             budget.category || "-",
-            `RM${budget.budget.allocated.toLocaleString()}`,
-            `RM${budget.budget.spent.toLocaleString()}`,
-            `RM${budget.actual.expenses.toLocaleString()}`,
-            `${budget.variance.amount >= 0 ? "+" : ""}RM${budget.variance.amount.toLocaleString()}`,
+            formatMoney(budget.budget.allocated, currency),
+            formatMoney(budget.budget.spent, currency),
+            formatMoney(budget.actual.expenses, currency),
+            `${budget.variance.amount >= 0 ? "+" : ""}${formatMoney(budget.variance.amount, currency)}`,
             `${budget.variance.percentage.toFixed(1)}%`,
             `${budget.utilization.toFixed(1)}%`,
             budget.status,
@@ -163,14 +172,13 @@ export default function BudgetVsActualReport() {
   };
 
   const getVarianceColor = (favorable: boolean) => {
-    return favorable ? "text-green-600" : "text-red-600";
+    return favorable ? "text-academic-teal" : "text-academic-coral";
   };
 
   const getHealthStatus = (utilization: number) => {
-    if (utilization >= 100) return { icon: "⚠️", text: "Exceeded", color: "red" };
-    if (utilization >= 90) return { icon: "⚡", text: "Warning", color: "yellow" };
-    if (utilization >= 70) return { icon: "✓", text: "On Track", color: "green" };
-    return { icon: "○", text: "Under", color: "blue" };
+    if (utilization >= 100) return { marker: "!", text: "Exceeded", className: "text-academic-coral" };
+    if (utilization >= 90) return { marker: "•", text: "Watch", className: "text-academic-gold-foreground" };
+    return { marker: "✓", text: "On track", className: "text-academic-teal" };
   };
 
   if (error) {
@@ -238,89 +246,21 @@ export default function BudgetVsActualReport() {
 
       {/* Interactive screen-only view */}
       <div className="print:hidden space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Total Allocated</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                RM{data.summary.totalAllocated.toLocaleString()}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Budgeted amount
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                RM{data.summary.totalSpent.toLocaleString()}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                According to budget
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Actual Expenses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                RM{data.summary.totalActualExpenses.toLocaleString()}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Recorded expenses
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Total Variance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${
-                data.summary.totalVariance >= 0 ? "text-green-600" : "text-red-600"
-              }`}>
-                {data.summary.totalVariance >= 0 ? "+" : ""}
-                RM{data.summary.totalVariance.toLocaleString()}
-              </div>
-              <div className="flex items-center mt-1">
-                {data.summary.totalVariance >= 0 ? (
-                  <TrendingUp className="w-4 h-4 text-green-600 mr-1" />
-                ) : (
-                  <TrendingDown className="w-4 h-4 text-red-600 mr-1" />
-                )}
-                <p className="text-xs text-gray-500">
-                  {data.summary.totalVariance >= 0 ? "Under budget" : "Over budget"}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Overall Utilization</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {data.summary.overallUtilization.toFixed(1)}%
-              </div>
-              <BudgetHealthIndicator
-                utilization={data.summary.overallUtilization}
-                showLabel={false}
-                size="small"
-              />
-            </CardContent>
-          </Card>
-        </div>
+        <section className="grid border border-foreground bg-card sm:grid-cols-2 xl:grid-cols-5" aria-label="Budget position summary">
+          {[
+            ["Approved allocation", formatMoney(data.summary.totalAllocated, currency), "Budget register"],
+            ["Ledger spend", formatMoney(data.summary.totalSpent, currency), "Posted to budgets"],
+            ["Actual expenses", formatMoney(data.summary.totalActualExpenses, currency), "Gross approved invoices"],
+            ["Variance", `${data.summary.totalVariance >= 0 ? "+" : ""}${formatMoney(data.summary.totalVariance, currency)}`, data.summary.totalVariance >= 0 ? "Headroom" : "Over budget"],
+            ["Utilization", `${data.summary.overallUtilization.toFixed(1)}%`, `${data.budgets.length} active records`],
+          ].map(([label, value, note], index) => (
+            <div key={label} className={cn("min-w-0 px-5 py-5", index && "border-t border-foreground sm:border-l sm:border-t-0", index === 2 && "sm:border-l-0 sm:border-t xl:border-l xl:border-t-0")}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{label}</p>
+              <p className={cn("mt-2 truncate font-mono text-lg font-semibold tabular-nums", label === "Variance" && (data.summary.totalVariance >= 0 ? "text-academic-teal" : "text-academic-coral"))}>{value}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{note}</p>
+            </div>
+          ))}
+        </section>
 
         <Tabs defaultValue="cards" className="space-y-4">
           <TabsList>
@@ -339,6 +279,7 @@ export default function BudgetVsActualReport() {
                     actual={budget.actual.expenses}
                     variance={budget.variance.amount}
                     fiscalYear={budget.fiscalYear}
+                    currency={currency}
                   />
                 );
               })}
@@ -380,17 +321,17 @@ export default function BudgetVsActualReport() {
                             )}
                           </TableCell>
                           <TableCell className="text-right">
-                            RM{budget.budget.allocated.toLocaleString()}
+                            {formatMoney(budget.budget.allocated, currency)}
                           </TableCell>
                           <TableCell className="text-right">
-                            RM{budget.budget.spent.toLocaleString()}
+                            {formatMoney(budget.budget.spent, currency)}
                           </TableCell>
                           <TableCell className="text-right">
-                            RM{budget.actual.expenses.toLocaleString()}
+                            {formatMoney(budget.actual.expenses, currency)}
                           </TableCell>
                           <TableCell className={`text-right font-medium ${getVarianceColor(budget.variance.favorable)}`}>
                             {budget.variance.amount >= 0 ? "+" : ""}
-                            RM{budget.variance.amount.toLocaleString()}
+                            {formatMoney(budget.variance.amount, currency)}
                           </TableCell>
                           <TableCell className="text-right">
                             {budget.variance.percentage.toFixed(1)}%
@@ -402,8 +343,8 @@ export default function BudgetVsActualReport() {
                             <Badge variant="outline">{budget.status}</Badge>
                           </TableCell>
                           <TableCell>
-                            <div className={cn("flex items-center gap-2", `text-${health.color}-600`)}>
-                              <span className="text-lg">{health.icon}</span>
+                            <div className={cn("flex items-center gap-2", health.className)}>
+                              <span className="font-mono text-sm font-bold">{health.marker}</span>
                               <span className="text-xs">{health.text}</span>
                             </div>
                           </TableCell>
@@ -464,16 +405,16 @@ export default function BudgetVsActualReport() {
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
             <div className="border border-slate-300 p-3 rounded text-center">
               <p className="text-xs text-slate-500 uppercase font-bold">Allocated</p>
-              <p className="text-lg font-bold mt-1">RM{data.summary.totalAllocated.toLocaleString()}</p>
+              <p className="text-lg font-bold mt-1">{formatMoney(data.summary.totalAllocated, currency)}</p>
             </div>
             <div className="border border-slate-300 p-3 rounded text-center">
               <p className="text-xs text-slate-500 uppercase font-bold">Actual Expenses</p>
-              <p className="text-lg font-bold mt-1">RM{data.summary.totalActualExpenses.toLocaleString()}</p>
+              <p className="text-lg font-bold mt-1">{formatMoney(data.summary.totalActualExpenses, currency)}</p>
             </div>
             <div className="border border-slate-300 p-3 rounded text-center">
               <p className="text-xs text-slate-500 uppercase font-bold">Variance</p>
               <p className={`text-lg font-bold mt-1 ${data.summary.totalVariance >= 0 ? "text-green-700" : "text-red-700"}`}>
-                {data.summary.totalVariance >= 0 ? "+" : ""}RM{data.summary.totalVariance.toLocaleString()}
+                {data.summary.totalVariance >= 0 ? "+" : ""}{formatMoney(data.summary.totalVariance, currency)}
               </p>
             </div>
             <div className="border border-slate-300 p-3 rounded text-center">
@@ -504,11 +445,11 @@ export default function BudgetVsActualReport() {
                 <tr key={budget.id}>
                   <td className="p-2">{budget.name} <span className="text-slate-500">({budget.code})</span></td>
                   <td className="p-2">{budget.category || "-"}</td>
-                  <td className="text-right p-2">RM{budget.budget.allocated.toLocaleString()}</td>
-                  <td className="text-right p-2">RM{budget.budget.spent.toLocaleString()}</td>
-                  <td className="text-right p-2">RM{budget.actual.expenses.toLocaleString()}</td>
+                  <td className="text-right p-2">{formatMoney(budget.budget.allocated, currency)}</td>
+                  <td className="text-right p-2">{formatMoney(budget.budget.spent, currency)}</td>
+                  <td className="text-right p-2">{formatMoney(budget.actual.expenses, currency)}</td>
                   <td className="text-right p-2">
-                    {budget.variance.amount >= 0 ? "+" : ""}RM{budget.variance.amount.toLocaleString()} ({budget.variance.percentage.toFixed(1)}%)
+                    {budget.variance.amount >= 0 ? "+" : ""}{formatMoney(budget.variance.amount, currency)} ({budget.variance.percentage.toFixed(1)}%)
                   </td>
                   <td className="text-right p-2">{budget.utilization.toFixed(1)}%</td>
                   <td className="p-2">{budget.status}</td>
@@ -518,11 +459,11 @@ export default function BudgetVsActualReport() {
             <tfoot>
               <tr className="font-bold">
                 <td className="p-2" colSpan={2}>Total</td>
-                <td className="text-right p-2">RM{data.summary.totalAllocated.toLocaleString()}</td>
-                <td className="text-right p-2">RM{data.summary.totalSpent.toLocaleString()}</td>
-                <td className="text-right p-2">RM{data.summary.totalActualExpenses.toLocaleString()}</td>
+                <td className="text-right p-2">{formatMoney(data.summary.totalAllocated, currency)}</td>
+                <td className="text-right p-2">{formatMoney(data.summary.totalSpent, currency)}</td>
+                <td className="text-right p-2">{formatMoney(data.summary.totalActualExpenses, currency)}</td>
                 <td className="text-right p-2">
-                  {data.summary.totalVariance >= 0 ? "+" : ""}RM{data.summary.totalVariance.toLocaleString()}
+                  {data.summary.totalVariance >= 0 ? "+" : ""}{formatMoney(data.summary.totalVariance, currency)}
                 </td>
                 <td className="text-right p-2">{data.summary.overallUtilization.toFixed(1)}%</td>
                 <td className="p-2"></td>

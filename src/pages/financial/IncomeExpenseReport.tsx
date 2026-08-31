@@ -1,14 +1,21 @@
 import { useEffect, useState } from "react";
 import { usePermissions } from "@/src/lib/permissions";
-import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Calendar, Download, Printer, TrendingUp, TrendingDown, FileSpreadsheet } from "lucide-react";
 import { exportReportToExcel } from "@/src/lib/exportReport";
 import { PrintLayout } from "../../components/reports/PrintLayout";
+import { formatMoney } from "../../lib/locale";
+import { useSettings } from "../../providers/SettingsProvider";
 
 const REPORT_YEARS = Array.from({ length: 6 }, (_, index) => new Date().getFullYear() + 1 - index);
+
+const csvCell = (value: string | number) => {
+  const text = String(value);
+  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
 
 interface IncomeDetailRow {
   date: string;
@@ -60,10 +67,12 @@ interface IncomeExpenseData {
 
 export default function IncomeExpenseReport() {
   const { hasPermission } = usePermissions();
+  const { systemSettings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<IncomeExpenseData | null>(null);
   const [year, setYear] = useState(new Date().getFullYear());
   const [error, setError] = useState<string | null>(null);
+  const currency = systemSettings.currency || "MYR";
 
   useEffect(() => {
     if (!hasPermission("view_financial_reports") && !hasPermission("view_budgets")) {
@@ -125,7 +134,7 @@ export default function IncomeExpenseReport() {
       ["Summary", ""],
       ["Net Surplus", data.summary.netSurplus.toFixed(2)],
       ["Surplus Ratio", data.summary.surplusRatio.toFixed(1) + "%"]
-    ].map(row => row.join(",")).join("\n");
+    ].map(row => row.map(csvCell).join(",")).join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -144,11 +153,11 @@ export default function IncomeExpenseReport() {
       subtitle: `Fiscal Year ${year}`,
       filename: `income-expense-report-${year}`,
       summary: [
-        { label: "Total Income", value: `RM${data.income.total.toLocaleString()}` },
-        { label: "Total Expenses", value: `RM${data.expenses.total.toLocaleString()}` },
+        { label: "Total Income", value: formatMoney(data.income.total, currency) },
+        { label: "Total Expenses", value: formatMoney(data.expenses.total, currency) },
         {
           label: "Net Surplus",
-          value: `${data.summary.netSurplus >= 0 ? "+" : ""}RM${data.summary.netSurplus.toLocaleString()} (${data.summary.surplusRatio.toFixed(1)}%)`,
+          value: `${data.summary.netSurplus >= 0 ? "+" : ""}${formatMoney(data.summary.netSurplus, currency)} (${data.summary.surplusRatio.toFixed(1)}%)`,
         },
       ],
       sections: [
@@ -156,9 +165,9 @@ export default function IncomeExpenseReport() {
           heading: "Income by Source",
           columns: ["Source", "Amount"],
           rows: [
-            ["Fees", `RM${data.income.bySource.fees.toLocaleString()}`],
-            ["Donations", `RM${data.income.bySource.donations.toLocaleString()}`],
-            ["Total", `RM${data.income.total.toLocaleString()}`],
+            ["Fees", formatMoney(data.income.bySource.fees, currency)],
+            ["Donations", formatMoney(data.income.bySource.donations, currency)],
+            ["Total", formatMoney(data.income.total, currency)],
           ],
         },
         {
@@ -167,11 +176,11 @@ export default function IncomeExpenseReport() {
           rows: [
             ...data.expenses.byCategory.map((item) => [
               item.category,
-              `RM${item.amount.toLocaleString()}`,
+              formatMoney(item.amount, currency),
               item.count,
               `${item.percentage.toFixed(1)}%`,
             ]),
-            ["Total", `RM${data.expenses.total.toLocaleString()}`, data.expenses.byCategory.reduce((s, i) => s + i.count, 0), "100%"],
+            ["Total", formatMoney(data.expenses.total, currency), data.expenses.byCategory.reduce((s, i) => s + i.count, 0), "100%"],
           ],
         },
         {
@@ -183,7 +192,7 @@ export default function IncomeExpenseReport() {
             row.description,
             row.reference || "-",
             row.paymentMethod || "-",
-            `RM${row.amount.toLocaleString()}`,
+            formatMoney(row.amount, currency),
           ]),
         },
         {
@@ -196,7 +205,7 @@ export default function IncomeExpenseReport() {
             row.vendor || "-",
             row.reference || "-",
             row.status,
-            `RM${row.amount.toLocaleString()}`,
+            formatMoney(row.amount, currency),
           ]),
         },
       ],
@@ -242,8 +251,6 @@ export default function IncomeExpenseReport() {
     { name: "Donations", amount: data.income.bySource.donations },
   ];
 
-  const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
-
   return (
     <div className="space-y-6">
       <div className="print:hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -288,10 +295,10 @@ export default function IncomeExpenseReport() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                RM{data.income.total.toLocaleString()}
+                {formatMoney(data.income.total, currency)}
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Fees: RM{data.income.bySource.fees.toLocaleString()} + Donations: RM{data.income.bySource.donations.toLocaleString()}
+                Fees: {formatMoney(data.income.bySource.fees, currency)} + Donations: {formatMoney(data.income.bySource.donations, currency)}
               </p>
             </CardContent>
           </Card>
@@ -302,7 +309,7 @@ export default function IncomeExpenseReport() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">
-                RM{data.expenses.total.toLocaleString()}
+                {formatMoney(data.expenses.total, currency)}
               </div>
               <p className="text-xs text-gray-500 mt-1">
                 {data.expenses.byCategory.length} categories
@@ -316,7 +323,7 @@ export default function IncomeExpenseReport() {
             </CardHeader>
             <CardContent>
               <div className={`text-2xl font-bold ${data.summary.netSurplus >= 0 ? "text-green-600" : "text-red-600"}`}>
-                {data.summary.netSurplus >= 0 ? "+" : ""}RM{data.summary.netSurplus.toLocaleString()}
+                {data.summary.netSurplus >= 0 ? "+" : ""}{formatMoney(data.summary.netSurplus, currency)}
               </div>
               <div className="flex items-center mt-1">
                 {data.summary.netSurplus >= 0 ? (
@@ -348,54 +355,49 @@ export default function IncomeExpenseReport() {
         </div>
 
         {/* Charts */}
-        <div className="print:hidden grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Income by Source</CardTitle>
-              <CardDescription>Breakdown of income sources</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={incomeSourceData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="amount"
-                  >
-                    {incomeSourceData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+        <section className="print:hidden mb-6 grid border border-foreground bg-card lg:grid-cols-[minmax(280px,0.7fr)_minmax(0,1.3fr)]" aria-label="Income and expense analysis">
+          <div className="border-b border-foreground lg:border-b-0 lg:border-r">
+            <header className="border-b border-foreground px-5 py-4">
+              <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-academic-teal">Receipt composition</p>
+              <h2 className="mt-1 text-base font-semibold">Income by source</h2>
+            </header>
+            <div>
+              {incomeSourceData.map((source, index) => {
+                const share = data.income.total > 0 ? (source.amount / data.income.total) * 100 : 0;
+                return (
+                  <div key={source.name} className={`px-5 py-5 ${index ? "border-t border-border" : ""}`}>
+                    <div className="flex items-end justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-semibold">{source.name}</p>
+                        <p className="mt-1 font-mono text-lg font-semibold tabular-nums">{formatMoney(source.amount, currency)}</p>
+                      </div>
+                      <p className="font-mono text-xs text-muted-foreground">{share.toFixed(1)}%</p>
+                    </div>
+                    <div className="mt-3 h-1.5 bg-muted"><div className={index ? "h-full bg-[#0c2538]" : "h-full bg-academic-teal"} style={{ width: `${share}%` }} /></div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Expenses by Category</CardTitle>
-              <CardDescription>Breakdown of expense categories</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <div>
+            <header className="border-b border-foreground px-5 py-4">
+              <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-academic-coral">Settled payments</p>
+              <h2 className="mt-1 text-base font-semibold">Expenses by category</h2>
+            </header>
+            <div className="px-3 py-5 sm:px-5">
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={expenseChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="amount" fill="#ef4444" name="Amount (RM)" />
+                <BarChart data={expenseChartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                  <YAxis tickLine={false} axisLine={false} />
+                  <Tooltip formatter={(value: number) => formatMoney(value, currency)} cursor={{ fill: "rgba(12, 37, 56, 0.05)" }} />
+                  <Bar dataKey="amount" fill="#e97961" name={`Amount (${currency})`} radius={0} />
                 </BarChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </div>
+        </section>
 
         {/* Expenses by Category */}
         <div className="mb-8">
@@ -415,7 +417,7 @@ export default function IncomeExpenseReport() {
               {data.expenses.byCategory.map((item, index) => (
                 <tr key={index}>
                   <td className="p-2">{item.category}</td>
-                  <td className="text-right p-2">RM{item.amount.toLocaleString()}</td>
+                  <td className="text-right p-2">{formatMoney(item.amount, currency)}</td>
                   <td className="text-right p-2">{item.count}</td>
                   <td className="text-right p-2">{item.percentage.toFixed(1)}%</td>
                 </tr>
@@ -424,7 +426,7 @@ export default function IncomeExpenseReport() {
             <tfoot>
               <tr className="font-bold">
                 <td className="p-2">Total</td>
-                <td className="text-right p-2">RM{data.expenses.total.toLocaleString()}</td>
+                <td className="text-right p-2">{formatMoney(data.expenses.total, currency)}</td>
                 <td className="text-right p-2">
                   {data.expenses.byCategory.reduce((sum, item) => sum + item.count, 0)}
                 </td>
@@ -461,14 +463,14 @@ export default function IncomeExpenseReport() {
                     <td className="p-2">{row.description}</td>
                     <td className="p-2">{row.reference || "-"}</td>
                     <td className="p-2">{row.paymentMethod || "-"}</td>
-                    <td className="text-right p-2">RM{row.amount.toLocaleString()}</td>
+                    <td className="text-right p-2">{formatMoney(row.amount, currency)}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr className="font-bold">
                   <td className="p-2" colSpan={5}>Total</td>
-                  <td className="text-right p-2">RM{data.income.total.toLocaleString()}</td>
+                  <td className="text-right p-2">{formatMoney(data.income.total, currency)}</td>
                 </tr>
               </tfoot>
             </table>
@@ -504,14 +506,14 @@ export default function IncomeExpenseReport() {
                     <td className="p-2">{row.vendor || "-"}</td>
                     <td className="p-2">{row.reference || "-"}</td>
                     <td className="p-2">{row.status}</td>
-                    <td className="text-right p-2">RM{row.amount.toLocaleString()}</td>
+                    <td className="text-right p-2">{formatMoney(row.amount, currency)}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr className="font-bold">
                   <td className="p-2" colSpan={6}>Total</td>
-                  <td className="text-right p-2">RM{data.expenses.total.toLocaleString()}</td>
+                  <td className="text-right p-2">{formatMoney(data.expenses.total, currency)}</td>
                 </tr>
               </tfoot>
             </table>
