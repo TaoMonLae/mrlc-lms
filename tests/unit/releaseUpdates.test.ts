@@ -20,9 +20,10 @@ test('release acknowledgement is stored separately for each user', () => {
   assert.equal(releaseStorageKey('student-1'), 'mrlc:release-seen:student-1');
 });
 
-test('a changed release id becomes unseen again', () => {
+test('the school portal release is unseen after the previous Language Quest release', () => {
   const storage = memoryStorage();
-  markReleaseSeen(storage, 'teacher-1', 'previous-release');
+  markReleaseSeen(storage, 'teacher-1', '2026-08-31-language-quest-refresh');
+  assert.equal(CURRENT_RELEASE.id, '2026-08-31-school-portal-refresh');
   assert.equal(hasSeenRelease(storage, 'teacher-1', CURRENT_RELEASE.id), false);
 });
 
