@@ -15297,9 +15297,22 @@ async function startServer() {
 
     try {
       const existing = await prisma.schoolProfile.findFirst();
-      const profile = existing
-        ? await prisma.schoolProfile.update({ where: { id: existing.id }, data })
-        : await prisma.schoolProfile.create({ data: { name: data.name || "School", ...data } });
+      const saveProfile = existing
+        ? prisma.schoolProfile.update({ where: { id: existing.id }, data })
+        : prisma.schoolProfile.create({ data: { name: data.name || "School", ...data } });
+      // When an admin explicitly changes the school cursor, retire their old
+      // personal override too. Otherwise the settings page preview would end
+      // on navigation and reveal the stale preference (commonly Click Spark).
+      // The client omits cursorEffect for unrelated system-settings saves.
+      const profile = b.cursorEffect !== undefined
+        ? (await prisma.$transaction([
+            saveProfile,
+            prisma.user.update({
+              where: { id: jwtUser.userId },
+              data: { cursorEffect: null },
+            } as any),
+          ]))[0]
+        : await saveProfile;
       await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "SETTINGS", profile.id,
         "School settings updated.", req.ip, req.headers["user-agent"] || null, "SUCCESS");
       res.json(profile);

@@ -300,9 +300,9 @@ export default function App() {
       <I18nProvider>
       <AuthProvider>
         <SettingsProvider>
-        <ReleaseUpdatesProvider>
         <TooltipProvider>
           <BrowserRouter>
+          <ReleaseUpdatesProvider>
           <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-slate-500">Loading page…</div>}>
           <ExternalLearnerBoundary>
           <Routes>
@@ -723,9 +723,9 @@ export default function App() {
           <Toaster position="top-right" closeButton richColors />
           <CursorEffect />
           <DynamicFavicon />
+          </ReleaseUpdatesProvider>
         </BrowserRouter>
         </TooltipProvider>
-        </ReleaseUpdatesProvider>
       </SettingsProvider>
       </AuthProvider>
       </I18nProvider>

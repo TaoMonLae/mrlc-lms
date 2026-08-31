@@ -22,3 +22,20 @@ export function markReleaseSeen(storage: StorageLike, userId: string, releaseId:
     return false;
   }
 }
+
+const RELEASE_FREE_ROUTES = [
+  '/login',
+  '/signup',
+  '/forgot-password',
+  '/reset-password',
+  '/change-password',
+  '/unauthorized',
+  '/verify',
+  '/dictionary',
+  '/language-quest',
+];
+
+export function canAutoShowReleaseUpdates(pathname: string) {
+  if (pathname === '/' || pathname.includes('/print')) return false;
+  return !RELEASE_FREE_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}

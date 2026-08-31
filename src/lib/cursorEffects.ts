@@ -32,6 +32,14 @@ export function resolveCursorEffect(personal: unknown, schoolDefault: unknown): 
   return 'RAINBOW_TRAIL';
 }
 
+// System Settings submits the cursor field only when that control changed.
+// This matters because the server uses its presence to make the saving admin
+// follow the newly selected school default; unrelated settings saves must not
+// silently clear an existing personal preference.
+export function cursorEffectForSchoolSave(effect: unknown, changed: boolean): CursorEffect | undefined {
+  return changed && isCursorEffect(effect) ? effect : undefined;
+}
+
 export function previewCursorEffect(effect: CursorEffect | null) {
   window.dispatchEvent(new CustomEvent<CursorEffect | null>(CURSOR_PREVIEW_EVENT, { detail: effect }));
 }

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { isCursorEffect, resolveCursorEffect } from '../../src/lib/cursorEffects';
+import { cursorEffectForSchoolSave, isCursorEffect, resolveCursorEffect } from '../../src/lib/cursorEffects';
 
 test('personal cursor preferences override the school default, including None', () => {
   assert.equal(resolveCursorEffect('CLICK_SPARK', 'RAINBOW_TRAIL'), 'CLICK_SPARK');
@@ -13,4 +13,14 @@ test('invalid or missing cursor values fall back safely', () => {
   assert.equal(resolveCursorEffect(undefined, 'BROKEN'), 'RAINBOW_TRAIL');
   assert.equal(isCursorEffect('SPLASH_CURSOR'), true);
   assert.equal(isCursorEffect('SCHOOL_DEFAULT'), false);
+});
+
+test('a changed school cursor is sent while unrelated settings saves leave personal overrides alone', () => {
+  assert.equal(cursorEffectForSchoolSave('GHOST_CURSOR', true), 'GHOST_CURSOR');
+  assert.equal(cursorEffectForSchoolSave('GHOST_CURSOR', false), undefined);
+  assert.equal(cursorEffectForSchoolSave('BROKEN', true), undefined);
+
+  // Once the saving admin's stale Click Spark override is cleared, navigation
+  // resolves to the school cursor that was just saved.
+  assert.equal(resolveCursorEffect(null, 'GHOST_CURSOR'), 'GHOST_CURSOR');
 });

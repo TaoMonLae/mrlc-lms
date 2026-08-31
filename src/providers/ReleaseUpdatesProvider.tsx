@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useLocation } from 'react-router';
 import { CURRENT_RELEASE } from '../data/releases';
-import { hasSeenRelease, markReleaseSeen, releaseStorageKey } from '../lib/releaseUpdates';
+import { canAutoShowReleaseUpdates, hasSeenRelease, markReleaseSeen, releaseStorageKey } from '../lib/releaseUpdates';
 import { useAuth } from './AuthProvider';
 import { UpdateScreen } from '../components/updates/UpdateScreen';
 
@@ -20,8 +21,10 @@ export function useReleaseUpdates() {
 
 export function ReleaseUpdatesProvider({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [hasUnseenRelease, setHasUnseenRelease] = useState(false);
+  const canShowHere = canAutoShowReleaseUpdates(location.pathname);
 
   useEffect(() => {
     if (isLoading || !user) {
@@ -32,13 +35,16 @@ export function ReleaseUpdatesProvider({ children }: { children: ReactNode }) {
 
     const unseen = !hasSeenRelease(localStorage, user.id, CURRENT_RELEASE.id);
     setHasUnseenRelease(unseen);
-    if (!unseen) return;
+    if (!canShowHere || !unseen) {
+      setOpen(false);
+      return;
+    }
 
     // Let the destination page settle first; the update remains the next
     // clear focus without competing with the login transition.
     const timer = window.setTimeout(() => setOpen(true), 450);
     return () => window.clearTimeout(timer);
-  }, [isLoading, user]);
+  }, [canShowHere, isLoading, user]);
 
   useEffect(() => {
     if (!user) return;
@@ -65,7 +71,7 @@ export function ReleaseUpdatesProvider({ children }: { children: ReactNode }) {
   return (
     <ReleaseUpdatesContext.Provider value={value}>
       {children}
-      {user && <UpdateScreen open={open} onClose={closeUpdates} release={CURRENT_RELEASE} />}
+      {user && canShowHere && <UpdateScreen open={open} onClose={closeUpdates} release={CURRENT_RELEASE} />}
     </ReleaseUpdatesContext.Provider>
   );
 }

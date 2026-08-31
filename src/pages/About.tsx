@@ -1,326 +1,240 @@
-import type { ReactNode } from "react";
-import {
-  ArrowUpRight,
-  BookMarked,
-  Code2,
-  Crown,
-  Gamepad2,
-  Github,
-  Grid3x3,
-  Heart,
-  Info,
-  Languages,
-  Layers,
-  Palette,
-  ShieldCheck,
-  Sparkles,
-  UsersRound,
-} from "lucide-react";
-import { Card } from "@/components/ui/card";
+import type { CSSProperties, ReactNode } from 'react';
+import { Link } from 'react-router';
+import AnimatedContent from '@/components/AnimatedContent';
+import { useSettings } from '../providers/SettingsProvider';
 
-const PLATFORM_PILLARS = [
+const SCHOOL_DAY = [
   {
-    eyebrow: "Learning",
-    title: "Teach, practise, and grow",
-    description: "Classes, homework, exams, dictionaries, an e-library, and Learning Quest—including K–12 Mathematics and four GED preparation courses—live in one familiar learning space.",
-    art: "/icons/optimized/Eduv2_06.png",
-    tone: "from-violet-50 to-indigo-100/80 dark:from-violet-500/10 dark:to-indigo-500/10",
+    number: '01',
+    title: 'Learning has a visible path.',
+    description: 'Classes, homework, exams, dictionaries and the e-library stay connected, so the next task is never hidden behind a different system.',
+    scope: 'Classes · Homework · Exams · Library',
   },
   {
-    eyebrow: "People",
-    title: "Keep the school connected",
-    description: "Students, teachers, families, and staff can find the information and conversations that matter to them.",
-    art: "/icons/optimized/Eduv2_02.png",
-    tone: "from-emerald-50 to-teal-100/80 dark:from-emerald-500/10 dark:to-teal-500/10",
+    number: '02',
+    title: 'People share one source of truth.',
+    description: 'Students, teachers and the school team work from the same current records instead of passing disconnected files between departments.',
+    scope: 'Profiles · Attendance · Timetables · Communication',
   },
   {
-    eyebrow: "Operations",
-    title: "Run each school day clearly",
-    description: "Attendance, schedules, fees, records, reports, and school workflows stay organised without losing the human touch.",
-    art: "/icons/optimized/Eduv2_09.png",
-    tone: "from-sky-50 to-cyan-100/80 dark:from-sky-500/10 dark:to-cyan-500/10",
+    number: '03',
+    title: 'Operations support the classroom.',
+    description: 'Fees, reports, documents and daily administration are organised around the school day—not treated as a separate back office.',
+    scope: 'Fees · Documents · Reports · School operations',
   },
   {
-    eyebrow: "Motivation",
-    title: "Make progress feel rewarding",
-    description: "Friendly games, achievements, streaks, and visible milestones give learners more reasons to keep showing up.",
-    art: "/icons/optimized/Eduv2_05.png",
-    tone: "from-amber-50 to-orange-100/80 dark:from-amber-500/10 dark:to-orange-500/10",
+    number: '04',
+    title: 'Practice can still feel alive.',
+    description: 'Learning Quest, mastery review and thoughtful games make progress visible without turning the school portal into a toy.',
+    scope: 'Languages · K–12 Mathematics · GED · Mastery',
   },
+] as const;
+
+const BUILD_REGISTRY = [
+  ['Learning Quest', 'Language learning, K–12 Mathematics and four GED subject paths with mastery practice and teacher insight.'],
+  ['School learning', 'Classwork, homework, examinations, grade records, attendance, timetables and reporting.'],
+  ['Reading and reference', 'A managed e-library, public-domain imports and English, Myanmar and Mon dictionary resources.'],
+  ['Thoughtful play', 'Chess, checkers, Sudoku, Snake and other school-ready games with access controls.'],
+  ['Application foundation', 'React, TypeScript, Vite, Tailwind CSS and accessible interface primitives.'],
+  ['Data and services', 'Express, Prisma and PostgreSQL keep school information connected and auditable.'],
 ] as const;
 
 const THIRD_PARTY_NOTICES: { title: string; description: ReactNode }[] = [
   {
-    title: "Learning Quest",
-    description: (
-      <>
-        Informed by the concepts and interface patterns in{" "}
-        <a href="https://github.com/sanidhyy/duolingo-clone" target="_blank" rel="noopener noreferrer" className="font-bold text-aubergine-700 hover:underline dark:text-violet-300">
-          sanidhyy/duolingo-clone
-        </a>{" "}
-        (MIT License). An archived Spanish seed experiment was adapted from{" "}
-        <a href="https://github.com/TaoMonLae/duolingo-clone" target="_blank" rel="noopener noreferrer" className="font-bold text-aubergine-700 hover:underline dark:text-violet-300">
-          TaoMonLae/duolingo-clone
-        </a>
-        . MRLC’s original GED Science, Social Studies, RLA, and Mathematical Reasoning courses are informed by the public assessment guides and educator resources from{" "}
-        <a href="https://www.ged.com/content/dam/websites/ged/resources/en/assessment-guide-for-educators-math.pdf" target="_blank" rel="noopener noreferrer" className="font-bold text-aubergine-700 hover:underline dark:text-violet-300">
-          GED Testing Service
-        </a>
-        . They contain 150 concept-first lessons and 450 original practices, remain independent preparation materials, and do not reproduce official questions.
-      </>
-    ),
+    title: 'Learning Quest',
+    description: <>
+      Interface concepts were informed by <ExternalLink href="https://github.com/sanidhyy/duolingo-clone">sanidhyy/duolingo-clone</ExternalLink> (MIT). An archived Spanish seed experiment was adapted from <ExternalLink href="https://github.com/TaoMonLae/duolingo-clone">TaoMonLae/duolingo-clone</ExternalLink>. MRLC’s original GED preparation uses public educator guidance from <ExternalLink href="https://www.ged.com/content/dam/websites/ged/resources/en/assessment-guide-for-educators-math.pdf">GED Testing Service</ExternalLink>; it does not reproduce official questions.
+    </>,
   },
   {
-    title: "Sudoku",
-    description: (
-      <>
-        Adapted from{" "}
-        <a href="https://github.com/TN1ck/super-sudoku" target="_blank" rel="noopener noreferrer" className="font-bold text-aubergine-700 hover:underline dark:text-violet-300">
-          super-sudoku
-        </a>{" "}
-        by Tom Nick (MIT License).
-      </>
-    ),
+    title: 'Sudoku',
+    description: <>Adapted from <ExternalLink href="https://github.com/TN1ck/super-sudoku">super-sudoku</ExternalLink> by Tom Nick under the MIT License.</>,
   },
   {
-    title: "English definitions",
-    description: (
-      <>
-        Powered by{" "}
-        <a href="https://github.com/moos/wordpos" target="_blank" rel="noopener noreferrer" className="font-bold text-aubergine-700 hover:underline dark:text-violet-300">
-          WordPOS
-        </a>{" "}
-        and Princeton WordNet 3.1.
-      </>
-    ),
+    title: 'English definitions',
+    description: <>Powered by <ExternalLink href="https://github.com/moos/wordpos">WordPOS</ExternalLink> and Princeton WordNet 3.1.</>,
   },
   {
-    title: "English–Myanmar dictionary",
-    description:
-      "Translations originate from the ornagai/MZ dictionary dataset. Its data license isn't independently verifiable, so it's retained for internal, non-commercial school use only, with full provenance documented in the codebase.",
+    title: 'English–Myanmar dictionary',
+    description: 'Translations originate from the ornagai/MZ dataset. Because its data license is not independently verifiable, it remains limited to internal, non-commercial school use with provenance recorded in the codebase.',
   },
   {
-    title: "Mon dictionary",
-    description: (
-      <>
-        Entries come from{" "}
-        <a href="https://github.com/Barnista/MonDictDB" target="_blank" rel="noopener noreferrer" className="font-bold text-aubergine-700 hover:underline dark:text-violet-300">
-          MonDictDB
-        </a>{" "}
-        (MIT License).
-      </>
-    ),
+    title: 'Mon dictionary',
+    description: <>Entries come from <ExternalLink href="https://github.com/Barnista/MonDictDB">MonDictDB</ExternalLink> under the MIT License.</>,
   },
   {
-    title: "E-Library",
-    description: (
-      <>
-        Project Gutenberg search and import uses the public{" "}
-        <a href="https://github.com/garethbjohnson/gutendex" target="_blank" rel="noopener noreferrer" className="font-bold text-aubergine-700 hover:underline dark:text-violet-300">
-          Gutendex
-        </a>{" "}
-        service and downloads selected public-domain books on demand.
-      </>
-    ),
+    title: 'E-Library',
+    description: <>Project Gutenberg search and import uses the public <ExternalLink href="https://github.com/garethbjohnson/gutendex">Gutendex</ExternalLink> service and downloads selected public-domain books on demand.</>,
   },
 ];
 
-const CREDITS = [
-  {
-    title: "Learning Quest",
-    description: "An LMS-native language, K–12 Mathematics, and four-subject GED experience with readable formulas, mastery practice, rewards, and teacher insights.",
-    icon: Languages,
-  },
-  {
-    title: "Chess",
-    description: "Move validation by chess.js, with a custom AI opponent, piece art, and online multiplayer.",
-    icon: Crown,
-  },
-  {
-    title: "Sudoku",
-    description: "A school-ready puzzle generator and solver developed for this platform.",
-    icon: Grid3x3,
-  },
-  {
-    title: "Checkers & Snake",
-    description: "Two more in-house games designed to bring thoughtful play into the school day.",
-    icon: Gamepad2,
-  },
-  {
-    title: "React, Vite & TypeScript",
-    description: "The frontend foundation behind the fast, responsive interface.",
-    icon: Code2,
-  },
-  {
-    title: "Tailwind CSS & shadcn/ui",
-    description: "The design system and accessible interface components used throughout the LMS.",
-    icon: Palette,
-  },
-  {
-    title: "Prisma, PostgreSQL & Express",
-    description: "The database and server tools that keep school information connected and reliable.",
-    icon: Layers,
-  },
-  {
-    title: "Lucide",
-    description: "The open-source icon family used to make actions easier to recognise.",
-    icon: Sparkles,
-  },
-] as const;
+function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
+  return <a href={href} target="_blank" rel="noopener noreferrer" className="font-bold text-current underline decoration-2 underline-offset-4">{children}</a>;
+}
 
 export default function AboutPage() {
+  const { schoolProfile, brandingSettings } = useSettings();
+  const schoolName = schoolProfile.name || 'Mon Refugee Learning Centre';
+  const style = {
+    '--about-brand': brandingSettings.primaryColor || '#112d40',
+    '--about-accent': brandingSettings.accentColor || '#168c83',
+  } as CSSProperties;
+
   return (
-    <div className="mx-auto max-w-7xl space-y-8 pb-12">
-      <section className="relative isolate overflow-hidden rounded-[2.25rem] border border-amber-200/70 bg-[#fff8eb] px-6 py-8 shadow-[0_24px_70px_-36px_rgba(91,59,24,0.45)] dark:border-white/10 dark:bg-slate-950 sm:px-9 sm:py-10 lg:px-12 lg:py-12">
-        <div className="absolute -left-28 -top-36 -z-10 h-80 w-80 rounded-full bg-amber-300/35 blur-3xl dark:bg-amber-500/10" />
-        <div className="absolute -bottom-44 right-0 -z-10 h-96 w-96 rounded-full bg-violet-300/40 blur-3xl dark:bg-violet-500/15" />
-        <div className="grid items-center gap-8 lg:grid-cols-[1.12fr_0.88fr] lg:gap-12">
-          <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-white/70 px-3 py-1.5 text-xs font-black uppercase tracking-[0.18em] text-amber-800 shadow-sm backdrop-blur dark:border-amber-300/20 dark:bg-white/5 dark:text-amber-200">
-              <Info className="h-3.5 w-3.5" /> About MRLC–LMS
-            </p>
-            <h1 className="mt-5 max-w-3xl text-4xl font-black tracking-[-0.04em] text-slate-950 dark:text-white sm:text-5xl lg:text-6xl">
-              One school. One shared place to <span className="text-aubergine-700 dark:text-violet-300">learn, teach, and grow.</span>
+    <div style={style} className="-m-4 overflow-hidden bg-white text-[#112d40] sm:-m-6 xl:-m-8">
+      <section className="grid min-h-[520px] border-b border-[#112d40] lg:grid-cols-[1.18fr_0.82fr]" aria-labelledby="about-title">
+        <div className="flex min-h-[520px] flex-col justify-between bg-[var(--about-brand)] px-6 py-8 text-white sm:px-10 sm:py-10 xl:px-16 xl:py-14">
+          <div className="flex items-center justify-between gap-6 border-b border-white/30 pb-5 text-[10px] font-bold uppercase tracking-[0.18em] text-white/70 sm:text-xs">
+            <span>About the school portal</span>
+            <span>MRLC · Mae Sot</span>
+          </div>
+          <AnimatedContent container="#main-content" distance={34} duration={0.75} className="py-12 lg:py-16">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/65">One connected school day</p>
+            <h1 id="about-title" className="mt-5 max-w-[10ch] text-balance text-5xl font-black uppercase leading-[0.82] tracking-[-0.065em] sm:text-6xl lg:text-7xl xl:text-[6.7rem]">
+              A clear place to learn, teach and move forward.
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300 sm:text-lg">
-              The Mon Refugee Learning Centre LMS brings learning, school operations, and community into one thoughtful digital home—made for the people who use it every day.
+            <p className="mt-7 max-w-2xl text-pretty text-base leading-7 text-white/75 sm:text-lg">
+              {schoolProfile.description || 'The MRLC school portal brings learning, records and community into one dependable workspace for the people who use it every day.'}
             </p>
-            <div className="mt-7 flex flex-wrap gap-2.5">
-              {["For learners", "For teachers", "For the school team"].map((label) => (
-                <span key={label} className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-slate-900/5 dark:bg-white/10 dark:text-slate-100 dark:ring-white/10">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" /> {label}
-                </span>
-              ))}
-            </div>
+          </AnimatedContent>
+          <div className="flex flex-wrap gap-x-6 gap-y-2 border-t border-white/30 pt-5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/65 sm:text-xs">
+            <span>Students</span><span>Teachers</span><span>School team</span><span>Public learners</span>
           </div>
+        </div>
 
-          <div className="relative mx-auto min-h-[290px] w-full max-w-md sm:min-h-[360px]">
-            <div className="absolute inset-x-4 bottom-0 h-[72%] rounded-[2rem] border border-white/70 bg-gradient-to-br from-violet-200/70 via-white/65 to-amber-100/75 shadow-xl backdrop-blur dark:border-white/10 dark:from-violet-500/20 dark:via-slate-900/80 dark:to-amber-500/10" />
-            <div className="absolute left-3 top-8 z-20 rounded-2xl bg-white/90 px-3 py-2 shadow-lg ring-1 ring-black/5 backdrop-blur dark:bg-slate-900/90 dark:ring-white/10 sm:left-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Our purpose</p>
-              <p className="mt-0.5 text-sm font-black text-slate-900 dark:text-white">Learning with dignity</p>
+        <div className="relative min-h-[380px] overflow-hidden bg-[#f4d35e] lg:min-h-[520px]">
+          {brandingSettings.loginHeroUrl ? (
+            <>
+              <img src={brandingSettings.loginHeroUrl} alt={`${schoolName} learning community`} className="absolute inset-0 h-full w-full object-cover" />
+              <div className="absolute inset-0 bg-[#112d40]/20" />
+              <p className="absolute bottom-0 left-0 right-0 bg-[#f4d35e] px-6 py-5 text-xs font-bold uppercase tracking-[0.16em] text-[#112d40] sm:px-10">
+                School life first. Technology in service of it.
+              </p>
+            </>
+          ) : (
+            <div className="flex h-full min-h-[380px] flex-col justify-between p-7 text-[#112d40] sm:p-10 lg:min-h-[520px]">
+              <div className="flex items-start justify-between gap-6">
+                {brandingSettings.logoUrl ? <img src={brandingSettings.logoUrl} alt={`${schoolName} logo`} className="h-20 w-20 border border-[#112d40] bg-white object-contain p-2" /> : <span className="grid h-20 w-20 place-items-center border border-[#112d40] bg-white text-2xl font-black">M</span>}
+                <span className="text-right text-[10px] font-bold uppercase tracking-[0.18em]">School portal<br />2026</span>
+              </div>
+              <p aria-hidden="true" className="text-[clamp(5rem,14vw,11rem)] font-black uppercase leading-[0.7] tracking-[-0.08em] text-[#112d40]/15">MRLC</p>
+              <p className="max-w-[20ch] text-2xl font-black leading-[1.02] tracking-[-0.04em]">Learning with dignity.<br />Records with clarity.</p>
             </div>
-            <div className="absolute bottom-8 right-0 z-20 rounded-2xl bg-emerald-600 px-4 py-3 text-white shadow-xl sm:right-1">
-              <p className="flex items-center gap-2 text-sm font-black"><ShieldCheck className="h-4 w-4" /> Built for school life</p>
-            </div>
-            <img
-              src="/icons/about-guide.webp"
-              alt=""
-              aria-hidden="true"
-              decoding="async"
-              fetchPriority="high"
-              className="absolute bottom-0 left-1/2 z-10 h-[108%] max-h-[440px] w-auto -translate-x-1/2 object-contain drop-shadow-[0_28px_24px_rgba(68,45,20,0.22)]"
-            />
-          </div>
+          )}
         </div>
       </section>
 
-      <section aria-labelledby="platform-story-heading">
-        <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-aubergine-700 dark:text-violet-300">A complete school workspace</p>
-            <h2 id="platform-story-heading" className="mt-2 text-3xl font-black tracking-tight text-slate-950 dark:text-white">Built around the whole school day</h2>
+      <AnimatedContent container="#main-content" distance={30} duration={0.68} threshold={0.16}>
+        <section className="grid border-b border-[#112d40] lg:grid-cols-[0.72fr_1.28fr]" aria-labelledby="purpose-title">
+          <div className="bg-[#f4d35e] px-6 py-12 sm:px-10 lg:px-12 lg:py-16">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em]">Why it exists</p>
+            <h2 id="purpose-title" className="mt-5 max-w-[12ch] text-4xl font-black uppercase leading-[0.9] tracking-[-0.055em] sm:text-5xl">The portal should reduce distance—not create more of it.</h2>
           </div>
-          <p className="max-w-xl text-sm leading-6 text-slate-500 dark:text-slate-400">Useful administration and joyful learning belong together. Each part of the LMS supports the next.</p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {PLATFORM_PILLARS.map((pillar) => (
-            <article key={pillar.title} className={`group relative min-h-[310px] overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-gradient-to-br ${pillar.tone} p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-white/10`}>
-              <div className="relative z-10 max-w-[75%]">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-aubergine-700 dark:text-violet-300">{pillar.eyebrow}</p>
-                <h3 className="mt-2 text-xl font-black leading-tight text-slate-950 dark:text-white">{pillar.title}</h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">{pillar.description}</p>
-              </div>
-              <div className="absolute -bottom-8 -right-8 h-40 w-40 rounded-full bg-white/70 dark:bg-white/5" />
-              <img
-                src={pillar.art}
-                alt=""
-                aria-hidden="true"
-                loading="lazy"
-                decoding="async"
-                className="absolute bottom-3 right-2 h-28 w-28 object-contain drop-shadow-xl transition duration-300 group-hover:scale-105 group-hover:-rotate-2"
-              />
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <Card className="overflow-hidden border-slate-200 bg-white p-0 shadow-sm dark:border-white/10 dark:bg-slate-900">
-        <div className="grid lg:grid-cols-[0.72fr_1.28fr]">
-          <div className="relative overflow-hidden bg-gradient-to-br from-aubergine-800 via-violet-800 to-indigo-900 p-7 text-white sm:p-9">
-            <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-fuchsia-400/20 blur-3xl" />
-            <div className="relative">
-              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/20">
-                <UsersRound className="h-6 w-6" />
-              </div>
-              <p className="mt-6 text-xs font-black uppercase tracking-[0.2em] text-violet-200">Made with care</p>
-              <h2 className="mt-2 text-3xl font-black tracking-tight">Technology serving people</h2>
-              <p className="mt-4 text-sm leading-6 text-white/75">The platform combines open-source foundations with features built specifically for MRLC—not a generic school dropped into a template.</p>
+          <div className="grid gap-10 bg-white px-6 py-12 sm:px-10 lg:grid-cols-2 lg:px-14 lg:py-16">
+            <p className="text-2xl font-black leading-tight tracking-[-0.035em] text-[#112d40]">MRLC serves a real school community. The software starts with that responsibility.</p>
+            <div className="space-y-5 text-sm leading-7 text-[#526875] sm:text-base">
+              <p>Teachers need less duplication. Students need a clear next step. School staff need dependable records. Every part of the portal is designed around those practical needs.</p>
+              <p>Learning Quest is one learning area inside that wider school system. It should never replace the school’s identity, login or primary journey.</p>
             </div>
           </div>
-          <div className="grid gap-px bg-slate-200 sm:grid-cols-2 dark:bg-white/10">
-            {CREDITS.map(({ title, description, icon: Icon }) => (
-              <article key={title} className="bg-white p-5 dark:bg-slate-900 sm:p-6">
-                <div className="flex items-start gap-3">
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-aubergine-50 text-aubergine-700 dark:bg-violet-500/10 dark:text-violet-300">
-                    <Icon className="h-4.5 w-4.5" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black text-slate-950 dark:text-white">{title}</h3>
-                    <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">{description}</p>
-                  </div>
+        </section>
+      </AnimatedContent>
+
+      <section className="px-6 py-14 sm:px-10 lg:px-14 lg:py-20" aria-labelledby="school-day-title">
+        <AnimatedContent container="#main-content" distance={28} duration={0.65}>
+          <div className="grid gap-5 pb-10 lg:grid-cols-[0.75fr_1.25fr] lg:items-end">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--about-accent)]">Built around the whole school day</p>
+            <h2 id="school-day-title" className="max-w-[15ch] text-4xl font-black uppercase leading-[0.9] tracking-[-0.055em] sm:text-5xl lg:text-6xl">Four jobs. One connected workspace.</h2>
+          </div>
+        </AnimatedContent>
+
+        <div className="border-b border-[#112d40]">
+          {SCHOOL_DAY.map((item, index) => (
+            <AnimatedContent key={item.number} container="#main-content" direction="horizontal" reverse={index % 2 === 1} distance={26} duration={0.6} threshold={0.08}>
+              <article className="grid gap-5 border-t border-[#112d40] py-7 sm:grid-cols-[72px_0.9fr_1.1fr] sm:py-9 lg:grid-cols-[100px_0.8fr_1.2fr]">
+                <p className="text-sm font-black tracking-[0.14em] text-[var(--about-accent)]">{item.number}</p>
+                <h3 className="max-w-[18ch] text-2xl font-black leading-[1.02] tracking-[-0.035em] sm:text-3xl">{item.title}</h3>
+                <div>
+                  <p className="max-w-2xl text-sm leading-6 text-[#526875] sm:text-base sm:leading-7">{item.description}</p>
+                  <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.15em] text-[#778b95]">{item.scope}</p>
                 </div>
               </article>
-            ))}
-          </div>
+            </AnimatedContent>
+          ))}
         </div>
-      </Card>
+      </section>
 
-      <section className="grid gap-5 lg:grid-cols-[0.72fr_1.28fr]" aria-labelledby="acknowledgments-heading">
-        <div className="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-6 dark:border-white/10 dark:bg-slate-900 sm:p-8">
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-            <BookMarked className="h-5 w-5" />
-          </div>
-          <p className="mt-6 text-xs font-black uppercase tracking-[0.18em] text-amber-700 dark:text-amber-300">Open-source acknowledgments</p>
-          <h2 id="acknowledgments-heading" className="mt-2 text-3xl font-black tracking-tight text-slate-950 dark:text-white">Credit belongs where it is due.</h2>
-          <p className="mt-4 text-sm leading-6 text-slate-500 dark:text-slate-400">MRLC–LMS stands on generous public projects and datasets. Sources, licenses, and distribution limits remain documented clearly.</p>
+      <AnimatedContent container="#main-content" distance={30} duration={0.7}>
+        <section className="grid bg-black text-white sm:grid-cols-3" aria-label="Learning Quest curriculum evidence">
+          {[
+            ['150', 'Concept-first GED lessons'],
+            ['450', 'Original practice activities'],
+            ['04', 'GED subject pathways'],
+          ].map(([value, label]) => (
+            <div key={label} className="border-b border-white/25 px-6 py-10 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0 sm:px-10 lg:py-14">
+              <p className="text-6xl font-black leading-none tracking-[-0.07em] text-[#f4d35e] sm:text-7xl">{value}</p>
+              <p className="mt-4 max-w-[18ch] text-xs font-bold uppercase tracking-[0.15em] text-white/65">{label}</p>
+            </div>
+          ))}
+        </section>
+      </AnimatedContent>
+
+      <section className="grid border-b border-[#112d40] lg:grid-cols-[0.72fr_1.28fr]" aria-labelledby="build-title">
+        <AnimatedContent container="#main-content" distance={26} duration={0.65} className="bg-[var(--about-brand)] px-6 py-12 text-white sm:px-10 lg:px-12 lg:py-16">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/60">What the portal brings together</p>
+          <h2 id="build-title" className="mt-5 max-w-[12ch] text-4xl font-black uppercase leading-[0.9] tracking-[-0.055em] sm:text-5xl">Technology serving school life.</h2>
+          <p className="mt-6 max-w-md text-sm leading-7 text-white/70">The platform combines open-source foundations with features built specifically for MRLC—not a generic school dropped into a template.</p>
+        </AnimatedContent>
+        <div className="bg-white px-6 py-4 sm:px-10 lg:px-14">
+          {BUILD_REGISTRY.map(([title, description], index) => (
+            <AnimatedContent key={title} container="#main-content" direction="horizontal" distance={20} duration={0.55} delay={index * 0.025}>
+              <article className="grid gap-3 border-b border-[#cad4d9] py-6 last:border-b-0 sm:grid-cols-[48px_0.65fr_1.35fr] sm:items-start">
+                <span className="text-[10px] font-bold tracking-[0.15em] text-[#8a9ca5]">{String(index + 1).padStart(2, '0')}</span>
+                <h3 className="font-black tracking-[-0.02em]">{title}</h3>
+                <p className="text-sm leading-6 text-[#526875]">{description}</p>
+              </article>
+            </AnimatedContent>
+          ))}
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+      </section>
+
+      <section className="px-6 py-14 sm:px-10 lg:px-14 lg:py-20" aria-labelledby="credits-title">
+        <AnimatedContent container="#main-content" distance={28} duration={0.65}>
+          <div className="grid gap-5 pb-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--about-accent)]">Open-source acknowledgements</p>
+            <div>
+              <h2 id="credits-title" className="text-4xl font-black uppercase leading-[0.9] tracking-[-0.055em] sm:text-5xl">Credit belongs where it is due.</h2>
+              <p className="mt-5 max-w-2xl text-sm leading-7 text-[#526875]">Sources, licenses and distribution limits remain visible because responsible school technology should explain what it stands on.</p>
+            </div>
+          </div>
+        </AnimatedContent>
+
+        <div className="border-b border-[#112d40]">
           {THIRD_PARTY_NOTICES.map(({ title, description }, index) => (
-            <article key={title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-slate-900">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="font-black text-slate-950 dark:text-white">{title}</h3>
-                <span className="text-xs font-black text-slate-300 dark:text-slate-600">{String(index + 1).padStart(2, "0")}</span>
-              </div>
-              <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">{description}</p>
+            <article key={title} className="grid gap-4 border-t border-[#112d40] py-6 sm:grid-cols-[72px_0.55fr_1.45fr] sm:py-7">
+              <span className="text-[10px] font-bold tracking-[0.15em] text-[#8a9ca5]">{String(index + 1).padStart(2, '0')}</span>
+              <h3 className="font-black tracking-[-0.02em]">{title}</h3>
+              <p className="text-sm leading-6 text-[#526875]">{description}</p>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="relative overflow-hidden rounded-[2rem] border border-emerald-200/70 bg-gradient-to-br from-emerald-50 via-white to-amber-50 p-7 shadow-sm dark:border-emerald-500/20 dark:from-emerald-500/10 dark:via-slate-950 dark:to-amber-500/10 sm:p-9">
-        <div className="absolute -bottom-16 right-4 h-44 w-44 rounded-full bg-emerald-300/25 blur-3xl dark:bg-emerald-500/10" />
-        <div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center">
-          <div className="flex items-start gap-4">
-            <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/20">
-              <Heart className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300">Designed and developed by</p>
-              <h2 className="mt-1 text-3xl font-black tracking-tight text-slate-950 dark:text-white">Tao Mon Lae</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">Built for the students, teachers, and staff of the Mon Refugee Learning Centre—with the belief that school technology should feel capable, welcoming, and distinctly ours.</p>
+      <AnimatedContent container="#main-content" distance={24} duration={0.6}>
+        <section className="grid bg-[var(--about-accent)] text-white lg:grid-cols-[1.25fr_0.75fr]" aria-labelledby="maker-title">
+          <div className="px-6 py-12 sm:px-10 lg:px-14 lg:py-16">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/65">Designed and developed by Tao Mon Lae</p>
+            <h2 id="maker-title" className="mt-5 max-w-[17ch] text-4xl font-black uppercase leading-[0.9] tracking-[-0.055em] sm:text-5xl">Built for the students, teachers and staff of MRLC.</h2>
+          </div>
+          <div className="flex flex-col justify-between border-t border-white/30 px-6 py-10 sm:px-10 lg:border-l lg:border-t-0 lg:px-12 lg:py-16">
+            <p className="text-sm leading-7 text-white/75">School technology should feel capable, welcoming and distinctly ours.</p>
+            <div className="mt-10 flex flex-wrap gap-3">
+              <Link to="/dashboard" className="inline-flex min-h-12 items-center justify-center bg-white px-5 text-sm font-black text-[#112d40] transition-colors duration-150 hover:bg-[#f4d35e]">Return to dashboard →</Link>
+              <a href="https://github.com/TaoMonLae/" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center justify-center border border-white px-5 text-sm font-black text-white transition-colors duration-150 hover:bg-white hover:text-[#112d40]">View project work ↗</a>
             </div>
           </div>
-          <a
-            href="https://github.com/TaoMonLae/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-slate-950 px-5 py-3 text-sm font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-aubergine-800 focus:outline-none focus:ring-4 focus:ring-aubergine-200 dark:bg-white dark:text-slate-950 dark:hover:bg-violet-100"
-          >
-            <Github className="h-4 w-4" /> View GitHub <ArrowUpRight className="h-4 w-4" />
-          </a>
-        </div>
-      </section>
+        </section>
+      </AnimatedContent>
     </div>
   );
 }

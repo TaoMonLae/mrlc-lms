@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { hasSeenRelease, markReleaseSeen, releaseStorageKey } from '../../src/lib/releaseUpdates';
+import { canAutoShowReleaseUpdates, hasSeenRelease, markReleaseSeen, releaseStorageKey } from '../../src/lib/releaseUpdates';
 import { CURRENT_RELEASE } from '../../src/data/releases';
 
 function memoryStorage() {
@@ -33,4 +33,13 @@ test('storage failures do not break the application shell', () => {
   };
   assert.equal(hasSeenRelease(storage, 'admin-1', CURRENT_RELEASE.id), false);
   assert.equal(markReleaseSeen(storage, 'admin-1', CURRENT_RELEASE.id), false);
+});
+
+test('release updates never cover school login or other public entry routes', () => {
+  assert.equal(canAutoShowReleaseUpdates('/login'), false);
+  assert.equal(canAutoShowReleaseUpdates('/language-quest'), false);
+  assert.equal(canAutoShowReleaseUpdates('/language-quest/about'), false);
+  assert.equal(canAutoShowReleaseUpdates('/verify/document-token'), false);
+  assert.equal(canAutoShowReleaseUpdates('/dashboard'), true);
+  assert.equal(canAutoShowReleaseUpdates('/games/language-quest'), true);
 });

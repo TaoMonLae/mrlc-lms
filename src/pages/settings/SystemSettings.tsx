@@ -16,7 +16,7 @@ import { useSettings } from '../../providers/SettingsProvider';
 import { LANGUAGES } from '../../i18n/catalog';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useAuth } from '../../providers/AuthProvider';
-import { CURSOR_EFFECT_LABELS, previewCursorEffect } from '../../lib/cursorEffects';
+import { CURSOR_EFFECT_LABELS, cursorEffectForSchoolSave, previewCursorEffect } from '../../lib/cursorEffects';
 
 const systemSchema = z.object({
   currency: z.string(),
@@ -39,7 +39,7 @@ type FormValues = z.infer<typeof systemSchema>;
 export default function SystemSettings() {
   const currencies = useMemo(() => getCurrencies(), []);
   const { systemSettings, updateSystem } = useSettings();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { setLang } = useI18n();
   const reduceMotion = useReducedMotion();
 
@@ -49,7 +49,7 @@ export default function SystemSettings() {
     setValue,
     watch,
     reset,
-    formState: { isSubmitting, isDirty }
+    formState: { isSubmitting, isDirty, dirtyFields }
   } = useForm<FormValues>({
     resolver: zodResolver(systemSchema),
     defaultValues: systemSettings,
@@ -61,19 +61,33 @@ export default function SystemSettings() {
   }, [systemSettings, reset]);
 
   const selectedCursorEffect = watch('cursorEffect');
+  const cursorWasChanged = dirtyFields.cursorEffect === true;
 
-  // Preview the school-wide choice even when this admin has a personal
-  // override. Clearing on unmount restores the actual effective preference.
+  // Preview only after this control changes. On initial page load the global
+  // cursor keeps rendering the user's real effective preference, rather than
+  // temporarily masking an existing personal override.
   useEffect(() => {
+    if (!cursorWasChanged) {
+      previewCursorEffect(null);
+      return;
+    }
     previewCursorEffect(selectedCursorEffect);
     return () => previewCursorEffect(null);
-  }, [selectedCursorEffect]);
+  }, [cursorWasChanged, selectedCursorEffect]);
 
   const onSubmit = async (data: FormValues) => {
     try {
-      await updateSystem(data);
+      const savedCursorEffect = cursorEffectForSchoolSave(data.cursorEffect, cursorWasChanged);
+      await updateSystem({ ...data, cursorEffect: savedCursorEffect });
+      if (savedCursorEffect !== undefined) {
+        // The API clears the saving user's old personal override in the same
+        // transaction, so leaving this page keeps the cursor just selected.
+        updateUser({ cursorEffect: null });
+      }
       reset(data);
-      toast.success('System settings updated successfully');
+      toast.success(savedCursorEffect === undefined
+        ? 'System settings updated successfully'
+        : 'Cursor effect saved and applied to your account');
     } catch (error: any) {
       toast.error(error.message || 'Failed to update system settings');
     }
@@ -211,7 +225,7 @@ export default function SystemSettings() {
             </SelectContent>
           </Select>
           <p className="text-xs text-slate-500">
-            Applies for users who have not chosen a personal override. Your selection previews across this screen before you save.
+            Applies for users who follow the school default. Saving a changed effect also makes your account follow it, so it stays active when you leave this page.
           </p>
         </div>
 
@@ -226,12 +240,23 @@ export default function SystemSettings() {
           <div className="max-w-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-200" role="status">
             <div className="flex items-start gap-3">
               <Eye className="mt-0.5 size-4 shrink-0" />
-              <p>
-                <span className="font-semibold">Previewing {CURSOR_EFFECT_LABELS[selectedCursorEffect]} now.</span>
-                {user?.cursorEffect
-                  ? ` Your account normally uses the personal “${CURSOR_EFFECT_LABELS[user.cursorEffect as keyof typeof CURSOR_EFFECT_LABELS] || user.cursorEffect}” override; other users will receive this school default.`
-                  : ' Your account follows the school default, so this is also what you will use after saving.'}
-              </p>
+              {cursorWasChanged ? (
+                <p>
+                  <span className="font-semibold">Previewing {CURSOR_EFFECT_LABELS[selectedCursorEffect]} now.</span>
+                  {user?.cursorEffect
+                    ? ` Saving will replace your personal “${CURSOR_EFFECT_LABELS[user.cursorEffect as keyof typeof CURSOR_EFFECT_LABELS] || user.cursorEffect}” override so this effect remains active after navigation.`
+                    : ' Your account follows the school default, so this is also what you will use after saving.'}
+                </p>
+              ) : (
+                <p>
+                  <span className="font-semibold">Using {user?.cursorEffect
+                    ? CURSOR_EFFECT_LABELS[user.cursorEffect as keyof typeof CURSOR_EFFECT_LABELS] || user.cursorEffect
+                    : CURSOR_EFFECT_LABELS[selectedCursorEffect]}.</span>
+                  {user?.cursorEffect
+                    ? ' This is your personal preference. Change the school effect above to preview and apply a new default.'
+                    : ' Your account is following the saved school default.'}
+                </p>
+              )}
             </div>
           </div>
         )}
