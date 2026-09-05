@@ -29,7 +29,7 @@ export function isCursorEffect(value: unknown): value is CursorEffect {
 export function resolveCursorEffect(personal: unknown, schoolDefault: unknown): CursorEffect {
   if (isCursorEffect(personal)) return personal;
   if (isCursorEffect(schoolDefault)) return schoolDefault;
-  return 'RAINBOW_TRAIL';
+  return 'CLICK_SPARK';
 }
 
 // System Settings submits the cursor field only when that control changed.

@@ -20,10 +20,10 @@ test('release acknowledgement is stored separately for each user', () => {
   assert.equal(releaseStorageKey('student-1'), 'mrlc:release-seen:student-1');
 });
 
-test('the Malaysia About release is unseen after the previous school portal release', () => {
+test('the landing-brand release is unseen after the previous About MRLC release', () => {
   const storage = memoryStorage();
-  markReleaseSeen(storage, 'teacher-1', '2026-08-31-school-portal-refresh');
-  assert.equal(CURRENT_RELEASE.id, '2026-09-01-about-mrlc-malaysia');
+  markReleaseSeen(storage, 'teacher-1', '2026-09-01-about-mrlc-malaysia');
+  assert.equal(CURRENT_RELEASE.id, '2026-09-05-landing-brand-click-spark');
   assert.equal(hasSeenRelease(storage, 'teacher-1', CURRENT_RELEASE.id), false);
 });
 

@@ -52,7 +52,7 @@ const DEFAULT_SYSTEM: SystemSettings = {
   lockdownAutoSubmitOnViolation: true,
   lockdownMaxWarnings: 3,
   lockdownInstructions: '',
-  cursorEffect: 'RAINBOW_TRAIL',
+  cursorEffect: 'CLICK_SPARK',
 };
 
 const SettingsContext = createContext<SettingsContextType>({
@@ -128,10 +128,21 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const reloadSettings = async () => {
     const token = sessionStorage.getItem('auth_token');
     if (!token) {
-      // Reset to defaults when logged out
+      // Public routes still need the saved school identity and cursor. Reset
+      // first so a logout cannot leak the previous user's authenticated data,
+      // then hydrate only the explicitly public fields from the server.
       setSchoolProfile(DEFAULT_SCHOOL);
       setBrandingSettings(DEFAULT_BRANDING);
       setSystemSettings(DEFAULT_SYSTEM);
+      try {
+        const res = await fetch(`/api/public/branding?t=${Date.now()}`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          applyServerData(data, setSchoolProfile, setBrandingSettings, setSystemSettings);
+        }
+      } catch (error) {
+        console.error('Failed to load public school branding:', error);
+      }
       return;
     }
 

@@ -17,6 +17,7 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 type LoginRouteState = { from?: unknown; accountCreated?: boolean; identifier?: unknown };
+const DEFAULT_PUBLIC_LOGO = '/icon-192.png';
 
 export default function LoginPage() {
   const location = useLocation();
@@ -27,7 +28,7 @@ export default function LoginPage() {
   const presetIdentifier = typeof routeState?.identifier === 'string' ? routeState.identifier : '';
   const [serverError, setServerError] = useState<string | null>(null);
   const [showAccountCreated, setShowAccountCreated] = useState(Boolean(routeState?.accountCreated));
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(DEFAULT_PUBLIC_LOGO);
   const [heroUrl, setHeroUrl] = useState<string | null>(null);
   const [heroReady, setHeroReady] = useState(false);
   const [schoolName, setSchoolName] = useState('Mon Refugee Learning Centre');
@@ -105,7 +106,14 @@ export default function LoginPage() {
   const brand = (
     <Link to="/" aria-label={`${schoolName} home`} className="flex min-w-0 items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#168c83] focus-visible:ring-offset-2">
       {logoUrl ? (
-        <img src={logoUrl} alt="" width="44" height="44" className="size-11 shrink-0 border border-[#cad4d9] bg-white object-contain p-1" onError={() => setLogoUrl(null)} />
+        <img
+          src={logoUrl}
+          alt=""
+          width="44"
+          height="44"
+          className="size-11 shrink-0 border border-[#cad4d9] bg-white object-contain p-1"
+          onError={() => setLogoUrl((current) => current && current !== DEFAULT_PUBLIC_LOGO ? DEFAULT_PUBLIC_LOGO : null)}
+        />
       ) : (
         <span className="grid size-11 shrink-0 place-items-center bg-[#112d40] text-base font-black text-white">M</span>
       )}

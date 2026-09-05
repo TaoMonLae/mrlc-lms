@@ -10,7 +10,7 @@ test('personal cursor preferences override the school default, including None', 
 test('invalid or missing cursor values fall back safely', () => {
   assert.equal(resolveCursorEffect(null, 'RIBBONS'), 'RIBBONS');
   assert.equal(resolveCursorEffect('BROKEN', 'TARGET_CURSOR'), 'TARGET_CURSOR');
-  assert.equal(resolveCursorEffect(undefined, 'BROKEN'), 'RAINBOW_TRAIL');
+  assert.equal(resolveCursorEffect(undefined, 'BROKEN'), 'CLICK_SPARK');
   assert.equal(isCursorEffect('SPLASH_CURSOR'), true);
   assert.equal(isCursorEffect('SCHOOL_DEFAULT'), false);
 });

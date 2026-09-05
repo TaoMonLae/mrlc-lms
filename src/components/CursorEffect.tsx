@@ -73,12 +73,14 @@ export default function CursorEffect() {
       );
       break;
     case 'CLICK_SPARK':
-      visual = <ClickSpark sparkColor="#5227FF" />;
+      // React Bits' published defaults: 8 rays, 10px length, 15px radius,
+      // 400ms ease-out. Only the color is tuned to MRLC's brand palette.
+      visual = <ClickSpark sparkColor="#168c83" />;
       break;
     case 'TARGET_CURSOR':
       visual = (
         <TargetCursor
-          cursorColor="#5227FF"
+          cursorColor="#168c83"
           targetSelector="a, button, input, select, textarea, summary, [role='button'], [role='link'], [role='tab']"
         />
       );

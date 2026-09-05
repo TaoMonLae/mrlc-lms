@@ -355,8 +355,8 @@ model SchoolProfile {
   lockdownInstructions          String?
 
   // Fun/decorative — global mouse-pointer effect for the whole app.
-  // NONE | RAINBOW_TRAIL | SPLASH_CURSOR | RIBBONS
-  cursorEffect String? @default("RAINBOW_TRAIL")
+  // NONE | RAINBOW_TRAIL | SPLASH_CURSOR | RIBBONS | GHOST_CURSOR | CLICK_SPARK | TARGET_CURSOR
+  cursorEffect String? @default("CLICK_SPARK")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

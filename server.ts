@@ -15227,15 +15227,18 @@ async function startServer() {
       const profile = await prisma.schoolProfile.findFirst();
       res.json({
         name: profile?.name || null,
+        shortName: profile?.shortName || null,
+        address: profile?.address || null,
         logoUrl: profile?.logoUrl || null,
         loginHeroUrl: profile?.loginHeroUrl || null,
         primaryColor: profile?.primaryColor || null,
+        cursorEffect: profile?.cursorEffect || "CLICK_SPARK",
         contactEmail: profile?.contactEmail || null,
         contactPhone: profile?.contactPhone || null,
       });
     } catch (err) {
       logger.error("Error fetching public branding:", err);
-      res.json({ name: null, logoUrl: null, loginHeroUrl: null, primaryColor: null, contactEmail: null, contactPhone: null });
+      res.json({ name: null, shortName: null, address: null, logoUrl: null, loginHeroUrl: null, primaryColor: null, cursorEffect: "CLICK_SPARK", contactEmail: null, contactPhone: null });
     }
   });
 
