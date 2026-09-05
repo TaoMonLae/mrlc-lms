@@ -94,8 +94,16 @@ export default function TimetablePage() {
   const identifierOptions = useMemo(() => {
     const options = new Map<string, string>();
     timetable.forEach((entry) => {
-      if (viewType === 'teacher' && entry.teacherId) {
-        options.set(entry.teacherId, entry.teacherName || options.get(entry.teacherId) || 'Unnamed teacher');
+      if (viewType === 'teacher') {
+        if (entry.teacherId) {
+          options.set(entry.teacherId, entry.teacherName || options.get(entry.teacherId) || 'Unnamed teacher');
+        }
+        if (entry.substituteTeacherId) {
+          options.set(
+            entry.substituteTeacherId,
+            entry.substituteTeacherName || options.get(entry.substituteTeacherId) || 'Unnamed teacher',
+          );
+        }
       } else if (viewType === 'room' && entry.room) {
         options.set(entry.room, entry.room);
       } else if (viewType === 'class' && entry.classId) {
@@ -105,6 +113,12 @@ export default function TimetablePage() {
     return Array.from(options, ([value, label]) => ({ value, label }))
       .sort((first, second) => first.label.localeCompare(second.label));
   }, [timetable, viewType]);
+
+  useEffect(() => {
+    if (selectedIdentifier && !identifierOptions.some((option) => option.value === selectedIdentifier)) {
+      setSelectedIdentifier('');
+    }
+  }, [identifierOptions, selectedIdentifier]);
 
   const filteredTimetable = useMemo(() => {
     if (isTeacher || isStudent || !selectedIdentifier) return timetable;

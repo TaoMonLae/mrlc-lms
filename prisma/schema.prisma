@@ -457,6 +457,8 @@ model Teacher {
   payslips       Payslip[]
   homework       Homework[]
   flashcardDecks FlashcardDeck[]
+  timetableEntries       TimetableEntry[] @relation("PrimaryTimetableTeacher")
+  timetableSubstitutions TimetableEntry[] @relation("SubstituteTimetableTeacher")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2050,6 +2052,8 @@ model TimetableEntry {
   teacherName           String?
   substituteTeacherId   String?
   substituteTeacherName String?
+  teacher               Teacher?  @relation("PrimaryTimetableTeacher", fields: [teacherId], references: [id], onDelete: SetNull)
+  substituteTeacher     Teacher?  @relation("SubstituteTimetableTeacher", fields: [substituteTeacherId], references: [id], onDelete: SetNull)
   academicYear          String?
   term                  String?
   dayOfWeek             String

@@ -6,6 +6,10 @@ import {
   occursOn,
   type TimetableEntry,
 } from '../../src/lib/timetable';
+import {
+  activeTimetableTeacherNames,
+  normalizeTimetableTeacherReferences,
+} from '../../shared/timetableTeacherIntegrity';
 
 function entry(overrides: Partial<TimetableEntry> = {}): TimetableEntry {
   return {
@@ -60,4 +64,34 @@ test('overlapping entries receive lanes while adjacent entries reuse space', () 
 
 test('CSV cells escape quotes, commas, and line breaks safely', () => {
   assert.equal(csvCell('English, "Level 2"\nRoom'), '"English, ""Level 2""\nRoom"');
+});
+
+test('timetable teacher names come only from active teacher profiles', () => {
+  const names = activeTimetableTeacherNames([
+    { id: 'teacher-1', teacherCode: 'T-001', user: { firstName: 'Tao', lastName: 'Mon Lae', isActive: true } },
+    { id: 'teacher-2', teacherCode: 'T-002', user: { firstName: 'Mock', lastName: 'Teacher', isActive: false } },
+    { id: 'teacher-3', teacherCode: 'T-003', user: null },
+  ]);
+
+  assert.deepEqual([...names], [['teacher-1', 'Tao Mon Lae']]);
+});
+
+test('orphaned timetable teacher copies are removed without deleting the schedule', () => {
+  const current = entry({
+    teacherId: 'missing-teacher',
+    teacherName: 'Copied Demo Name',
+    substituteTeacherId: 'teacher-1',
+    substituteTeacherName: 'Old Name',
+  });
+  const normalized = normalizeTimetableTeacherReferences(
+    current,
+    new Map([['teacher-1', 'Tao Mon Lae']]),
+  );
+
+  assert.equal(normalized.id, current.id);
+  assert.equal(normalized.subjectName, current.subjectName);
+  assert.equal(normalized.teacherId, null);
+  assert.equal(normalized.teacherName, null);
+  assert.equal(normalized.substituteTeacherId, 'teacher-1');
+  assert.equal(normalized.substituteTeacherName, 'Tao Mon Lae');
 });

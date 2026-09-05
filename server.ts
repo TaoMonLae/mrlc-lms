@@ -100,6 +100,10 @@ import {
   parseGradeItemDate,
   parseGradeItemMaxMarks,
 } from "./shared/gradebook";
+import {
+  activeTimetableTeacherNames,
+  normalizeTimetableTeacherReferences,
+} from "./shared/timetableTeacherIntegrity";
 
 dotenv.config();
 
@@ -3714,6 +3718,7 @@ async function startServer() {
     }
     try {
       const teachers = await prisma.teacher.findMany({
+        where: { user: { is: { isActive: true } } },
         // Only ADMIN gets salary/currency/notes -- everyone else granted
         // 'view_teachers' just needs enough to identify/pick a teacher
         // (name, code, subject specialization), not their pay details.
@@ -7408,6 +7413,22 @@ async function startServer() {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? null : date;
   };
+  const loadActiveTimetableTeacherNames = async (ids: unknown[]) => {
+    const teacherIds = [...new Set(ids.filter((id): id is string => typeof id === "string" && id.length > 0))];
+    if (teacherIds.length === 0) return new Map<string, string>();
+    const teachers = await prisma.teacher.findMany({
+      where: { id: { in: teacherIds } },
+      select: {
+        id: true,
+        teacherCode: true,
+        user: { select: { firstName: true, lastName: true, isActive: true } },
+      },
+    });
+    return activeTimetableTeacherNames(teachers);
+  };
+  const activeTeacherNamesForEntries = (entries: any[]) => loadActiveTimetableTeacherNames(
+    entries.flatMap((entry) => [entry.teacherId, entry.substituteTeacherId]),
+  );
   const findTimetableConflicts = async (entry: any, ignoreId?: string) => {
     if (entry.scheduleType && entry.scheduleType !== "CLASS" && entry.scheduleType !== "EXAM" && entry.scheduleType !== "MEETING") {
       return [];
@@ -7472,7 +7493,8 @@ async function startServer() {
         where,
         orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
       });
-      res.json(entries);
+      const activeTeacherNames = await activeTeacherNamesForEntries(entries);
+      res.json(entries.map((entry: any) => normalizeTimetableTeacherReferences(entry, activeTeacherNames)));
     } catch (err: any) {
       if (err?.code === "P2021" || err?.code === "P2022") {
         logger.warn("TimetableEntry table/columns missing — run `prisma migrate deploy`. Returning empty list.");
@@ -7492,7 +7514,8 @@ async function startServer() {
         res.status(404).json({ error: "Timetable entry not found" });
         return;
       }
-      res.json(entry);
+      const activeTeacherNames = await activeTeacherNamesForEntries([entry]);
+      res.json(normalizeTimetableTeacherReferences(entry, activeTeacherNames));
     } catch (err) {
       logger.error("Error fetching timetable entry:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -7526,6 +7549,22 @@ async function startServer() {
         scheduleType,
         recurrence: req.body.recurrence || "WEEKLY",
       };
+      const activeTeacherNames = await loadActiveTimetableTeacherNames([
+        candidate.teacherId,
+        candidate.substituteTeacherId,
+      ]);
+      if (["CLASS", "EXAM"].includes(scheduleType) && !activeTeacherNames.has(candidate.teacherId)) {
+        res.status(400).json({ error: "An active teacher is required for class and exam schedules" });
+        return;
+      }
+      if (candidate.teacherId && !activeTeacherNames.has(candidate.teacherId)) {
+        res.status(400).json({ error: "Selected teacher is inactive or no longer exists" });
+        return;
+      }
+      if (candidate.substituteTeacherId && !activeTeacherNames.has(candidate.substituteTeacherId)) {
+        res.status(400).json({ error: "Selected substitute teacher is inactive or no longer exists" });
+        return;
+      }
       const conflicts = await findTimetableConflicts(candidate);
       if (conflicts.length > 0) {
         res.status(409).json({ error: "Schedule conflict detected", conflicts });
@@ -7539,9 +7578,9 @@ async function startServer() {
           subjectName: candidate.subjectName || null,
           subjectColor: candidate.subjectColor || "bg-blue-500",
           teacherId: candidate.teacherId || null,
-          teacherName: candidate.teacherName || null,
+          teacherName: activeTeacherNames.get(candidate.teacherId) || null,
           substituteTeacherId: candidate.substituteTeacherId || null,
-          substituteTeacherName: candidate.substituteTeacherName || null,
+          substituteTeacherName: activeTeacherNames.get(candidate.substituteTeacherId) || null,
           academicYear: candidate.academicYear,
           term: candidate.term,
           dayOfWeek: candidate.dayOfWeek,
@@ -7593,6 +7632,22 @@ async function startServer() {
         res.status(400).json({ error: "endTime must be after startTime" });
         return;
       }
+      const activeTeacherNames = await loadActiveTimetableTeacherNames([
+        candidate.teacherId,
+        candidate.substituteTeacherId,
+      ]);
+      if (["CLASS", "EXAM"].includes(candidate.scheduleType) && !activeTeacherNames.has(candidate.teacherId)) {
+        res.status(400).json({ error: "An active teacher is required for class and exam schedules" });
+        return;
+      }
+      if (candidate.teacherId && !activeTeacherNames.has(candidate.teacherId)) {
+        res.status(400).json({ error: "Selected teacher is inactive or no longer exists" });
+        return;
+      }
+      if (candidate.substituteTeacherId && !activeTeacherNames.has(candidate.substituteTeacherId)) {
+        res.status(400).json({ error: "Selected substitute teacher is inactive or no longer exists" });
+        return;
+      }
       const conflicts = await findTimetableConflicts(candidate, id);
       if (conflicts.length > 0) {
         res.status(409).json({ error: "Schedule conflict detected", conflicts });
@@ -7606,10 +7661,10 @@ async function startServer() {
           ...(req.body.subjectId !== undefined ? { subjectId: req.body.subjectId } : {}),
           ...(req.body.subjectName !== undefined ? { subjectName: req.body.subjectName || null } : {}),
           ...(req.body.subjectColor !== undefined ? { subjectColor: req.body.subjectColor || "bg-blue-500" } : {}),
-          ...(req.body.teacherId !== undefined ? { teacherId: req.body.teacherId || null } : {}),
-          ...(req.body.teacherName !== undefined ? { teacherName: req.body.teacherName || null } : {}),
-          ...(req.body.substituteTeacherId !== undefined ? { substituteTeacherId: req.body.substituteTeacherId || null } : {}),
-          ...(req.body.substituteTeacherName !== undefined ? { substituteTeacherName: req.body.substituteTeacherName || null } : {}),
+          teacherId: candidate.teacherId || null,
+          teacherName: activeTeacherNames.get(candidate.teacherId) || null,
+          substituteTeacherId: candidate.substituteTeacherId || null,
+          substituteTeacherName: activeTeacherNames.get(candidate.substituteTeacherId) || null,
           ...(req.body.academicYear !== undefined ? { academicYear: req.body.academicYear || null } : {}),
           ...(req.body.term !== undefined ? { term: req.body.term || null } : {}),
           ...(req.body.dayOfWeek !== undefined ? { dayOfWeek: req.body.dayOfWeek } : {}),
@@ -7655,6 +7710,11 @@ async function startServer() {
         return;
       }
       const candidate = { ...current, substituteTeacherId: req.body.substituteTeacherId };
+      const activeTeacherNames = await loadActiveTimetableTeacherNames([candidate.substituteTeacherId]);
+      if (!activeTeacherNames.has(candidate.substituteTeacherId)) {
+        res.status(400).json({ error: "Selected substitute teacher is inactive or no longer exists" });
+        return;
+      }
       const conflicts = await findTimetableConflicts(candidate, id);
       if (conflicts.length > 0) {
         res.status(409).json({ error: "Schedule conflict detected", conflicts });
@@ -7664,7 +7724,7 @@ async function startServer() {
         where: { id },
         data: {
           substituteTeacherId: req.body.substituteTeacherId,
-          substituteTeacherName: req.body.substituteTeacherName || null,
+          substituteTeacherName: activeTeacherNames.get(req.body.substituteTeacherId) || null,
           status: "SUBSTITUTED",
           notes: req.body.notes || current.notes,
         },
