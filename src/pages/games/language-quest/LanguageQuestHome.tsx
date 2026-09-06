@@ -3,7 +3,6 @@ import { Link } from 'react-router';
 import { ArrowRight, BookOpen, Crown, Flame, Heart, LayoutGrid, Languages, Map, Sparkles, Star, Trophy, WholeWord } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -94,37 +93,37 @@ function CourseLibrary({ courses, progressSavedText }: { courses: LanguageQuestC
         <LanguageQuestCourseFolders
           groups={courseGroups}
           idPrefix="learner-course-folder"
+          courseGridClassName="!gap-4 !overflow-visible !border-0 !bg-transparent"
           renderCourse={(course) => (
-            <article key={course.id} className="group min-w-0 bg-white p-5 transition-colors hover:bg-sky-50/70 dark:bg-slate-900 dark:hover:bg-slate-800/85">
+            <article key={course.id} className="group min-w-0 rounded-2xl border-2 border-[#e5e5e5] bg-white p-5 shadow-[0_5px_0_#e5e5e5] transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-[#b8e986] hover:shadow-[0_7px_0_#b8e986] dark:border-slate-700 dark:bg-slate-900 dark:shadow-[0_5px_0_#334155] dark:hover:border-[#58a700] dark:hover:shadow-[0_7px_0_#3f8f00]">
                 <div className="flex items-start gap-4">
-                  <div className="lq-tile-circle relative grid h-14 w-14 shrink-0 place-items-center border border-[var(--lq-steel-border)] text-3xl dark:border-slate-700">
-                    <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900" style={{ backgroundColor: course.accentColor }} aria-hidden="true" />
+                  <div className="relative grid h-14 w-14 shrink-0 place-items-center rounded-full border-2 border-[#b8e986] bg-[#f2ffe8] text-3xl shadow-[0_3px_0_#b8e986] dark:border-[#3f8f00] dark:bg-[#58cc02]/10 dark:shadow-[0_3px_0_#3f8f00]">
                     {course.imageEmoji || <BookOpen className="h-6 w-6" aria-hidden="true" />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <Badge variant="outline" className="border-[var(--lq-steel-border)] text-[var(--lq-slate-caption)]">{course.language}</Badge>
-                    <h4 className="mt-2 text-lg font-bold text-[var(--lq-charcoal)] dark:text-white">{course.title}</h4>
+                    <span className="text-[10px] font-black uppercase tracking-[0.14em] text-[#58a700]">{course.language}</span>
+                    <h4 className="mt-1 text-lg font-black leading-tight text-[var(--lq-charcoal)] dark:text-white">{course.title}</h4>
                   </div>
                 </div>
                 <p className="mt-3 min-h-10 text-sm leading-5 text-[var(--lq-slate-caption)] dark:text-slate-300">{course.description || 'A new language adventure.'}</p>
-                <div className="mt-4 flex items-center justify-between text-xs font-medium text-[var(--lq-slate-caption)]">
+                <div className="mt-4 flex items-center justify-between text-xs font-bold text-[var(--lq-slate-caption)]">
                   <span>{course.lessonCount} lessons</span>
                   <span>{course.progressPercent}% complete</span>
                 </div>
-                <Progress value={course.progressPercent} className="mt-2 [&_[data-slot=progress-track]]:h-2 [&_[data-slot=progress-indicator]]:bg-[var(--lq-signal-blue)]" />
-                <div className="mt-5 flex items-center gap-2 border-t border-[var(--lq-steel-border)] pt-4 dark:border-slate-700">
+                <Progress value={course.progressPercent} className="mt-2 [&_[data-slot=progress-track]]:h-3 [&_[data-slot=progress-track]]:rounded-full [&_[data-slot=progress-track]]:bg-[#e5e5e5] [&_[data-slot=progress-indicator]]:rounded-full [&_[data-slot=progress-indicator]]:bg-[#58cc02]" />
+                <div className="mt-5 flex items-center gap-2">
                   <Link
                     to={course.completed && !course.certificateEligible && course.finalExam.available ? `/games/language-quest/courses/${course.id}/final-exam` : course.nextLessonId ? `/games/language-quest/lessons/${course.nextLessonId}` : `/games/language-quest/courses/${course.id}`}
-                    className="inline-flex min-h-10 flex-1 items-center justify-between rounded-full px-1 text-sm font-extrabold text-[var(--lq-signal-blue)] outline-none transition group-hover:pl-2 focus-visible:ring-4 focus-visible:ring-[var(--lq-signal-blue)]/20"
+                    className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#46a302] bg-[#58cc02] px-4 text-sm font-black text-white shadow-[0_4px_0_#46a302] outline-none transition-[transform,box-shadow,filter] duration-150 hover:-translate-y-0.5 hover:shadow-[0_5px_0_#46a302] hover:brightness-[1.03] active:translate-y-[3px] active:shadow-[0_1px_0_#46a302] focus-visible:ring-4 focus-visible:ring-[#58cc02]/25"
                   >
                     {course.certificateEligible ? 'Certificate earned' : course.completed && course.finalExam.available ? 'Take final exam' : course.completed ? 'Exam setup required' : course.nextLessonId ? (course.progressPercent > 0 ? 'Resume lesson' : 'Start course') : 'View course'}
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
                   </Link>
                   {course.progressPercent > 0 && (
                     <Button
                       variant="outline"
                       size="icon"
-                      className="rounded-full border-[var(--lq-steel-border)] text-[var(--lq-signal-blue)]"
+                      className="h-11 w-11 shrink-0 rounded-xl border-2 border-[#84d8ff] text-[#1899d6] shadow-[0_3px_0_#84d8ff]"
                       aria-label="View course path"
                       title="View course path"
                       render={<Link to={`/games/language-quest/courses/${course.id}`} />}

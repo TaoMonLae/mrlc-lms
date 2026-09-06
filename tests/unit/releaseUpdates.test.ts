@@ -20,10 +20,10 @@ test('release acknowledgement is stored separately for each user', () => {
   assert.equal(releaseStorageKey('student-1'), 'mrlc:release-seen:student-1');
 });
 
-test('the timetable-integrity release is unseen after the previous landing release', () => {
+test('the course-path release is unseen after the timetable-integrity release', () => {
   const storage = memoryStorage();
-  markReleaseSeen(storage, 'teacher-1', '2026-09-05-landing-brand-click-spark');
-  assert.equal(CURRENT_RELEASE.id, '2026-09-05-timetable-teacher-integrity');
+  markReleaseSeen(storage, 'teacher-1', '2026-09-05-timetable-teacher-integrity');
+  assert.equal(CURRENT_RELEASE.id, '2026-09-06-language-quest-course-path');
   assert.equal(hasSeenRelease(storage, 'teacher-1', CURRENT_RELEASE.id), false);
 });
 

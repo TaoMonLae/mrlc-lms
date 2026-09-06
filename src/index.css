@@ -748,6 +748,400 @@ html[lang='mnw'] :is(input, button, select) {
   box-shadow: none;
 }
 
+/* ── Learning Quest course path: Refero/Duolingo-inspired progression ─────
+   Flat, high-contrast and tactile. Green owns learning progress, blue owns
+   study tools, yellow owns rewards, and purple/red are reserved for the two
+   final milestones. These rules intentionally stay inside the course page. */
+.lq-course-page {
+  --lq-course-green: #58cc02;
+  --lq-course-green-dark: #46a302;
+  --lq-course-green-ink: #3f8f00;
+  --lq-course-blue: #1cb0f6;
+  --lq-course-yellow: #ffc800;
+  --lq-course-border: #e5e5e5;
+}
+
+.lq-course-hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(1.5rem, 5vw, 3rem);
+  border: 2px solid var(--lq-course-green-dark);
+  border-radius: 1rem;
+  background: var(--lq-course-green);
+  box-shadow: 0 6px 0 var(--lq-course-green-dark);
+}
+
+.lq-course-hero-mark {
+  position: absolute;
+  right: clamp(1.5rem, 5vw, 3.5rem);
+  top: 50%;
+  display: grid;
+  width: 9rem;
+  height: 9rem;
+  translate: 0 -50%;
+  place-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.lq-course-primary-action {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.75rem 1.25rem;
+  border: 2px solid #d8d8d8;
+  border-radius: 0.75rem;
+  color: var(--lq-course-green-ink);
+  background: white;
+  box-shadow: 0 4px 0 #d8d8d8;
+  font-size: 0.875rem;
+  font-weight: 900;
+  outline: none;
+  transition: translate 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.lq-course-primary-action:hover {
+  translate: 0 -1px;
+  background: #f8fff3;
+  box-shadow: 0 5px 0 #d8d8d8;
+}
+
+.lq-course-primary-action:active {
+  translate: 0 3px;
+  box-shadow: 0 1px 0 #d8d8d8;
+}
+
+.lq-course-primary-action:focus-visible {
+  outline: 4px solid rgba(255, 255, 255, 0.4);
+  outline-offset: 3px;
+}
+
+.lq-unit-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  border: 2px solid var(--lq-course-green-dark);
+  border-radius: 1rem;
+  color: white;
+  background: var(--lq-course-green);
+  box-shadow: 0 5px 0 var(--lq-course-green-dark);
+}
+
+.lq-course-path {
+  isolation: isolate;
+  margin-top: 2.25rem;
+}
+
+.lq-course-path-line {
+  stroke: var(--lq-course-border);
+  stroke-width: 12;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dark .lq-course-path-line {
+  stroke: #334155;
+}
+
+.lq-lesson-node-wrap {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  width: 10.5rem;
+  translate: -50% 0;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 1rem;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lq-lesson-node {
+  display: grid;
+  width: 4.6rem;
+  height: 4.6rem;
+  place-items: center;
+  border: 4px solid #4fb800;
+  border-radius: 9999px;
+  color: white;
+  background: var(--lq-course-green);
+  box-shadow: 0 7px 0 var(--lq-course-green-dark);
+  transition: translate 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+}
+
+.lq-lesson-node-wrap[href]:hover .lq-lesson-node {
+  translate: 0 -3px;
+  filter: brightness(1.03);
+  box-shadow: 0 10px 0 var(--lq-course-green-dark);
+}
+
+.lq-lesson-node-wrap[href]:active .lq-lesson-node {
+  translate: 0 5px;
+  box-shadow: 0 2px 0 var(--lq-course-green-dark);
+}
+
+.lq-lesson-node-wrap:focus-visible .lq-lesson-node {
+  outline: 4px solid rgba(88, 204, 2, 0.24);
+  outline-offset: 4px;
+}
+
+.lq-lesson-node.is-current {
+  width: 5.15rem;
+  height: 5.15rem;
+  border-width: 5px;
+  box-shadow: 0 8px 0 var(--lq-course-green-dark), 0 0 0 8px rgba(88, 204, 2, 0.13);
+}
+
+.lq-lesson-node.is-complete {
+  border-color: #46a302;
+  background: #58cc02;
+}
+
+.lq-lesson-node.is-locked {
+  border-color: #d2d2d2;
+  color: #8f8f8f;
+  background: #e5e5e5;
+  box-shadow: 0 7px 0 #c5c5c5;
+}
+
+.dark .lq-lesson-node.is-locked {
+  border-color: #475569;
+  color: #94a3b8;
+  background: #334155;
+  box-shadow: 0 7px 0 #1e293b;
+}
+
+.lq-lesson-node-title {
+  display: block;
+  width: 100%;
+  margin-top: 0.8rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 900;
+  line-height: 1.15rem;
+}
+
+.lq-current-lesson-callout {
+  position: absolute;
+  bottom: calc(100% + 0.8rem);
+  left: 50%;
+  padding: 0.55rem 0.8rem;
+  translate: -50% 0;
+  border: 2px solid var(--lq-course-border);
+  border-radius: 0.65rem;
+  color: #4b4b4b;
+  background: white;
+  box-shadow: 0 3px 0 var(--lq-course-border);
+  font-size: 0.72rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.lq-current-lesson-callout span {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 0.65rem;
+  height: 0.65rem;
+  translate: -50% -42%;
+  rotate: 45deg;
+  border-right: 2px solid var(--lq-course-border);
+  border-bottom: 2px solid var(--lq-course-border);
+  background: white;
+}
+
+.dark .lq-current-lesson-callout,
+.dark .lq-current-lesson-callout span {
+  border-color: #475569;
+  color: #f8fafc;
+  background: #0f172a;
+}
+
+.lq-course-aside-panel {
+  padding: 1.2rem;
+  border: 2px solid var(--lq-course-border);
+  border-radius: 1rem;
+  background: white;
+}
+
+.dark .lq-course-aside-panel {
+  border-color: #334155;
+  background: #0f172a;
+}
+
+.lq-course-side-action {
+  display: flex;
+  min-height: 3.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.8rem;
+  border: 2px solid #a5ed6f;
+  border-radius: 0.75rem;
+  color: var(--lq-course-green-ink);
+  background: #f2ffe8;
+  box-shadow: 0 3px 0 #a5ed6f;
+  outline: none;
+  transition: translate 160ms ease, box-shadow 160ms ease;
+}
+
+.lq-course-side-action:hover {
+  translate: 0 -1px;
+  box-shadow: 0 4px 0 #a5ed6f;
+}
+
+.lq-course-side-action:focus-visible {
+  outline: 4px solid rgba(88, 204, 2, 0.2);
+  outline-offset: 3px;
+}
+
+.dark .lq-course-side-action {
+  border-color: #3f8f00;
+  background: rgba(88, 204, 2, 0.08);
+  box-shadow: 0 3px 0 #3f8f00;
+}
+
+.lq-milestone-row {
+  display: flex;
+  min-height: 7.5rem;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0.25rem;
+  outline: none;
+}
+
+a.lq-milestone-row {
+  border-radius: 0.75rem;
+  transition: background-color 160ms ease;
+}
+
+a.lq-milestone-row:hover {
+  background: #f7f7f7;
+}
+
+a.lq-milestone-row:focus-visible {
+  outline: 4px solid rgba(28, 176, 246, 0.2);
+  outline-offset: 3px;
+}
+
+.dark a.lq-milestone-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.lq-milestone-icon {
+  display: grid;
+  width: 4.25rem;
+  height: 4.25rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 9999px;
+  color: white;
+}
+
+.lq-milestone-icon.is-exam {
+  border: 4px solid #7a4db6;
+  background: #9b6bd3;
+  box-shadow: 0 6px 0 #7445a6;
+}
+
+.lq-milestone-icon.is-boss {
+  border: 4px solid #cf3751;
+  background: #ed5b73;
+  box-shadow: 0 6px 0 #b92d45;
+}
+
+[aria-disabled='true'] .lq-milestone-icon {
+  border-color: #d2d2d2;
+  color: #8f8f8f;
+  background: #e5e5e5;
+  box-shadow: 0 6px 0 #c5c5c5;
+}
+
+.lq-milestone-action {
+  display: inline-flex;
+  min-height: 2.75rem;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.25rem;
+  color: #1899d6;
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.lq-milestone-action.is-disabled {
+  color: #9ca3af;
+}
+
+.lq-celebration-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem 0;
+  border-top: 2px solid #ffe68a;
+  border-bottom: 2px solid #ffe68a;
+}
+
+@media (max-width: 639px) {
+  .lq-course-hero-mark {
+    right: -2.5rem;
+    top: 1rem;
+    width: 8rem;
+    height: 8rem;
+    translate: 0 0;
+  }
+
+  .lq-course-hero > div:first-child {
+    max-width: calc(100% - 1.25rem);
+  }
+
+  .lq-unit-banner {
+    align-items: flex-start;
+    padding: 1rem;
+  }
+
+  .lq-course-path {
+    margin-top: 3rem;
+  }
+
+  .lq-milestone-row {
+    align-items: flex-start;
+  }
+
+  .lq-milestone-action {
+    align-self: center;
+  }
+
+  .lq-celebration-strip {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 380px) {
+  .lq-milestone-row {
+    flex-wrap: wrap;
+  }
+
+  .lq-milestone-row > .lq-milestone-action {
+    width: 100%;
+    min-height: 2.75rem;
+    justify-content: flex-end;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lq-course-primary-action,
+  .lq-lesson-node,
+  .lq-course-side-action,
+  a.lq-milestone-row {
+    transition: none;
+  }
+}
+
 .lq-hero-scene {
   perspective: 1100px;
 }

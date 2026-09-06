@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import confetti from 'canvas-confetti';
-import { ArrowLeft, BookA, BookOpen, Flame, Headphones, Heart, Lightbulb, ListChecks, Mic, PartyPopper, PencilLine, SpellCheck2, Square, Star, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, BookA, BookOpen, ChevronRight, Flame, Headphones, Heart, Lightbulb, ListChecks, Mic, PartyPopper, PencilLine, SpellCheck2, Square, Star, Volume2, VolumeX } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -1227,56 +1227,55 @@ export default function LanguageQuestLesson() {
 
   if (finished) {
     return (
-      <div className="mx-auto flex min-h-[560px] max-w-2xl flex-col items-center justify-center text-center">
-        <div className="relative grid h-28 w-28 place-items-center rounded-full bg-gradient-to-br from-amber-300 to-orange-500 text-white shadow-xl">
-          <PartyPopper className="h-12 w-12" />
-          <span className="absolute -right-2 top-2 text-3xl">✨</span>
-          <span className="absolute -left-3 bottom-3 text-2xl">⭐</span>
+      <div className="mx-auto flex min-h-[560px] max-w-2xl flex-col items-center justify-center py-8 text-center">
+        <div className={`relative grid h-28 w-28 place-items-center rounded-full border-[5px] border-[#e7ad00] bg-[#ffc800] text-[#795600] shadow-[0_8px_0_#d79f00] ${reducedMotion ? '' : 'lq-cheer'}`}>
+          <PartyPopper className="h-12 w-12 stroke-[2.5]" />
           <div className="absolute -bottom-2 -right-2">
             <LanguageQuestCompanion rewards={profile?.rewards} reaction="correct" reducedMotion={reducedMotion} size="sm" />
           </div>
         </div>
-        <h1 className="mt-7 text-3xl font-black text-slate-900 dark:text-white">Lesson complete!</h1>
-        <p className="mt-2 text-slate-500 dark:text-slate-300">You finished <strong>{lesson.title}</strong>. Great work!</p>
-        <div className="mt-7 grid w-full grid-cols-3 gap-2 sm:gap-3">
-          <div className="rounded-2xl border-2 border-amber-200 bg-amber-50 p-3 sm:p-4 dark:border-amber-500/20 dark:bg-amber-500/10">
+        <p className="mt-8 text-[11px] font-black uppercase tracking-[0.18em] text-[#58a700]">Path updated</p>
+        <h1 className="mt-2 text-3xl font-black tracking-[-0.035em] text-slate-900 dark:text-white sm:text-4xl">Lesson complete!</h1>
+        <p className="mt-3 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-300">You finished <strong className="text-slate-800 dark:text-white">{lesson.title}</strong>. Your next step is ready on the course path.</p>
+        <div className="mt-8 grid w-full grid-cols-1 gap-3 min-[440px]:grid-cols-3">
+          <div className="rounded-2xl border-2 border-[#ffe172] bg-[#fff9df] p-4 shadow-[0_4px_0_#ffe172] dark:border-amber-500/30 dark:bg-amber-500/10 dark:shadow-[0_4px_0_#854d0e]">
             <Star className="mx-auto h-6 w-6 fill-amber-500 text-amber-500" />
-            <p className="mt-2 text-xl font-black text-amber-700 sm:text-2xl dark:text-amber-400">+{sessionPoints}</p>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-600/70 sm:text-xs">XP earned</p>
+            <p className="mt-2 text-2xl font-black text-[#b77900] dark:text-amber-300">+{sessionPoints}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#b77900]/70">XP earned</p>
           </div>
-          <div className="rounded-2xl border-2 border-sky-200 bg-sky-50 p-3 sm:p-4 dark:border-sky-500/20 dark:bg-sky-500/10">
-            <BookA className="mx-auto h-6 w-6 text-sky-600" />
-            <p className="mt-2 text-xl font-black text-sky-700 sm:text-2xl dark:text-sky-400">{isSubjectCourse ? quizChallenges.length : practiceCards.length}</p>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-600/70 sm:text-xs">{isMathematics ? 'Problems practised' : isSubjectCourse ? 'Questions practised' : 'Words learned'}</p>
+          <div className="rounded-2xl border-2 border-[#84d8ff] bg-[#eefaff] p-4 shadow-[0_4px_0_#84d8ff] dark:border-sky-500/30 dark:bg-sky-500/10 dark:shadow-[0_4px_0_#075985]">
+            <BookA className="mx-auto h-6 w-6 text-[#1899d6]" />
+            <p className="mt-2 text-2xl font-black text-[#1899d6] dark:text-sky-300">{isSubjectCourse ? quizChallenges.length : practiceCards.length}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#1899d6]/70">{isMathematics ? 'Problems' : isSubjectCourse ? 'Questions' : 'Words learned'}</p>
           </div>
-          <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-3 sm:p-4 dark:border-orange-500/20 dark:bg-orange-500/10">
+          <div className="rounded-2xl border-2 border-[#ffb27a] bg-[#fff2e8] p-4 shadow-[0_4px_0_#ffb27a] dark:border-orange-500/30 dark:bg-orange-500/10 dark:shadow-[0_4px_0_#9a3412]">
             <Flame className={`mx-auto h-6 w-6 fill-orange-500 text-orange-500 ${reducedMotion ? '' : 'animate-pulse'}`} />
-            <p className="mt-2 text-xl font-black text-orange-700 sm:text-2xl dark:text-orange-400">{profile?.currentStreak ?? 0}</p>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-orange-600/70 sm:text-xs">Day streak</p>
+            <p className="mt-2 text-2xl font-black text-orange-700 dark:text-orange-300">{profile?.currentStreak ?? 0}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.12em] text-orange-700/70">Day streak</p>
           </div>
         </div>
         {profile?.rewards && (
-          <div className="mt-4 w-full rounded-2xl border border-violet-200 bg-violet-50 p-4 text-left dark:border-violet-500/20 dark:bg-violet-500/10">
+          <div className="mt-5 w-full border-y-2 border-slate-100 px-1 py-4 text-left dark:border-slate-800">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-black uppercase tracking-wider text-violet-600 dark:text-violet-300">Quest level</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#58a700]">Quest level</p>
                 <p className="mt-1 font-black text-slate-900 dark:text-white">Level {profile.rewards.level} • {profile.rewards.title}</p>
               </div>
-              <span className="rounded-xl bg-white px-3 py-2 text-sm font-black text-violet-700 shadow-sm dark:bg-slate-950 dark:text-violet-300">{profile.rewards.xp} XP</span>
+              <span className="rounded-xl bg-[#f2ffe8] px-3 py-2 text-sm font-black text-[#58a700] dark:bg-[#58cc02]/10 dark:text-[#a5ed6f]">{profile.rewards.xp} XP</span>
             </div>
           </div>
         )}
-        <div className="mt-7 flex w-full flex-col gap-2 sm:flex-row">
+        <div className="mt-8 flex w-full flex-col-reverse gap-3 sm:flex-row">
           {usesStudyCards && (
-            <Button variant="outline" className="flex-1" render={<Link to={`/games/language-quest/words?courseId=${lesson.course.id}`} />} nativeButton={false}>
+            <Button variant="outline" className="min-h-12 flex-1 rounded-xl border-2 border-[#84d8ff] text-[#1899d6] shadow-[0_3px_0_#84d8ff]" render={<Link to={`/games/language-quest/words?courseId=${lesson.course.id}`} />} nativeButton={false}>
               <BookA className="mr-2 h-4 w-4" /> Learned words
             </Button>
           )}
-          <Button variant="outline" className="flex-1" onClick={practiseAgain}>
+          <Button variant="outline" className="min-h-12 flex-1 rounded-xl border-2 border-slate-200 shadow-[0_3px_0_#e5e5e5] dark:border-slate-700 dark:shadow-[0_3px_0_#334155]" onClick={practiseAgain}>
             Practise again
           </Button>
-          <Link to={`/games/language-quest/courses/${lesson.course.id}`} className="lq-btn-primary flex-1">
-            Continue the path
+          <Link to={`/games/language-quest/courses/${lesson.course.id}`} className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#46a302] bg-[#58cc02] px-5 text-sm font-black text-white shadow-[0_4px_0_#46a302] outline-none transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_5px_0_#46a302] active:translate-y-[3px] active:shadow-[0_1px_0_#46a302] focus-visible:ring-4 focus-visible:ring-[#58cc02]/25">
+            Continue the path <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
       </div>
