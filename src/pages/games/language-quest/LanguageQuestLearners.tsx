@@ -8,6 +8,7 @@ import {
   Flame,
   Search,
   ShieldAlert,
+  SlidersHorizontal,
   Star,
   Trash2,
   Trophy,
@@ -17,7 +18,11 @@ import {
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { LanguageQuestAvatar } from '@/src/components/games/LanguageQuestAvatar';
 import { apiGet, apiSend } from '@/src/lib/api';
 
@@ -93,6 +98,10 @@ export default function LanguageQuestLearners() {
   const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState('');
+  const [xpTarget, setXpTarget] = useState<ManagedLearner | null>(null);
+  const [xpDelta, setXpDelta] = useState('');
+  const [xpReason, setXpReason] = useState('');
+  const [xpBusy, setXpBusy] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -167,6 +176,39 @@ export default function LanguageQuestLearners() {
       toast.error(error?.message || 'Could not terminate learner');
     } finally {
       setBusyId('');
+    }
+  };
+
+  const adjustXp = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!xpTarget) return;
+    const delta = Number(xpDelta);
+    if (!Number.isInteger(delta) || delta === 0 || Math.abs(delta) > 10_000) {
+      toast.error('Enter a whole-number XP change from -10,000 to 10,000, excluding zero');
+      return;
+    }
+    if (xpReason.trim().length < 8) {
+      toast.error('Add a short reason for the audit record');
+      return;
+    }
+    setXpBusy(true);
+    try {
+      const result = await apiSend<{ points: number; rewards: ManagedLearner['rewards']; appliedDelta: number }>(
+        '/api/language-quest/admin/learners/' + xpTarget.id + '/xp',
+        'PATCH',
+        { delta, reason: xpReason.trim() },
+      );
+      setLearners((current) => current.map((learner) => learner.id === xpTarget.id
+        ? { ...learner, points: result.points, rewards: result.rewards }
+        : learner));
+      toast.success((result.appliedDelta > 0 ? '+' : '') + result.appliedDelta + ' XP applied to ' + xpTarget.name);
+      setXpTarget(null);
+      setXpDelta('');
+      setXpReason('');
+    } catch (error: any) {
+      toast.error(error?.message || 'Could not adjust learner XP');
+    } finally {
+      setXpBusy(false);
     }
   };
 
@@ -325,6 +367,16 @@ export default function LanguageQuestLearners() {
                   </div>
 
                   <div className="flex shrink-0 flex-wrap gap-2 lg:w-36 lg:flex-col">
+                    {learner.role !== 'ADMIN' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setXpTarget(learner); setXpDelta(''); setXpReason(''); }}
+                        className="border-sky-300 text-sky-700 hover:bg-sky-50 dark:border-sky-500/30 dark:text-sky-300 dark:hover:bg-sky-500/10"
+                      >
+                        <SlidersHorizontal className="mr-2 h-4 w-4" /> Adjust XP
+                      </Button>
+                    )}
                     {!learner.isExternalLearner ? (
                       <p className="text-[11px] font-semibold text-slate-400 lg:text-right">Managed via Users</p>
                     ) : learner.active ? (
@@ -348,6 +400,55 @@ export default function LanguageQuestLearners() {
           </div>
         )}
       </section>
+
+      <Dialog open={Boolean(xpTarget)} onOpenChange={(open) => { if (!open && !xpBusy) setXpTarget(null); }}>
+        <DialogContent className="lq-xp-dialog overflow-hidden p-0 sm:max-w-xl">
+          <div className="lq-xp-dialog-banner">
+            <div><p>Administrator action</p><DialogTitle>Adjust learning XP</DialogTitle></div>
+            <span><Star /> XP</span>
+          </div>
+          <form onSubmit={adjustXp}>
+            <div className="p-6">
+              <DialogHeader className="text-left">
+                <DialogDescription>
+                  {xpTarget ? 'Update ' + xpTarget.name + ' from ' + xpTarget.points + ' XP. Every change is written to the XP timeline and audit log.' : ''}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="lq-xp-direction-grid" aria-label="Quick XP adjustment">
+                {[-100, -25, 25, 100].map((amount) => (
+                  <button key={amount} type="button" className={Number(xpDelta) === amount ? 'is-selected' : ''} onClick={() => setXpDelta(String(amount))}>
+                    <span>{amount > 0 ? '+' : ''}{amount}</span>
+                    <small>{amount > 0 ? 'award' : 'remove'}</small>
+                  </button>
+                ))}
+              </div>
+              <label className="lq-xp-field">
+                <span>Exact change</span>
+                <Input type="number" min={-10000} max={10000} step={1} value={xpDelta} onChange={(event) => setXpDelta(event.target.value)} placeholder="Example: 50 or -20" required />
+                <small>The total can never fall below zero.</small>
+              </label>
+              <label className="lq-xp-field">
+                <span>Reason for the record</span>
+                <Textarea value={xpReason} onChange={(event) => setXpReason(event.target.value)} minLength={8} maxLength={240} placeholder="Example: Restored XP after a verified lesson sync issue." required />
+                <small>{xpReason.trim().length}/240 · visible to administrators in the audit log</small>
+              </label>
+              {xpTarget && Number.isInteger(Number(xpDelta)) && Number(xpDelta) !== 0 && (
+                <div className="lq-xp-proof">
+                  <span>Before<strong>{xpTarget.points} XP</strong></span>
+                  <span aria-hidden="true">→</span>
+                  <span>After<strong>{Math.max(0, xpTarget.points + Number(xpDelta))} XP</strong></span>
+                </div>
+              )}
+            </div>
+            <DialogFooter className="border-t border-slate-200 bg-slate-50 px-6 py-4 dark:border-slate-700 dark:bg-slate-900">
+              <Button type="button" variant="ghost" disabled={xpBusy} onClick={() => setXpTarget(null)}>Cancel</Button>
+              <Button type="submit" disabled={xpBusy || !xpDelta || xpReason.trim().length < 8} className="bg-sky-600 text-white hover:bg-sky-700">
+                <SlidersHorizontal className="h-4 w-4" /> {xpBusy ? 'Applying…' : 'Apply XP change'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <section className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-100">
         <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" />

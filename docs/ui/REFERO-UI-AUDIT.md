@@ -99,6 +99,29 @@ Timetable color roles are fixed: navy carries structure; teal marks published re
 
 Rejected timetable patterns: duplicate page titles, soft floating filter cards, native unlabelled selects, rainbow subject blocks, decorative empty-state icons behind every day, equal-height day stacks that ignore clock time, and week controls that change the label without changing one-off/effective-date records.
 
+## Language Quest social league
+
+The Language Quest redesign treats competition as a doorway into a safe learning circle rather than an isolated score table. Refero research covered four style systems—Preply, Quizlet, Duolingo, and SuperHi—plus Duolingo leaderboard/profile screens, the Google Classroom grade-adjustment modal, and the Duolingo/Xbox friend-profile flows.
+
+Reference lock:
+
+- **Primary structure:** Duolingo leaderboard 87d6ccff-4b3e-4680-a203-a216696ea127 and learner profile 18c9d3d6-8b3e-43fe-9ede-7a1ce6f8fdb7 for rank scanning, profile hierarchy, relationship state, and progress evidence.
+- **Primary visual field:** Preply 27a3ccec-81de-419a-af4f-8c2abd732cd7 for one decisive pink brand statement, bold learning typography, bordered surfaces, and restrained 4–8px geometry.
+- **Borrowed details:** Quizlet d6523b05-a53f-4a2a-8829-d65a5c3724e9 for the soft academic canvas and course labels; SuperHi b98edb8d-43a6-47e2-9adf-71ac4d584f47 for code-native geometric background language.
+- **Journey logic:** Refero flows 11814 and 11822 for search/profile/follow states, and Xbox flow 7703 for explicit friend-request feedback and reversal.
+- **Administrative action:** Google Classroom 752dfd54-ca3b-4f10-95e9-477ae2ee4226 for a focused numeric adjustment dialog with consequence preview.
+
+| Decision | Source | Language Quest adaptation |
+| --- | --- | --- |
+| One bold league statement above a compact ranking sheet | Preply + Duolingo leaderboard | Pink editorial header, hard ink rule, familiar ranking rhythm, and no generic gradient/card collage |
+| Relationship states live beside each learner | Duolingo + Xbox flows | Add friend, incoming Accept, Request sent/cancel, and accepted Friends states use the existing reciprocal-follow data safely |
+| Profile is the social detail surface | Duolingo profile screens | A learner banner, bio, four connected progress facts, and a course section replace anonymous follow-only rows |
+| Course visibility follows friendship | User constraint + privacy rule | Current course is serialized only for self or mutual friends; private classrooms, lesson answers, and email stay hidden |
+| Admin XP changes are deliberate and traceable | Google Classroom grade modal | Signed whole-number change, quick presets, before/after proof, required reason, bounded server validation, XP event, and audit record |
+| Ranking eligibility is enforced server-side | User constraint | Active administrators are excluded from global, monthly, league, course, category, and classroom ranking queries |
+
+Rejected patterns: administrator accounts as competitors, decorative rank charts, anonymous follow buttons, one-click silent XP replacement, exposing friend course data before mutual acceptance, rainbow role badges, glassmorphism, and repeated floating statistic cards.
+
 ## System decisions
 
 - Canvas: paper `#f0f1ec` with a restrained 48px horizontal rule.

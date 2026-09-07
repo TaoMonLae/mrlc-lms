@@ -55,6 +55,11 @@ import {
   languageQuestLeagueForXp,
 } from "./shared/languageQuestLeaderboard";
 import {
+  languageQuestFriendCourseIsVisible,
+  languageQuestRelationship,
+  languageQuestXpAdjustment,
+} from "./shared/languageQuestSocial";
+import {
   languageQuestRewardProgress,
   newlyUnlockedLanguageQuestRewardIds,
 } from "./shared/languageQuestRewards";
@@ -1053,6 +1058,79 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     } catch (error) {
       logger.error("Error loading Learning Quest learner profile:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load your learner profile" });
+    }
+  });
+
+  app.get("/api/language-quest/profiles/:userId", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const target = await prisma.user.findFirst({
+        where: {
+          id: req.params.userId,
+          ...languageQuestGlobalLeaderboardWhere(),
+        },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          createdAt: true,
+          languageQuestAvatar: true,
+          languageQuestBio: true,
+          languageQuestProgress: {
+            include: {
+              activeCourse: {
+                select: {
+                  id: true,
+                  title: true,
+                  language: true,
+                  category: true,
+                  imageEmoji: true,
+                  accentColor: true,
+                },
+              },
+            },
+          },
+        },
+      } as any);
+      if (!target) { res.status(404).json({ error: "Learner profile not found" }); return; }
+
+      const [targetFollowing, targetFollowers] = await Promise.all([
+        (prisma as any).languageQuestFollow.findMany({
+          where: { followerId: target.id },
+          select: { followingId: true },
+        }),
+        (prisma as any).languageQuestFollow.findMany({
+          where: { followingId: target.id },
+          select: { followerId: true },
+        }),
+      ]);
+      const targetFollowingIds = new Set(targetFollowing.map((row: any) => row.followingId));
+      const targetFollowerIds = new Set(targetFollowers.map((row: any) => row.followerId));
+      const relationship = languageQuestRelationship(
+        targetFollowerIds.has(jwtUser.userId),
+        targetFollowingIds.has(jwtUser.userId),
+        target.id === jwtUser.userId,
+      );
+      const progress = target.languageQuestProgress || await getProgress(prisma, target.id);
+      const friendsCount = [...targetFollowingIds].filter((userId) => targetFollowerIds.has(userId)).length;
+
+      res.json({
+        id: target.id,
+        name: `${target.firstName} ${target.lastName}`.trim(),
+        avatarId: target.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
+        bio: target.languageQuestBio || "",
+        joinedAt: target.createdAt,
+        relationship,
+        friendsCount,
+        profile: profileJson(progress),
+        activeCourse: languageQuestFriendCourseIsVisible(relationship)
+          ? progress.activeCourse || null
+          : null,
+        courseVisible: languageQuestFriendCourseIsVisible(relationship),
+      });
+    } catch (error) {
+      logger.error("Error loading Learning Quest public learner profile:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load this learner profile" });
     }
   });
 
@@ -3077,7 +3155,22 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           where: { user: audienceWhere },
           take: 50,
           orderBy: [{ points: "desc" }, { currentStreak: "desc" }, { updatedAt: "asc" }],
-          include: { user: { select: { id: true, firstName: true, lastName: true, role: true, languageQuestAvatar: true } } },
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                role: true,
+                languageQuestAvatar: true,
+                languageQuestProgress: {
+                  select: {
+                    activeCourse: { select: { id: true, title: true, language: true, imageEmoji: true, accentColor: true } },
+                  },
+                },
+              },
+            },
+          },
         }),
         getProgress(prisma, jwtUser.userId),
         prisma.languageQuestXpEvent.groupBy({
@@ -3115,7 +3208,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         });
         res.json({
           currentUserId: jwtUser.userId,
-          currentUserRank: rank + 1,
+          currentUserRank: jwtUser.role === "ADMIN" ? null : rank + 1,
           scope,
           selection: { label: "School-wide", metricLabel: "Lifetime XP", periodStart: null },
           filters,
@@ -3133,17 +3226,29 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
               monthKey: periods.monthKey,
             };
           }),
-          leaders: leaders.map((row: any, index: number) => ({
-            rank: index + 1,
-            userId: row.userId,
-            name: `${row.user.firstName} ${row.user.lastName}`.trim(),
-            role: row.user.role,
-            avatarId: row.user.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
-            points: row.points,
-            currentStreak: row.currentStreak,
-            isFollowing: followingSet.has(row.userId),
-            isFriend: followingSet.has(row.userId) && followerSet.has(row.userId),
-          })),
+          leaders: leaders.map((row: any, index: number) => {
+            const relationship = languageQuestRelationship(
+              followingSet.has(row.userId),
+              followerSet.has(row.userId),
+              row.userId === jwtUser.userId,
+            );
+            return {
+              rank: index + 1,
+              userId: row.userId,
+              name: `${row.user.firstName} ${row.user.lastName}`.trim(),
+              role: row.user.role,
+              avatarId: row.user.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
+              points: row.points,
+              currentStreak: row.currentStreak,
+              relationship,
+              isFollowing: followingSet.has(row.userId),
+              isIncoming: followerSet.has(row.userId) && !followingSet.has(row.userId),
+              isFriend: relationship === "FRIENDS",
+              activeCourse: languageQuestFriendCourseIsVisible(relationship)
+                ? row.user.languageQuestProgress?.activeCourse || null
+                : null,
+            };
+          }),
         });
         return;
       }
@@ -3254,9 +3359,9 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     }
   });
 
-  // One-way follow, used on the global leaderboard. A mutual follow (both
-  // directions exist) is surfaced to the client as a "friend" — there is no
-  // separate friend-request flow to keep this simple.
+  // The existing directional follow rows act as friend requests. One row is
+  // pending; reciprocal rows mean the request has been accepted. This keeps
+  // the relationship explicit in the UI without adding a duplicate table.
   //
   // NOTE: `prisma as any` is used here because the sandbox this route was
   // authored in can't reach binaries.prisma.sh to regenerate the Prisma
@@ -3269,7 +3374,10 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     const targetId = req.params.userId;
     if (!targetId || targetId === jwtUser.userId) { res.status(400).json({ error: "You can't follow yourself" }); return; }
     try {
-      const target = await prisma.user.findUnique({ where: { id: targetId }, select: { id: true } });
+      const target = await prisma.user.findFirst({
+        where: { id: targetId, ...languageQuestGlobalLeaderboardWhere() },
+        select: { id: true },
+      });
       if (!target) { res.status(404).json({ error: "Learner not found" }); return; }
       try {
         await (prisma as any).languageQuestFollow.create({ data: { followerId: jwtUser.userId, followingId: targetId } });
@@ -3280,7 +3388,11 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         where: { followerId: targetId, followingId: jwtUser.userId },
         select: { id: true },
       }));
-      res.json({ following: true, isFriend: followedBack });
+      res.json({
+        following: true,
+        isFriend: followedBack,
+        relationship: followedBack ? "FRIENDS" : "OUTGOING",
+      });
     } catch (error) {
       logger.error("Error following Learning Quest learner:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to follow this learner" });
@@ -3292,9 +3404,14 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     const targetId = req.params.userId;
     try {
       await (prisma as any).languageQuestFollow.deleteMany({
-        where: { followerId: jwtUser.userId, followingId: targetId },
+        where: {
+          OR: [
+            { followerId: jwtUser.userId, followingId: targetId },
+            { followerId: targetId, followingId: jwtUser.userId },
+          ],
+        },
       });
-      res.json({ following: false });
+      res.json({ following: false, isFriend: false, relationship: "NONE" });
     } catch (error) {
       logger.error("Error unfollowing Learning Quest learner:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to unfollow this learner" });
@@ -4024,6 +4141,74 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     } catch (error) {
       logger.error("Error updating Learning Quest learner status:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to update learner status" });
+    }
+  });
+
+  app.patch("/api/language-quest/admin/learners/:id/xp", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN") { res.status(403).json({ error: "Administrator access required" }); return; }
+    const requestedDelta = Number(req.body?.delta);
+    const reason = text(req.body?.reason, 240);
+    if (!Number.isInteger(requestedDelta) || requestedDelta === 0 || Math.abs(requestedDelta) > 10_000) {
+      res.status(400).json({ error: "XP change must be a whole number from -10,000 to 10,000, excluding zero" });
+      return;
+    }
+    if (reason.length < 8) {
+      res.status(400).json({ error: "Add a short reason (at least 8 characters) for the audit record" });
+      return;
+    }
+    try {
+      const learner = await prisma.user.findFirst({
+        where: { id: req.params.id, role: { not: "ADMIN" } },
+        select: { id: true, firstName: true, lastName: true, email: true },
+      });
+      if (!learner) { res.status(404).json({ error: "Learner not found" }); return; }
+      await getProgress(prisma, learner.id);
+      const result = await prisma.$transaction(async (tx: any) => {
+        const rows: any[] = await tx.$queryRaw`
+          SELECT * FROM "LanguageQuestUserProgress" WHERE "userId" = ${learner.id} FOR UPDATE
+        `;
+        const progress = rows[0];
+        const adjustment = languageQuestXpAdjustment(progress?.points || 0, requestedDelta);
+        if (!adjustment) return null;
+        const updated = await tx.languageQuestUserProgress.update({
+          where: { userId: learner.id },
+          data: { points: adjustment.nextPoints },
+        });
+        await tx.languageQuestXpEvent.create({
+          data: {
+            userId: learner.id,
+            source: "ADMIN_ADJUSTMENT",
+            sourceId: jwtUser.userId,
+            points: adjustment.appliedDelta,
+          },
+        });
+        return { updated, adjustment };
+      });
+      if (!result) {
+        res.status(409).json({ error: "That change would leave the learner's XP unchanged" });
+        return;
+      }
+      const learnerName = `${learner.firstName} ${learner.lastName}`.trim();
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "UPDATE",
+        "LANGUAGE_QUEST_XP",
+        learner.id,
+        `Adjusted ${learnerName}'s Learning Quest XP by ${result.adjustment.appliedDelta}. Reason: ${reason}`,
+        req.ip || null,
+        req.headers["user-agent"] || null,
+        "WARNING",
+      );
+      res.json({
+        points: result.updated.points,
+        appliedDelta: result.adjustment.appliedDelta,
+        rewards: languageQuestRewardProgress(result.updated.points),
+      });
+    } catch (error) {
+      logger.error("Error adjusting Learning Quest XP:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to adjust learner XP" });
     }
   });
 

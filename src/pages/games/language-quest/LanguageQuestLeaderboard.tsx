@@ -1,6 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { ArrowLeft, BookOpen, Flame, Globe2, Heart, Layers3, Medal, Shield, Sparkles, Star, Trophy, UserCheck, UserPlus, Users } from 'lucide-react';
+import {
+  ArrowLeft, BookOpen, ChevronRight, Clock3, Eye, Flame, Globe2, Heart,
+  Layers3, Medal, Shield, Sparkles, Star, UserCheck, UserPlus, Users,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,6 +11,26 @@ import { LanguageQuestAvatar } from '@/src/components/games/LanguageQuestAvatar'
 import { apiGet, apiSend, qs } from '@/src/lib/api';
 import { languageQuestRewardCardById } from '@/shared/languageQuestRewards';
 import type { LanguageQuestLeaderboardScope, LanguageQuestLeague } from '@/shared/languageQuestLeaderboard';
+import type { LanguageQuestRelationship } from '@/shared/languageQuestSocial';
+
+interface LeaderCourse {
+  id: string;
+  title: string;
+  language: string;
+  imageEmoji: string;
+  accentColor: string;
+}
+
+interface LeaderboardLeader {
+  rank: number;
+  userId: string;
+  name: string;
+  avatarId: string;
+  points: number;
+  currentStreak: number;
+  relationship?: LanguageQuestRelationship;
+  activeCourse?: LeaderCourse | null;
+}
 
 interface LeaderboardPayload {
   currentUserId: string;
@@ -29,17 +52,7 @@ interface LeaderboardPayload {
     currentCardId: string | null;
     monthKey: string;
   }[];
-  leaders: {
-    rank: number;
-    userId: string;
-    name: string;
-    role: string;
-    avatarId: string;
-    points: number;
-    currentStreak: number;
-    isFollowing?: boolean;
-    isFriend?: boolean;
-  }[];
+  leaders: LeaderboardLeader[];
 }
 
 interface LeaderboardQuery {
@@ -49,29 +62,29 @@ interface LeaderboardQuery {
   classroomId: string;
 }
 
-const rankTone: Record<number, string> = {
-  1: 'bg-amber-400 text-amber-950',
-  2: 'bg-slate-300 text-slate-700',
-  3: 'bg-orange-300 text-orange-900',
-};
-
 const scopes: { value: LanguageQuestLeaderboardScope; label: string; icon: typeof Globe2 }[] = [
-  { value: 'global', label: 'Global', icon: Globe2 },
-  { value: 'league', label: 'My League', icon: Shield },
+  { value: 'global', label: 'School', icon: Globe2 },
+  { value: 'league', label: 'My league', icon: Shield },
   { value: 'course', label: 'Course', icon: BookOpen },
   { value: 'category', label: 'Category', icon: Layers3 },
   { value: 'classroom', label: 'Classroom', icon: Users },
 ];
 
+const rankLabel = (rank: number) => rank <= 3 ? ['Gold', 'Silver', 'Bronze'][rank - 1] : `Rank ${rank}`;
+
+function relationshipAction(relationship: LanguageQuestRelationship) {
+  if (relationship === 'INCOMING') return { label: 'Accept', icon: UserPlus, tone: 'lq-board-friend-action is-accept' };
+  if (relationship === 'OUTGOING') return { label: 'Request sent', icon: Clock3, tone: 'lq-board-friend-action is-pending' };
+  if (relationship === 'FRIENDS') return { label: 'Friends', icon: Heart, tone: 'lq-board-friend-action is-friend' };
+  return { label: 'Add friend', icon: UserPlus, tone: 'lq-board-friend-action' };
+}
+
 export default function LanguageQuestLeaderboard() {
   const [data, setData] = useState<LeaderboardPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState<LeaderboardQuery>({ scope: 'global', courseId: '', category: '', classroomId: '' });
-  // Follow state per learner, keyed by userId. Seeded from the leaderboard
-  // payload on every fetch, then updated optimistically as the current user
-  // follows/unfollows people so the button doesn't need a full refetch.
-  const [followState, setFollowState] = useState<Record<string, { following: boolean; isFriend: boolean }>>({});
-  const [followBusyId, setFollowBusyId] = useState('');
+  const [relationshipState, setRelationshipState] = useState<Record<string, LanguageQuestRelationship>>({});
+  const [friendBusyId, setFriendBusyId] = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -83,30 +96,47 @@ export default function LanguageQuestLeaderboard() {
     })}`)
       .then((payload) => {
         setData(payload);
-        setFollowState(Object.fromEntries(
-          payload.leaders.map((leader) => [leader.userId, { following: !!leader.isFollowing, isFriend: !!leader.isFriend }]),
+        setRelationshipState(Object.fromEntries(
+          payload.leaders.map((leader) => [
+            leader.userId,
+            leader.userId === payload.currentUserId ? 'SELF' : (leader.relationship || 'NONE'),
+          ]),
         ));
       })
       .catch((error: any) => toast.error(error?.message || 'Could not load the leaderboard'))
       .finally(() => setLoading(false));
   }, [query]);
 
-  const toggleFollow = async (leader: { userId: string; name: string }) => {
-    const current = followState[leader.userId] ?? { following: false, isFriend: false };
-    setFollowBusyId(leader.userId);
+  const friendCourses = useMemo(() => data?.leaders.filter((leader) => (
+    relationshipState[leader.userId] === 'FRIENDS' && leader.activeCourse
+  )) ?? [], [data, relationshipState]);
+
+  const updateFriend = async (leader: LeaderboardLeader) => {
+    const relationship = relationshipState[leader.userId] || 'NONE';
+    if (relationship === 'FRIENDS' || relationship === 'SELF') return;
+    setFriendBusyId(leader.userId);
     try {
-      if (current.following) {
+      if (relationship === 'OUTGOING') {
         await apiSend(`/api/language-quest/follow/${leader.userId}`, 'DELETE');
-        setFollowState((state) => ({ ...state, [leader.userId]: { following: false, isFriend: false } }));
+        setRelationshipState((current) => ({ ...current, [leader.userId]: 'NONE' }));
+        toast.success(`Friend request to ${leader.name} cancelled`);
       } else {
-        const result = await apiSend<{ following: boolean; isFriend: boolean }>(`/api/language-quest/follow/${leader.userId}`, 'POST');
-        setFollowState((state) => ({ ...state, [leader.userId]: { following: true, isFriend: result.isFriend } }));
-        toast.success(result.isFriend ? `You and ${leader.name} are now friends!` : `Following ${leader.name}`);
+        const result = await apiSend<{ relationship: LanguageQuestRelationship }>(
+          `/api/language-quest/follow/${leader.userId}`,
+          'POST',
+        );
+        setRelationshipState((current) => ({ ...current, [leader.userId]: result.relationship }));
+        toast.success(result.relationship === 'FRIENDS'
+          ? `${leader.name} is now your friend`
+          : `Friend request sent to ${leader.name}`);
+        if (result.relationship === 'FRIENDS') {
+          setQuery((current) => ({ ...current }));
+        }
       }
     } catch (error: any) {
-      toast.error(error?.message || 'Could not update follow status');
+      toast.error(error?.message || 'Could not update this friend request');
     } finally {
-      setFollowBusyId('');
+      setFriendBusyId('');
     }
   };
 
@@ -120,205 +150,144 @@ export default function LanguageQuestLeaderboard() {
     }));
   };
 
-  if (!data) return <div className="grid min-h-[420px] place-items-center"><div className="h-10 w-10 animate-spin rounded-full border-4 border-amber-200 border-t-amber-500" /></div>;
-
-  const rankMessage = data.currentUserRank
-    ? `Your current rank in this view is #${data.currentUserRank}.`
-    : 'Earn XP in this view to join the ranking.';
+  if (!data) return <div className="grid min-h-[420px] place-items-center"><div className="h-10 w-10 animate-spin rounded-full border-4 border-sky-200 border-t-sky-500" /></div>;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-10">
-      <Button variant="ghost" className="-ml-2" render={<Link to="/games/language-quest" />} nativeButton={false}>
+    <div className="lq-social-page mx-auto max-w-6xl pb-12">
+      <Button variant="ghost" className="-ml-2 mb-4" render={<Link to="/games/language-quest" />} nativeButton={false}>
         <ArrowLeft className="mr-2 h-4 w-4" /> Learning Quest
       </Button>
 
-      <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 p-7 text-white shadow-xl">
-        <div className="flex flex-wrap items-center justify-between gap-5">
-          <div className="flex items-center gap-4">
-            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-white/20 ring-1 ring-white/25"><Trophy className="h-8 w-8" /></div>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/75">Fair ways to compete</p>
-              <h1 className="mt-1 text-3xl font-black">Language Leaderboard</h1>
-              <p className="mt-1 text-sm text-white/85">{rankMessage}</p>
-            </div>
-          </div>
-          <div className="rounded-2xl bg-white/15 px-4 py-3 text-right ring-1 ring-white/20">
-            <p className="text-xs font-black uppercase tracking-wide text-white/70">Current view</p>
-            <p className="mt-1 font-black">{data.selection.label}</p>
-            <p className="text-xs text-white/75">{data.selection.metricLabel}</p>
+      <section className="lq-board-hero">
+        <div className="relative z-10 max-w-2xl">
+          <p className="lq-kicker">The learning league</p>
+          <h1>Climb together. Learn your own way.</h1>
+          <p className="mt-3 max-w-xl text-sm font-medium leading-6 sm:text-base">
+            Compare real learning XP, meet classmates, and open a friend’s profile to see what they are studying now.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-x-7 gap-y-3 text-sm font-bold">
+            <span><strong className="text-2xl">{data.currentUserRank ? `#${data.currentUserRank}` : '—'}</strong><br />your place</span>
+            <span><strong className="text-2xl">{data.leaders.length}</strong><br />learners shown</span>
+            <span><strong className="text-2xl">{friendCourses.length}</strong><br />friends studying</span>
           </div>
         </div>
+        <img src="/icons/LanguageQuests_Graphics/Owl School 12.svg" alt="Language Quest owl holding a trophy" className="lq-board-hero-owl" />
       </section>
 
-      <section className="rounded-3xl border border-amber-200 bg-white p-4 shadow-sm dark:border-amber-500/20 dark:bg-slate-900 sm:p-5">
-        <div className="flex flex-wrap gap-2">
+      <section className="lq-board-controls" aria-label="Leaderboard view">
+        <div className="lq-board-scope-rail" role="tablist" aria-label="Choose leaderboard scope">
           {scopes.map(({ value, label, icon: Icon }) => {
             const selected = query.scope === value;
             const unavailable = value === 'classroom' && data.filters.classrooms.length === 0;
             return (
-              <Button
-                key={value}
-                size="sm"
-                variant={selected ? 'default' : 'outline'}
-                disabled={unavailable}
-                className={selected ? 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-950' : ''}
-                onClick={() => changeScope(value)}
-              >
-                <Icon className="mr-1.5 h-3.5 w-3.5" /> {label}
-              </Button>
+              <button key={value} type="button" role="tab" aria-selected={selected} disabled={unavailable} className={selected ? 'is-active' : ''} onClick={() => changeScope(value)}>
+                <Icon aria-hidden="true" /> {label}
+              </button>
             );
           })}
         </div>
 
-        {query.scope === 'course' && (
-          <label className="mt-4 block text-sm font-bold text-slate-700 dark:text-slate-200">
-            Course
-            <select
-              value={query.courseId || data.filters.courses[0]?.id || ''}
-              onChange={(event) => setQuery((current) => ({ ...current, courseId: event.target.value }))}
-              className="mt-1.5 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 sm:max-w-md dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-            >
-              {data.filters.courses.map((course) => <option key={course.id} value={course.id}>{course.imageEmoji} {course.title}</option>)}
-            </select>
-          </label>
-        )}
-        {query.scope === 'category' && (
-          <label className="mt-4 block text-sm font-bold text-slate-700 dark:text-slate-200">
-            Course category
-            <select
-              value={query.category || data.filters.categories[0] || ''}
-              onChange={(event) => setQuery((current) => ({ ...current, category: event.target.value }))}
-              className="mt-1.5 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 sm:max-w-md dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-            >
-              {data.filters.categories.map((category) => <option key={category} value={category}>{category}</option>)}
-            </select>
-          </label>
-        )}
-        {query.scope === 'classroom' && (
-          <label className="mt-4 block text-sm font-bold text-slate-700 dark:text-slate-200">
-            Classroom
-            <select
-              value={query.classroomId || data.filters.classrooms[0]?.id || ''}
-              onChange={(event) => setQuery((current) => ({ ...current, classroomId: event.target.value }))}
-              className="mt-1.5 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 sm:max-w-md dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-            >
-              {data.filters.classrooms.map((classroom) => (
-                <option key={classroom.id} value={classroom.id}>{classroom.name}{classroom.focusCourseTitle ? ` · ${classroom.focusCourseTitle}` : ''}</option>
-              ))}
-            </select>
-          </label>
-        )}
-        <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
-          Global keeps the original lifetime ranking. Every focused view uses learning XP from the last 30 days, excluding mission bonuses.
-        </p>
+        <div className="lq-board-filter-proof">
+          <div><span>Current view</span><strong>{data.selection.label}</strong><small>{data.selection.metricLabel}</small></div>
+          {query.scope === 'course' && (
+            <label>Course<select value={query.courseId || data.filters.courses[0]?.id || ''} onChange={(event) => setQuery((current) => ({ ...current, courseId: event.target.value }))}>{data.filters.courses.map((course) => <option key={course.id} value={course.id}>{course.imageEmoji} {course.title}</option>)}</select></label>
+          )}
+          {query.scope === 'category' && (
+            <label>Category<select value={query.category || data.filters.categories[0] || ''} onChange={(event) => setQuery((current) => ({ ...current, category: event.target.value }))}>{data.filters.categories.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
+          )}
+          {query.scope === 'classroom' && (
+            <label>Classroom<select value={query.classroomId || data.filters.classrooms[0]?.id || ''} onChange={(event) => setQuery((current) => ({ ...current, classroomId: event.target.value }))}>{data.filters.classrooms.map((classroom) => <option key={classroom.id} value={classroom.id}>{classroom.name}{classroom.focusCourseTitle ? ` · ${classroom.focusCourseTitle}` : ''}</option>)}</select></label>
+          )}
+        </div>
       </section>
 
       {data.league && (
-        <section className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-violet-200 bg-gradient-to-r from-violet-50 to-fuchsia-50 p-5 shadow-sm dark:border-violet-500/25 dark:from-violet-950/30 dark:to-fuchsia-950/20">
-          <div className="flex items-center gap-4">
-            <span className="grid h-14 w-14 place-items-center rounded-2xl bg-white text-3xl shadow-sm dark:bg-slate-900">{data.league.emoji}</span>
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300">Your recent-XP bracket</p>
-              <h2 className="mt-1 text-xl font-black text-slate-950 dark:text-white">{data.league.title}</h2>
-              <p className="text-sm text-slate-600 dark:text-slate-300">Compete with learners building at a similar recent pace.</p>
-            </div>
-          </div>
-          <Badge className="bg-violet-700 text-white">
-            {data.league.maxXp === null ? `${data.league.minXp}+ XP` : `${data.league.minXp}–${data.league.maxXp} XP`}
-          </Badge>
+        <section className="lq-league-strip">
+          <span className="lq-league-mark" aria-hidden="true">{data.league.emoji}</span>
+          <div className="min-w-0 flex-1"><p className="lq-kicker">Your 30-day pace</p><h2>{data.league.title}</h2><p>Compete with learners building at a similar recent rhythm.</p></div>
+          <Badge>{data.league.maxXp === null ? `${data.league.minXp}+ XP` : `${data.league.minXp}–${data.league.maxXp} XP`}</Badge>
         </section>
       )}
 
-      {data.scope === 'global' && (
-        <section className="rounded-3xl border border-fuchsia-200 bg-gradient-to-br from-violet-950 via-fuchsia-950 to-slate-950 p-5 text-white shadow-lg dark:border-fuchsia-500/20 sm:p-6">
-          <div className="flex items-center gap-3">
-            <Sparkles className="h-5 w-5 text-amber-300" />
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-fuchsia-200">Monthly learner showcase</p>
-              <h2 className="text-xl font-black">Celebrating consistent learning</h2>
-            </div>
-          </div>
-          <p className="mt-2 text-xs leading-5 text-white/65">Top learning XP this month. This showcase has no comments, direct messages, or public profile links.</p>
-          {data.monthlyShowcase.length === 0 ? (
-            <p className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-5 text-center text-sm text-white/60">The month’s first learner can still take this spot.</p>
+      {data.scope === 'global' && data.monthlyShowcase.length > 0 && (
+        <section className="lq-showcase-strip">
+          <div className="lq-showcase-intro"><Sparkles aria-hidden="true" /><div><span>Monthly spotlight</span><strong>Three learners on a roll</strong></div></div>
+          {data.monthlyShowcase.map((learner) => {
+            const card = languageQuestRewardCardById(learner.currentCardId);
+            return (
+              <Link key={learner.userId} to={`/games/language-quest/profile/${learner.userId}`} className="lq-showcase-person">
+                <span>{card?.emoji || '🌟'}</span>
+                <LanguageQuestAvatar avatarId={learner.avatarId} name={learner.name} className="h-10 w-10 text-xl" />
+                <span className="min-w-0"><strong>{learner.name}</strong><small>#{learner.rank} · {learner.monthXp} XP</small></span>
+              </Link>
+            );
+          })}
+        </section>
+      )}
+
+      <div className="lq-board-layout">
+        <section className="lq-board-sheet" aria-labelledby="leaderboard-heading">
+          <header>
+            <div><p className="lq-kicker">Live standings</p><h2 id="leaderboard-heading">{data.selection.label}</h2></div>
+            {loading && <span className="lq-board-updating">Updating…</span>}
+          </header>
+          {data.leaders.length === 0 ? (
+            <div className="lq-board-empty"><Medal /><strong>No scores here yet</strong><p>Finish a matching lesson to claim the first place.</p></div>
           ) : (
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              {data.monthlyShowcase.map((learner) => {
-                const card = languageQuestRewardCardById(learner.currentCardId);
+            <ol className={loading ? 'is-loading' : ''}>
+              {data.leaders.map((leader) => {
+                const mine = leader.userId === data.currentUserId;
+                const relationship = relationshipState[leader.userId] || (mine ? 'SELF' : 'NONE');
+                const action = relationshipAction(relationship);
+                const ActionIcon = action.icon;
                 return (
-                  <article key={learner.userId} className="rounded-2xl border border-white/10 bg-white/10 p-4 text-center backdrop-blur">
-                    <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-white/10 text-3xl">{card?.emoji || '🌟'}</span>
-                    <LanguageQuestAvatar avatarId={learner.avatarId} name={learner.name} className="mx-auto -mt-3 h-10 w-10 text-xl ring-2 ring-fuchsia-300" />
-                    <p className="mt-2 truncate font-black">{learner.name}</p>
-                    <p className="mt-1 text-xs font-bold text-amber-200">#{learner.rank} • {learner.monthXp} XP</p>
-                  </article>
+                  <li key={leader.userId} className={mine ? 'is-me' : ''}>
+                    <div className={`lq-board-rank rank-${Math.min(leader.rank, 4)}`} aria-label={rankLabel(leader.rank)}>
+                      {leader.rank <= 3 ? <Medal aria-hidden="true" /> : leader.rank}
+                    </div>
+                    <LanguageQuestAvatar avatarId={leader.avatarId} name={leader.name} className="h-12 w-12 shrink-0 text-2xl" />
+                    <div className="lq-board-person">
+                      <div><strong>{leader.name}</strong>{mine && <Badge>You</Badge>}{relationship === 'FRIENDS' && <Badge className="is-friend"><Heart /> Friend</Badge>}</div>
+                      {leader.activeCourse ? <p><span style={{ backgroundColor: `${leader.activeCourse.accentColor}22` }}>{leader.activeCourse.imageEmoji}</span> Studying {leader.activeCourse.title}</p> : <p>{relationship === 'FRIENDS' ? 'Choosing their next course' : 'Open profile to connect'}</p>}
+                    </div>
+                    <div className="lq-board-stat"><Flame aria-hidden="true" /><strong>{leader.currentStreak}</strong><span>day streak</span></div>
+                    <div className="lq-board-xp"><Star aria-hidden="true" /><strong>{leader.points}</strong><span>XP</span></div>
+                    {!mine && (
+                      <div className="lq-board-row-actions">
+                        <Button variant="ghost" size="icon" title={`View ${leader.name}'s profile`} aria-label={`View ${leader.name}'s profile`} render={<Link to={`/games/language-quest/profile/${leader.userId}`} />} nativeButton={false}><Eye /></Button>
+                        {data.scope === 'global' && (
+                          <button type="button" className={action.tone} disabled={friendBusyId === leader.userId || relationship === 'FRIENDS'} onClick={() => updateFriend(leader)}>
+                            <ActionIcon aria-hidden="true" /> <span>{action.label}</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </li>
                 );
               })}
-            </div>
+            </ol>
           )}
         </section>
-      )}
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-4 dark:border-surface-raised sm:px-6">
-          <div>
-            <h2 className="font-black text-slate-950 dark:text-white">{data.selection.label}</h2>
-            <p className="text-xs text-slate-500">{data.selection.metricLabel}</p>
-          </div>
-          {loading && <span className="text-xs font-bold text-amber-600">Updating…</span>}
-        </div>
-        {data.leaders.length === 0 ? (
-          <div className="p-12 text-center">
-            <Medal className="mx-auto h-12 w-12 text-slate-300" />
-            <p className="mt-3 font-semibold text-slate-900 dark:text-white">No scores in this view yet</p>
-            <p className="mt-1 text-sm text-slate-500">Complete a matching lesson to take the first spot.</p>
-          </div>
-        ) : (
-          <div className={`divide-y divide-slate-100 transition-opacity dark:divide-surface-raised ${loading ? 'opacity-60' : ''}`}>
-            {data.leaders.map((leader) => {
-              const mine = leader.userId === data.currentUserId;
-              const follow = followState[leader.userId] ?? { following: !!leader.isFollowing, isFriend: !!leader.isFriend };
-              return (
-                <div key={leader.userId} className={`flex items-center gap-3 px-4 py-4 sm:px-6 ${mine ? 'bg-violet-50 dark:bg-violet-500/10' : ''}`}>
-                  <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black ${rankTone[leader.rank] || 'bg-slate-100 text-slate-500 dark:bg-surface-raised dark:text-slate-300'}`}>
-                    {leader.rank <= 3 ? <Medal className="h-5 w-5" /> : leader.rank}
-                  </div>
-                  <LanguageQuestAvatar avatarId={leader.avatarId} name={leader.name} className="h-10 w-10 text-xl shadow-sm" />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate font-semibold text-slate-900 dark:text-white">{leader.name}</p>
-                      {mine && <Badge className="bg-violet-100 text-violet-700 hover:bg-violet-100 dark:bg-violet-500/15 dark:text-violet-300">You</Badge>}
-                      {!mine && follow.isFriend && (
-                        <Badge className="gap-1 bg-rose-100 text-rose-700 hover:bg-rose-100 dark:bg-rose-500/15 dark:text-rose-300">
-                          <Heart className="h-3 w-3 fill-current" /> Friends
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs capitalize text-slate-400">{leader.role.toLowerCase().replace('_', ' ')}</p>
-                  </div>
-                  <div className="hidden items-center gap-1 text-sm font-bold text-orange-500 sm:flex"><Flame className="h-4 w-4 fill-current" /> {leader.currentStreak}</div>
-                  <div className="flex min-w-16 items-center justify-end gap-1 text-sm font-black text-amber-500"><Star className="h-4 w-4 fill-current" /> {leader.points}</div>
-                  {data.scope === 'global' && !mine && (
-                    <Button
-                      size="sm"
-                      variant={follow.following ? 'outline' : 'default'}
-                      disabled={followBusyId === leader.userId}
-                      onClick={() => toggleFollow(leader)}
-                      className={`ml-1 shrink-0 ${follow.following ? '' : 'bg-violet-600 text-white hover:bg-violet-700'}`}
-                    >
-                      {follow.following ? (
-                        <><UserCheck className="mr-1 h-3.5 w-3.5" /> Following</>
-                      ) : (
-                        <><UserPlus className="mr-1 h-3.5 w-3.5" /> Follow</>
-                      )}
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+        <aside className="lq-friend-course-board">
+          <div className="lq-friend-course-heading"><Heart aria-hidden="true" /><div><span>Friend activity</span><h2>Learning beside you</h2></div></div>
+          <p>Friendship is mutual. Accept a request or add someone; once connected, you can see the course they are studying.</p>
+          {friendCourses.length === 0 ? (
+            <div className="lq-friend-course-empty"><Users /><strong>Your learning circle starts here.</strong><span>Open a learner profile or add a friend from the school ranking.</span></div>
+          ) : (
+            <div className="lq-friend-course-list">
+              {friendCourses.slice(0, 5).map((friend) => (
+                <Link key={friend.userId} to={`/games/language-quest/profile/${friend.userId}`}>
+                  <LanguageQuestAvatar avatarId={friend.avatarId} name={friend.name} className="h-10 w-10 text-xl" />
+                  <span className="min-w-0"><strong>{friend.name}</strong><small>{friend.activeCourse?.imageEmoji} {friend.activeCourse?.title}</small></span>
+                  <ChevronRight aria-hidden="true" />
+                </Link>
+              ))}
+            </div>
+          )}
+          <div className="lq-friend-privacy"><UserCheck /><span><strong>Course privacy</strong>Your current course is visible only to accepted friends.</span></div>
+        </aside>
+      </div>
     </div>
   );
 }

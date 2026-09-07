@@ -13,6 +13,7 @@ test("external learners stay within the Learning Quest browser routes", () => {
     "/games/language-quest",
     "/games/language-quest/",
     "/games/language-quest/profile",
+    "/games/language-quest/profile/learner-2",
     "/games/language-quest/leaderboard",
     "/games/language-quest/mastery",
     "/games/language-quest/heart-refill",
@@ -51,6 +52,7 @@ test("external learner API access uses an explicit method and route allowlist", 
     ["POST", "/api/auth/change-password"],
     ["GET", "/api/language-quest/overview"],
     ["GET", "/api/language-quest/profile"],
+    ["GET", "/api/language-quest/profiles/learner-2"],
     ["GET", "/api/language-quest/leaderboard?limit=10"],
     ["GET", "/api/language-quest/engagement"],
     ["GET", "/api/language-quest/mastery"],
@@ -72,8 +74,10 @@ test("external learner API access uses an explicit method and route allowlist", 
     ["POST", "/api/language-quest/voice"],
     ["POST", "/api/language-quest/heart-refill/start"],
     ["POST", "/api/language-quest/heart-refill/finish"],
+    ["POST", "/api/language-quest/follow/learner-2"],
     ["PATCH", "/api/language-quest/profile"],
     ["DELETE", "/api/language-quest/profile/classrooms/classroom-1"],
+    ["DELETE", "/api/language-quest/follow/learner-2"],
   ];
   const denied: Array<[string, string]> = [
     ["GET", "/api/students"],
@@ -94,9 +98,9 @@ test("external learner API access uses an explicit method and route allowlist", 
   }
 });
 
-test("Learning Quest leaderboard includes every active learner globally", () => {
+test("Learning Quest leaderboard includes active non-admin learners globally", () => {
   assert.deepEqual(
     languageQuestGlobalLeaderboardWhere(),
-    { isActive: true },
+    { isActive: true, role: { not: "ADMIN" } },
   );
 });

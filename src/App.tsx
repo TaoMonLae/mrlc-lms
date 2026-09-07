@@ -208,6 +208,7 @@ const LanguageQuestCourse = lazy(() => import("./pages/games/language-quest/Lang
 const LanguageQuestLesson = lazy(() => import("./pages/games/language-quest/LanguageQuestLesson"));
 const LanguageQuestLeaderboard = lazy(() => import("./pages/games/language-quest/LanguageQuestLeaderboard"));
 const LanguageQuestProfile = lazy(() => import("./pages/games/language-quest/LanguageQuestProfile"));
+const LanguageQuestPublicProfile = lazy(() => import("./pages/games/language-quest/LanguageQuestPublicProfile"));
 const LanguageQuestMastery = lazy(() => import("./pages/games/language-quest/LanguageQuestMastery"));
 const LanguageQuestHeartRefill = lazy(() => import("./pages/games/language-quest/LanguageQuestHeartRefill"));
 const LanguageQuestWords = lazy(() => import("./pages/games/language-quest/LanguageQuestWords"));
@@ -335,6 +336,7 @@ export default function App() {
                 <Route path="/games/language-quest/lessons/:lessonId" element={<LanguageQuestLesson />} />
                 <Route path="/games/language-quest/leaderboard" element={<LanguageQuestLeaderboard />} />
                 <Route path="/games/language-quest/profile" element={<LanguageQuestProfile />} />
+                <Route path="/games/language-quest/profile/:userId" element={<LanguageQuestPublicProfile />} />
                 <Route path="/games/language-quest/mastery" element={<LanguageQuestMastery />} />
                 <Route path="/games/language-quest/heart-refill" element={<LanguageQuestHeartRefill />} />
                 <Route path="/games/language-quest/words" element={<LanguageQuestWords />} />

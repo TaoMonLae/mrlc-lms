@@ -18,6 +18,7 @@ export function isExternalLearnerAppPathAllowed(value: string): boolean {
     || pathname === "/change-password"
     || pathname === "/games/language-quest"
     || pathname === "/games/language-quest/profile"
+    || /^\/games\/language-quest\/profile\/[^/]+$/.test(pathname)
     || pathname === "/games/language-quest/leaderboard"
     || pathname === "/games/language-quest/mastery"
     || pathname === "/games/language-quest/heart-refill"
@@ -50,6 +51,7 @@ export function isExternalLearnerApiRequestAllowed(method: string, value: string
       || pathname === "/api/language-quest/mastery"
       || pathname === "/api/language-quest/voice"
       || pathname === "/api/language-quest/learned-words"
+      || /^\/api\/language-quest\/profiles\/[^/]+$/.test(pathname)
       || /^\/api\/language-quest\/courses\/[^/]+$/.test(pathname)
       || /^\/api\/language-quest\/courses\/[^/]+\/boss-battle$/.test(pathname)
       || /^\/api\/language-quest\/lessons\/[^/]+(?:\/preview)?$/.test(pathname)
@@ -64,6 +66,7 @@ export function isExternalLearnerApiRequestAllowed(method: string, value: string
       || pathname === "/api/language-quest/voice"
       || pathname === "/api/language-quest/heart-refill/start"
       || pathname === "/api/language-quest/heart-refill/finish"
+      || /^\/api\/language-quest\/follow\/[^/]+$/.test(pathname)
       || /^\/api\/language-quest\/challenges\/[^/]+\/answer$/.test(pathname)
       || /^\/api\/language-quest\/courses\/[^/]+\/boss-battle\/finish$/.test(pathname)
       || /^\/api\/language-quest\/courses\/[^/]+\/final-exam\/(?:start|audio|finish|violation)$/.test(pathname)
@@ -77,7 +80,10 @@ export function isExternalLearnerApiRequestAllowed(method: string, value: string
   }
 
   if (verb === "DELETE") {
-    return /^\/api\/language-quest\/profile\/classrooms\/[^/]+$/.test(pathname);
+    return (
+      /^\/api\/language-quest\/profile\/classrooms\/[^/]+$/.test(pathname)
+      || /^\/api\/language-quest\/follow\/[^/]+$/.test(pathname)
+    );
   }
 
   return false;
@@ -91,5 +97,6 @@ export function isExternalLearnerApiRequestAllowed(method: string, value: string
 export function languageQuestGlobalLeaderboardWhere() {
   return {
     isActive: true,
+    role: { not: "ADMIN" },
   };
 }

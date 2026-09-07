@@ -166,7 +166,7 @@ export default function LanguageQuestHome() {
   if (loading) {
     return (
       <div className="space-y-6 pb-10" aria-busy="true" aria-label="Loading Learning Quest">
-        <div className="lq-hero-gradient overflow-hidden rounded-[1.75rem] p-6 sm:p-8">
+        <div className="lq-home-hero overflow-hidden p-6 sm:p-8">
           <Skeleton className="h-4 w-32 rounded-full bg-white/20" />
           <Skeleton className="mt-5 h-10 w-80 max-w-full bg-white/20" />
           <Skeleton className="mt-4 h-4 w-full max-w-lg bg-white/15" />
@@ -220,7 +220,7 @@ export default function LanguageQuestHome() {
 
   return (
     <div className="min-w-0 max-w-full space-y-5 pb-8 sm:space-y-6 sm:pb-10">
-      <section className="lq-hero-gradient relative overflow-hidden rounded-[1.75rem] text-white">
+      <section className="lq-home-hero relative overflow-hidden text-white">
         <div className="lq-hero-grid absolute inset-0 opacity-30" aria-hidden="true" />
         <div className="relative grid min-h-[390px] items-center gap-8 px-5 py-8 sm:px-8 sm:py-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,.85fr)] lg:px-10">
           <div className="max-w-2xl">
@@ -241,13 +241,16 @@ export default function LanguageQuestHome() {
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
                 <p className="text-xs font-bold text-white/65">{nextCourse.progressPercent}% complete · {nextCourse.lessonCount} lessons</p>
+                <Link to="/games/language-quest/leaderboard" className="lq-home-social-link">
+                  Meet learning friends <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
               </div>
             )}
           </div>
 
           <QuestDepthStage className="mx-auto hidden w-full max-w-sm lg:block">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-[1.5rem] border border-white/25 bg-white/10 p-6 backdrop-blur-sm">
-              <span className="absolute left-6 top-6 rounded-full bg-white px-3 py-1.5 text-xs font-extrabold text-[var(--lq-signal-blue)]">Hello, {learnerName}!</span>
+            <div className="lq-home-passport relative aspect-[4/3] overflow-hidden p-6">
+              <span className="absolute left-6 top-6 rounded bg-white px-3 py-1.5 text-xs font-extrabold text-[var(--lq-signal-blue)]">Hello, {learnerName}!</span>
               <img
                 src="/icons/LanguageQuests_Graphics/Owl School 12.svg"
                 alt="A friendly owl guide ready for the next lesson"
