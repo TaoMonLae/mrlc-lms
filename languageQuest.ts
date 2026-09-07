@@ -111,7 +111,6 @@ import { teachYourselfMalayCourse } from "./languageQuestTeachYourselfMalayCours
 import { k12MathCourses } from "./languageQuestK12MathCourses";
 import { languageQuestVoiceServiceFromEnv } from "./languageQuestVoice";
 import {
-  kokoroSupportsLanguage,
   LANGUAGE_QUEST_VOICE_MAX_TEXT_LENGTH,
   normalizeLanguageQuestSpeechText,
 } from "./shared/languageQuestVoice";
@@ -895,8 +894,10 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
   // A dictation answer must never be embedded as browser speech text in a
   // monitored certificate exam. It is eligible only when the server can stream
   // protected audio; other objective question types remain available.
-  const finalExamChallengeIsEligible = (type: string, language: string) =>
-    languageQuestFinalExamTypeIsEligible(type, voiceService.enabled && kokoroSupportsLanguage(language));
+  const finalExamChallengeIsEligible = (challenge: any, language: string) =>
+    languageQuestFinalExamTypeIsEligible(challenge.type, voiceService.canSynthesize(
+      challenge.options?.find((option: any) => option.correct)?.text || "", language,
+    ));
   const voiceLimiter = rateLimit({
     windowMs: 60_000,
     max: 20,
@@ -953,7 +954,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
 
   app.get("/api/language-quest/voice", authMiddleware, (_req, res) => {
     res.json({
-      provider: voiceService.enabled ? "kokoro" : "browser",
+      provider: voiceService.enabled ? voiceService.provider : "browser",
       enabled: voiceService.enabled,
       model: voiceService.enabled ? voiceService.model : null,
     });
@@ -969,7 +970,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       });
       return;
     }
-    if (!kokoroSupportsLanguage(language)) {
+    if (!voiceService.supportsLanguage(language)) {
       res.status(422).json({
         error: "This course language uses the browser voice",
         code: "VOICE_LANGUAGE_UNSUPPORTED",
@@ -978,21 +979,22 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     }
     if (!voiceService.enabled) {
       res.status(503).json({
-        error: "Kokoro is offline; use the browser voice",
+        error: "Course audio is unavailable; use the browser voice",
         code: "VOICE_PROVIDER_UNAVAILABLE",
       });
       return;
     }
     try {
       const audio = await voiceService.synthesize(text, language);
+      res.setHeader("X-Voice-Provider", audio.provider || "kokoro");
       res.setHeader("Content-Type", audio.contentType);
       res.setHeader("Content-Length", String(audio.data.length));
       res.setHeader("Cache-Control", "private, max-age=3600");
       res.send(audio.data);
     } catch (error) {
-      logger.warn?.("Kokoro Learning Quest synthesis failed:", error);
+      logger.warn?.("Learning Quest audio playback failed:", error);
       res.status(503).json({
-        error: "Kokoro could not generate speech; use the browser voice",
+        error: "Course audio could not be played; use the browser voice",
         code: "VOICE_PROVIDER_UNAVAILABLE",
       });
     }
@@ -1147,7 +1149,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           include: {
             units: {
               orderBy: { order: "asc" },
-              include: { lessons: { orderBy: { order: "asc" }, include: { challenges: { select: { id: true, type: true } } } } },
+              include: { lessons: { orderBy: { order: "asc" }, include: { challenges: { select: { id: true, type: true, options: { where: { correct: true }, select: { text: true, correct: true } } } } } } },
             },
           },
         }),
@@ -1183,7 +1185,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         courses: courses.map((course: any) => {
           const challengeIds = course.units.flatMap((unit: any) => unit.lessons.flatMap((lesson: any) => lesson.challenges.map((challenge: any) => challenge.id)));
           const examEligibleChallenges = course.units.flatMap((unit: any) => unit.lessons.flatMap((lesson: any) => lesson.challenges))
-            .filter((challenge: any) => finalExamChallengeIsEligible(challenge.type, course.language));
+            .filter((challenge: any) => finalExamChallengeIsEligible(challenge, course.language));
           const completedChallenges = challengeIds.filter((id: string) => completed.has(id)).length;
           const lessonCount = course.units.reduce((sum: number, unit: any) => sum + unit.lessons.length, 0);
           const courseCompleted = challengeIds.length > 0 && completedChallenges === challengeIds.length;
@@ -1582,7 +1584,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
             include: {
               lessons: {
                 orderBy: { order: "asc" },
-                include: { challenges: { orderBy: { order: "asc" }, select: { id: true, type: true } } },
+                include: { challenges: { orderBy: { order: "asc" }, select: { id: true, type: true, options: { where: { correct: true }, select: { text: true, correct: true } } } } },
               },
             },
           },
@@ -1638,7 +1640,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           expiresAt: true, submittedAt: true, createdAt: true, updatedAt: true, violationReason: true,
         },
       });
-      const examEligibleChallenges = challenges.filter((challenge: any) => finalExamChallengeIsEligible(challenge.type, course.language));
+      const examEligibleChallenges = challenges.filter((challenge: any) => finalExamChallengeIsEligible(challenge, course.language));
       const currentVersionExamAttempts = finalExamAttempts.filter(
         (attempt: any) => attempt.courseUpdatedAt.getTime() === course.updatedAt.getTime(),
       );
@@ -1765,7 +1767,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       }
 
       const eligible = challenges.filter((challenge: any) =>
-        finalExamChallengeIsEligible(challenge.type, course.language)
+        finalExamChallengeIsEligible(challenge, course.language)
         && challenge.options.some((option: any) => option.correct),
       );
       if (eligible.length < LANGUAGE_QUEST_FINAL_EXAM_MIN_QUESTIONS) {
@@ -1870,11 +1872,12 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         res.status(409).json({ error: "This spelling question has no exam audio configured." });
         return;
       }
-      if (!voiceService.enabled || !kokoroSupportsLanguage(attempt.course.language)) {
+      if (!voiceService.enabled || !voiceService.supportsLanguage(attempt.course.language)) {
         res.status(503).json({ error: "Secure spelling audio is temporarily unavailable. Ask your teacher before continuing." });
         return;
       }
       const audio = await voiceService.synthesize(correctText, attempt.course.language);
+      res.setHeader("X-Voice-Provider", audio.provider || "kokoro");
       res.setHeader("Content-Type", audio.contentType);
       res.setHeader("Content-Length", String(audio.data.length));
       res.setHeader("Cache-Control", "private, no-store");

@@ -21,7 +21,8 @@ import { Input } from '@/components/ui/input';
 import { LanguageQuestAvatar } from '@/src/components/games/LanguageQuestAvatar';
 import { LanguageQuestPinyinText } from '@/src/components/games/LanguageQuestPinyinText';
 import { apiGet, qs } from '@/src/lib/api';
-import { languageQuestSpeechLocale } from '@/shared/languageQuestVoice';
+import { speakLanguageQuestVoice, cancelLanguageQuestVoice } from '@/src/lib/languageQuestVoice';
+import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
 import type { LanguageQuestLearnedWordStatus } from '@/shared/languageQuestLearnedWords';
 
 interface LearnedWordCourse {
@@ -142,12 +143,11 @@ export default function LanguageQuestWords() {
     [data],
   );
 
+  const { voiceProvider } = useLanguageQuestPreferences();
+  useEffect(() => () => cancelLanguageQuestVoice(), []);
+
   const speak = (word: LearnedWord) => {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(word.audioText || word.term);
-    utterance.lang = languageQuestSpeechLocale(word.course.language);
-    window.speechSynthesis.speak(utterance);
+    void speakLanguageQuestVoice(word.audioText || word.term, word.course.language, voiceProvider);
   };
 
   const toggleReveal = (id: string) => {

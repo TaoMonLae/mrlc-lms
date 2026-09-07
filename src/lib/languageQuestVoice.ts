@@ -1,12 +1,11 @@
 import { authHeaders } from '@/src/lib/api';
 import {
-  kokoroSupportsLanguage,
   languageQuestSpeechLocale,
   normalizeLanguageQuestSpeechText,
   type LanguageQuestVoiceProvider,
 } from '@/shared/languageQuestVoice';
 
-export type LanguageQuestVoiceResult = 'kokoro' | 'browser' | 'unavailable' | 'cancelled';
+export type LanguageQuestVoiceResult = 'kokoro' | 'elevenlabs' | 'browser' | 'unavailable' | 'cancelled';
 
 let activeRequest: AbortController | null = null;
 let activeAudio: HTMLAudioElement | null = null;
@@ -74,7 +73,7 @@ export async function speakLanguageQuestVoice(
 
   cancelLanguageQuestVoice();
   const version = requestVersion;
-  if (provider === 'browser' || !kokoroSupportsLanguage(language)) {
+  if (provider === 'browser') {
     return speakWithBrowser(text, language);
   }
 
@@ -90,7 +89,7 @@ export async function speakLanguageQuestVoice(
     if (!response.ok) throw new Error(`Voice request failed (${response.status})`);
     const blob = await response.blob();
     if (version !== requestVersion) return 'cancelled';
-    if (await playAudioBlob(blob, version)) return 'kokoro';
+    if (await playAudioBlob(blob, version)) return response.headers.get('X-Voice-Provider') === 'elevenlabs' ? 'elevenlabs' : 'kokoro';
   } catch (error: any) {
     if (error?.name === 'AbortError' || version !== requestVersion) return 'cancelled';
   } finally {
@@ -118,7 +117,8 @@ export async function playLanguageQuestProtectedVoice(
     if (!response.ok) return 'unavailable';
     const blob = await response.blob();
     if (version !== requestVersion) return 'cancelled';
-    return await playAudioBlob(blob, version) ? 'kokoro' : 'unavailable';
+    if (!await playAudioBlob(blob, version)) return 'unavailable';
+    return response.headers.get('X-Voice-Provider') === 'elevenlabs' ? 'elevenlabs' : 'kokoro';
   } catch (error: any) {
     if (error?.name === 'AbortError' || version !== requestVersion) return 'cancelled';
     return 'unavailable';
