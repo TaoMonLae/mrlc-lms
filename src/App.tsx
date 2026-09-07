@@ -1,3 +1,5 @@
+import FinanceProcedures from './pages/financial/FinanceProcedures';
+import FinanceWorkspace from './components/financial/FinanceWorkspace';
 import { Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { lazyWithRetry as lazy } from "./lib/lazyWithRetry";
@@ -610,20 +612,28 @@ export default function App() {
                 </Route>
 
                 <Route element={<ProtectedRoute requiredPermission="manage_fees" />}>
+                  <Route element={<FinanceWorkspace />}>
+
                   <Route path="/payroll" element={<Payroll />} />
                   <Route path="/fees" element={<FeesDashboard />} />
                   <Route path="/fees/payments/new" element={<PaymentNew />} />
                   <Route path="/fees/students/:id" element={<StudentFeeProfile />} />
                   <Route path="/fees/receipts/:id" element={<PaymentReceipt />} />
+                  </Route>
                 </Route>
 
                 <Route element={<ProtectedRoute requiredPermission="view_expenses" />}>
+                  <Route element={<FinanceWorkspace />}>
                   <Route path="/expenses" element={<ExpensesDashboard />} />
                   <Route path="/expenses/:id" element={<ExpenseDetail />} />
+                  </Route>
                 </Route>
                 <Route element={<ProtectedRoute requiredPermission="manage_expenses" />}>
+                  <Route element={<FinanceWorkspace />}>
+
                   <Route path="/expenses/new" element={<ExpenseNew />} />
                   <Route path="/expenses/:id/edit" element={<ExpenseEdit />} />
+                  </Route>
                 </Route>
 
                 <Route element={<ProtectedRoute requiredPermission="view_vendors" />}>
@@ -636,12 +646,17 @@ export default function App() {
                 </Route>
 
                 <Route element={<ProtectedRoute requiredPermission="view_budgets" />}>
+                  <Route element={<FinanceWorkspace />}>
                   <Route path="/budgets" element={<BudgetsPage />} />
                   <Route path="/budgets/:id" element={<BudgetDetail />} />
+                  </Route>
                 </Route>
                 <Route element={<ProtectedRoute requiredPermission="manage_budgets" />}>
+                  <Route element={<FinanceWorkspace />}>
+
                   <Route path="/budgets/new" element={<BudgetNew />} />
                   <Route path="/budgets/:id/edit" element={<BudgetEdit />} />
+                  </Route>
                 </Route>
 
                 <Route element={<ProtectedRoute requiredPermission="view_fee_structures" />}>
@@ -656,10 +671,13 @@ export default function App() {
                 </Route>
 
                 <Route element={<ProtectedRoute requiredPermission="view_financial_reports" />}>
+                  <Route element={<FinanceWorkspace />}>
                   <Route path="/financial" element={<FinancialDashboard />} />
+                  <Route path="/financial/procedures" element={<FinanceProcedures />} />
                   <Route path="/financial/reports/budget-vs-actual" element={<BudgetVsActualReport />} />
                   <Route path="/financial/reports/income-expense" element={<IncomeExpenseReport />} />
                   <Route path="/financial/reports/monthly" element={<MonthlyFinanceReport />} />
+                  </Route>
                 </Route>
 
                 <Route element={<ProtectedRoute requiredPermission="manage_cases" />}>
@@ -690,6 +708,7 @@ export default function App() {
                 </Route>
 
                 <Route element={<ProtectedRoute requiredPermission="view_donations" />}>
+                  <Route element={<FinanceWorkspace />}>
                   <Route path="/donations" element={<DonationsDashboard />} />
                   <Route path="/donations/campaigns" element={<CampaignsPage />} />
                   <Route path="/donations/campaigns/new" element={<CampaignNew />} />
@@ -699,6 +718,7 @@ export default function App() {
                   <Route path="/donors/new" element={<DonorNew />} />
                   <Route path="/donors/:id/edit" element={<DonorEdit />} />
                   <Route path="/donors/:id" element={<DonorProfile />} />
+                  </Route>
                 </Route>
 
                 <Route element={<ProtectedRoute requiredPermission="view_duties" />}>

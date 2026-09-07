@@ -1418,3 +1418,9 @@ a.lq-milestone-row:focus-visible {
   animation-iteration-count: 1 !important;
   transition-duration: 0.001ms !important;
 }
+
+/* Finance text accents preserve Fieldbook roles at WCAG AA contrast. */
+.finance-workspace .text-academic-teal { color: #116d66; }
+.finance-workspace .text-academic-coral { color: #a13d2b; }
+.dark .finance-workspace .text-academic-teal { color: #70d4c9; }
+.dark .finance-workspace .text-academic-coral { color: #ffac98; }

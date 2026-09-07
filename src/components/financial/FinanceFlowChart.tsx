@@ -61,7 +61,7 @@ export function FinanceFlowChart({ data, currency, year }: FinanceFlowChartProps
     return [
       { label: 'Peak receipts', value: Math.max(0, ...income) },
       { label: 'Average paid out', value: expenses.length ? expenses.reduce((sum, value) => sum + value, 0) / expenses.length : 0 },
-      { label: 'Closing position', value: data.reduce((sum, point) => sum + point.net, 0), signed: true },
+      { label: 'Net movement', value: data.reduce((sum, point) => sum + point.net, 0), signed: true },
     ];
   }, [data]);
 
@@ -76,7 +76,7 @@ export function FinanceFlowChart({ data, currency, year }: FinanceFlowChartProps
     <section className="min-w-0 border border-foreground bg-card" aria-labelledby="cash-movement-heading">
       <header className="flex flex-col gap-4 border-b border-foreground px-5 py-5 sm:flex-row sm:items-start sm:justify-between sm:px-6">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-academic-teal">12-month cash movement</p>
+          <p className="font-mono text-xs uppercase tracking-[0.12em] text-academic-teal">12-month cash movement</p>
           <h2 id="cash-movement-heading" className="mt-1 text-lg font-semibold tracking-[-0.02em]">Receipts against paid expenses</h2>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">Actual collections and bill payments for fiscal year {year}.</p>
         </div>
@@ -135,7 +135,7 @@ export function FinanceFlowChart({ data, currency, year }: FinanceFlowChartProps
             ))}
 
             {data.map((point, index) => (
-              <text key={point.label} x={x(index)} y={VIEW.height - 10} textAnchor="middle" className="fill-muted-foreground font-mono text-[10px]">{point.label}</text>
+              <text key={point.label} x={x(index)} y={VIEW.height - 10} textAnchor="middle" className="fill-muted-foreground font-mono text-xs">{point.label}</text>
             ))}
 
             <g clipPath={`url(#${clipId})`}>
@@ -172,7 +172,7 @@ export function FinanceFlowChart({ data, currency, year }: FinanceFlowChartProps
       <div className="grid border-t border-foreground sm:grid-cols-3">
         {stats.map((stat, index) => (
           <div key={stat.label} className={`px-5 py-4 ${index ? 'border-t border-border sm:border-l sm:border-t-0' : ''}`}>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{stat.label}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">{stat.label}</p>
             <p className={`mt-1 font-mono text-base font-semibold tabular-nums ${stat.signed && stat.value < 0 ? 'text-academic-coral' : 'text-foreground'}`}>
               {stat.signed && stat.value >= 0 ? '+' : ''}{formatMoney(stat.value, currency)}
             </p>

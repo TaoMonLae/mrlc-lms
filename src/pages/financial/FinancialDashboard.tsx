@@ -1,3 +1,4 @@
+import { FinanceMetricStrip } from '../../components/financial/FinanceMetricStrip';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import {
@@ -87,22 +88,6 @@ async function fetchJson<T>(url: string, signal: AbortSignal): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-function MetricCell({ label, value, note, tone = 'default' }: {
-  label: string;
-  value: string;
-  note: string;
-  tone?: 'default' | 'teal' | 'coral';
-}) {
-  const valueTone = tone === 'teal' ? 'text-academic-teal' : tone === 'coral' ? 'text-academic-coral' : 'text-foreground';
-  return (
-    <div className="min-w-0 border-t border-foreground px-5 py-5 first:border-t-0 sm:border-l sm:border-t-0 sm:first:border-l-0">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
-      <p className={`mt-2 truncate font-mono text-xl font-semibold tabular-nums tracking-[-0.03em] ${valueTone}`}>{value}</p>
-      <p className="mt-1 text-xs text-muted-foreground">{note}</p>
-    </div>
-  );
-}
-
 function LedgerLink({ to, icon: Icon, title, detail }: {
   to: string;
   icon: typeof DollarSign;
@@ -155,10 +140,10 @@ export default function FinancialDashboard() {
     const yearStart = `${year}-01-01`;
     const yearEnd = `${year}-12-31`;
     const [summary, cashFlow, budgets, pending] = await Promise.all([
-      fetchJson<FinancialSummary>(`/api/financial-reports/summary?fiscalYear=${year}`, signal),
-      fetchJson<CashFlowResponse>(`/api/financial-reports/cash-flow?startDate=${yearStart}&endDate=${yearEnd}`, signal),
-      fetchJson<BudgetRow[]>(`/api/budgets?fiscalYear=${year}`, signal),
-      fetchJson<PendingExpenseResponse>(`/api/expenses?status=PENDING_APPROVAL&limit=5&startDate=${yearStart}&endDate=${yearEnd}`, signal),
+      fetchJson<FinancialSummary>(`/api/financial-reports/summary?fiscalYear=${year}&currency=${currency}`, signal),
+      fetchJson<CashFlowResponse>(`/api/financial-reports/cash-flow?startDate=${yearStart}&endDate=${yearEnd}&currency=${currency}`, signal),
+      fetchJson<BudgetRow[]>(`/api/budgets?fiscalYear=${year}&currency=${currency}`, signal),
+      fetchJson<PendingExpenseResponse>(`/api/expenses?status=PENDING_APPROVAL&limit=5&startDate=${yearStart}&endDate=${yearEnd}&currency=${currency}`, signal),
     ]);
     return {
       summary,
@@ -167,7 +152,7 @@ export default function FinancialDashboard() {
       pendingExpenses: pending.data || [],
       pendingExpenseCount: pending.pagination?.total || 0,
     };
-  }, [year]);
+  }, [year, currency]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -222,15 +207,15 @@ export default function FinancialDashboard() {
     <div className="mx-auto max-w-[1500px] space-y-6 pb-12">
       <header className="flex flex-col gap-5 border-b border-foreground pb-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-academic-teal">Finance / Operating ledger</p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">Financial control desk</h1>
+          <p className="font-mono text-xs uppercase tracking-[0.14em] text-academic-teal">Finance / Operating ledger</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">Finance overview</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Cash movement, fee exposure, commitments, and budget pressure for fiscal year {year}.
+            Review cash movement, support school fee collection, and follow every expense from submission to payment.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Select value={String(year)} onValueChange={(value) => setYear(Number(value))}>
-            <SelectTrigger className="h-10 min-w-36 rounded-none border-foreground bg-background font-mono text-xs">
+            <SelectTrigger aria-label="Fiscal year" className="h-10 min-w-36 rounded-none border-foreground bg-background font-mono text-xs">
               <Calendar className="mr-2 h-4 w-4" />
               <SelectValue />
             </SelectTrigger>
@@ -259,36 +244,36 @@ export default function FinancialDashboard() {
 
       {!loading && !error && summary && data && (
         <>
-          <section className="grid border border-foreground bg-card sm:grid-cols-2 xl:grid-cols-4" aria-label="Financial position">
-            <MetricCell label="Cash received" value={formatMoney(summary.income.total, currency)} note={`${summary.income.feePayments + summary.income.donationCount} recorded receipts`} tone="teal" />
-            <MetricCell label="Paid out" value={formatMoney(summary.expenses.total, currency)} note={`${summary.expenses.paidExpenses} settled payments`} />
-            <MetricCell label="Fees receivable" value={formatMoney(summary.accountsReceivable.outstanding, currency)} note={`${summary.accountsReceivable.count} open fee accounts`} tone={summary.accountsReceivable.outstanding > 0 ? 'coral' : 'default'} />
-            <MetricCell label="Budget used" value={`${summary.budget.utilization.toFixed(1)}%`} note={`${formatMoney(summary.budget.remaining, currency)} uncommitted`} tone={summary.budget.utilization >= 100 ? 'coral' : 'default'} />
-          </section>
+          <FinanceMetricStrip items={[
+            { label: 'Cash received', value: formatMoney(summary.income.total, currency), note: `${summary.income.feePayments + summary.income.donationCount} cash receipts · excludes gifts in kind` },
+            { label: 'Cash paid out', value: formatMoney(summary.expenses.total, currency), note: `${summary.expenses.paidExpenses} payment records, including instalments` },
+            { label: 'Unpaid school fees', value: formatMoney(summary.accountsReceivable.outstanding, currency), note: `Charges due in ${year} · ${summary.accountsReceivable.count} open balances`, attention: summary.accountsReceivable.outstanding > 0 },
+            { label: 'Budget committed', value: `${summary.budget.utilization.toFixed(1)}%`, note: `${formatMoney(summary.budget.remaining, currency)} available for approval`, attention: summary.budget.utilization >= 100 },
+          ]} />
 
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1.85fr)_minmax(320px,0.75fr)]">
             <FinanceFlowChart data={chartData} currency={currency} year={year} />
 
             <aside className="border border-foreground bg-[#0c2538] text-white">
               <div className="border-b border-white/35 px-5 py-5">
-                <p className="font-mono text-[10px] uppercase tracking-[0.13em] text-[#6dd4cb]">Operating position</p>
+                <p className="font-mono text-xs uppercase tracking-[0.13em] text-[#6dd4cb]">Net cash movement</p>
                 <p className={`mt-3 font-mono text-3xl font-semibold tabular-nums tracking-[-0.04em] ${net < 0 ? 'text-[#ff9b86]' : 'text-white'}`}>
                   {net >= 0 ? '+' : ''}{formatMoney(net, currency)}
                 </p>
-                <p className="mt-2 text-xs leading-5 text-white/65">Cash received less settled expense payments. Commitments are listed separately below.</p>
+                <p className="mt-2 text-xs leading-5 text-white/65">Receipts less payments in the selected period. This is not a bank balance; no opening balance or reconciliation is included.</p>
               </div>
 
               <div className="px-5 py-5">
                 <div className="flex items-end justify-between gap-4">
                   <div>
-                    <p className="text-[10px] uppercase tracking-[0.1em] text-white/55">Movement split</p>
-                    <p className="mt-1 font-mono text-sm tabular-nums">{inflowShare.toFixed(0)}% in / {(100 - inflowShare).toFixed(0)}% out</p>
+                    <p className="text-xs uppercase tracking-[0.1em] text-white/75">Movement split</p>
+                    <p className="mt-1 font-mono text-sm tabular-nums">{inflowShare.toFixed(0)}% in / {(movementTotal > 0 ? 100 - inflowShare : 0).toFixed(0)}% out</p>
                   </div>
-                  <p className="font-mono text-xs text-white/55">FY {year}</p>
+                  <p className="font-mono text-xs text-white/75">FY {year}</p>
                 </div>
                 <div className="mt-3 flex h-2 bg-white/15" aria-hidden="true">
                   <span className="bg-[#48b9af]" style={{ width: `${inflowShare}%` }} />
-                  <span className="bg-[#e97961]" style={{ width: `${100 - inflowShare}%` }} />
+                  <span className="bg-[#e97961]" style={{ width: `${movementTotal > 0 ? 100 - inflowShare : 0}%` }} />
                 </div>
               </div>
 
@@ -296,7 +281,7 @@ export default function FinancialDashboard() {
                 {[
                   ['Fee collections', summary.income.fees],
                   ['Donations received', summary.income.donations],
-                  ['Pending commitments', summary.expenses.pendingAmount],
+                  ['Drafts & awaiting approval', summary.expenses.pendingAmount],
                 ].map(([label, value], index) => (
                   <div key={String(label)} className={`flex items-center justify-between gap-4 px-5 py-4 ${index ? 'border-t border-white/20' : ''}`}>
                     <dt className="text-xs text-white/65">{label}</dt>
@@ -311,14 +296,14 @@ export default function FinancialDashboard() {
             <section className="border border-foreground bg-card" aria-labelledby="action-ledger-heading">
               <header className="flex items-start justify-between gap-4 border-b border-foreground px-5 py-5">
                 <div>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-academic-coral">Needs attention</p>
-                  <h2 id="action-ledger-heading" className="mt-1 text-lg font-semibold">Finance action ledger</h2>
+                  <p className="font-mono text-xs uppercase tracking-[0.12em] text-academic-coral">Needs attention</p>
+                  <h2 id="action-ledger-heading" className="mt-1 text-lg font-semibold">Review & follow up</h2>
                 </div>
-                <span className="border border-foreground px-2 py-1 font-mono text-[10px] uppercase tracking-[0.08em]">Live</span>
+                <span className="border border-foreground px-2 py-1 font-mono text-xs uppercase tracking-[0.08em]">Live</span>
               </header>
 
               <div className="divide-y divide-border">
-                <Link to="/expenses" className="group grid gap-3 px-5 py-4 hover:bg-muted/45 sm:grid-cols-[1fr_auto] sm:items-center">
+                <Link to="/expenses?status=PENDING_APPROVAL" className="group grid gap-3 px-5 py-4 hover:bg-muted/45 sm:grid-cols-[1fr_auto] sm:items-center">
                   <div>
                     <p className="text-sm font-semibold">Expense approvals</p>
                     <p className="mt-1 text-xs text-muted-foreground">{data.pendingExpenseCount ? `${data.pendingExpenseCount} submissions await a decision` : 'No submissions waiting for approval'}</p>
@@ -340,7 +325,7 @@ export default function FinancialDashboard() {
 
               {data.pendingExpenses.length > 0 && (
                 <div className="border-t border-foreground">
-                  <div className="grid grid-cols-[1fr_auto] bg-muted/35 px-5 py-2 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+                  <div className="grid grid-cols-[1fr_auto] bg-muted/35 px-5 py-2 font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground">
                     <span>Latest expense submissions</span><span>Gross amount</span>
                   </div>
                   {data.pendingExpenses.slice(0, 3).map((expense) => {
@@ -362,7 +347,7 @@ export default function FinancialDashboard() {
             <section className="border border-foreground bg-card" aria-labelledby="budget-watch-heading">
               <header className="flex items-start justify-between gap-4 border-b border-foreground px-5 py-5">
                 <div>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-academic-teal">Allocation pressure</p>
+                  <p className="font-mono text-xs uppercase tracking-[0.12em] text-academic-teal">Allocation pressure</p>
                   <h2 id="budget-watch-heading" className="mt-1 text-lg font-semibold">Budget watch</h2>
                 </div>
                 <Link to="/budgets" className="inline-flex items-center gap-1 text-xs font-semibold text-academic-teal hover:underline">All budgets <ArrowRight className="h-3.5 w-3.5" /></Link>

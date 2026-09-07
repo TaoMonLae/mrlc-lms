@@ -1,3 +1,5 @@
+import { collectSchoolFee, syncDonationCampaign, financeTransaction, reviewExpense, recordExpensePayment } from './lib/financeOperations';
+import { FinanceControlError, validateMoney } from './shared/financeControls';
 import express from "express";
 import compression from "compression";
 import path from "path";
@@ -977,6 +979,7 @@ const num = z.union([z.string(), z.number()]); // handlers coerce with Number()
 // without this, negative/zero values (e.g. a negative expense amount or donation) pass
 // validation and corrupt financial totals downstream.
 const reqNum = num.refine((v) => Number.isFinite(Number(v)) && Number(v) > 0, { message: "must be a positive number" });
+const financeAmount = reqNum.transform(Number).refine(value => { try { validateMoney(value); return true; } catch { return false; } }, 'Use a positive amount with at most two decimals');
 const optNum = num.optional().nullable();
 const nonNegativeNum = num.refine(
   (v) => Number.isFinite(Number(v)) && Number(v) >= 0,
@@ -1235,7 +1238,7 @@ const schemas = {
   }),
   donationCreate: z.object({
     donorId: reqStr,
-    amount: reqNum,
+    amount: financeAmount,
     currency: z.string().length(3).optional().default("MYR"),
     donationType: z.enum(["ONE_TIME", "RECURRING_MONTHLY", "RECURRING_QUARTERLY", "RECURRING_YEARLY", "IN_KIND"]).optional().default("ONE_TIME"),
     purpose: nullableStr,
@@ -1243,14 +1246,14 @@ const schemas = {
     campaignId: optionalId,
     paymentMethod: nullableStr,
     paymentReference: nullableStr,
-    donationDate: reqStr,
-    isTaxDeductible: z.boolean().optional().default(true),
+    donationDate: validDateStr,
+    isTaxDeductible: z.boolean().optional().default(false),
     taxReceiptAmount: optNum,
     notes: nullableStr,
   }),
   donationUpdate: z.object({
     donorId: optionalId,
-    amount: optNum,
+    amount: financeAmount.optional(),
     currency: z.string().length(3).optional(),
     donationType: z.enum(["ONE_TIME", "RECURRING_MONTHLY", "RECURRING_QUARTERLY", "RECURRING_YEARLY", "IN_KIND"]).optional(),
     status: z.enum(["PENDING", "RECEIVED", "PROCESSED", "CANCELLED", "REFUNDED"]).optional(),
@@ -1259,9 +1262,9 @@ const schemas = {
     campaignId: optionalId,
     paymentMethod: nullableStr,
     paymentReference: nullableStr,
-    donationDate: optStr,
-    receivedDate: optStr,
-    processedDate: optStr,
+    donationDate: validDateStr.optional(),
+    receivedDate: validDateStr.optional(),
+    processedDate: validDateStr.optional(),
     isTaxDeductible: z.boolean().optional(),
     notes: nullableStr,
   }),
@@ -1649,7 +1652,7 @@ const schemas = {
     title: reqStr,
     description: nullableStr,
     category: z.enum(["OPERATIONAL", "ACADEMIC", "STAFF_COSTS", "FOOD_CATERING", "TRANSPORTATION", "FACILITY", "TECHNOLOGY", "EVENT", "ADMINISTRATIVE", "OTHER"]),
-    amount: reqNum,
+    amount: financeAmount,
     currency: z.string().length(3).optional().default("MYR"),
     taxAmount: optNonNegativeNum,
     expenseDate: validDateStr,
@@ -1673,7 +1676,7 @@ const schemas = {
     title: optStr,
     description: nullableStr,
     category: z.enum(["OPERATIONAL", "ACADEMIC", "STAFF_COSTS", "FOOD_CATERING", "TRANSPORTATION", "FACILITY", "TECHNOLOGY", "EVENT", "ADMINISTRATIVE", "OTHER"]).optional(),
-    amount: reqNum.optional().nullable(),
+    amount: financeAmount.optional(),
     currency: z.string().length(3).optional(),
     taxAmount: optNonNegativeNum,
     expenseDate: validDateStr.optional(),
@@ -1703,7 +1706,7 @@ const schemas = {
   }),
   billPaymentCreate: z.object({
     expenseId: reqStr,
-    amount: reqNum,
+    amount: financeAmount,
     paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK", "CREDIT_CARD", "DEBIT_CARD", "ONLINE_PAYMENT", "WIRE_TRANSFER", "OTHER"]),
     paymentReference: nullableStr,
     bankAccount: nullableStr,
@@ -1712,7 +1715,7 @@ const schemas = {
     notes: nullableStr,
   }),
   billPaymentUpdate: z.object({
-    amount: reqNum.optional(),
+    amount: financeAmount.optional(),
     paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK", "CREDIT_CARD", "DEBIT_CARD", "ONLINE_PAYMENT", "WIRE_TRANSFER", "OTHER"]).optional(),
     paymentReference: nullableStr,
     bankAccount: nullableStr,
@@ -8795,7 +8798,11 @@ async function startServer() {
     // Omitting amountPaid preserves the historical one-step "record a
     // completed payment" behavior; providing a smaller number records a
     // partial payment instead.
-    const paidNow = amountPaid == null ? netAmount : Math.min(Math.max(0, Number(amountPaid)), netAmount);
+    if (amountPaid != null && (Number(amountPaid) < 0 || Number(amountPaid) > netAmount)) {
+      res.status(400).json({ error: "amountPaid must be between zero and the fee balance" }); return;
+    }
+    if (discount > 0 && !notes?.trim()) { res.status(400).json({ error: "Record the reason and approval reference for a fee discount or scholarship in notes" }); return; }
+    const paidNow = amountPaid == null ? netAmount : Number(amountPaid);
     // PARTIAL, discountAmount and paidAmount are new (see the
     // add_fee_payment_discount_and_partial migration) and not yet reflected
     // in this environment's generated Prisma client typings -- cast so this
@@ -8870,75 +8877,12 @@ async function startServer() {
       return;
     }
     try {
-      // Cast: discountAmount/paidAmount/PARTIAL are new (see the
-      // add_fee_payment_discount_and_partial migration) and not yet
-      // reflected in this environment's generated Prisma client typings.
-      const fee: any = await prisma.feePayment.findUnique({ where: { id: req.params.id } });
-      if (!fee) {
-        res.status(404).json({ error: "Fee record not found" });
-        return;
-      }
-      if (fee.status === "PAID") {
-        res.status(400).json({ error: "This fee is already fully paid" });
-        return;
-      }
-      if (fee.status === "WAIVED") {
-        res.status(400).json({ error: "This fee has been waived" });
-        return;
-      }
-      const balance = Math.max(0, fee.amount - fee.paidAmount);
-      const amountNow = Number(req.body.amount);
-      if (!amountNow || amountNow <= 0) {
-        res.status(400).json({ error: "amount must be greater than 0" });
-        return;
-      }
-      const applied = Math.min(amountNow, balance);
-      const newPaid = fee.paidAmount + applied;
-      const newStatus: any = newPaid >= fee.amount ? "PAID" : "PARTIAL";
-      const paymentDate = req.body.paymentDate ? new Date(req.body.paymentDate) : new Date();
-      const noteLine = `${paymentDate.toISOString().slice(0, 10)}: +${applied} payment recorded${req.body.notes ? ` (${req.body.notes})` : ""}`;
-
-      const updated: any = await prisma.$transaction(async (tx) => {
-        await tx.feeCollection.create({
-          data: {
-            feePaymentId: fee.id,
-            amount: applied,
-            currency: fee.currency || "MYR",
-            paymentDate,
-            paymentMethod: req.body.paymentMethod || fee.paymentMethod,
-            notes: req.body.notes || null,
-          },
-        });
-        return tx.feePayment.update({
-          where: { id: fee.id },
-          data: {
-            paidAmount: newPaid,
-            status: newStatus,
-            paidDate: paymentDate,
-            paymentMethod: req.body.paymentMethod || fee.paymentMethod,
-            notes: fee.notes ? `${fee.notes}\n${noteLine}` : noteLine,
-          } as any,
-          include: { student: { include: { user: true, class: true } } },
-        });
-      });
-
-      const profile = await prisma.schoolProfile.findFirst();
-      await createAuditLog(
-        jwtUser.userId,
-        jwtUser.email,
-        "PAY",
-        "PAYMENT",
-        fee.id,
-        `Recorded additional payment of ${applied} toward fee ${fee.id} (new balance ${Math.max(0, updated.amount - updated.paidAmount)}).`,
-        req.ip,
-        req.headers["user-agent"] || null,
-        "SUCCESS"
-      );
-
-      res.json(feeReceiptPayload(updated, profile?.currency || "MYR"));
-    } catch (err) {
-      logger.error("Error recording fee top-up payment:", err);
-      res.status(500).json({ error: "Internal Server Error" });
+      const updated = await collectSchoolFee(prisma, req.params.id, jwtUser, req.body);
+      res.json(feeReceiptPayload(updated, updated.currency));
+    } catch (error) {
+      if (error instanceof FinanceControlError) { res.status(error.status).json({ error: error.message }); return; }
+      logger.error("Error recording fee collection:", error);
+      res.status(500).json({ error: "Could not record fee collection. Refresh before retrying." });
     }
   });
 
@@ -8959,12 +8903,15 @@ async function startServer() {
         return;
       }
 
+      if (fee.paidAmount > 0 || await prisma.feeCollection.count({ where: { feePaymentId: fee.id } })) {
+        res.status(409).json({ error: "A fee with recorded cash receipts cannot be voided. Ask the finance officer to document a refund or correction; preserve the original receipts." }); return;
+      }
       const voidedAt = new Date();
       const voidNote = `${voidedAt.toISOString().slice(0, 10)}: Payment voided by ${jwtUser.email}. Reason: ${req.body.reason}`;
       // Keep the collection rows as an immutable audit trail. Financial
       // reports exclude collections whose parent charge is WAIVED.
       const updated: any = await prisma.feePayment.update({
-        where: { id: fee.id },
+        where: { id: fee.id, paidAmount: 0 },
         data: {
           status: "WAIVED" as any,
           paidAmount: 0,
@@ -9729,27 +9676,16 @@ async function startServer() {
     }
 
     try {
-      // Auto-generate donation number
-      const year = new Date().getFullYear();
-      const count = await prisma.donation.count({ where: { donationNumber: { startsWith: `DON-${year}-` } } });
-      const donationNumber = `DON-${year}-${String(count + 1).padStart(4, '0')}`;
-
-      const donation = await prisma.donation.create({
-        data: {
-          ...req.body,
-          donationNumber,
-          donationDate: new Date(req.body.donationDate),
-          taxReceiptAmount: req.body.isTaxDeductible ? req.body.amount : undefined,
-        },
+      const donationNumber = `DON-${new Date().getUTCFullYear()}-${crypto.randomUUID()}`;
+      const donation = await financeTransaction(prisma, async tx => {
+        if (req.body.campaignId) {
+          const campaign = await tx.donationCampaign.findUnique({ where: { id: req.body.campaignId } });
+          if (!campaign || campaign.currency !== req.body.currency) throw new FinanceControlError("Donation and campaign currencies must match", 400);
+        }
+        const gift = await tx.donation.create({ data: { ...req.body, amount: Number(req.body.amount), donationNumber, donationDate: new Date(req.body.donationDate), isTaxDeductible: req.body.donationType === 'IN_KIND' ? false : req.body.isTaxDeductible, taxReceiptAmount: req.body.isTaxDeductible && req.body.donationType !== 'IN_KIND' ? Number(req.body.amount) : null } });
+        await syncDonationCampaign(tx, gift.campaignId);
+        return gift;
       });
-
-      // Update campaign raised amount if linked
-      if (donation.campaignId) {
-        await prisma.donationCampaign.update({
-          where: { id: donation.campaignId },
-          data: { raisedAmount: { increment: donation.amount }, donorCount: { increment: 1 } },
-        });
-      }
 
       await createAuditLog(
         jwtUser.userId,
@@ -9764,6 +9700,7 @@ async function startServer() {
 
       res.status(201).json(donation);
     } catch (err) {
+      if (err instanceof FinanceControlError) { res.status(err.status).json({ error: err.message }); return; }
       logger.error("Error creating donation:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
@@ -9777,51 +9714,33 @@ async function startServer() {
     }
 
     try {
-      const existing = await prisma.donation.findUnique({ where: { id: req.params.id } });
-      if (!existing) {
-        res.status(404).json({ error: "Donation not found" });
-        return;
-      }
-
-      const nextAmount = req.body.amount !== undefined ? Number(req.body.amount) : existing.amount;
-      const nextCampaignId = req.body.campaignId !== undefined ? (req.body.campaignId || null) : existing.campaignId;
-
-      const donation = await prisma.$transaction(async (tx) => {
-        // Keep each campaign's cached raisedAmount/donorCount in sync if the
-        // amount was corrected or the donation was reassigned to a different
-        // campaign (or removed from one).
-        if (existing.campaignId !== nextCampaignId || existing.amount !== nextAmount) {
-          if (existing.campaignId) {
-            await tx.donationCampaign.update({
-              where: { id: existing.campaignId },
-              data: {
-                raisedAmount: { decrement: existing.amount },
-                donorCount: { decrement: 1 },
-              },
-            });
-          }
-          if (nextCampaignId) {
-            await tx.donationCampaign.update({
-              where: { id: nextCampaignId },
-              data: {
-                raisedAmount: { increment: nextAmount },
-                donorCount: { increment: 1 },
-              },
-            });
+      const donation = await financeTransaction(prisma, async tx => {
+        const existing = await tx.donation.findUnique({ where: { id: req.params.id }, include: { receipt: true } });
+        if (!existing) throw new FinanceControlError('Donation not found', 404);
+        if (['RECEIVED', 'PROCESSED', 'REFUNDED'].includes(existing.status) || existing.receipt) {
+          const immutable = ['amount', 'currency', 'donorId', 'donationType', 'donationDate', 'receivedDate', 'campaignId', 'designation', 'isTaxDeductible'];
+          if (immutable.some(key => req.body[key] !== undefined && String(req.body[key]) !== String((existing as any)[key] instanceof Date ? (existing as any)[key].toISOString().slice(0, 10) : (existing as any)[key] ?? '')) || (req.body.status && req.body.status !== existing.status && !(existing.status === 'RECEIVED' && req.body.status === 'PROCESSED'))) {
+            throw new FinanceControlError('Received donations and issued receipts are retained as evidence. Financial changes or refunds require a documented adjustment through the finance officer.');
           }
         }
-
-        return tx.donation.update({
-          where: { id: req.params.id },
-          data: {
-            ...req.body,
-            amount: nextAmount,
-            campaignId: nextCampaignId,
-            donationDate: req.body.donationDate ? new Date(req.body.donationDate) : undefined,
-            receivedDate: req.body.receivedDate ? new Date(req.body.receivedDate) : undefined,
-            processedDate: req.body.processedDate ? new Date(req.body.processedDate) : undefined,
-          },
-        });
+        const currency = req.body.currency || existing.currency;
+        const campaignId = req.body.campaignId === undefined ? existing.campaignId : req.body.campaignId;
+        if (campaignId) {
+          const campaign = await tx.donationCampaign.findUnique({ where: { id: campaignId } });
+          if (!campaign || campaign.currency !== currency) throw new FinanceControlError('Donation and campaign currencies must match', 400);
+        }
+        if (req.body.amount !== undefined) validateMoney(Number(req.body.amount));
+        const donationType = req.body.donationType || existing.donationType;
+        const deductible = donationType !== 'IN_KIND' && (req.body.isTaxDeductible ?? existing.isTaxDeductible);
+        const gift = await tx.donation.update({ where: { id: existing.id }, data: {
+          ...req.body, ...(req.body.amount !== undefined && { amount: Number(req.body.amount) }), isTaxDeductible: deductible, taxReceiptAmount: deductible ? Number(req.body.amount ?? existing.amount) : null,
+          donationDate: req.body.donationDate ? new Date(req.body.donationDate) : undefined,
+          receivedDate: req.body.receivedDate ? new Date(req.body.receivedDate) : (!existing.receivedDate && existing.status === 'PENDING' && ['RECEIVED', 'PROCESSED'].includes(req.body.status) ? new Date() : undefined),
+          processedDate: req.body.processedDate ? new Date(req.body.processedDate) : undefined,
+        } });
+        await syncDonationCampaign(tx, existing.campaignId);
+        if (gift.campaignId !== existing.campaignId) await syncDonationCampaign(tx, gift.campaignId);
+        return gift;
       });
 
       await createAuditLog(
@@ -9837,6 +9756,7 @@ async function startServer() {
 
       res.json(donation);
     } catch (err) {
+      if (err instanceof FinanceControlError) { res.status(err.status).json({ error: err.message }); return; }
       logger.error("Error updating donation:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
@@ -9860,28 +9780,12 @@ async function startServer() {
         return;
       }
 
-      // A donation with an issued tax receipt shouldn't be silently deleted --
-      // that receipt may already be in the donor's hands / filed with tax
-      // authorities. Delete the receipt first (or cancel/refund instead).
-      if (donation.receipt) {
-        res.status(400).json({ error: "Cannot delete a donation that already has a tax receipt issued. Delete the receipt first, or mark the donation as CANCELLED/REFUNDED instead." });
-        return;
+      if (donation.receipt || !['PENDING', 'CANCELLED'].includes(donation.status)) {
+        throw new FinanceControlError('Only unreceived pledges can be deleted. Preserve received donations and receipts for audit.');
       }
-
-      await prisma.$transaction(async (tx) => {
-        // Keep the linked campaign's cached totals in sync (mirrors the
-        // increment done when the donation was created).
-        if (donation.campaignId) {
-          await tx.donationCampaign.update({
-            where: { id: donation.campaignId },
-            data: {
-              raisedAmount: { decrement: donation.amount },
-              donorCount: { decrement: 1 },
-            },
-          });
-        }
-
-        await tx.donation.delete({ where: { id: req.params.id } });
+      await financeTransaction(prisma, async tx => {
+        await tx.donation.delete({ where: { id: donation.id, status: { in: ['PENDING', 'CANCELLED'] } } });
+        await syncDonationCampaign(tx, donation.campaignId);
       });
 
       await createAuditLog(
@@ -9897,6 +9801,7 @@ async function startServer() {
 
       res.json({ success: true });
     } catch (err) {
+      if (err instanceof FinanceControlError) { res.status(err.status).json({ error: err.message }); return; }
       logger.error("Error deleting donation:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
@@ -9979,7 +9884,7 @@ async function startServer() {
         return;
       }
 
-      if (!donation.isTaxDeductible) {
+      if (!donation.isTaxDeductible || donation.donationType === "IN_KIND") {
         res.status(400).json({ error: "This donation is not tax-deductible" });
         return;
       }
@@ -10435,6 +10340,7 @@ async function startServer() {
       const safeSortOrder = sortOrder === "asc" ? "asc" : "desc";
 
       const where: any = {};
+      if (req.query.currency) where.currency = String(req.query.currency).toUpperCase();
       if (status) where.status = { in: (status as string).split(',') };
       if (category) where.category = { in: (category as string).split(',') };
       if (vendorId) where.vendorId = vendorId;
@@ -10624,10 +10530,10 @@ async function startServer() {
       }
 
       const updated = await prisma.expense.update({
-        where: { id: req.params.id },
+        where: { id: req.params.id, status: "DRAFT" },
         data: {
           ...rest,
-          ...(amount !== undefined && { amount: Number(amount) }),
+          ...(amount !== undefined && amount !== null && { amount: Number(amount) }),
           ...(taxAmount !== undefined && { taxAmount: Number(taxAmount ?? 0) }),
           totalAmount: nextAmount + nextTaxAmount,
           expenseDate: rest.expenseDate ? new Date(rest.expenseDate) : undefined,
@@ -10708,7 +10614,7 @@ async function startServer() {
         return;
       }
       const expense = await prisma.expense.update({
-        where: { id: req.params.id },
+        where: { id: req.params.id, status: "DRAFT" },
         data: {
           status: "PENDING_APPROVAL",
           submittedAt: new Date(),
@@ -10743,65 +10649,12 @@ async function startServer() {
       return;
     }
     try {
-      const { notes } = req.body;
-      const existing = await prisma.expense.findUnique({
-        where: { id: req.params.id },
-        include: { budget: true },
-      });
-      if (!existing) { res.status(404).json({ error: "Expense not found" }); return; }
-      if (existing.status !== "PENDING_APPROVAL") {
-        res.status(400).json({ error: "Only PENDING_APPROVAL expenses can be approved" });
-        return;
-      }
-      if (existing.budget?.status === "ARCHIVED") {
-        res.status(409).json({ error: "Cannot approve an expense against an archived budget" });
-        return;
-      }
-      if (existing.budget?.strictLimit) {
-        const committed = await prisma.expense.findMany({
-          where: {
-            budgetId: existing.budgetId!,
-            id: { not: existing.id },
-            status: { in: ["APPROVED", "PARTIAL", "PAID"] },
-          },
-          select: { amount: true, taxAmount: true },
-        });
-        const committedTotal = committed.reduce((sum, row) => sum + getExpenseGrossAmount(row), 0);
-        const requestedTotal = getExpenseGrossAmount(existing);
-        if (committedTotal + requestedTotal > existing.budget.allocatedAmount) {
-          const remaining = Math.max(0, existing.budget.allocatedAmount - committedTotal);
-          res.status(409).json({ error: `This strict budget has only ${remaining.toFixed(2)} remaining` });
-          return;
-        }
-      }
-      const expense = await prisma.expense.update({
-        where: { id: req.params.id },
-        data: {
-          status: "APPROVED",
-          approvedAt: new Date(),
-          approvedById: jwtUser.userId,
-          approvedByName: jwtUser.email,
-          notes: notes || undefined,
-        },
-      });
-
-      await syncBudgetSpending(expense.budgetId);
-
-      await createAuditLog(
-        jwtUser.userId,
-        jwtUser.email,
-        "EXPENSE_APPROVED",
-        "EXPENSE",
-        expense.id,
-        `Approved expense: ${expense.title}`,
-        req.ip,
-        req.headers["user-agent"] || null
-      );
-
+      const expense = await reviewExpense(prisma, req.params.id, jwtUser, 'APPROVED', req.body.notes);
       res.json(expense);
     } catch (error) {
-      logger.error("Error approving expense:", error);
-      res.status(500).json({ error: "Internal server error" });
+      if (error instanceof FinanceControlError) { res.status(error.status).json({ error: error.message }); return; }
+      logger.error("Finance operation failed:", error);
+      res.status(500).json({ error: "Finance operation failed. Refresh the record before retrying." });
     }
   });
 
@@ -10813,41 +10666,12 @@ async function startServer() {
       return;
     }
     try {
-      const { reason } = req.body;
-      const existing = await prisma.expense.findUnique({ where: { id: req.params.id } });
-      if (!existing) { res.status(404).json({ error: "Expense not found" }); return; }
-      if (existing.status !== "PENDING_APPROVAL") {
-        res.status(400).json({ error: "Only PENDING_APPROVAL expenses can be rejected" });
-        return;
-      }
-      const expense = await prisma.expense.update({
-        where: { id: req.params.id },
-        data: {
-          status: "REJECTED",
-          approvedAt: new Date(),
-          approvedById: jwtUser.userId,
-          approvedByName: jwtUser.email,
-          rejectionReason: reason,
-        },
-      });
-
-      await syncBudgetSpending(expense.budgetId);
-
-      await createAuditLog(
-        jwtUser.userId,
-        jwtUser.email,
-        "EXPENSE_REJECTED",
-        "EXPENSE",
-        expense.id,
-        `Rejected expense: ${expense.title}. Reason: ${reason}`,
-        req.ip,
-        req.headers["user-agent"] || null
-      );
-
+      const expense = await reviewExpense(prisma, req.params.id, jwtUser, 'REJECTED', req.body.reason);
       res.json(expense);
     } catch (error) {
-      logger.error("Error rejecting expense:", error);
-      res.status(500).json({ error: "Internal server error" });
+      if (error instanceof FinanceControlError) { res.status(error.status).json({ error: error.message }); return; }
+      logger.error("Finance operation failed:", error);
+      res.status(500).json({ error: "Finance operation failed. Refresh the record before retrying." });
     }
   });
 
@@ -10859,81 +10683,12 @@ async function startServer() {
       return;
     }
     try {
-      const expense = await prisma.expense.findUnique({
-        where: { id: req.params.id },
-      });
-
-      if (!expense) {
-        res.status(404).json({ error: "Expense not found" });
-        return;
-      }
-
-      if (expense.status !== "APPROVED") {
-        res.status(400).json({ error: "Expense must be approved before payment" });
-        return;
-      }
-
-      const {
-        paymentMethod,
-        paymentReference,
-        bankAccount,
-        paymentDate = new Date().toISOString(),
-        receiptUrl,
-        notes,
-      } = req.body;
-
-      const parsedPaymentDate = new Date(paymentDate);
-      const paymentNumber = generatePaymentNumber(parsedPaymentDate);
-
-      const [payment] = await prisma.$transaction([
-        prisma.billPayment.create({
-          data: {
-            expenseId: expense.id,
-            paymentNumber,
-            amount: getExpenseGrossAmount(expense),
-            currency: expense.currency,
-            paymentMethod,
-            paymentDate: parsedPaymentDate,
-            referenceNumber: paymentReference,
-            bankAccount,
-            receiptUrl,
-            notes,
-            approvedById: jwtUser.userId,
-            approvedByName: jwtUser.email,
-            approvedAt: new Date(),
-          },
-        }),
-        prisma.expense.update({
-          where: { id: req.params.id },
-          data: {
-            status: "PAID",
-            paidDate: parsedPaymentDate,
-            paymentReference,
-          },
-        }),
-      ]);
-
-      await createAuditLog(
-        jwtUser.userId,
-        jwtUser.email,
-        "EXPENSE_PAID",
-        "EXPENSE",
-        expense.id,
-        `Recorded payment for expense: ${expense.title}. Amount: ${getExpenseGrossAmount(expense)}`,
-        req.ip,
-        req.headers["user-agent"] || null
-      );
-
-      res.json({
-        expense: await prisma.expense.findUnique({
-          where: { id: req.params.id },
-          include: { vendor: true, budget: true, payments: true },
-        }),
-        payment,
-      });
+      const result = await recordExpensePayment(prisma, req.params.id, jwtUser, req.body);
+      res.json(result);
     } catch (error) {
-      logger.error("Error processing payment:", error);
-      res.status(500).json({ error: "Internal server error" });
+      if (error instanceof FinanceControlError) { res.status(error.status).json({ error: error.message }); return; }
+      logger.error("Finance operation failed:", error);
+      res.status(500).json({ error: "Finance operation failed. Refresh the record before retrying." });
     }
   });
 
@@ -11042,181 +10797,22 @@ async function startServer() {
       return;
     }
     try {
-      const { expenseId, amount, paymentMethod, paymentReference, bankAccount, paymentDate, receiptUrl, notes } = req.body;
-
-      // Validate expense exists
-      const expense = await prisma.expense.findUnique({
-        where: { id: expenseId },
-      });
-
-      if (!expense) {
-        res.status(404).json({ error: "Expense not found" });
-        return;
-      }
-
-      if (!["APPROVED", "PARTIAL"].includes(expense.status)) {
-        res.status(400).json({ error: "Expense must be approved before payment" });
-        return;
-      }
-
-      const parsedPaymentDate = paymentDate ? new Date(paymentDate) : new Date();
-      const paymentNumber = generatePaymentNumber(parsedPaymentDate);
-
-      const existingPayments = await prisma.billPayment.findMany({ where: { expenseId } });
-      const totalPaidBefore = existingPayments.reduce((sum, p) => sum + p.amount, 0);
-      const totalAmount = getExpenseGrossAmount(expense);
-      const outstandingAmount = Math.max(0, totalAmount - totalPaidBefore);
-      const paymentAmount = Number(amount);
-
-      if (!paymentAmount || paymentAmount <= 0) {
-        res.status(400).json({ error: "amount must be greater than 0" });
-        return;
-      }
-      if (outstandingAmount <= 0) {
-        res.status(400).json({ error: "Expense is already fully paid" });
-        return;
-      }
-      if (paymentAmount > outstandingAmount) {
-        res.status(400).json({ error: `Payment exceeds outstanding amount of ${outstandingAmount}` });
-        return;
-      }
-
-      const payment = await prisma.billPayment.create({
-        data: {
-          expenseId,
-          paymentNumber,
-          amount: paymentAmount,
-          currency: expense.currency,
-          paymentMethod,
-          referenceNumber: paymentReference,
-          bankAccount,
-          paymentDate: parsedPaymentDate,
-          receiptUrl,
-          notes,
-        },
-      });
-
-      await syncExpensePaymentStatus(expenseId);
-
-      await createAuditLog(
-        jwtUser.userId,
-        jwtUser.email,
-        "CREATE",
-        "BILL_PAYMENT",
-        payment.id,
-        `Created bill payment: ${payment.paymentNumber} for expense ${expense.title}`,
-        req.ip,
-        req.headers["user-agent"] || null
-      );
-
-      res.status(201).json(payment);
-    } catch (error: any) {
-      logger.error("Error creating bill payment:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
-  app.put("/api/bill-payments/:id", authMiddleware, validate(schemas.billPaymentUpdate), async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (!expenseCanManage(jwtUser.role)) {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    try {
-      const { amount, paymentMethod, paymentReference, bankAccount, paymentDate, receiptUrl, notes, approved } = req.body;
-
-      const existing = await prisma.billPayment.findUnique({
-        where: { id: req.params.id },
-        include: { expense: { include: { payments: true } } },
-      });
-      if (!existing) { res.status(404).json({ error: "Bill payment not found" }); return; }
-
-      const nextAmount = amount !== undefined ? Number(amount) : existing.amount;
-      const paidByOthers = existing.expense.payments
-        .filter((row) => row.id !== existing.id)
-        .reduce((sum, row) => sum + row.amount, 0);
-      const expenseTotal = getExpenseGrossAmount(existing.expense);
-      if (paidByOthers + nextAmount > expenseTotal) {
-        res.status(400).json({ error: `Payment exceeds the remaining amount of ${Math.max(0, expenseTotal - paidByOthers)}` });
-        return;
-      }
-
-      const payment = await prisma.billPayment.update({
-        where: { id: existing.id },
-        data: {
-          ...(amount !== undefined && { amount: Number(amount) }),
-          ...(paymentMethod !== undefined && { paymentMethod }),
-          ...(paymentReference !== undefined && { referenceNumber: paymentReference }),
-          ...(bankAccount !== undefined && { bankAccount }),
-          ...(paymentDate !== undefined && { paymentDate: new Date(paymentDate) }),
-          ...(receiptUrl !== undefined && { receiptUrl }),
-          ...(notes !== undefined && { notes }),
-          ...(approved !== undefined && {
-            approvedById: jwtUser.userId,
-            approvedByName: jwtUser.email,
-            approvedAt: approved ? new Date() : null,
-          }),
-        },
-      });
-      await syncExpensePaymentStatus(payment.expenseId);
-
-      await createAuditLog(
-        jwtUser.userId,
-        jwtUser.email,
-        "UPDATE",
-        "BILL_PAYMENT",
-        payment.id,
-        `Updated bill payment: ${payment.paymentNumber}`,
-        req.ip,
-        req.headers["user-agent"] || null
-      );
-
-      res.json(payment);
+      const result = await recordExpensePayment(prisma, req.body.expenseId, jwtUser, req.body);
+      res.status(201).json(result.payment);
     } catch (error) {
-      logger.error("Error updating bill payment:", error);
-      res.status(500).json({ error: "Internal server error" });
+      if (error instanceof FinanceControlError) { res.status(error.status).json({ error: error.message }); return; }
+      logger.error("Finance operation failed:", error);
+      res.status(500).json({ error: "Finance operation failed. Refresh the record before retrying." });
     }
   });
 
-  app.delete("/api/bill-payments/:id", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (!expenseCanManage(jwtUser.role)) {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    try {
-      const payment = await prisma.billPayment.findUnique({
-        where: { id: req.params.id },
-      });
-
-      if (!payment) {
-        res.status(404).json({ error: "Bill payment not found" });
-        return;
-      }
-
-      await prisma.billPayment.delete({
-        where: { id: req.params.id },
-      });
-
-      await syncExpensePaymentStatus(payment.expenseId);
-
-      await createAuditLog(
-        jwtUser.userId,
-        jwtUser.email,
-        "DELETE",
-        "BILL_PAYMENT",
-        payment.id,
-        `Deleted bill payment: ${payment.paymentNumber}`,
-        req.ip,
-        req.headers["user-agent"] || null
-      );
-
-      res.status(204).send();
-    } catch (error) {
-      logger.error("Error deleting bill payment:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
+  for (const method of ['put', 'delete'] as const) {
+    app[method]("/api/bill-payments/:id", authMiddleware, (req, res) => {
+      const user = (req as any).user as JwtPayload;
+      if (!expenseCanManage(user.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+      res.status(409).json({ error: "Posted payments are retained as audit evidence. Record a documented correction through your finance officer; posted receipts cannot be overwritten or deleted." });
+    });
+  }
 
   // ---- Vendors ----
   app.get("/api/vendors", authMiddleware, async (req, res) => {
@@ -11659,6 +11255,7 @@ async function startServer() {
     try {
       const { fiscalYear, status, departmentId } = req.query;
       const where: any = {};
+      if (req.query.currency) where.currency = String(req.query.currency).toUpperCase();
       if (fiscalYear) {
         where.fiscalYear = resolveUtcReportRange(undefined, undefined, String(fiscalYear)).gte.getUTCFullYear();
       }
@@ -11894,6 +11491,8 @@ async function startServer() {
       return;
     }
     try {
+      const currency = String(req.query.currency || (await prisma.schoolProfile.findFirst())?.currency || 'MYR').toUpperCase();
+      if (!/^[A-Z]{3}$/.test(currency)) throw new ReportRangeError('currency must be a three-letter code');
       const { startDate, endDate, fiscalYear, year: yearParam } = req.query;
 
       // Determine date range (accept both `fiscalYear` and `year` for the year shortcut)
@@ -11908,7 +11507,7 @@ async function startServer() {
       // and paidDate only represents the latest receipt.
       const feeCollections = await prisma.feeCollection.aggregate({
         where: {
-          paymentDate: dateFilter,
+          paymentDate: dateFilter, currency,
           feePayment: { status: { not: 'WAIVED' } },
         },
         _sum: { amount: true },
@@ -11918,8 +11517,9 @@ async function startServer() {
       // Get donations (income)
       const donations = await prisma.donation.aggregate({
         where: {
-          donationDate: dateFilter,
+          OR: [{ receivedDate: dateFilter }, { receivedDate: null, donationDate: dateFilter }], currency,
           status: { in: ['RECEIVED', 'PROCESSED'] },
+          donationType: { not: 'IN_KIND' },
         },
         _sum: { amount: true },
         _count: true,
@@ -11930,7 +11530,7 @@ async function startServer() {
       // expense may have none.
       const billPayments = await prisma.billPayment.aggregate({
         where: {
-          paymentDate: dateFilter,
+          paymentDate: dateFilter, currency,
         },
         _sum: { amount: true },
         _count: true,
@@ -11941,6 +11541,7 @@ async function startServer() {
       // The old OR filter missed budgets that span the entire period.
       const budgets = await prisma.budget.findMany({
         where: {
+          currency,
           startDate: { lte: dateFilter.lte },
           endDate: { gte: dateFilter.gte },
         },
@@ -11955,7 +11556,7 @@ async function startServer() {
       const outstandingFees = await prisma.feePayment.findMany({
         where: {
           status: { in: ['PENDING', 'OVERDUE', 'PARTIAL'] },
-          dueDate: dateFilter,
+          dueDate: dateFilter, currency,
         },
         select: { amount: true, paidAmount: true },
       });
@@ -11966,7 +11567,7 @@ async function startServer() {
       const pendingExpenses = await prisma.expense.findMany({
         where: {
           status: { in: ['DRAFT', 'PENDING_APPROVAL'] },
-          expenseDate: dateFilter,
+          expenseDate: dateFilter, currency,
         },
         select: { amount: true, taxAmount: true },
       });
@@ -11976,6 +11577,7 @@ async function startServer() {
       const netCashFlow = totalIncome - totalExpenses;
 
       res.json({
+        currency,
         period: {
           startDate: dateFilter.gte,
           endDate: dateFilter.lte,
@@ -12029,6 +11631,8 @@ async function startServer() {
       return;
     }
     try {
+      const currency = String(req.query.currency || (await prisma.schoolProfile.findFirst())?.currency || 'MYR').toUpperCase();
+      if (!/^[A-Z]{3}$/.test(currency)) throw new ReportRangeError('currency must be a three-letter code');
       const { startDate, endDate, groupBy = 'month' } = req.query;
 
       const dateFilter = resolveUtcReportRange(
@@ -12039,8 +11643,9 @@ async function startServer() {
       const donationsByPeriod = await prisma.donation.groupBy({
         by: groupBy === 'month' ? ['donationDate'] : ['donationDate'],
         where: {
-          donationDate: dateFilter,
+          OR: [{ receivedDate: dateFilter }, { receivedDate: null, donationDate: dateFilter }], currency,
           status: { in: ['RECEIVED', 'PROCESSED'] },
+          donationType: { not: 'IN_KIND' },
         },
         _sum: { amount: true },
         _count: true,
@@ -12050,7 +11655,7 @@ async function startServer() {
       // partial payments from being reported as if the full invoice was paid.
       const billPaymentDetails = await prisma.billPayment.findMany({
         where: {
-          paymentDate: dateFilter,
+          paymentDate: dateFilter, currency,
         },
         select: {
           amount: true,
@@ -12091,7 +11696,7 @@ async function startServer() {
       // Income & Expense Report.
       const [feeCollectionDetails, donationDetails, expenseDetails] = await Promise.all([
         prisma.feeCollection.findMany({
-          where: { paymentDate: dateFilter, feePayment: { status: { not: 'WAIVED' } } },
+          where: { paymentDate: dateFilter, currency, feePayment: { status: { not: 'WAIVED' } } },
           select: {
             id: true,
             amount: true,
@@ -12114,11 +11719,12 @@ async function startServer() {
           orderBy: { paymentDate: 'desc' },
         }),
         prisma.donation.findMany({
-          where: { donationDate: dateFilter, status: { in: ['RECEIVED', 'PROCESSED'] } },
+          where: { OR: [{ receivedDate: dateFilter }, { receivedDate: null, donationDate: dateFilter }], currency, status: { in: ['RECEIVED', 'PROCESSED'] }, donationType: { not: 'IN_KIND' } },
           select: {
             id: true,
             amount: true,
             donationDate: true,
+          receivedDate: true,
             donationNumber: true,
             paymentMethod: true,
             donor: { select: { name: true, donorCode: true } },
@@ -12142,7 +11748,7 @@ async function startServer() {
           amount: p.amount,
         })),
         ...donationDetails.map((d) => ({
-          date: d.donationDate,
+          date: d.receivedDate || d.donationDate,
           type: 'Donation' as const,
           description: `Donation — ${d.donor.name}${d.campaign ? ` (${d.campaign.name})` : ''}`,
           reference: d.donationNumber,
@@ -12169,6 +11775,7 @@ async function startServer() {
       const netSurplus = totalIncome - totalExpenses;
 
       res.json({
+        currency,
         period: {
           startDate: dateFilter.gte,
           endDate: dateFilter.lte,
@@ -12218,9 +11825,11 @@ async function startServer() {
       return;
     }
     try {
+      const currency = String(req.query.currency || (await prisma.schoolProfile.findFirst())?.currency || 'MYR').toUpperCase();
+      if (!/^[A-Z]{3}$/.test(currency)) throw new ReportRangeError('currency must be a three-letter code');
       const { budgetId, fiscalYear } = req.query;
 
-      let where: any = {};
+      let where: any = { currency };
       if (budgetId) {
         where.id = budgetId;
       } else if (fiscalYear) {
@@ -12277,6 +11886,7 @@ async function startServer() {
       }), { allocated: 0, spent: 0, actualExpenses: 0, variance: 0 });
 
       res.json({
+        currency,
         budgets: budgetComparison,
         summary: {
           totalAllocated: totals.allocated,
@@ -12307,6 +11917,8 @@ async function startServer() {
       return;
     }
     try {
+      const currency = String(req.query.currency || (await prisma.schoolProfile.findFirst())?.currency || 'MYR').toUpperCase();
+      if (!/^[A-Z]{3}$/.test(currency)) throw new ReportRangeError('currency must be a three-letter code');
       const { startDate, endDate } = req.query;
 
       const dateFilter = resolveUtcReportRange(
@@ -12317,7 +11929,7 @@ async function startServer() {
       // Cash inflows
       const feeInflows = await prisma.feeCollection.findMany({
         where: {
-          paymentDate: dateFilter,
+          paymentDate: dateFilter, currency,
           feePayment: { status: { not: 'WAIVED' } },
         },
         select: {
@@ -12329,11 +11941,13 @@ async function startServer() {
 
       const donationInflows = await prisma.donation.findMany({
         where: {
-          donationDate: dateFilter,
+          OR: [{ receivedDate: dateFilter }, { receivedDate: null, donationDate: dateFilter }], currency,
           status: { in: ['RECEIVED', 'PROCESSED'] },
+          donationType: { not: 'IN_KIND' },
         },
         select: {
           donationDate: true,
+          receivedDate: true,
           amount: true,
           paymentMethod: true,
         },
@@ -12343,7 +11957,7 @@ async function startServer() {
       // overstated partial payments and placed cash movement in the wrong month.
       const expenseOutflows = await prisma.billPayment.findMany({
         where: {
-          paymentDate: dateFilter,
+          paymentDate: dateFilter, currency,
         },
         select: {
           paymentDate: true,
@@ -12359,7 +11973,11 @@ async function startServer() {
       // Dec 31 local) and (b) skipped months via day-of-month overflow when the
       // start day was the 29th–31st.
       const reportYear = dateFilter.gte.getUTCFullYear();
-      const monthlyCashFlow = buildMonthlyFinanceRows(reportYear, feeInflows, donationInflows, expenseOutflows);
+      let carry = 0;
+      const monthlyCashFlow = Array.from({ length: dateFilter.lte.getUTCFullYear() - reportYear + 1 }, (_, i) => reportYear + i)
+        .flatMap(year => buildMonthlyFinanceRows(year, feeInflows, donationInflows.map(d => ({ ...d, donationDate: d.receivedDate || d.donationDate })), expenseOutflows))
+        .filter(row => Date.UTC(row.year, row.month, 1) > dateFilter.gte.getTime() && Date.UTC(row.year, row.month - 1, 1) <= dateFilter.lte.getTime())
+        .map(row => ({ ...row, cumulative: (carry = Math.round((carry + row.netFlow) * 100) / 100) }));
 
       const totalInflow = feeInflows.reduce((sum, f) => sum + f.amount, 0) +
                          donationInflows.reduce((sum, d) => sum + d.amount, 0);
@@ -12367,6 +11985,7 @@ async function startServer() {
       const netCashFlow = totalInflow - totalOutflow;
 
       res.json({
+        currency,
         period: {
           startDate: dateFilter.gte,
           endDate: dateFilter.lte,
@@ -12376,7 +11995,8 @@ async function startServer() {
           totalInflow,
           totalOutflow,
           netCashFlow,
-          averageMonthlyFlow: netCashFlow / 12,
+          averageMonthlyFlow: monthlyCashFlow.length ? netCashFlow / monthlyCashFlow.length : 0,
+          basis: "Cash movement; excludes in-kind donations; no opening bank balance",
           endingBalance: monthlyCashFlow.length > 0 ?
             monthlyCashFlow[monthlyCashFlow.length - 1].cumulative : 0,
         },

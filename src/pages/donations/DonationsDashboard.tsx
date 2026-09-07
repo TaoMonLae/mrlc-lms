@@ -23,12 +23,12 @@ export default function DonationsDashboard() {
   useEffect(() => {
     const token = sessionStorage.getItem('auth_token');
     Promise.all([
-      fetch('/api/donations', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch('/api/campaigns', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      fetch('/api/donations', { headers: { Authorization: `Bearer ${token}` } }).then(async r => { if (!r.ok) throw new Error('Unable to load finance records'); return r.json(); }),
+      fetch('/api/campaigns', { headers: { Authorization: `Bearer ${token}` } }).then(async r => { if (!r.ok) throw new Error('Unable to load finance records'); return r.json(); }),
     ])
       .then(([donationsData, campaignsData]) => {
-        setDonations(donationsData || []);
-        setCampaigns(campaignsData || []);
+        setDonations(Array.isArray(donationsData) ? donationsData : []);
+        setCampaigns(Array.isArray(campaignsData) ? campaignsData : []);
       })
       .catch(() => {
         toast.error('Failed to load donation data');
@@ -38,8 +38,8 @@ export default function DonationsDashboard() {
 
   const stats = {
     totalDonations: donations.length,
-    totalAmount: donations.reduce((sum, d) => sum + (d.status !== 'CANCELLED' && d.status !== 'REFUNDED' ? d.amount : 0), 0),
-    processedAmount: donations.filter(d => d.status === 'PROCESSED').reduce((sum, d) => sum + d.amount, 0),
+    totalAmount: donations.filter(d => d.currency === currency && d.donationType !== 'IN_KIND' && ['RECEIVED', 'PROCESSED'].includes(d.status)).reduce((sum, d) => sum + d.amount, 0),
+    processedAmount: donations.filter(d => d.status === 'PROCESSED' && d.currency === currency && d.donationType !== 'IN_KIND').reduce((sum, d) => sum + d.amount, 0),
     activeCampaigns: campaigns.filter(c => c.status === 'ACTIVE').length,
   };
 
@@ -55,7 +55,7 @@ export default function DonationsDashboard() {
   };
 
   const handleDelete = async (donation: any) => {
-    if (!confirm(`Delete donation from "${donation.donor?.name || 'this donor'}" (${formatMoney(donation.amount, currency)})? This cannot be undone.`)) return;
+    if (!confirm(`Delete donation from "${donation.donor?.name || 'this donor'}" (${formatMoney(donation.amount, donation.currency || currency)})? This cannot be undone.`)) return;
 
     const token = sessionStorage.getItem('auth_token');
     try {
@@ -88,10 +88,10 @@ export default function DonationsDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex justify-between">
+      <div className="flex flex-wrap justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Donations</h1>
-          <p className="text-sm text-slate-500">Track donations and fundraising campaigns</p>
+          <p className="text-sm text-slate-500">Track pledges, received gifts and campaigns. Cash totals exclude in-kind gifts and other currencies.</p>
         </div>
         <div className="flex gap-2">
           {hasPermission('manage_campaigns') && (
@@ -126,7 +126,7 @@ export default function DonationsDashboard() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
-              Total Amount
+              Cash received ({currency})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -182,7 +182,7 @@ export default function DonationsDashboard() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-semibold text-lg">{formatMoney(donation.amount, currency)}</div>
+                    <div className="font-semibold text-lg">{formatMoney(donation.amount, donation.currency || currency)}</div>
                     {donation.isTaxDeductible && (
                       <div className="text-xs text-green-600">Tax Deductible</div>
                     )}
@@ -193,6 +193,7 @@ export default function DonationsDashboard() {
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0"
+                        aria-label={`Edit donation ${donation.donationNumber}`}
                         onClick={() => navigate(`/donations/${donation.id}/edit`)}
                       >
                         <Pencil className="h-4 w-4" />
@@ -201,6 +202,8 @@ export default function DonationsDashboard() {
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                        aria-label={`Delete pledge ${donation.donationNumber}`}
+                        disabled={!['PENDING', 'CANCELLED'].includes(donation.status) || Boolean(donation.receiptNumber)}
                         onClick={() => handleDelete(donation)}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -234,11 +237,11 @@ export default function DonationsDashboard() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-600 dark:text-slate-300">Goal</span>
-                      <span className="font-medium">{formatMoney(campaign.goalAmount, currency)}</span>
+                      <span className="font-medium">{formatMoney(campaign.goalAmount, campaign.currency || currency)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-600 dark:text-slate-300">Raised</span>
-                      <span className="font-medium text-green-600">{formatMoney(campaign.raisedAmount, currency)}</span>
+                      <span className="font-medium text-green-600">{formatMoney(campaign.raisedAmount, campaign.currency || currency)}</span>
                     </div>
                     <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                       <div

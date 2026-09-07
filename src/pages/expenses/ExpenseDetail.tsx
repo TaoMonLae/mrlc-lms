@@ -1,10 +1,13 @@
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { paymentPosition } from '../../../shared/financeControls';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
 import { ArrowLeft, Edit, CheckCircle2, XCircle, DollarSign, FileText, Calendar, Building2, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { usePermissions } from '../../lib/permissions';
+import { useUser, usePermissions } from '../../lib/permissions';
 import { formatMoney } from '../../lib/locale';
 import { useSettings } from '../../providers/SettingsProvider';
 import { toast } from 'sonner';
@@ -13,19 +16,31 @@ export default function ExpenseDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
+  const { user } = useUser();
   const { systemSettings } = useSettings();
   const [expense, setExpense] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const currency = systemSettings.currency || 'MYR';
+  const currency = expense?.currency || systemSettings.currency || 'MYR';
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [reason, setReason] = useState('');
+  const [paymentForm, setPaymentForm] = useState({ amount: '', paymentMethod: 'BANK_TRANSFER', paymentDate: new Date().toISOString().slice(0, 10), paymentReference: '', bankAccount: '', notes: '' });
+  const paid = expense?.payments?.reduce((sum: number, p: any) => sum + p.amount, 0) || 0;
+  const outstanding = expense ? Math.max(0, Math.round((expense.amount + (expense.taxAmount || 0) - paid) * 100) / 100) : 0;
+  const ownSubmission = expense?.submittedById === user?.id;
+  const responseError = async (response: Response) => {
+    const body = await response.json().catch(() => ({}));
+    return new Error(body.error || 'The finance action could not be completed');
+  };
 
   useEffect(() => {
     const token = sessionStorage.getItem('auth_token');
     fetch(`/api/expenses/${id}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .then(r => r.json())
+      .then(async r => { if (!r.ok) throw await responseError(r); return r.json(); })
       .then(data => {
         setExpense(data);
       })
@@ -47,13 +62,13 @@ export default function ExpenseDetail() {
         },
       });
 
-      if (!response.ok) throw new Error('Failed to submit expense');
+      if (!response.ok) throw await responseError(response);
 
       const updated = await response.json();
-      setExpense(updated);
+      setExpense((previous: any) => ({ ...previous, ...updated }));
       toast.success('Expense submitted for approval');
-    } catch {
-      toast.error('Failed to submit expense');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to submit expense');
     } finally {
       setActionLoading(false);
     }
@@ -72,21 +87,20 @@ export default function ExpenseDetail() {
         body: JSON.stringify({}),
       });
 
-      if (!response.ok) throw new Error('Failed to approve expense');
+      if (!response.ok) throw await responseError(response);
 
       const updated = await response.json();
-      setExpense(updated);
+      setExpense((previous: any) => ({ ...previous, ...updated }));
       toast.success('Expense approved');
-    } catch {
-      toast.error('Failed to approve expense');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to approve expense');
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleReject = async () => {
-    const reason = prompt('Enter rejection reason:');
-    if (!reason) return;
+    if (!reason.trim()) return;
 
     setActionLoading(true);
     try {
@@ -100,48 +114,42 @@ export default function ExpenseDetail() {
         body: JSON.stringify({ reason }),
       });
 
-      if (!response.ok) throw new Error('Failed to reject expense');
+      if (!response.ok) throw await responseError(response);
 
       const updated = await response.json();
-      setExpense(updated);
+      setExpense((previous: any) => ({ ...previous, ...updated }));
+      setRejectOpen(false);
       toast.success('Expense rejected');
-    } catch {
-      toast.error('Failed to reject expense');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to reject expense');
     } finally {
       setActionLoading(false);
     }
   };
 
-  const handlePay = async () => {
-    const paymentMethod = prompt('Enter payment method (CASH, BANK_TRANSFER, CHECK, etc.):');
-    if (!paymentMethod) return;
-
+  const handlePay = async (event: React.FormEvent) => {
+    event.preventDefault();
     setActionLoading(true);
     try {
+      const position = paymentPosition(expense, expense.payments || [], Number(paymentForm.amount));
       const token = sessionStorage.getItem('auth_token');
-      const response = await fetch(`/api/expenses/${id}/pay`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ paymentMethod }),
+      const response = await fetch('/api/bill-payments', {
+        method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...paymentForm, expenseId: id, amount: position.amount }),
       });
-
-      if (!response.ok) throw new Error('Failed to record payment');
-
-      const data = await response.json();
-      setExpense(data.expense);
-      toast.success('Payment recorded successfully');
-    } catch {
-      toast.error('Failed to record payment');
-    } finally {
-      setActionLoading(false);
-    }
+      if (!response.ok) throw await responseError(response);
+      const payment = await response.json();
+      setExpense((previous: any) => ({ ...previous, status: position.status, payments: [...(previous.payments || []), payment] }));
+      setPaymentOpen(false);
+      toast.success('Payment recorded. Receipt retained in the payment history.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not record payment');
+    } finally { setActionLoading(false); }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case 'PARTIAL': return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'PAID': return 'bg-green-100 text-green-800 border-green-200';
       case 'APPROVED': return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'PENDING_APPROVAL': return 'bg-amber-100 text-amber-800 border-amber-200';
@@ -187,7 +195,7 @@ export default function ExpenseDetail() {
             <p className="text-sm text-slate-500">Expense Details</p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {expense.status === 'DRAFT' && hasPermission('manage_expenses') && (
             <>
               <Button variant="outline" size="sm" onClick={handleSubmit} disabled={actionLoading}>
@@ -201,18 +209,18 @@ export default function ExpenseDetail() {
           )}
           {expense.status === 'PENDING_APPROVAL' && hasPermission('approve_expenses') && (
             <>
-              <Button variant="outline" size="sm" onClick={handleApprove} disabled={actionLoading}>
+              <Button variant="outline" size="sm" onClick={handleApprove} disabled={actionLoading || ownSubmission}>
                 <CheckCircle2 className="h-4 w-4 mr-2" />
                 Approve
               </Button>
-              <Button variant="outline" size="sm" onClick={handleReject} disabled={actionLoading}>
+              <Button variant="outline" size="sm" onClick={() => setRejectOpen(true)} disabled={actionLoading || ownSubmission}>
                 <XCircle className="h-4 w-4 mr-2" />
                 Reject
               </Button>
             </>
           )}
-          {expense.status === 'APPROVED' && hasPermission('manage_expenses') && (
-            <Button size="sm" onClick={handlePay} disabled={actionLoading}>
+          {['APPROVED', 'PARTIAL'].includes(expense.status) && hasPermission('manage_expenses') && (
+            <Button size="sm" onClick={() => { setPaymentForm(previous => ({ ...previous, amount: outstanding.toFixed(2) })); setPaymentOpen(true); }} disabled={actionLoading}>
               <DollarSign className="h-4 w-4 mr-2" />
               Record Payment
             </Button>
@@ -220,6 +228,26 @@ export default function ExpenseDetail() {
         </div>
       </div>
 
+      <section className="grid gap-px border border-border bg-border sm:grid-cols-3" aria-label="Expense payment position">
+        {[['Invoice including tax', expense.amount + (expense.taxAmount || 0)], ['Payments recorded', paid], ['Still to pay', outstanding]].map(([label, value]) => <div key={String(label)} className="bg-card p-5"><p className="text-sm text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-semibold tabular-nums">{formatMoney(Number(value), currency)}</p></div>)}
+      </section>
+      {ownSubmission && expense.status === 'PENDING_APPROVAL' && <p className="border-l-4 border-academic-gold bg-muted p-4 text-sm">A different finance officer must review your submission. Check the invoice, budget, and supporting evidence before approval.</p>}
+      {rejectOpen && <form onSubmit={event => { event.preventDefault(); void handleReject(); }} className="space-y-4 border border-border bg-card p-5" aria-label="Reject expense">
+        <Label htmlFor="rejection-reason">Reason for rejection</Label><Input id="rejection-reason" value={reason} onChange={e => setReason(e.target.value)} required autoFocus />
+        <div className="flex gap-2"><Button type="submit" disabled={actionLoading || !reason.trim()}>Confirm rejection</Button><Button type="button" variant="outline" onClick={() => setRejectOpen(false)}>Cancel</Button></div>
+      </form>}
+      {paymentOpen && <form onSubmit={handlePay} className="space-y-5 border border-foreground bg-card p-5" aria-label="Record expense payment">
+        <div><h2 className="text-lg font-semibold">Record a payment</h2><p className="mt-1 text-sm text-muted-foreground">Record money already paid. You can pay part of the outstanding {formatMoney(outstanding, currency)}.</p></div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2"><Label htmlFor="payment-amount">Amount ({currency})</Label><Input id="payment-amount" type="number" min="0.01" step="0.01" max={outstanding} required value={paymentForm.amount} onChange={e => setPaymentForm({ ...paymentForm, amount: e.target.value })} autoFocus /></div>
+          <div className="space-y-2"><Label htmlFor="payment-date">Payment date</Label><Input id="payment-date" type="date" required min={String(expense.expenseDate).slice(0, 10)} max={new Date().toISOString().slice(0, 10)} value={paymentForm.paymentDate} onChange={e => setPaymentForm({ ...paymentForm, paymentDate: e.target.value })} /></div>
+          <div className="space-y-2"><Label htmlFor="payment-method">Method</Label><select id="payment-method" className="h-10 w-full border border-input bg-background px-3 text-sm" value={paymentForm.paymentMethod} onChange={e => setPaymentForm({ ...paymentForm, paymentMethod: e.target.value })}>{['BANK_TRANSFER', 'CASH', 'CHECK', 'CREDIT_CARD', 'DEBIT_CARD', 'ONLINE_PAYMENT', 'WIRE_TRANSFER', 'OTHER'].map(method => <option key={method} value={method}>{method.replaceAll('_', ' ')}</option>)}</select></div>
+          <div className="space-y-2"><Label htmlFor="payment-reference">Bank or receipt reference</Label><Input id="payment-reference" required value={paymentForm.paymentReference} onChange={e => setPaymentForm({ ...paymentForm, paymentReference: e.target.value })} /></div>
+          <div className="space-y-2"><Label htmlFor="payment-account">Paying account or cash box</Label><Input id="payment-account" required value={paymentForm.bankAccount} onChange={e => setPaymentForm({ ...paymentForm, bankAccount: e.target.value })} /></div>
+          <div className="space-y-2"><Label htmlFor="payment-notes">Evidence / notes</Label><Input id="payment-notes" value={paymentForm.notes} onChange={e => setPaymentForm({ ...paymentForm, notes: e.target.value })} placeholder="Voucher or supporting document reference" /></div>
+        </div>
+        <div className="flex flex-wrap gap-2"><Button type="submit" disabled={actionLoading}>{actionLoading ? 'Recording…' : 'Confirm payment record'}</Button><Button type="button" variant="outline" disabled={actionLoading} onClick={() => setPaymentOpen(false)}>Cancel</Button></div>
+      </form>}
       {/* Status Badge */}
       <div className="flex justify-center">
         <Badge className={getStatusColor(expense.status)} variant="outline">

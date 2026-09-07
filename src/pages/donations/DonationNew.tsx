@@ -47,7 +47,7 @@ export default function DonationNew() {
     paymentMethod: '',
     paymentReference: '',
     donationDate: new Date().toISOString().split('T')[0],
-    isTaxDeductible: true,
+    isTaxDeductible: false,
     notes: '',
   });
 
@@ -252,7 +252,7 @@ export default function DonationNew() {
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
                 <Label htmlFor="isTaxDeductible">Tax Deductible</Label>
-                <p className="text-xs text-slate-500">A tax receipt can be issued for this donation</p>
+                <p className="text-xs text-slate-500">Enable only after confirming the organisation’s approval and this gift’s eligibility.</p>
               </div>
               <Switch
                 id="isTaxDeductible"

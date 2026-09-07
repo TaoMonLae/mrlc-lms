@@ -31,6 +31,7 @@ export default function DonationEdit() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
+  const [posted, setPosted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [donors, setDonors] = useState<Donor[]>([]);
@@ -67,6 +68,7 @@ export default function DonationEdit() {
           return;
         }
         setDonationNumber(donation.donationNumber || '');
+        setPosted(['RECEIVED', 'PROCESSED', 'REFUNDED'].includes(donation.status) || Boolean(donation.receiptNumber));
         setFormData({
           donorId: donation.donorId || '',
           amount: String(donation.amount ?? ''),
@@ -177,12 +179,13 @@ export default function DonationEdit() {
             <p className="text-sm text-slate-500">{donationNumber}</p>
           </div>
         </div>
-        <Button variant="outline" className="text-red-600 hover:text-red-700" onClick={handleDelete}>
+        <Button variant="outline" className="text-red-600 hover:text-red-700" onClick={handleDelete} disabled={posted}>
           <Trash2 className="mr-2 h-4 w-4" />
           Delete
         </Button>
       </div>
 
+      {posted && <p className="border-l-4 border-academic-gold bg-muted p-4 text-sm">This received gift is retained as audit evidence. Financial fields are locked; record corrections or refunds through the finance officer. Notes and processing details can still be updated.</p>}
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
           <CardHeader>
@@ -192,7 +195,7 @@ export default function DonationEdit() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2 col-span-2">
                 <Label htmlFor="donorId">Donor *</Label>
-                <Select value={formData.donorId} onValueChange={(value) => setFormData({ ...formData, donorId: value })}>
+                <Select disabled={posted} value={formData.donorId} onValueChange={(value) => setFormData({ ...formData, donorId: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select donor" />
                   </SelectTrigger>
@@ -208,7 +211,7 @@ export default function DonationEdit() {
               <div className="space-y-2">
                 <Label htmlFor="amount">Amount *</Label>
                 <Input
-                  id="amount"
+                  id="amount" disabled={posted}
                   type="number"
                   min="0"
                   step="0.01"
@@ -221,7 +224,7 @@ export default function DonationEdit() {
               <div className="space-y-2">
                 <Label htmlFor="currency">Currency</Label>
                 <Input
-                  id="currency"
+                  id="currency" disabled={posted}
                   value={formData.currency}
                   onChange={(e) => setFormData({ ...formData, currency: e.target.value.toUpperCase() })}
                   maxLength={3}
@@ -229,7 +232,7 @@ export default function DonationEdit() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="donationType">Donation Type</Label>
-                <Select value={formData.donationType} onValueChange={(value) => setFormData({ ...formData, donationType: value })}>
+                <Select disabled={posted} value={formData.donationType} onValueChange={(value) => setFormData({ ...formData, donationType: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
@@ -260,7 +263,7 @@ export default function DonationEdit() {
               <div className="space-y-2">
                 <Label htmlFor="donationDate">Donation Date *</Label>
                 <Input
-                  id="donationDate"
+                  id="donationDate" disabled={posted}
                   type="date"
                   value={formData.donationDate}
                   onChange={(e) => setFormData({ ...formData, donationDate: e.target.value })}
@@ -270,7 +273,7 @@ export default function DonationEdit() {
               <div className="space-y-2">
                 <Label htmlFor="campaignId">Campaign</Label>
                 <Select
-                  value={formData.campaignId || '__none__'}
+                  disabled={posted} value={formData.campaignId || '__none__'}
                   onValueChange={(value) => setFormData({ ...formData, campaignId: value === '__none__' ? '' : value })}
                 >
                   <SelectTrigger>
@@ -330,7 +333,7 @@ export default function DonationEdit() {
                 <p className="text-xs text-slate-500">A tax receipt can be issued for this donation</p>
               </div>
               <Switch
-                id="isTaxDeductible"
+                id="isTaxDeductible" disabled={posted}
                 checked={formData.isTaxDeductible}
                 onCheckedChange={(checked) => setFormData({ ...formData, isTaxDeductible: checked })}
               />
@@ -356,7 +359,7 @@ export default function DonationEdit() {
               <div className="space-y-2">
                 <Label htmlFor="designation">Designation</Label>
                 <Input
-                  id="designation"
+                  id="designation" disabled={posted}
                   value={formData.designation}
                   onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
                   placeholder="e.g. Unrestricted"

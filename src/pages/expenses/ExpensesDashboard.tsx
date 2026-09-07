@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { Plus, Search, DollarSign, TrendingUp, AlertCircle, CheckCircle2, Receipt, Building2, Wallet, Printer, FileSpreadsheet, Pencil, Trash2, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,8 @@ export default function ExpensesDashboard() {
   const { hasPermission } = usePermissions();
   const { systemSettings } = useSettings();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [searchParams] = useSearchParams();
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [monthFilter, setMonthFilter] = useState('ALL');
   const [expenses, setExpenses] = useState<any[]>([]);
@@ -83,7 +84,7 @@ export default function ExpensesDashboard() {
     return matchesSearch && matchesStatus && matchesCategory && matchesMonth;
   });
 
-  const trackableExpenses = filteredExpenses.filter((expense) => !['REJECTED', 'CANCELLED'].includes(expense.status));
+  const trackableExpenses = filteredExpenses.filter((expense) => expense.currency === currency && !['REJECTED', 'CANCELLED'].includes(expense.status));
   const totalAmount = trackableExpenses.reduce((sum, expense) => sum + expenseGrossAmount(expense), 0);
   const paidAmount = trackableExpenses.reduce((sum, expense) => sum + expensePaidAmount(expense), 0);
   const pendingAmount = trackableExpenses.reduce(

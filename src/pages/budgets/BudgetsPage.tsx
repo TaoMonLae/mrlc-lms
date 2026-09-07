@@ -33,9 +33,9 @@ export default function BudgetsPage() {
     fetch('/api/budgets', {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .then(r => r.json())
+      .then(async r => { if (!r.ok) throw new Error('Unable to load budgets'); return r.json(); })
       .then(data => {
-        setBudgets(data || []);
+        setBudgets(Array.isArray(data) ? data : []);
       })
       .catch(() => {
         setBudgets([]);
@@ -51,9 +51,9 @@ export default function BudgetsPage() {
     return matchesSearch && matchesYear && matchesStatus;
   });
 
-  const totalAllocated = budgets.reduce((sum, b) => sum + (b.allocatedAmount || 0), 0);
-  const totalSpent = budgets.reduce((sum, b) => sum + (b.spentAmount || 0), 0);
-  const totalRemaining = budgets.reduce((sum, b) => sum + (b.remainingAmount || 0), 0);
+  const totalAllocated = filteredBudgets.filter(b => b.currency === currency).reduce((sum, b) => sum + (b.allocatedAmount || 0), 0);
+  const totalSpent = filteredBudgets.filter(b => b.currency === currency).reduce((sum, b) => sum + (b.spentAmount || 0), 0);
+  const totalRemaining = filteredBudgets.filter(b => b.currency === currency).reduce((sum, b) => sum + (b.remainingAmount || 0), 0);
   const years = Array.from(new Set(budgets.map((b) => b.fiscalYear))).sort((a, b) => b - a);
 
   const getStatusColor = (status: string) => {

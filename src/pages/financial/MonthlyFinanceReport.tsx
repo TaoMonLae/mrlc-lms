@@ -112,7 +112,7 @@ export default function MonthlyFinanceReport() {
           ["Total", data.monthlyCashFlow.reduce((sum, month) => sum + month.inflow.fees, 0).toFixed(2), data.monthlyCashFlow.reduce((sum, month) => sum + month.inflow.donations, 0).toFixed(2), data.summary.totalInflow.toFixed(2)],
         ]
       : [
-          ["Month", "Paid Expenses", "Net Cash Flow", "Running Balance"],
+          ["Month", "Paid Expenses", "Net Cash Flow", "Cumulative net movement"],
           ...data.monthlyCashFlow.map((month) => [
             `${MONTH_LABELS[month.month - 1]} ${month.year}`,
             month.outflow.total.toFixed(2),
@@ -170,7 +170,7 @@ export default function MonthlyFinanceReport() {
         { label: `Paid expenses (${monthLabel})`, value: formatMoney(selected.outflow.total, currency) },
         { label: `Net cash flow (${monthLabel})`, value: formatMoney(selected.netFlow, currency) },
         { label: `Annual expenses (${year})`, value: formatMoney(data.summary.totalOutflow, currency) },
-        { label: "Running balance", value: formatMoney(selected.cumulative, currency) },
+        { label: "Cumulative net movement", value: formatMoney(selected.cumulative, currency) },
       ],
       sections: [
         ...(categories.length ? [{
@@ -180,7 +180,7 @@ export default function MonthlyFinanceReport() {
         }] : []),
         {
           heading: `Monthly Expenses — ${year}`,
-          columns: ["Month", "Paid Expenses", "Net Cash Flow", "Running Balance"],
+          columns: ["Month", "Paid Expenses", "Net Cash Flow", "Cumulative net movement"],
           rows: data.monthlyCashFlow.map((month) => [
             MONTH_LABELS[month.month - 1],
             formatMoney(month.outflow.total, currency),
@@ -250,7 +250,7 @@ export default function MonthlyFinanceReport() {
           <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Income / Fees — {monthLabel}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-emerald-600">{formatMoney(selected.inflow.total, currency)}</div><p className="mt-1 text-xs text-slate-500">Fees {formatMoney(selected.inflow.fees, currency)} · Donations {formatMoney(selected.inflow.donations, currency)}</p></CardContent></Card>
           <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Expenses — {monthLabel}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-red-600">{formatMoney(selected.outflow.total, currency)}</div><p className="mt-1 text-xs text-slate-500">Actual payments made this month</p></CardContent></Card>
           <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Net — {monthLabel}</CardTitle></CardHeader><CardContent><div className={`text-2xl font-bold ${selected.netFlow >= 0 ? "text-emerald-600" : "text-red-600"}`}>{selected.netFlow >= 0 ? "+" : ""}{formatMoney(selected.netFlow, currency)}</div><div className="mt-1 flex items-center text-xs text-slate-500">{selected.netFlow >= 0 ? <TrendingUp className="mr-1 h-4 w-4 text-emerald-600" /> : <TrendingDown className="mr-1 h-4 w-4 text-red-600" />}This month</div></CardContent></Card>
-          <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Running Balance</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{formatMoney(selected.cumulative, currency)}</div><p className="mt-1 text-xs text-slate-500"><Calendar className="mr-1 inline h-3 w-3" />Cumulative through {monthLabel}</p></CardContent></Card>
+          <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Cumulative net movement</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{formatMoney(selected.cumulative, currency)}</div><p className="mt-1 text-xs text-slate-500"><Calendar className="mr-1 inline h-3 w-3" />Cumulative through {monthLabel}</p></CardContent></Card>
         </div>
 
         <Tabs value={reportView} onValueChange={(value) => setReportView(value as ReportView)} className="space-y-4">
@@ -275,7 +275,7 @@ export default function MonthlyFinanceReport() {
           <TabsContent value="expenses" className="space-y-4">
             <Card><CardHeader><CardTitle>Expenses — {monthLabel}</CardTitle><CardDescription>Only actual bill payments are counted; pending and approved invoices are not treated as cash spent.</CardDescription></CardHeader><CardContent>{categories.length === 0 ? <p className="py-6 text-center text-sm text-slate-500">No expense payments recorded for {monthLabel}.</p> : <div className="grid gap-3 sm:grid-cols-2">{categories.map(([category, amount]) => <div key={category} className="flex items-center justify-between rounded-lg border p-3"><span className="text-sm text-slate-600 dark:text-slate-300">{category.replaceAll("_", " ")}</span><span className="font-medium">{formatMoney(amount, currency)}</span></div>)}</div>}</CardContent></Card>
             <Card className="rounded-none border-foreground shadow-none"><CardHeader className="border-b border-foreground"><CardTitle>Monthly expenses — {year}</CardTitle><CardDescription>Actual cash paid out each month.</CardDescription></CardHeader><CardContent className="pt-6"><ResponsiveContainer width="100%" height={320}><BarChart data={chartData}><CartesianGrid vertical={false} strokeDasharray="3 3" /><XAxis dataKey="name" tickLine={false} axisLine={false} /><YAxis tickLine={false} axisLine={false} /><Tooltip formatter={(value: number) => formatMoney(value, currency)} cursor={{ fill: "rgba(12, 37, 56, 0.05)" }} /><Legend /><Bar dataKey="Expenses" fill="#e97961" radius={0} /></BarChart></ResponsiveContainer></CardContent></Card>
-            <Card><CardHeader><CardTitle>Monthly Expense Breakdown</CardTitle><CardDescription>Select any row to review its expense categories.</CardDescription></CardHeader><CardContent><div className="overflow-x-auto"><table className="w-full"><thead><tr className="border-b"><th className="p-3 text-left">Month</th><th className="p-3 text-right">Paid Expenses</th><th className="p-3 text-right">Net Cash Flow</th><th className="p-3 text-right">Running Balance</th></tr></thead><tbody>{data.monthlyCashFlow.map((month) => <tr key={`expense-${month.month}`} onClick={() => setSelectedMonth(month.month)} className={`cursor-pointer border-b hover:bg-slate-50 dark:hover:bg-slate-900 ${month.month === selectedMonth ? "bg-red-50 dark:bg-red-950/20" : ""}`}><td className="p-3">{MONTH_LABELS[month.month - 1]} {month.year}</td><td className="p-3 text-right font-medium">{formatMoney(month.outflow.total, currency)}</td><td className={`p-3 text-right ${month.netFlow >= 0 ? "text-emerald-600" : "text-red-600"}`}>{month.netFlow >= 0 ? "+" : ""}{formatMoney(month.netFlow, currency)}</td><td className="p-3 text-right">{formatMoney(month.cumulative, currency)}</td></tr>)}</tbody><tfoot><tr className="border-t-2 font-bold"><td className="p-3">Total</td><td className="p-3 text-right">{formatMoney(data.summary.totalOutflow, currency)}</td><td className="p-3 text-right">{data.summary.netCashFlow >= 0 ? "+" : ""}{formatMoney(data.summary.netCashFlow, currency)}</td><td className="p-3 text-right">{formatMoney(data.summary.endingBalance, currency)}</td></tr></tfoot></table></div></CardContent></Card>
+            <Card><CardHeader><CardTitle>Monthly Expense Breakdown</CardTitle><CardDescription>Select any row to review its expense categories.</CardDescription></CardHeader><CardContent><div className="overflow-x-auto"><table className="w-full"><thead><tr className="border-b"><th className="p-3 text-left">Month</th><th className="p-3 text-right">Paid Expenses</th><th className="p-3 text-right">Net Cash Flow</th><th className="p-3 text-right">Cumulative net movement</th></tr></thead><tbody>{data.monthlyCashFlow.map((month) => <tr key={`expense-${month.month}`} onClick={() => setSelectedMonth(month.month)} className={`cursor-pointer border-b hover:bg-slate-50 dark:hover:bg-slate-900 ${month.month === selectedMonth ? "bg-red-50 dark:bg-red-950/20" : ""}`}><td className="p-3">{MONTH_LABELS[month.month - 1]} {month.year}</td><td className="p-3 text-right font-medium">{formatMoney(month.outflow.total, currency)}</td><td className={`p-3 text-right ${month.netFlow >= 0 ? "text-emerald-600" : "text-red-600"}`}>{month.netFlow >= 0 ? "+" : ""}{formatMoney(month.netFlow, currency)}</td><td className="p-3 text-right">{formatMoney(month.cumulative, currency)}</td></tr>)}</tbody><tfoot><tr className="border-t-2 font-bold"><td className="p-3">Total</td><td className="p-3 text-right">{formatMoney(data.summary.totalOutflow, currency)}</td><td className="p-3 text-right">{data.summary.netCashFlow >= 0 ? "+" : ""}{formatMoney(data.summary.netCashFlow, currency)}</td><td className="p-3 text-right">{formatMoney(data.summary.endingBalance, currency)}</td></tr></tfoot></table></div></CardContent></Card>
           </TabsContent>
         </Tabs>
       </div>
@@ -317,14 +317,14 @@ export default function MonthlyFinanceReport() {
                 <div className="monthly-print-summary grid grid-cols-3 gap-3">
                   <div className="rounded border border-slate-300 p-3"><p className="text-xs text-slate-600">Paid Expenses</p><p className="mt-1 text-lg font-bold text-slate-900">{formatMoney(selected.outflow.total, currency)}</p></div>
                   <div className="rounded border border-slate-300 p-3"><p className="text-xs text-slate-600">Net Cash Flow</p><p className="mt-1 text-lg font-bold text-slate-900">{formatMoney(selected.netFlow, currency)}</p></div>
-                  <div className="rounded border border-slate-300 p-3"><p className="text-xs text-slate-600">Running Balance</p><p className="mt-1 text-lg font-bold text-slate-900">{formatMoney(selected.cumulative, currency)}</p></div>
+                  <div className="rounded border border-slate-300 p-3"><p className="text-xs text-slate-600">Cumulative net movement</p><p className="mt-1 text-lg font-bold text-slate-900">{formatMoney(selected.cumulative, currency)}</p></div>
                 </div>
                 {categories.length > 0 && <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 text-xs">{categories.map(([category, amount]) => <div key={`print-${category}`} className="flex justify-between border-b border-slate-200 py-1"><span>{category.replaceAll("_", " ")}</span><strong>{formatMoney(amount, currency)}</strong></div>)}</div>}
               </section>
               <section className="monthly-print-section mt-5">
                 <h2 className="text-sm font-bold text-slate-900">Monthly Expense Breakdown</h2>
                 <table>
-                  <thead><tr><th>Month</th><th className="text-right">Paid Expenses</th><th className="text-right">Net Cash Flow</th><th className="text-right">Running Balance</th></tr></thead>
+                  <thead><tr><th>Month</th><th className="text-right">Paid Expenses</th><th className="text-right">Net Cash Flow</th><th className="text-right">Cumulative net movement</th></tr></thead>
                   <tbody>{data.monthlyCashFlow.map((month) => <tr key={`print-expense-${month.month}`}><td>{MONTH_LABELS[month.month - 1]} {month.year}</td><td className="text-right">{formatMoney(month.outflow.total, currency)}</td><td className="text-right">{formatMoney(month.netFlow, currency)}</td><td className="text-right">{formatMoney(month.cumulative, currency)}</td></tr>)}</tbody>
                   <tfoot><tr><td>Total</td><td className="text-right">{formatMoney(data.summary.totalOutflow, currency)}</td><td className="text-right">{formatMoney(data.summary.netCashFlow, currency)}</td><td className="text-right">{formatMoney(data.summary.endingBalance, currency)}</td></tr></tfoot>
                 </table>

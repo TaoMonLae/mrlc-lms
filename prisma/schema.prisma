@@ -1247,7 +1247,7 @@ model Donation {
   processedDate DateTime?
 
   // Tax Information
-  isTaxDeductible  Boolean @default(true)
+  isTaxDeductible  Boolean @default(false)
   taxReceiptAmount Float?
 
   // Additional
