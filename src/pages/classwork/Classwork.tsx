@@ -45,6 +45,9 @@ const statusText: Record<string, string> = {
   ACTIVE: "Open",
   SCHEDULED: "Scheduled",
   UPCOMING: "Opens later",
+  IN_PROGRESS: "In progress",
+  RETAKE_AVAILABLE: "Another attempt available",
+  NO_ATTEMPTS: "No attempts left",
   RESOURCE: "Learning resource",
   UNAVAILABLE: "Resource unavailable",
 };
@@ -69,6 +72,7 @@ export default function Classwork() {
   const [busy, setBusy] = useState(false);
   const [retry, setRetry] = useState(0);
   const requestId = useRef(0);
+  const writePending = useRef(false);
   const selected = params.get("class") || classes[0]?.id || "";
   const currentClass = classes.find((c) => c.id === selected);
 
@@ -89,9 +93,11 @@ export default function Classwork() {
     return () => controller.abort();
   }, [retry]);
   useEffect(() => {
+    const version = ++requestId.current;
+    writePending.current = false;
+    setBusy(false);
     if (!selected || !currentClass) return;
     const controller = new AbortController();
-    const version = ++requestId.current;
     setLoading(true);
     setData(null);
     setError("");
@@ -113,37 +119,46 @@ export default function Classwork() {
         if (version === requestId.current && !controller.signal.aborted)
           setLoading(false);
       });
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      ++requestId.current;
+    };
   }, [selected, currentClass?.id, retry]);
 
-  const refresh = async () => {
+  const refresh = async (version: number) => {
     const value = await apiGet<ClassworkPayload>(
       `/api/classwork/classes/${selected}`,
     );
-    setData(value);
+    if (version === requestId.current) setData(value);
   };
   const write = async (
     action: () => Promise<unknown>,
     message: string,
     close = false,
   ) => {
-    if (busy) return;
+    if (writePending.current) return;
+    writePending.current = true;
+    const version = requestId.current;
     setBusy(true);
     try {
       await action();
-      if (close) setComposer(null);
+      if (close && version === requestId.current) setComposer(null);
       toast.success(message);
       try {
-        await refresh();
+        await refresh(version);
       } catch {
-        setError(
-          "Your change was saved, but the list could not refresh. Reload to see the latest classwork.",
-        );
+        if (version === requestId.current)
+          setError(
+            "Your change was saved, but the list could not refresh. Reload to see the latest classwork.",
+          );
       }
     } catch (e: any) {
       toast.error(e.message || "Could not save. Your changes are still here.");
     } finally {
-      setBusy(false);
+      if (version === requestId.current) {
+        writePending.current = false;
+        setBusy(false);
+      }
     }
   };
   const startComposer = (type: "topic" | "resource") => {
@@ -230,7 +245,7 @@ export default function Classwork() {
             <span>{statusText[item.status] ?? item.status}</span>
             <span>
               {item.dueDate
-                ? `Due ${formatDateOnly(item.dueDate)}`
+                ? `Due ${item.kind === "EXAM" ? new Date(item.dueDate).toLocaleString() : formatDateOnly(item.dueDate)}`
                 : "No deadline"}
             </span>
           </div>

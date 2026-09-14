@@ -224,17 +224,36 @@ export function registerClassworkRoutes({
               availableFrom: true,
               availableUntil: true,
               allowLateStart: true,
+              attemptLimit: true,
               subject: { select: { name: true } },
-              _count: { select: { assignments: true } },
+              _count: {
+                select: {
+                  assignments: true,
+                  attempts: {
+                    where: {
+                      studentId: studentId ?? "__no_student__",
+                      state: { not: "INVALIDATED" },
+                    },
+                  },
+                },
+              },
               assignments: {
                 where: { studentId: studentId ?? "__no_student__" },
-                select: { studentId: true },
+                select: {
+                  studentId: true,
+                  availableFromOverride: true,
+                  availableUntilOverride: true,
+                  attemptLimitOverride: true,
+                },
               },
               attempts: {
-                where: { studentId: studentId ?? "__no_student__" },
+                where: {
+                  studentId: studentId ?? "__no_student__",
+                  state: { not: "INVALIDATED" },
+                },
                 orderBy: { attemptNumber: "desc" },
                 take: 1,
-                select: { id: true, isCompleted: true },
+                select: { id: true, isCompleted: true, state: true },
               },
             },
           }),
@@ -271,7 +290,11 @@ export function registerClassworkRoutes({
             ? pending
               ? `${pending} to review`
               : h.status
-            : (submission ?? h.status),
+            : submission === "MARKED" || submission === "SUBMITTED"
+              ? submission
+              : h.status === "CLOSED"
+                ? "CLOSED"
+                : (submission ?? h.status),
           actionable:
             !canManage &&
             h.status === "OPEN" &&
@@ -280,6 +303,17 @@ export function registerClassworkRoutes({
       });
       for (const exam of exams) {
         const completed = !!exam.attempts[0]?.isCompleted;
+        const assignment = exam.assignments[0];
+        const availableFrom =
+          assignment?.availableFromOverride ?? exam.availableFrom;
+        const availableUntil =
+          assignment?.availableUntilOverride ?? exam.availableUntil;
+        const attemptLimit =
+          assignment?.attemptLimitOverride ?? exam.attemptLimit;
+        const inProgress = ["IN_PROGRESS", "PAUSED"].includes(
+          exam.attempts[0]?.state,
+        );
+        const attemptsRemain = exam._count.attempts < attemptLimit;
         if (
           !canManage &&
           !studentCanSeeClassworkExam({
@@ -291,11 +325,17 @@ export function registerClassworkRoutes({
         )
           continue;
         const upcoming =
-          !!exam.availableFrom && exam.availableFrom.getTime() > Date.now();
+          !!availableFrom && availableFrom.getTime() > Date.now();
         const ended =
-          !!exam.availableUntil &&
-          exam.availableUntil.getTime() < Date.now() &&
+          !!availableUntil &&
+          availableUntil.getTime() < Date.now() &&
           !exam.allowLateStart;
+        const canAttempt =
+          !upcoming &&
+          !ended &&
+          ["PUBLISHED", "ACTIVE", "SCHEDULED"].includes(exam.status) &&
+          (inProgress || attemptsRemain);
+        const showResult = completed && !canAttempt;
         items.push(
           withPlacement({
             id: `EXAM:${exam.id}`,
@@ -305,28 +345,29 @@ export function registerClassworkRoutes({
             title: exam.title,
             description: null,
             subject: exam.subject?.name ?? null,
-            dueDate: exam.availableUntil?.toISOString() ?? null,
+            dueDate: availableUntil?.toISOString() ?? null,
             createdAt: exam.createdAt.toISOString(),
             href: canManage
               ? `/exams/${exam.id}`
-              : completed
+              : showResult
                 ? `/exam2/attempts/${exam.attempts[0].id}/result`
-                : `/exams/${exam.id}/take`,
+                : `/exam2/resume?exam=${encodeURIComponent(exam.id)}`,
             status: canManage
               ? exam.status
-              : completed
+              : showResult
                 ? "SUBMITTED"
                 : upcoming
                   ? "UPCOMING"
                   : ended
                     ? "CLOSED"
-                    : exam.status,
-            actionable:
-              !canManage &&
-              !completed &&
-              !upcoming &&
-              !ended &&
-              ["PUBLISHED", "ACTIVE", "SCHEDULED"].includes(exam.status),
+                    : inProgress
+                      ? "IN_PROGRESS"
+                      : completed && canAttempt
+                        ? "RETAKE_AVAILABLE"
+                        : !attemptsRemain
+                          ? "NO_ATTEMPTS"
+                          : exam.status,
+            actionable: !canManage && canAttempt,
           }),
         );
       }

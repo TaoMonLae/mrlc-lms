@@ -52,3 +52,14 @@ This implementation does not add rubric grading, scheduled publishing, Google in
 - Prisma schema validation, TypeScript checking, and production build passed. Existing Lottie eval and Node deprecation warnings remain unrelated to this module.
 
 The isolated UI fixture was removed after QA. It verifies interaction/layout but does not prove live school data connectivity or source-destination end-to-end workflows. Production migration deployment and authenticated smoke testing remain deployment steps.
+
+## Bug review — 2026-09-14
+
+- Student exam deadlines and opening states now use individual assignment overrides. Exam timestamps display local date and time rather than treating a UTC timestamp as a calendar-only homework deadline.
+- Exam attempt counts and latest-attempt selection exclude invalidated attempts. Individual attempt limits are respected, active attempts remain resumable, and eligible retakes are not hidden behind a result-only link.
+- Classwork's “View exam” now opens `/exam2/resume?exam=<id>` without starting a timed attempt. The existing exam entry screen filters to that exam and requires an explicit Start/Resume action. Result-only links remain for completed work without a currently available retake.
+- The exam entry screen now requests access codes for resumed protected attempts, matching the server's requirements. It handles network errors, prevents overlapping start requests, and distinguishes failed loading from an empty exam list with a retry action.
+- Closed homework no longer shows a pending redo request as actionable work. Submitted/marked state remains visible.
+- Classwork save refreshes are scoped to the classroom/request generation that initiated them, so browser-history navigation cannot let an old response overwrite the current classroom. Mutations also have a synchronous in-flight guard.
+
+Regression coverage includes six additional route tests for assignment windows, safe exam destinations, retakes, resume at the attempt limit, invalidated-attempt query isolation, and closed homework. Browser checks using isolated fixtures verified zero start requests on preview, a failed start followed by successful retry, protected resume submitting a prompted test code, visible load errors, and class A remaining visible after a delayed class B save. Fixtures were removed; school data was not modified. No schema migration or dependency changes are required for these fixes.

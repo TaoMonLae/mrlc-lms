@@ -166,6 +166,139 @@ function harness(
   };
 }
 const base = "/api/classwork/classes/:classId";
+const examFixture = (overrides: Record<string, any> = {}) => ({
+  id: "e1",
+  title: "Checkpoint",
+  status: "PUBLISHED",
+  createdAt: new Date("2026-09-14T00:00:00Z"),
+  availableFrom: null,
+  availableUntil: null,
+  allowLateStart: false,
+  attemptLimit: 1,
+  _count: { assignments: 0, attempts: 0 },
+  assignments: [],
+  attempts: [],
+  ...overrides,
+});
+test("classwork honors individual exam windows and links to a non-starting preview", async () => {
+  const extended = new Date("2099-01-02T10:00:00Z");
+  const request = harness("STUDENT", {
+    exam: {
+      findMany: async () => [
+        examFixture({
+          availableUntil: new Date("2000-01-01T00:00:00Z"),
+          _count: { assignments: 1, attempts: 0 },
+          assignments: [{ studentId: "s1", availableUntilOverride: extended }],
+        }),
+      ],
+    },
+  });
+  const { payload } = await request("get", base);
+  assert.equal(payload.items[0].dueDate, extended.toISOString());
+  assert.equal(payload.items[0].actionable, true);
+  assert.equal(payload.items[0].href, "/exam2/resume?exam=e1");
+  assert.notEqual(payload.items[0].status, "CLOSED");
+});
+test("individual opening dates prevent classwork from claiming an exam is open", async () => {
+  const request = harness("STUDENT", {
+    exam: {
+      findMany: async () => [
+        examFixture({
+          _count: { assignments: 1, attempts: 0 },
+          assignments: [
+            {
+              studentId: "s1",
+              availableFromOverride: new Date("2099-01-01T00:00:00Z"),
+            },
+          ],
+        }),
+      ],
+    },
+  });
+  const { payload } = await request("get", base);
+  assert.equal(payload.items[0].status, "UPCOMING");
+  assert.equal(payload.items[0].actionable, false);
+});
+test("completed work still offers authorized retakes, including individual attempt limits", async () => {
+  const row = examFixture({
+    _count: { assignments: 1, attempts: 1 },
+    assignments: [{ studentId: "s1", attemptLimitOverride: 2 }],
+    attempts: [{ id: "a1", isCompleted: true, state: "SUBMITTED" }],
+  });
+  const request = harness("STUDENT", { exam: { findMany: async () => [row] } });
+  const retake = (await request("get", base)).payload.items[0];
+  assert.equal(retake.status, "RETAKE_AVAILABLE");
+  assert.equal(retake.actionable, true);
+  assert.equal(retake.href, "/exam2/resume?exam=e1");
+  row.assignments[0].attemptLimitOverride = 1;
+  const exhausted = (await request("get", base)).payload.items[0];
+  assert.equal(exhausted.status, "SUBMITTED");
+  assert.equal(exhausted.actionable, false);
+  assert.equal(exhausted.href, "/exam2/attempts/a1/result");
+});
+test("in-progress attempts can be resumed even when the attempt limit has been reached", async () => {
+  const request = harness("STUDENT", {
+    exam: {
+      findMany: async () => [
+        examFixture({
+          _count: { assignments: 0, attempts: 1 },
+          attempts: [{ id: "a1", isCompleted: false, state: "PAUSED" }],
+        }),
+      ],
+    },
+  });
+  const item = (await request("get", base)).payload.items[0];
+  assert.equal(item.status, "IN_PROGRESS");
+  assert.equal(item.actionable, true);
+  assert.equal(item.href, "/exam2/resume?exam=e1");
+});
+test("attempt selection and counts exclude invalidated attempts without selecting exam secrets", async () => {
+  let query: any;
+  const request = harness("STUDENT", {
+    exam: {
+      findMany: async (args: any) => {
+        query = args;
+        return [];
+      },
+    },
+  });
+  await request("get", base);
+  assert.deepEqual(query.select.attempts.where, {
+    studentId: "s1",
+    state: { not: "INVALIDATED" },
+  });
+  assert.deepEqual(
+    query.select._count.select.attempts.where,
+    query.select.attempts.where,
+  );
+  assert.deepEqual(query.select.attempts.select, {
+    id: true,
+    isCompleted: true,
+    state: true,
+  });
+  assert.equal(query.select.questions, undefined);
+  assert.equal(query.select.accessCodeHash, undefined);
+  assert.equal(query.select.assignments.select.availableUntilOverride, true);
+});
+test("closed homework with a redo request is not advertised as work to redo", async () => {
+  const request = harness("STUDENT", {
+    homework: {
+      findMany: async () => [
+        {
+          id: "h1",
+          title: "Essay",
+          status: "CLOSED",
+          dueDate: new Date(),
+          createdAt: new Date(),
+          submissions: [{ status: "REDO" }],
+        },
+      ],
+    },
+  });
+  const item = (await request("get", base)).payload.items[0];
+  assert.equal(item.status, "CLOSED");
+  assert.equal(item.actionable, false);
+});
 test("topic creation trims input and binds the authenticated class", async () => {
   let created: any;
   const request = harness("TEACHER", {
