@@ -26,6 +26,7 @@ import { ZipArchive } from "archiver";
 import JSZip from "jszip";
 import sharp from "sharp";
 import { registerExamPhase2Routes } from "./examPhase2";
+import { registerClassworkRoutes } from "./classworkRoutes";
 import { composeQuestionSet, registerExamBankRoutes } from "./examBank";
 import { registerNewsRoutes } from "./news";
 import { registerPayrollPdfRoutes } from "./payrollPdf";
@@ -19959,6 +19960,7 @@ async function startServer() {
 
   // ── Phase 2 advanced exam routes (registered before the SPA catch-all) ──────
   registerExamPhase2Routes({ app, prisma, authMiddleware, createAuditLog, logger, canManageExamClass });
+  registerClassworkRoutes({ app, prisma, authMiddleware, logger, canManageExamClass });
   // ── Phase 3 reusable question bank routes ───────────────────────────────────
   registerExamBankRoutes({ app, prisma, authMiddleware, createAuditLog, logger, canManageExamClass });
   // ── News / Daily Digest (RSS aggregation) ───────────────────────────────────

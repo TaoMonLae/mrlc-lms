@@ -83,7 +83,7 @@ export default function ClassProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
-  const { hasPermission } = usePermissions();
+  const { hasPermission, isAdmin, isTeacher } = usePermissions();
   const canManageClass = hasPermission('manage_classes');
 
   const [klass, setKlass] = useState<ClassData | null>(null);
@@ -391,6 +391,7 @@ export default function ClassProfile() {
             )}
           </p>
         </div>
+        {(isAdmin || isTeacher) && <Button variant="outline" render={<Link to={`/classwork?class=${encodeURIComponent(id || '')}`} />} nativeButton={false}><BookOpen className="mr-2 h-4 w-4" /> Classwork</Button>}
         {canManageClass && (
           <div className="flex gap-2">
             <Button variant="outline" render={<Link to={`/classes/${id}/edit`} />} nativeButton={false}>

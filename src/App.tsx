@@ -56,6 +56,7 @@ const TeacherEdit = lazy(() => import("./pages/teachers/TeacherEdit"));
 const ClassesList = lazy(() => import("./pages/classes/ClassesList"));
 const ClassNew = lazy(() => import("./pages/classes/ClassNew"));
 const ClassProfile = lazy(() => import("./pages/classes/ClassProfile"));
+const Classwork = lazy(() => import("./pages/classwork/Classwork"));
 const ClassEdit = lazy(() => import("./pages/classes/ClassEdit"));
 
 const SubjectsList = lazy(() => import("./pages/subjects/SubjectsList"));
@@ -356,6 +357,9 @@ export default function App() {
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/profile" element={<MyProfile />} />
                 <Route path="/my-payroll" element={<MyPayroll />} />
+                <Route element={<ProtectedRoute allowedRoles={['TEACHER', 'STUDENT', 'ADMIN']} />}>
+                  <Route path="/classwork" element={<Classwork />} />
+                </Route>
 
                 <Route element={<ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']} />}>
                   <Route path="/teacher/dashboard" element={<TeacherDashboard />} />

@@ -50,6 +50,10 @@ interface HomeworkRow {
 export default function HomeworkList() {
   const { isAdmin } = usePermissions();
   const location = useLocation();
+  const classworkState = location.state as {
+    classId?: string;
+    openComposer?: boolean;
+  } | null;
   // Arrives here from "Assign as Homework" on a News article — see
   // NewsFeed.tsx / ArticleReader.tsx, which navigate with this shape.
   const prefill = (
@@ -62,7 +66,9 @@ export default function HomeworkList() {
   const [loadError, setLoadError] = useState("");
   const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
   const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
-  const [showForm, setShowForm] = useState(!!prefill);
+  const [showForm, setShowForm] = useState(
+    !!prefill || !!classworkState?.openComposer,
+  );
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [query, setQuery] = useState("");
@@ -75,7 +81,7 @@ export default function HomeworkList() {
   const [form, setForm] = useState({
     title: prefill?.title || "",
     instructions: prefill?.instructions || "",
-    classId: "",
+    classId: classworkState?.classId || "",
     subjectId: "",
     dueDate: localToday(),
     maxMarks: "",

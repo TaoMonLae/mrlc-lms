@@ -118,6 +118,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       { title: "Classes", url: "/classes", icon: BookOpen },
       { title: "Subjects", url: "/subjects", icon: BookOpen },
       { title: "Homework", url: "/teacher/homework", icon: FileText },
+      { title: "Classwork", url: "/classwork", icon: Layers },
       { title: "Exams", url: "/exams", icon: FileCheck },
       { title: "Gradebook", url: "/gradebook", icon: ClipboardList },
       { title: "GED Readiness", url: "/gradebook/ged-readiness", icon: GraduationCap },
@@ -210,6 +211,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
     items: [
       { title: "My Timetable", url: "/teacher/timetable", icon: CalendarDays },
       { title: "My Classes", url: "/teacher/classes", icon: BookOpen },
+      { title: "Classwork", url: "/classwork", icon: Layers },
       { title: "Homework", url: "/teacher/homework", icon: FileText },
       { title: "Lesson Planner", url: "/teacher/planner", icon: ClipboardList },
       { title: "Exams", url: "/teacher/exams", icon: FileCheck },
@@ -267,6 +269,7 @@ export const STUDENT_NAV: AdminNavEntry[] = [
     items: [
       { title: "My Timetable", url: "/timetable", icon: CalendarDays },
       { title: "Homework", url: "/student/homework", icon: FileText },
+      { title: "Classwork", url: "/classwork", icon: Layers },
       { title: "Exams", url: "/student/exams", icon: FileCheck },
       { title: "My Results", url: "/student/results", icon: GraduationCap },
       { title: "My Progress", url: "/student/grades", icon: ClipboardList },

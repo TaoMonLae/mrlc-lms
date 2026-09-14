@@ -485,6 +485,9 @@ model Class {
   categoryWeights     CategoryWeight[]
   lessonPlans         LessonPlan[]
   homework            Homework[]
+  classworkTopics     ClassworkTopic[]
+  classworkResources  ClassworkResource[]
+  classworkPlacements ClassworkPlacement[]
   flashcardDeckLinks  FlashcardDeckClass[]
   socialPosts         SocialPost[]
   gameControlPolicies GameControlPolicy[]
@@ -2155,6 +2158,47 @@ model GradeItem {
 }
 
 // ── Homework ──────────────────────────────────────────────────────────────────
+// Classwork organizes existing assessment records; it never copies their grades.
+model ClassworkTopic {
+  id        String   @id @default(uuid())
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  title     String
+  createdAt DateTime @default(now())
+  placements ClassworkPlacement[]
+
+  @@unique([classId, title])
+}
+
+model ClassworkResource {
+  id          String   @id @default(uuid())
+  classId     String
+  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  kind        String   // READING | ACTIVITY
+  url         String
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([classId])
+}
+
+model ClassworkPlacement {
+  id         String @id @default(uuid())
+  classId    String
+  class      Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  sourceType String // HOMEWORK | EXAM | RESOURCE; source ownership is checked by API
+  sourceId   String
+  topicId    String?
+  topic      ClassworkTopic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  pinned     Boolean @default(false)
+
+  @@unique([classId, sourceType, sourceId])
+  @@index([topicId])
+}
+
 model Homework {
   id            String  @id @default(uuid())
   title         String

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router";
 import {
   BookOpen,
   BookOpenCheck,
@@ -65,10 +66,14 @@ interface HomeworkItem {
 }
 
 export default function StudentHomework() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const focusedAssignment = searchParams.get("assignment");
   const { user } = useAuth();
   const [query, setQuery] = useState("");
   const [subject, setSubject] = useState("all");
-  const [view, setView] = useState<HomeworkStage | "all">("todo");
+  const [view, setView] = useState<HomeworkStage | "all">(
+    focusedAssignment ? "all" : "todo",
+  );
   const [draftSaved, setDraftSaved] = useState(false);
   const [items, setItems] = useState<HomeworkItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -277,9 +282,10 @@ export default function StudentHomework() {
       ? isHomeworkActionable(homeworkStage(item, today))
       : homeworkStage(item, today) === selected);
   const visible = items
+    .filter((item) => !focusedAssignment || item.id === focusedAssignment)
     .filter(
       (item) =>
-        matchesView(item, view) &&
+        (focusedAssignment || matchesView(item, view)) &&
         (subject === "all" || item.subjectName === subject) &&
         `${item.title} ${item.subjectName ?? ""} ${item.teacherName ?? ""}`
           .toLowerCase()
@@ -317,7 +323,7 @@ export default function StudentHomework() {
               {item.maxMarks != null && <span>· out of {item.maxMarks}</span>}
             </p>
             {item.instructions && (
-              <details>
+              <details open={focusedAssignment === item.id ? true : undefined}>
                 <summary>Assignment brief</summary>
                 <p className="mt-3 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">
                   {item.instructions}
@@ -537,6 +543,27 @@ export default function StudentHomework() {
         title="A little progress, every day."
         description="Your assignments, next steps, and teacher feedback — together in one place."
       />
+      {focusedAssignment && (
+        <div className="flex flex-wrap items-center gap-4 text-sm">
+          <Link to="/classwork" className="text-blue-600">
+            ← Classwork
+          </Link>
+          <span>Opened from your class learning desk</span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={openId !== null}
+            onClick={() => {
+              setSearchParams({});
+              setView("all");
+              setQuery("");
+              setSubject("all");
+            }}
+          >
+            View all homework
+          </Button>
+        </div>
+      )}
       {!loading && !loadError && (
         <HomeworkFocus
           eyebrow="Where to begin"
@@ -566,7 +593,10 @@ export default function StudentHomework() {
             key={tab.key}
             disabled={openId !== null}
             aria-pressed={view === tab.key}
-            onClick={() => setView(tab.key)}
+            onClick={() => {
+              setSearchParams({});
+              setView(tab.key);
+            }}
           >
             {tab.label}{" "}
             <span className="ml-1 opacity-60">
