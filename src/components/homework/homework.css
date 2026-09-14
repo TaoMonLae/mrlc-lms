@@ -1,0 +1,308 @@
+.hw-workspace {
+  --hw-blue: #1967d2;
+  --hw-tint: #e8f0fe;
+  --hw-line: #dadce0;
+  --hw-ink: #202124;
+  --hw-muted: #5f6368;
+  --hw-paper: #fff;
+  max-width: 1280px;
+  margin: auto;
+  padding: 8px 0 48px;
+  color: var(--hw-ink);
+}
+.hw-workspace > * + * {
+  margin-top: 24px;
+}
+.hw-masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--hw-line);
+}
+.hw-eyebrow {
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hw-muted);
+}
+.hw-masthead h1 {
+  font-size: clamp(30px, 4vw, 44px);
+  font-weight: 580;
+  letter-spacing: -0.045em;
+  line-height: 1.15;
+  margin: 12px 0;
+}
+.hw-description {
+  max-width: 620px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--hw-muted);
+}
+.hw-workspace .hw-primary {
+  background: var(--hw-blue);
+  color: white;
+  border-radius: 999px;
+  padding-inline: 22px;
+}
+.hw-focus {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 32px;
+  background: var(--hw-tint);
+  border-radius: 8px;
+  padding: 28px 32px;
+}
+.hw-focus h2 {
+  font-size: clamp(22px, 3vw, 30px);
+  letter-spacing: -0.035em;
+  line-height: 1.25;
+  margin-top: 10px;
+  font-weight: 550;
+}
+.hw-focus-content {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 24px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.hw-focus-content strong {
+  display: block;
+  font-size: 26px;
+  font-weight: 550;
+}
+.hw-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid var(--hw-line);
+  padding-bottom: 10px;
+}
+.hw-tabs button {
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--hw-muted);
+}
+.hw-tabs button[aria-pressed="true"] {
+  background: var(--hw-tint);
+  color: var(--hw-blue);
+  font-weight: 650;
+}
+.hw-tabs button:hover {
+  background: var(--hw-tint);
+}
+.hw-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.hw-toolbar input {
+  flex: 1;
+  min-width: 180px;
+}
+.hw-toolbar select {
+  min-height: 38px;
+  border: 1px solid var(--hw-line);
+  border-radius: 6px;
+  background: var(--hw-paper);
+  padding: 6px 12px;
+  font-size: 13px;
+  max-width: 100%;
+}
+.hw-assignment-list {
+  border-top: 1px solid var(--hw-line);
+}
+.hw-assignment {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) 180px;
+  gap: 20px;
+  padding: 24px 8px;
+  border-bottom: 1px solid var(--hw-line);
+  align-items: center;
+  transition: background 0.15s;
+}
+.hw-assignment:hover {
+  background: var(--hw-tint);
+}
+.hw-date {
+  border-left: 2px solid var(--hw-blue);
+  padding-left: 12px;
+  font-size: 11px;
+  color: var(--hw-muted);
+}
+.hw-date strong {
+  display: block;
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--hw-ink);
+  line-height: 1.3;
+}
+.hw-assignment h3 {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+.hw-assignment-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  color: var(--hw-muted);
+  font-size: 12px;
+  margin-top: 8px;
+}
+.hw-progress {
+  height: 4px;
+  background: var(--hw-line);
+  margin: 8px 0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.hw-progress span {
+  display: block;
+  height: 100%;
+  background: var(--hw-blue);
+}
+.hw-progress-copy {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--hw-muted);
+}
+.hw-review-link {
+  font-size: 12px;
+  color: var(--hw-blue);
+  font-weight: 600;
+  margin-top: 8px;
+}
+.hw-student-card {
+  border-bottom: 1px solid var(--hw-line);
+  padding: 26px 4px;
+  overflow-wrap: anywhere;
+}
+.hw-student-card h3 {
+  font-size: 19px;
+  letter-spacing: -0.025em;
+  font-weight: 600;
+}
+.hw-student-card details {
+  margin-top: 16px;
+  font-size: 13px;
+}
+.hw-student-card summary {
+  cursor: pointer;
+  color: var(--hw-blue);
+  font-weight: 550;
+  width: fit-content;
+}
+.hw-student-card > div > div {
+  flex: 1;
+}
+.hw-composer {
+  background: var(--hw-paper);
+  border: 1px solid var(--hw-line);
+  border-radius: 8px;
+  padding: 24px;
+}
+.hw-answer {
+  padding: 24px;
+  border: 1px solid var(--hw-line);
+  background: var(--hw-tint);
+  border-radius: 8px;
+}
+.hw-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border-block: 1px solid var(--hw-line);
+}
+.hw-stats > div {
+  flex: 1;
+  min-width: 110px;
+  padding: 18px 22px;
+  border-right: 1px solid var(--hw-line);
+}
+.hw-stats > div:last-child {
+  border: 0;
+}
+.hw-stats p:first-child {
+  font-size: 26px;
+  font-weight: 550;
+}
+.hw-review {
+  border: 1px solid var(--hw-line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--hw-paper);
+}
+.hw-workspace button:focus-visible,
+.hw-workspace a:focus-visible,
+.hw-workspace summary:focus-visible {
+  outline: 2px solid var(--hw-blue);
+  outline-offset: 3px;
+}
+.hw-workspace label:focus-within {
+  outline: 2px solid var(--hw-blue);
+  outline-offset: 3px;
+}
+.hw-tabs button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.dark .hw-workspace {
+  --hw-blue: #8ab4f8;
+  --hw-tint: #1b2c43;
+  --hw-line: #344151;
+  --hw-ink: #e8eaed;
+  --hw-muted: #acb8c8;
+  --hw-paper: #17212e;
+}
+.dark .hw-workspace .hw-primary {
+  background: #8ab4f8;
+  color: #13253e;
+}
+@media (max-width: 640px) {
+  .hw-masthead {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .hw-focus {
+    grid-template-columns: 1fr;
+    padding: 22px;
+    gap: 18px;
+  }
+  .hw-focus-content {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .hw-assignment {
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .hw-assignment > div:last-child {
+    grid-column: 2;
+  }
+  .hw-answer,
+  .hw-composer {
+    padding: 16px;
+  }
+  .hw-tabs button {
+    padding: 8px 10px;
+  }
+  .hw-toolbar select {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hw-assignment {
+    transition: none;
+  }
+}

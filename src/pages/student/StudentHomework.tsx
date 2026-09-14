@@ -1,11 +1,34 @@
-import { useEffect, useRef, useState } from 'react';
-import { BookOpen, BookOpenCheck, Camera, CheckCircle2, Clock, Newspaper, Paperclip, RotateCcw, Send, X } from 'lucide-react';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { apiGet, apiSend } from '../../lib/api';
-import { formatDateOnly, localToday } from '../../lib/dates';
+import { useEffect, useRef, useState } from "react";
+import {
+  BookOpen,
+  BookOpenCheck,
+  Camera,
+  CheckCircle2,
+  Clock,
+  Newspaper,
+  Paperclip,
+  RotateCcw,
+  Send,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "../../providers/AuthProvider";
+import {
+  HomeworkFocus,
+  HomeworkMasthead,
+} from "../../components/homework/HomeworkWorkspace";
+import {
+  homeworkDraftKey,
+  homeworkStage,
+  isHomeworkActionable,
+  type HomeworkStage,
+} from "../../lib/homeworkWorkspace";
+import { apiGet, apiSend } from "../../lib/api";
+import { formatDateOnly, localToday } from "../../lib/dates";
 import {
   HOMEWORK_FILE_ACCEPT,
   HOMEWORK_SUBMISSION_FILE_LIMIT,
@@ -13,7 +36,7 @@ import {
   removeUnusedHomeworkMedia,
   uploadHomeworkFile,
   type HomeworkUploadedFile,
-} from '../../lib/homeworkMedia';
+} from "../../lib/homeworkMedia";
 
 type SubmissionFile = HomeworkUploadedFile & { legacy?: boolean };
 
@@ -22,7 +45,7 @@ interface MySubmission {
   text?: string | null;
   attachmentUrl?: string | null;
   submittedAt: string;
-  status: 'SUBMITTED' | 'MARKED' | 'REDO';
+  status: "SUBMITTED" | "MARKED" | "REDO";
   score?: number | null;
   feedback?: string | null;
   attachments?: HomeworkUploadedFile[];
@@ -42,11 +65,16 @@ interface HomeworkItem {
 }
 
 export default function StudentHomework() {
+  const { user } = useAuth();
+  const [query, setQuery] = useState("");
+  const [subject, setSubject] = useState("all");
+  const [view, setView] = useState<HomeworkStage | "all">("todo");
+  const [draftSaved, setDraftSaved] = useState(false);
   const [items, setItems] = useState<HomeworkItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
+  const [loadError, setLoadError] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
-  const [text, setText] = useState('');
+  const [text, setText] = useState("");
   const [attachments, setAttachments] = useState<SubmissionFile[]>([]);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -54,11 +82,11 @@ export default function StudentHomework() {
 
   const load = () => {
     setLoading(true);
-    setLoadError('');
-    apiGet<HomeworkItem[]>('/api/student/homework')
+    setLoadError("");
+    apiGet<HomeworkItem[]>("/api/student/homework")
       .then((d) => setItems(Array.isArray(d) ? d : []))
       .catch((e: any) => {
-        const message = e?.message || 'Failed to load homework';
+        const message = e?.message || "Failed to load homework";
         setItems([]);
         setLoadError(message);
         toast.error(message);
@@ -74,14 +102,20 @@ export default function StudentHomework() {
     };
   }, []);
 
-  const filesForSubmission = (submission: MySubmission | null): SubmissionFile[] => {
+  const filesForSubmission = (
+    submission: MySubmission | null,
+  ): SubmissionFile[] => {
     if (!submission) return [];
     const files: SubmissionFile[] = [...(submission.attachments ?? [])];
-    if (submission.attachmentUrl && !files.some((file) => file.url === submission.attachmentUrl)) {
+    if (
+      submission.attachmentUrl &&
+      !files.some((file) => file.url === submission.attachmentUrl)
+    ) {
       files.unshift({
         url: submission.attachmentUrl,
-        originalName: submission.attachmentUrl.split('/').pop() || 'Submitted attachment',
-        mimeType: '',
+        originalName:
+          submission.attachmentUrl.split("/").pop() || "Submitted attachment",
+        mimeType: "",
         size: 0,
         legacy: true,
       });
@@ -90,12 +124,23 @@ export default function StudentHomework() {
   };
 
   const startSubmit = (item: HomeworkItem) => {
+    if (uploading || submitting) return;
     for (const url of stagedUploads.current) {
       void removeUnusedHomeworkMedia(url).catch(() => {});
     }
     stagedUploads.current = [];
     setOpenId(item.id);
-    setText(item.mySubmission?.text ?? '');
+    let recovered: string | null = null;
+    try {
+      if (user)
+        recovered = sessionStorage.getItem(
+          homeworkDraftKey(user.id, item.id, item.mySubmission?.submittedAt),
+        );
+    } catch {
+      /* Private browsing may disable storage. */
+    }
+    setText(recovered ?? item.mySubmission?.text ?? "");
+    setDraftSaved(recovered !== null);
     setAttachments(filesForSubmission(item.mySubmission));
   };
 
@@ -113,52 +158,71 @@ export default function StudentHomework() {
         setAttachments((current) => [...current, result]);
         uploadedCount += 1;
       }
-      toast.success(`${uploadedCount} ${uploadedCount === 1 ? 'file' : 'files'} attached`);
+      toast.success(
+        `${uploadedCount} ${uploadedCount === 1 ? "file" : "files"} attached`,
+      );
     } catch (e: any) {
-      if (uploadedCount > 0) toast.info(`${uploadedCount} file${uploadedCount === 1 ? '' : 's'} attached before the upload stopped`);
-      toast.error(e.message || 'Upload failed');
+      if (uploadedCount > 0)
+        toast.info(
+          `${uploadedCount} file${uploadedCount === 1 ? "" : "s"} attached before the upload stopped`,
+        );
+      toast.error(e.message || "Upload failed");
     } finally {
       setUploading(false);
     }
   };
 
   const removeAttachment = async (file: SubmissionFile) => {
-    setAttachments((current) => current.filter((item) => item.url !== file.url));
+    setAttachments((current) =>
+      current.filter((item) => item.url !== file.url),
+    );
     if (stagedUploads.current.includes(file.url)) {
-      stagedUploads.current = stagedUploads.current.filter((url) => url !== file.url);
+      stagedUploads.current = stagedUploads.current.filter(
+        (url) => url !== file.url,
+      );
       await removeUnusedHomeworkMedia(file.url).catch(() => {});
     }
   };
 
   const cancelSubmit = () => {
+    if (uploading || submitting) return;
     for (const url of stagedUploads.current) {
       void removeUnusedHomeworkMedia(url).catch(() => {});
     }
     stagedUploads.current = [];
     setAttachments([]);
     setOpenId(null);
-    setText('');
+    setText("");
   };
 
   const submit = async (id: string) => {
     if (!text.trim() && attachments.length === 0) {
-      toast.error('Write something or attach your work');
+      toast.error("Write something or attach your work");
       return;
     }
     setSubmitting(true);
     try {
-      await apiSend(`/api/homework/${id}/submit`, 'POST', {
+      await apiSend(`/api/homework/${id}/submit`, "POST", {
         text: text.trim() || null,
         attachmentUrl: attachments[0]?.url ?? null,
         attachments: attachments.filter((file) => !file.legacy),
       });
       stagedUploads.current = [];
-      toast.success('Homework submitted!');
+      const item = items.find((item) => item.id === id);
+      try {
+        if (user)
+          sessionStorage.removeItem(
+            homeworkDraftKey(user.id, id, item?.mySubmission?.submittedAt),
+          );
+      } catch {
+        /* Submission still succeeded. */
+      }
+      toast.success("Homework submitted!");
       setOpenId(null);
       setAttachments([]);
       load();
     } catch (e: any) {
-      toast.error(e.message || 'Failed to submit');
+      toast.error(e.message || "Failed to submit");
     } finally {
       setSubmitting(false);
     }
@@ -170,49 +234,122 @@ export default function StudentHomework() {
     // "today" shows as overdue starting at UTC midnight, which is still
     // mid-afternoon the day before in Myanmar (UTC+6:30).
     const overdue = item.dueDate.slice(0, 10) < localToday();
-    if (s?.status === 'MARKED') return <Badge className="bg-emerald-500 text-white"><CheckCircle2 className="mr-1 h-3 w-3" /> Marked{s.score != null && item.maxMarks != null ? ` ${s.score}/${item.maxMarks}` : ''}</Badge>;
-    if (s?.status === 'REDO') return <Badge className="bg-amber-500 text-white"><RotateCcw className="mr-1 h-3 w-3" /> Redo requested</Badge>;
-    if (s) return <Badge variant="secondary">Submitted</Badge>;
-    if (item.status === 'CLOSED') return <Badge variant="outline">Closed</Badge>;
-    if (overdue) return <Badge className="bg-rose-500 text-white">Overdue</Badge>;
+    if (s?.status === "MARKED")
+      return (
+        <Badge className="bg-emerald-500 text-white">
+          <CheckCircle2 className="mr-1 h-3 w-3" /> Marked
+          {s.score != null && item.maxMarks != null
+            ? ` ${s.score}/${item.maxMarks}`
+            : ""}
+        </Badge>
+      );
+    if (s?.status === "SUBMITTED")
+      return <Badge variant="secondary">Submitted</Badge>;
+    if (item.status === "CLOSED")
+      return <Badge variant="outline">Closed</Badge>;
+    if (s?.status === "REDO")
+      return (
+        <Badge className="bg-amber-500 text-white">
+          <RotateCcw className="mr-1 h-3 w-3" /> Redo requested
+        </Badge>
+      );
+    if (overdue)
+      return <Badge className="bg-rose-500 text-white">Overdue</Badge>;
     return <Badge variant="outline">To do</Badge>;
   };
 
-  const pending = items.filter((i) => !i.mySubmission || i.mySubmission.status === 'REDO');
-  const done = items.filter((i) => i.mySubmission && i.mySubmission.status !== 'REDO');
+  const today = localToday();
+  const pending = items.filter((i) =>
+    isHomeworkActionable(homeworkStage(i, today)),
+  );
+  const tabs: { key: HomeworkStage | "all"; label: string }[] = [
+    { key: "todo", label: "To do" },
+    { key: "today", label: "Due today" },
+    { key: "overdue", label: "Overdue" },
+    { key: "redo", label: "Changes requested" },
+    { key: "submitted", label: "Submitted" },
+    { key: "marked", label: "Marked" },
+    { key: "all", label: "All work" },
+  ];
+  const matchesView = (item: HomeworkItem, selected: typeof view) =>
+    selected === "all" ||
+    (selected === "todo"
+      ? isHomeworkActionable(homeworkStage(item, today))
+      : homeworkStage(item, today) === selected);
+  const visible = items
+    .filter(
+      (item) =>
+        matchesView(item, view) &&
+        (subject === "all" || item.subjectName === subject) &&
+        `${item.title} ${item.subjectName ?? ""} ${item.teacherName ?? ""}`
+          .toLowerCase()
+          .includes(query.trim().toLowerCase()),
+    )
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  const nextDue = [...pending].sort((a, b) =>
+    a.dueDate.localeCompare(b.dueDate),
+  )[0];
 
   const renderCard = (item: HomeworkItem) => {
-    const canSubmit = item.status === 'OPEN' && item.mySubmission?.status !== 'MARKED';
+    const canSubmit =
+      item.status === "OPEN" && item.mySubmission?.status !== "MARKED";
     const isOpen = openId === item.id;
     return (
-      <div key={item.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-surface-raised dark:bg-surface-indigo">
+      <article key={item.id} className="hw-student-card">
+        <p className="hw-eyebrow mb-3">
+          {item.subjectName || "Independent learning"} / Due{" "}
+          {formatDateOnly(item.dueDate)}
+        </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="font-bold text-slate-900 dark:text-white">{item.title}</h3>
+              <h3 className="font-bold text-slate-900 dark:text-white">
+                {item.title}
+              </h3>
               {stateBadge(item)}
             </div>
             <p className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-slate-500">
               {item.subjectName && <span>{item.subjectName}</span>}
               {item.teacherName && <span>· {item.teacherName}</span>}
-              <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> due {formatDateOnly(item.dueDate)}</span>
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" /> due {formatDateOnly(item.dueDate)}
+              </span>
               {item.maxMarks != null && <span>· out of {item.maxMarks}</span>}
             </p>
-            {item.instructions && <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">{item.instructions}</p>}
+            {item.instructions && (
+              <details>
+                <summary>Assignment brief</summary>
+                <p className="mt-3 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">
+                  {item.instructions}
+                </p>
+              </details>
+            )}
             {item.attachmentUrl && (
-              <a href={item.attachmentUrl} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs text-aubergine-600 underline">
-                {item.attachmentUrl.startsWith('/news/') ? (
-                  <><Newspaper className="h-3 w-3" /> Read the article</>
-                ) : item.attachmentUrl.startsWith('/elibrary/') ? (
-                  <><BookOpen className="h-3 w-3" /> Read the book</>
+              <a
+                href={item.attachmentUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-1 inline-flex items-center gap-1 text-xs text-aubergine-600 underline"
+              >
+                {item.attachmentUrl.startsWith("/news/") ? (
+                  <>
+                    <Newspaper className="h-3 w-3" /> Read the article
+                  </>
+                ) : item.attachmentUrl.startsWith("/elibrary/") ? (
+                  <>
+                    <BookOpen className="h-3 w-3" /> Read the book
+                  </>
                 ) : (
-                  <><Paperclip className="h-3 w-3" /> Worksheet</>
+                  <>
+                    <Paperclip className="h-3 w-3" /> Worksheet
+                  </>
                 )}
               </a>
             )}
             {item.mySubmission?.feedback && (
               <p className="mt-2 rounded-lg bg-slate-50 p-2 text-xs text-slate-600 dark:bg-surface-raised dark:text-slate-300">
-                <span className="font-semibold">Teacher feedback:</span> {item.mySubmission.feedback}
+                <span className="font-semibold">Teacher feedback:</span>{" "}
+                {item.mySubmission.feedback}
               </p>
             )}
             {!isOpen && filesForSubmission(item.mySubmission).length > 0 && (
@@ -232,49 +369,122 @@ export default function StudentHomework() {
               </div>
             )}
             {item.mySubmission && (
-              <p className="mt-2 text-[11px] text-slate-400">Submitted {new Date(item.mySubmission.submittedAt).toLocaleString()}</p>
+              <p className="mt-2 text-[11px] text-slate-400">
+                Submitted{" "}
+                {new Date(item.mySubmission.submittedAt).toLocaleString()}
+              </p>
             )}
           </div>
           {canSubmit && !isOpen && (
-            <Button size="sm" onClick={() => startSubmit(item)} disabled={submitting || uploading}>
-              <Send className="mr-2 h-3.5 w-3.5" /> {item.mySubmission ? 'Resubmit' : 'Submit'}
+            <Button
+              className="hw-primary"
+              size="sm"
+              onClick={() => startSubmit(item)}
+              disabled={submitting || uploading || openId !== null}
+            >
+              <Send className="mr-2 h-3.5 w-3.5" />{" "}
+              {item.mySubmission ? "Edit submission" : "Open workspace"}
             </Button>
           )}
         </div>
 
         {isOpen && (
-          <div className="mt-4 space-y-3 border-t border-slate-100 pt-4 dark:border-surface-raised">
-            <Textarea rows={3} maxLength={20000} value={text} onChange={(e) => setText(e.target.value)} placeholder="Type your answer, or add a note about your attached work…" />
+          <div className="hw-answer mt-5 space-y-3">
+            <div className="flex flex-wrap justify-between gap-2">
+              <h4 className="font-semibold">Your submission</h4>
+              <span className="text-xs text-slate-500">
+                {text.trim() ? text.trim().split(/\s+/).length : 0} words ·{" "}
+                {text.length}/20,000
+              </span>
+            </div>
+            <Textarea
+              aria-label="Your answer"
+              rows={6}
+              disabled={submitting}
+              maxLength={20000}
+              value={text}
+              onChange={(e) => {
+                setText(e.target.value);
+                try {
+                  if (user) {
+                    sessionStorage.setItem(
+                      homeworkDraftKey(
+                        user.id,
+                        item.id,
+                        item.mySubmission?.submittedAt,
+                      ),
+                      e.target.value,
+                    );
+                    setDraftSaved(true);
+                  }
+                } catch {
+                  setDraftSaved(false);
+                }
+              }}
+              placeholder="Type your answer, or add a note about your attached work…"
+            />
+            <p className="text-xs text-slate-500" role="status">
+              {draftSaved
+                ? "Text draft saved in this tab."
+                : "Text drafts stay in this tab when storage is available."}{" "}
+              Unsubmitted attachments are removed when you close the workspace.
+            </p>
             <div className="space-y-2">
-              <label className={`inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 dark:border-surface-raised dark:text-slate-300 ${
-                uploading || attachments.length >= HOMEWORK_SUBMISSION_FILE_LIMIT
-                  ? 'cursor-not-allowed opacity-60'
-                  : 'cursor-pointer hover:bg-slate-50 dark:hover:bg-surface-raised'
-              }`}>
+              <label
+                className={`inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 dark:border-surface-raised dark:text-slate-300 ${
+                  uploading ||
+                  attachments.length >= HOMEWORK_SUBMISSION_FILE_LIMIT
+                    ? "cursor-not-allowed opacity-60"
+                    : "cursor-pointer hover:bg-slate-50 dark:hover:bg-surface-raised"
+                }`}
+              >
                 <Camera className="h-4 w-4" />
-                {uploading ? 'Uploading…' : `Add documents (${attachments.length}/${HOMEWORK_SUBMISSION_FILE_LIMIT})`}
+                {uploading
+                  ? "Uploading…"
+                  : `Add documents (${attachments.length}/${HOMEWORK_SUBMISSION_FILE_LIMIT})`}
                 <input
                   type="file"
                   multiple
                   accept={HOMEWORK_FILE_ACCEPT}
-                  className="hidden"
-                  disabled={uploading || attachments.length >= HOMEWORK_SUBMISSION_FILE_LIMIT}
+                  className="sr-only"
+                  disabled={
+                    submitting ||
+                    uploading ||
+                    attachments.length >= HOMEWORK_SUBMISSION_FILE_LIMIT
+                  }
                   onChange={(e) => {
                     const selected = Array.from(e.target.files ?? []);
-                    e.currentTarget.value = '';
+                    e.currentTarget.value = "";
                     if (selected.length) void upload(selected);
                   }}
                 />
               </label>
-              <p className="text-[11px] text-slate-400">Up to 5 files, 10 MB each. Images, PDF, Word, PowerPoint, Excel, text and OpenDocument are accepted.</p>
+              <p className="text-[11px] text-slate-400">
+                Up to 5 files, 10 MB each. Images, PDF, Word, PowerPoint, Excel,
+                text and OpenDocument are accepted.
+              </p>
               {attachments.length > 0 && (
                 <div className="grid gap-2 sm:grid-cols-2">
                   {attachments.map((file) => (
-                    <div key={file.url} className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 dark:border-surface-raised">
+                    <div
+                      key={file.url}
+                      className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 dark:border-surface-raised"
+                    >
                       <Paperclip className="h-4 w-4 shrink-0 text-aubergine-600" />
-                      <a href={file.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1 text-xs text-slate-700 hover:underline dark:text-slate-200">
-                        <span className="block truncate font-medium">{file.originalName}</span>
-                        {file.size > 0 && <span className="text-[10px] text-slate-400">{formatHomeworkFileSize(file.size)}</span>}
+                      <a
+                        href={file.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="min-w-0 flex-1 text-xs text-slate-700 hover:underline dark:text-slate-200"
+                      >
+                        <span className="block truncate font-medium">
+                          {file.originalName}
+                        </span>
+                        {file.size > 0 && (
+                          <span className="text-[10px] text-slate-400">
+                            {formatHomeworkFileSize(file.size)}
+                          </span>
+                        )}
                       </a>
                       <Button
                         type="button"
@@ -282,7 +492,7 @@ export default function StudentHomework() {
                         size="sm"
                         className="h-7 w-7 shrink-0 p-0"
                         onClick={() => void removeAttachment(file)}
-                        disabled={uploading}
+                        disabled={uploading || submitting}
                         aria-label={`Remove ${file.originalName}`}
                       >
                         <X className="h-3.5 w-3.5" />
@@ -293,32 +503,118 @@ export default function StudentHomework() {
               )}
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={cancelSubmit} disabled={submitting}>Cancel</Button>
-              <Button size="sm" onClick={() => submit(item.id)} disabled={submitting || uploading}>
-                {submitting ? 'Submitting…' : 'Turn in'}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={cancelSubmit}
+                disabled={submitting || uploading}
+              >
+                Close workspace
+              </Button>
+              <Button
+                className="hw-primary"
+                size="sm"
+                onClick={() => submit(item.id)}
+                disabled={
+                  submitting ||
+                  uploading ||
+                  (!text.trim() && !attachments.length)
+                }
+              >
+                {submitting ? "Submitting…" : "Turn in"}
               </Button>
             </div>
           </div>
         )}
-      </div>
+      </article>
     );
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 pb-12">
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          <BookOpenCheck className="h-6 w-6 text-aubergine-600" /> My Homework
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">Type an answer or upload photos and documents for your teacher to review.</p>
+    <div className="hw-workspace">
+      <HomeworkMasthead
+        audience="Student desk"
+        title="A little progress, every day."
+        description="Your assignments, next steps, and teacher feedback — together in one place."
+      />
+      {!loading && !loadError && (
+        <HomeworkFocus
+          eyebrow="Where to begin"
+          title={nextDue?.title || "You’re up to date."}
+        >
+          <div>
+            <strong>{pending.length}</strong>Assignments to work on
+          </div>
+          <p>
+            {nextDue ? (
+              <>
+                {nextDue.dueDate.slice(0, 10) < today
+                  ? "Overdue since"
+                  : "Next deadline"}
+                <br />
+                <b>{formatDateOnly(nextDue.dueDate)}</b>
+              </>
+            ) : (
+              "New assignments will appear here when your teacher posts them."
+            )}
+          </p>
+        </HomeworkFocus>
+      )}
+      <nav className="hw-tabs" aria-label="Homework status">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            disabled={openId !== null}
+            aria-pressed={view === tab.key}
+            onClick={() => setView(tab.key)}
+          >
+            {tab.label}{" "}
+            <span className="ml-1 opacity-60">
+              {items.filter((item) => matchesView(item, tab.key)).length}
+            </span>
+          </button>
+        ))}
+      </nav>
+      <div className="hw-toolbar">
+        <Input
+          aria-label="Search your homework"
+          placeholder="Find an assignment, subject or teacher…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          disabled={openId !== null}
+        />
+        <select
+          aria-label="Filter by subject"
+          value={subject}
+          disabled={openId !== null}
+          onChange={(e) => setSubject(e.target.value)}
+        >
+          <option value="all">All subjects</option>
+          {Array.from(
+            new Set(items.map((i) => i.subjectName).filter(Boolean)),
+          ).map((name) => (
+            <option key={name} value={name!}>
+              {name}
+            </option>
+          ))}
+        </select>
       </div>
+      {openId && (
+        <p className="text-xs text-slate-500">
+          Close your workspace to browse other assignments.
+        </p>
+      )}
 
       {loading ? (
         <p className="py-14 text-center text-sm text-slate-500">Loading…</p>
       ) : loadError ? (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-5 py-10 text-center dark:border-rose-900/50 dark:bg-rose-950/20">
-          <p className="text-sm text-rose-700 dark:text-rose-300">{loadError}</p>
-          <Button variant="outline" size="sm" className="mt-3" onClick={load}>Try again</Button>
+          <p className="text-sm text-rose-700 dark:text-rose-300">
+            {loadError}
+          </p>
+          <Button variant="outline" size="sm" className="mt-3" onClick={load}>
+            Try again
+          </Button>
         </div>
       ) : items.length === 0 ? (
         <p className="rounded-xl border border-dashed border-slate-200 py-16 text-center text-sm text-slate-400 dark:border-surface-raised">
@@ -326,17 +622,31 @@ export default function StudentHomework() {
         </p>
       ) : (
         <>
-          {pending.length > 0 && (
-            <section className="space-y-3">
-              <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500">To do ({pending.length})</h2>
-              {[...pending].sort((a, b) => a.dueDate.localeCompare(b.dueDate)).map(renderCard)}
-            </section>
-          )}
-          {done.length > 0 && (
-            <section className="space-y-3">
-              <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500">Submitted &amp; marked</h2>
-              {done.map(renderCard)}
-            </section>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="hw-eyebrow">
+              {tabs.find((tab) => tab.key === view)?.label} / {visible.length}{" "}
+              {visible.length === 1 ? "assignment" : "assignments"}
+            </h2>
+            <span className="text-xs text-slate-500">
+              Earliest deadline first
+            </span>
+          </div>
+          <section>{visible.map(renderCard)}</section>
+          {!visible.length && (
+            <div className="py-10 text-center">
+              <p>No assignments in this view.</p>
+              <Button
+                className="mt-3"
+                variant="outline"
+                onClick={() => {
+                  setView("all");
+                  setSubject("all");
+                  setQuery("");
+                }}
+              >
+                See all work
+              </Button>
+            </div>
           )}
         </>
       )}
