@@ -238,10 +238,10 @@ export default function EbookReader() {
   return (
     <div
       ref={readerRef}
-      className={`flex flex-col -m-2 ${isFullscreen ? 'h-dvh bg-white dark:bg-canvas p-3' : 'h-[calc(100dvh-7rem)]'}`}
+      className={`elibrary-reader-shell flex flex-col -m-2 ${isFullscreen ? 'h-dvh bg-white dark:bg-canvas p-3' : 'h-[calc(100dvh-7rem)]'}`}
     >
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-1 pb-3 shrink-0">
+      <div className="elibrary-reader-toolbar flex items-center gap-3 shrink-0">
         {!isFullscreen && (
           <Button variant="ghost" size="icon" title="Back to library"
             render={<Link to="/elibrary" />} nativeButton={false}>
@@ -287,7 +287,7 @@ export default function EbookReader() {
       </div>
 
       {/* Viewer */}
-      <div className="flex-1 min-h-0 rounded-lg border border-slate-200 dark:border-surface-raised bg-slate-100 dark:bg-canvas overflow-hidden">
+      <div className="elibrary-reader-canvas flex-1 min-h-0 border border-slate-200 dark:border-surface-raised bg-slate-100 dark:bg-canvas overflow-hidden">
         {loading ? (
           <div className="h-full flex items-center justify-center text-slate-500">
             <Loader2 className="h-5 w-5 animate-spin mr-2" /> Opening book…

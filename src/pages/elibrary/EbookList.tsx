@@ -2,10 +2,11 @@ import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } fr
 import { Link, useNavigate } from 'react-router';
 import {
   ArrowUpDown, BarChart3, BookMarked, BookOpen, ChevronDown, ChevronLeft,
-  ChevronRight, ClipboardList, Download, LibraryBig, Lock, Pencil, Plus,
+  ChevronRight, ClipboardList, Download, LibraryBig, Pencil, Plus,
   Search, Trash2, X,
 } from 'lucide-react';
 import CircularGallery from '@/components/CircularGallery';
+import { LibraryReveal, LibraryStaggeredText } from '@/src/components/elibrary/LibraryMotion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -70,7 +71,7 @@ function hashText(value: string) {
 function genreArtwork(label: string) {
   const hue = Math.abs(hashText(label)) % 360;
   const safeLabel = label.replace(/[&<>"']/g, '').slice(0, 22);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="700" height="900" viewBox="0 0 700 900"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="hsl(${hue} 78% 58%)"/><stop offset="1" stop-color="hsl(${(hue + 58) % 360} 72% 34%)"/></linearGradient></defs><rect width="700" height="900" rx="44" fill="url(#g)"/><circle cx="580" cy="150" r="180" fill="white" opacity=".12"/><circle cx="90" cy="780" r="250" fill="white" opacity=".08"/><path d="M180 260h340v380H180z" fill="none" stroke="white" stroke-width="24" opacity=".9"/><path d="M350 260v380" stroke="white" stroke-width="20" opacity=".9"/><text x="350" y="735" text-anchor="middle" fill="white" font-family="sans-serif" font-size="52" font-weight="700">${safeLabel}</text></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="700" height="900" viewBox="0 0 700 900"><rect width="700" height="900" fill="hsl(${hue} 42% 74%)"/><rect x="34" y="34" width="632" height="832" fill="none" stroke="#151515" stroke-width="8"/><text x="70" y="105" fill="#151515" font-family="Arial,sans-serif" font-size="24" font-weight="700" letter-spacing="6">MRLC / OPEN STACKS</text><path d="M70 150h560M70 690h560" stroke="#151515" stroke-width="6"/><text x="70" y="260" fill="#151515" font-family="Arial,sans-serif" font-size="74" font-weight="700">${safeLabel}</text><text x="70" y="755" fill="#151515" font-family="Arial,sans-serif" font-size="28">DIGITAL COLLECTION</text><text x="70" y="810" fill="#151515" font-family="Arial,sans-serif" font-size="28">SELECT TO OPEN</text></svg>`;
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
@@ -91,11 +92,12 @@ function BookCover({ book, className = '' }: { book: Ebook; className?: string }
     );
   }
   return (
-    <div className={`flex h-full w-full flex-col justify-between bg-gradient-to-br from-primary via-accent-purple to-indigo-800 p-5 text-white ${className}`}>
-      <BookMarked className="h-8 w-8 opacity-80" />
+    <div className={`elibrary-cover-placeholder ${className}`} style={{ '--cover-hue': `${Math.abs(hashText(book.title)) % 360}` } as React.CSSProperties}>
+      <span>MRLC / DIGITAL EDITION</span>
+      <BookMarked className="h-8 w-8" />
       <div>
-        <p className="line-clamp-4 text-lg font-bold leading-tight">{book.title}</p>
-        <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/75">{book.author || 'Unknown author'}</p>
+        <p>{book.title}</p>
+        <small>{book.author || 'Unknown author'}</small>
       </div>
     </div>
   );
@@ -288,318 +290,292 @@ export default function EbookList() {
     });
   };
 
+  const formatCount = useMemo(() => new Set(ebooks.map((book) => book.format.toUpperCase())).size, [ebooks]);
+  const featuredBooks = useMemo(() => {
+    const withCovers = ebooks.filter((book) => book.coverUrl);
+    return (withCovers.length >= 3 ? withCovers : ebooks).slice(0, 3);
+  }, [ebooks]);
+
   const renderBookTile = (book: Ebook) => (
-    <article key={book.id} className="group min-w-0">
+    <article key={book.id} className="elibrary-book-card group min-w-0">
       <button
         type="button"
         onClick={() => setSelectedBook(book)}
         aria-label={`View information for ${book.title}`}
-        className="w-full cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 dark:focus-visible:ring-offset-surface-indigo"
+        className="elibrary-book-card__button"
       >
-        <div className="relative aspect-[3/4] overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-md transition duration-200 group-hover:-translate-y-1 group-hover:shadow-xl group-active:scale-[0.98] motion-reduce:transform-none dark:border-surface-raised dark:bg-surface-indigo">
+        <div className="elibrary-book-card__cover">
           <BookCover book={book} />
-          <Badge className="absolute right-3 top-3 border-0 bg-white/95 text-[10px] font-bold uppercase tracking-[0.14em] text-primary shadow-sm hover:bg-white/95 dark:bg-slate-950/90 dark:text-white">
-            {book.format}
-          </Badge>
+          <span className="elibrary-book-card__format">{book.format}</span>
           {book.seriesNumber != null && (
-            <span className="absolute bottom-3 left-3 rounded-full bg-slate-950/75 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
+            <span className="elibrary-book-card__volume">
               Vol. {book.seriesNumber}
             </span>
           )}
         </div>
-        <h3 className="mt-3 line-clamp-2 text-base font-semibold leading-snug text-slate-900 dark:text-white">{book.title}</h3>
-        <p className="mt-1 line-clamp-1 text-sm text-slate-500 dark:text-slate-300">{book.author || 'Unknown author'}</p>
+        <div className="elibrary-book-card__copy">
+          <span>{book.category?.trim() || 'Open collection'}</span>
+          <h3>{book.title}</h3>
+          <p>{book.author || 'Unknown author'}</p>
+        </div>
       </button>
     </article>
   );
 
   return (
-    <div className="min-w-0 max-w-full space-y-6 pb-10">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-            <BookMarked className="h-6 w-6 text-accent-purple" /> E-Library
-          </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Browse by genre, preview book details, and read online.</p>
+    <div className="elibrary-catalog-page">
+      <header className="elibrary-masthead">
+        <div className="elibrary-masthead__copy">
+          <p className="elibrary-index-label"><span>MRLC</span> Digital stacks · Issue 01</p>
+          <LibraryStaggeredText text="Read beyond the timetable." />
+          <p className="elibrary-masthead__dek">A school library built for curiosity: find a title, continue where you stopped, or move through the shelves by subject.</p>
+          <a href="#elibrary-discovery" className="elibrary-masthead__jump">
+            Open the catalogue <ChevronDown aria-hidden="true" />
+          </a>
         </div>
-        {canManage && (
-          <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
-            <Button variant="outline" className="min-h-11 w-full sm:w-auto" render={<Link to="/elibrary/analytics" />} nativeButton={false}>
-              <BarChart3 className="mr-2 h-4 w-4" /> Reading Analytics
-            </Button>
-            <Button variant="outline" className="min-h-11 w-full sm:w-auto" render={<Link to="/elibrary/gutenberg" />} nativeButton={false}>
-              <BookMarked className="mr-2 h-4 w-4" /> Import from Gutenberg
-            </Button>
-            <Button className="min-h-11 w-full bg-primary text-primary-foreground hover:bg-primary/90 sm:w-auto" render={<Link to="/elibrary/upload" />} nativeButton={false}>
-              <Plus className="mr-2 h-4 w-4" /> Upload Book
-            </Button>
+        <div className="elibrary-masthead__visual" aria-label="Featured books from the library">
+          <span className="elibrary-masthead__folio">OPEN STACKS / {String(ebooks.length).padStart(3, '0')}</span>
+          <div className="elibrary-cover-stack" aria-hidden="true">
+            {featuredBooks.map((book, index) => (
+              <div key={book.id} className={`elibrary-cover-stack__book is-${index + 1}`}>
+                <BookCover book={book} />
+              </div>
+            ))}
+            {featuredBooks.length === 0 && (
+              <div className="elibrary-cover-stack__empty"><BookMarked /><span>NEW WORLDS<br />LIVE HERE</span></div>
+            )}
           </div>
-        )}
+          <dl className="elibrary-masthead__stats">
+            <div><dt>Titles</dt><dd>{ebooks.length}</dd></div>
+            <div><dt>Collections</dt><dd>{genreGroups.length}</dd></div>
+            <div><dt>Formats</dt><dd>{formatCount}</dd></div>
+          </dl>
+        </div>
       </header>
 
+      {canManage && (
+        <nav className="elibrary-staff-rail" aria-label="E-Library management">
+          <div><span>Staff desk</span><strong>Curate the collection</strong></div>
+          <div className="elibrary-staff-rail__actions">
+            <Link to="/elibrary/analytics"><BarChart3 /> Reading analytics</Link>
+            <Link to="/elibrary/gutenberg"><BookMarked /> Gutenberg</Link>
+            <Link to="/elibrary/upload" className="is-primary"><Plus /> Upload book</Link>
+          </div>
+        </nav>
+      )}
+
       {!selectedGroup && !query.trim() && continueReading.length > 0 && (
-        <section className="min-w-0 max-w-full space-y-2" aria-labelledby="continue-reading-heading">
-          <h2 id="continue-reading-heading" className="text-sm font-semibold text-slate-700 dark:text-slate-200">Continue Reading</h2>
-          <div className="flex max-w-full gap-3 overflow-x-auto pb-2 custom-scrollbar">
+        <LibraryReveal className="elibrary-continue" aria-labelledby="continue-reading-heading">
+          <div className="elibrary-section-heading">
+            <p>01 / Your desk</p>
+            <h2 id="continue-reading-heading">Continue reading</h2>
+            <span>{continueReading.length} {continueReading.length === 1 ? 'book' : 'books'} in progress</span>
+          </div>
+          <div className="elibrary-continue__rail custom-scrollbar">
             {continueReading.map((progress) => (
               <button
                 key={progress.ebook.id}
                 type="button"
                 onClick={() => navigate(`/elibrary/${progress.ebook.id}/read`)}
-                className="group min-h-11 w-40 shrink-0 cursor-pointer overflow-hidden rounded-lg border border-slate-200 bg-white text-left shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-surface-raised dark:bg-surface-indigo"
+                className="elibrary-continue-card"
               >
-                <div className="flex h-24 w-full items-center justify-center overflow-hidden bg-accent-purple/10">
-                  {progress.ebook.coverUrl ? <img src={progress.ebook.coverUrl} alt="" className="h-full w-full object-cover" /> : <BookMarked className="h-7 w-7 text-accent-purple" />}
+                <div className="elibrary-continue-card__cover">
+                  {progress.ebook.coverUrl ? <img src={progress.ebook.coverUrl} alt="" /> : <BookMarked />}
                 </div>
-                <div className="p-2.5">
-                  <p className="line-clamp-2 text-xs font-semibold leading-tight text-slate-900 dark:text-white">{progress.ebook.title}</p>
+                <div className="elibrary-continue-card__copy">
+                  <span>Resume</span>
+                  <strong>{progress.ebook.title}</strong>
+                  <small>{progress.ebook.author || progress.ebook.format}</small>
                   {progress.percent != null && (
-                    <div className="mt-2 h-1 overflow-hidden rounded-full bg-slate-200 dark:bg-surface-raised" aria-label={`${Math.round(progress.percent)}% complete`}>
-                      <div className="h-full bg-primary" style={{ width: `${Math.min(100, Math.max(3, progress.percent))}%` }} />
+                    <div className="elibrary-reading-progress" aria-label={`${Math.round(progress.percent)}% complete`}>
+                      <i style={{ width: `${Math.min(100, Math.max(3, progress.percent))}%` }} />
+                      <em>{Math.round(progress.percent)}%</em>
                     </div>
                   )}
                 </div>
               </button>
             ))}
           </div>
-        </section>
+        </LibraryReveal>
       )}
 
+      <LibraryReveal className="elibrary-search-panel" delay={0.04}>
+        <div>
+          <p className="elibrary-index-label">02 / Catalogue search</p>
+          <h2>What do you want to understand next?</h2>
+        </div>
+        <div className="elibrary-search-panel__controls">
+          <label className="elibrary-search-field" htmlFor="elibrary-global-search">
+            <Search aria-hidden="true" />
+            <span className="sr-only">Search all books</span>
+            <Input
+              id="elibrary-global-search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Title, author, subject, language…"
+              autoComplete="off"
+            />
+            {query && (
+              <button type="button" onClick={() => setQuery('')} aria-label="Clear library search"><X /></button>
+            )}
+          </label>
+          <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortValue)}>
+            <SelectTrigger aria-label="Sort books">
+              <div><ArrowUpDown /><SelectValue /></div>
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      </LibraryReveal>
+
       {loading ? (
-        <div className="py-24 text-center text-sm text-slate-500" role="status">Loading e-library…</div>
+        <div className="elibrary-state" role="status"><BookOpen /> Indexing the shelves…</div>
       ) : loadError ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-16 text-center dark:border-red-900/50 dark:bg-red-950/20" role="alert">
-          <BookOpen className="mx-auto mb-3 h-11 w-11 text-red-400" />
-          <p className="font-semibold text-slate-900 dark:text-white">The E-Library could not be loaded.</p>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{loadError}</p>
-          <Button variant="outline" className="mt-5 min-h-11" onClick={() => void load()}>Try again</Button>
+        <div className="elibrary-state is-error" role="alert">
+          <BookOpen /><strong>The shelves are temporarily unavailable.</strong><p>{loadError}</p>
+          <Button variant="outline" onClick={() => void load()}>Try again</Button>
         </div>
       ) : ebooks.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-white py-20 text-center dark:border-surface-raised dark:bg-surface-indigo">
-          <BookOpen className="mx-auto mb-3 h-12 w-12 text-slate-300" />
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">No e-books yet.</p>
-          {canManage && <p className="mt-1 text-xs text-slate-500">Upload a PDF, EPUB, CBR, or CBZ file to create the first shelf.</p>}
+        <div className="elibrary-state">
+          <BookOpen /><strong>The first shelf is waiting.</strong>
+          {canManage && <p>Upload a PDF, EPUB, CBR, or CBZ file to begin the school collection.</p>}
         </div>
-      ) : !selectedGroup ? (
-        <div className="space-y-5">
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-surface-raised dark:bg-surface-indigo" aria-labelledby="search-library-heading">
-            <div className="mx-auto max-w-3xl">
-              <div className="text-center">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Find your next read</p>
-                <h2 id="search-library-heading" className="mt-1 text-2xl font-semibold text-slate-900 dark:text-white">Search the whole library</h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Search by title, author, genre, series, language, or format.</p>
-              </div>
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                <div className="relative min-w-0 flex-1">
-                  <label htmlFor="elibrary-global-search" className="sr-only">Search all books</label>
-                  <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                  <Input
-                    id="elibrary-global-search"
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Search all books…"
-                    autoComplete="off"
-                    className="min-h-12 rounded-xl pl-12 pr-12 text-base"
-                  />
-                  {query && (
-                    <button
-                      type="button"
-                      onClick={() => setQuery('')}
-                      aria-label="Clear library search"
-                      className="absolute right-2 top-1/2 flex min-h-10 min-w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:hover:bg-surface-raised dark:hover:text-white"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-                {query.trim() && (
-                  <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortValue)}>
-                    <SelectTrigger className="min-h-12 w-full rounded-xl sm:w-48" aria-label="Sort search results">
-                      <div className="flex items-center gap-2"><ArrowUpDown className="h-3.5 w-3.5" /><SelectValue /></div>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SORT_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-            </div>
-          </section>
-
-          {query.trim() ? (
-            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo" aria-labelledby="search-results-heading">
-              <div className="flex flex-col gap-1 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-surface-raised">
-                <h2 id="search-results-heading" className="text-lg font-semibold text-slate-900 dark:text-white">Search results</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-300" aria-live="polite">
-                  {searchBooks.length} {searchBooks.length === 1 ? 'book' : 'books'} found for “{query.trim()}”
-                </p>
-              </div>
-              {searchBooks.length > 0 ? (
-                <div className="grid grid-cols-2 gap-x-4 gap-y-7 p-5 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 sm:p-7">
-                  {searchBooks.map(renderBookTile)}
-                </div>
-              ) : (
-                <div className="px-5 py-20 text-center">
-                  <Search className="mx-auto mb-3 h-10 w-10 text-slate-300" />
-                  <p className="font-medium text-slate-700 dark:text-slate-200">No books match “{query.trim()}”.</p>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Try a title, author, genre, or series name.</p>
-                  <Button variant="link" className="mt-2" onClick={() => setQuery('')}>Clear search</Button>
-                </div>
-              )}
-            </section>
+      ) : query.trim() && !selectedGroup ? (
+        <LibraryReveal className="elibrary-sheet" aria-labelledby="search-results-heading">
+          <div className="elibrary-sheet__heading">
+            <div><p>Search index</p><h2 id="search-results-heading">Results for “{query.trim()}”</h2></div>
+            <span aria-live="polite">{searchBooks.length} {searchBooks.length === 1 ? 'title' : 'titles'}</span>
+          </div>
+          {searchBooks.length > 0 ? (
+            <div className="elibrary-book-grid">{searchBooks.map(renderBookTile)}</div>
           ) : (
-            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo" aria-labelledby="browse-genres-heading">
-              <div className="flex flex-col gap-2 border-b border-slate-200 px-5 py-5 sm:flex-row sm:items-end sm:justify-between dark:border-surface-raised">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Library collections</p>
-                  <h2 id="browse-genres-heading" className="mt-1 text-2xl font-semibold text-slate-900 dark:text-white">Browse genres</h2>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Select a collection to open its bookshelf.</p>
-                </div>
-                <p className="text-sm text-slate-500 dark:text-slate-300">{ebooks.length} books · {genreGroups.length} genres</p>
-              </div>
-              <div className="h-[400px] sm:h-[500px]" data-testid="genre-gallery">
-                <CircularGallery
-                  items={galleryItems}
-                  bend={2.6}
-                  borderRadius={0.08}
-                  textColor="#64748b"
-                  font="600 28px sans-serif"
-                  scrollSpeed={2}
-                  onItemClick={selectGenre}
-                />
-              </div>
-              <p className="border-t border-slate-100 px-5 py-3 text-center text-xs text-slate-500 dark:border-surface-raised dark:text-slate-300">
-                Drag or scroll to browse. Select a cover to view the books in that genre.
-              </p>
-            </section>
+            <div className="elibrary-state is-compact"><Search /><strong>No matching books.</strong><p>Try a title, author, genre, series, or language.</p><Button variant="link" onClick={() => setQuery('')}>Clear search</Button></div>
           )}
-        </div>
-      ) : (
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo" aria-labelledby="selected-genre-heading">
-          <div className="flex flex-col gap-4 border-b border-slate-200 p-4 lg:flex-row lg:items-center lg:justify-between dark:border-surface-raised">
-            <div className="flex min-w-0 items-center gap-3">
-              <Button variant="outline" className="min-h-11 shrink-0" onClick={returnToGenres}>
-                <ChevronLeft className="mr-1 h-4 w-4" /> All genres
-              </Button>
-              <div className="hidden rounded-xl bg-primary/10 p-3 text-primary sm:block"><LibraryBig className="h-5 w-5" /></div>
-              <div className="min-w-0">
-                <h2 id="selected-genre-heading" className="truncate text-xl font-semibold text-slate-900 dark:text-white">{selectedGroup.genre}</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-300">{selectedGroup.books.length} {selectedGroup.books.length === 1 ? 'book' : 'books'}</p>
-              </div>
+        </LibraryReveal>
+      ) : !selectedGroup ? (
+        <LibraryReveal className="elibrary-discovery" id="elibrary-discovery" aria-labelledby="browse-genres-heading">
+          <aside className="elibrary-genre-index">
+            <p className="elibrary-index-label">03 / Collection index</p>
+            <h2 id="browse-genres-heading">Move through the shelves.</h2>
+            <p>Choose a subject directly, or drag the animated shelf to browse the collection by cover.</p>
+            <ol>
+              {genreGroups.map((group, index) => (
+                <li key={group.key}>
+                  <button type="button" onClick={() => selectGenre({ id: group.key, image: '', text: group.genre })}>
+                    <span>{String(index + 1).padStart(2, '0')}</span><strong>{group.genre}</strong><em>{group.books.length}</em>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </aside>
+          <div className="elibrary-gallery-stage">
+            <div className="elibrary-gallery-stage__top"><span>ReactBits circular shelf</span><span>Drag / scroll / select</span></div>
+            <div className="elibrary-gallery-stage__canvas" data-testid="genre-gallery">
+              <CircularGallery items={galleryItems} bend={2.2} borderRadius={0.025} textColor="#1c1c1c" font="700 24px Arial" scrollSpeed={1.75} onItemClick={selectGenre} />
             </div>
-            <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
-              <label className="relative min-w-0 flex-1 lg:w-72">
-                <span className="sr-only">Search this shelf</span>
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search this shelf…" className="min-h-11 pl-9 text-base sm:text-sm" />
-              </label>
-              <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortValue)}>
-                <SelectTrigger className="min-h-11 w-full sm:w-48" aria-label="Sort books">
-                  <div className="flex items-center gap-2"><ArrowUpDown className="h-3.5 w-3.5" /><SelectValue /></div>
-                </SelectTrigger>
-                <SelectContent>
-                  {SORT_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+          </div>
+        </LibraryReveal>
+      ) : (
+        <LibraryReveal className="elibrary-sheet" aria-labelledby="selected-genre-heading">
+          <div className="elibrary-shelf-heading">
+            <div className="flex min-w-0 items-center gap-3">
+              <button type="button" className="elibrary-back-button" onClick={returnToGenres}><ChevronLeft /> All collections</button>
+              <div className="elibrary-shelf-heading__icon"><LibraryBig /></div>
+              <div className="min-w-0">
+                <p>Open collection</p>
+                <h2 id="selected-genre-heading">{selectedGroup.genre}</h2>
+                <span>{selectedGroup.books.length} {selectedGroup.books.length === 1 ? 'title' : 'titles'}</span>
+              </div>
             </div>
           </div>
 
           {shelfBooks.length === 0 ? (
-            <div className="py-20 text-center">
-              <Search className="mx-auto mb-3 h-10 w-10 text-slate-300" />
-              <p className="font-medium text-slate-700 dark:text-slate-200">No books match “{query}”.</p>
-              <Button variant="link" className="mt-2" onClick={() => setQuery('')}>Clear search</Button>
-            </div>
+            <div className="elibrary-state is-compact"><Search /><strong>No books match “{query}”.</strong><Button variant="link" onClick={() => setQuery('')}>Clear search</Button></div>
           ) : (
-            <div className="space-y-8 p-5 sm:p-7">
+            <div className="elibrary-shelf-content">
               {shelfGroups.series.map((series) => {
                 const seriesKey = `${selectedGroup.key}::${series.key}`;
                 const expanded = expandedSeries.has(seriesKey);
                 const authors = Array.from(new Set(series.books.map((book) => book.author).filter(Boolean)));
                 return (
-                  <div key={seriesKey} className="overflow-hidden rounded-2xl border border-accent-purple/20 bg-slate-50/70 dark:border-accent-purple/30 dark:bg-black/10">
+                  <div key={seriesKey} className="elibrary-series">
                     <button
                       type="button"
                       onClick={() => toggleSeries(seriesKey)}
                       aria-expanded={expanded}
-                      className="flex min-h-20 w-full cursor-pointer items-center gap-4 p-4 text-left transition-colors hover:bg-accent-purple/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                      className="elibrary-series__trigger"
                     >
-                      <div className="relative h-20 w-24 shrink-0" aria-hidden="true">
+                      <div className="elibrary-series__covers" aria-hidden="true">
                         {series.books.slice(0, 3).map((book, index) => (
-                          <div key={book.id} className="absolute top-0 h-20 w-14 overflow-hidden rounded-md border-2 border-white bg-accent-purple/10 shadow dark:border-surface-indigo" style={{ left: `${index * 14}px`, zIndex: 3 - index }}>
+                          <div key={book.id} style={{ left: `${index * 14}px`, zIndex: 3 - index }}>
                             <BookCover book={book} />
                           </div>
                         ))}
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="mb-1 flex flex-wrap items-center gap-2">
-                          <Badge className="bg-accent-purple/10 text-[10px] text-accent-purple hover:bg-accent-purple/10">Book series</Badge>
-                          <span className="text-xs text-slate-500">{series.books.length} {series.books.length === 1 ? 'volume' : 'volumes'}</span>
-                        </div>
-                        <h3 className="truncate text-base font-semibold text-slate-900 dark:text-white">{series.name}</h3>
-                        <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-300">{authors.join(', ') || 'Unknown author'}</p>
+                      <div className="elibrary-series__copy">
+                        <span>Series · {series.books.length} {series.books.length === 1 ? 'volume' : 'volumes'}</span>
+                        <h3>{series.name}</h3>
+                        <p>{authors.join(', ') || 'Unknown author'}</p>
                       </div>
-                      {expanded ? <ChevronDown className="h-5 w-5 shrink-0 text-slate-400" /> : <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" />}
+                      {expanded ? <ChevronDown /> : <ChevronRight />}
                     </button>
                     {expanded && (
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-7 border-t border-slate-200 p-4 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 dark:border-surface-raised">
-                        {series.books.map(renderBookTile)}
-                      </div>
+                      <div className="elibrary-book-grid is-series">{series.books.map(renderBookTile)}</div>
                     )}
                   </div>
                 );
               })}
 
               {shelfGroups.standalone.length > 0 && (
-                <div>
-                  {shelfGroups.series.length > 0 && <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Individual books</h3>}
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
-                    {shelfGroups.standalone.map(renderBookTile)}
-                  </div>
+                <div className="elibrary-individual-books">
+                  {shelfGroups.series.length > 0 && <h3>Individual titles</h3>}
+                  <div className="elibrary-book-grid">{shelfGroups.standalone.map(renderBookTile)}</div>
                 </div>
               )}
             </div>
           )}
-        </section>
+        </LibraryReveal>
       )}
 
       <Dialog open={Boolean(selectedBook)} onOpenChange={(open) => { if (!open) setSelectedBook(null); }}>
         {selectedBook && (
-          <DialogContent className="max-h-[90dvh] max-w-4xl overflow-y-auto p-0 sm:max-w-4xl [&_[data-slot=dialog-close]]:bg-white/90 [&_[data-slot=dialog-close]]:text-slate-900 [&_[data-slot=dialog-close]]:shadow-sm [&_[data-slot=dialog-close]]:hover:bg-white" showCloseButton>
-            <div className="grid min-h-[460px] md:grid-cols-[minmax(260px,0.9fr)_minmax(0,1.7fr)]">
-              <div className="min-h-72 overflow-hidden bg-slate-950 md:min-h-full">
+          <DialogContent className="elibrary-book-dialog max-h-[90dvh] max-w-4xl overflow-y-auto p-0 sm:max-w-4xl" showCloseButton>
+            <div className="elibrary-book-dialog__grid">
+              <div className="elibrary-book-dialog__cover">
                 <BookCover book={selectedBook} className="md:min-h-[520px]" />
               </div>
-              <div className="flex min-w-0 flex-col p-6 sm:p-8">
-                <div className="flex flex-wrap items-center gap-2 pr-10">
-                  <Badge className="bg-primary text-[10px] font-bold uppercase tracking-[0.14em] text-primary-foreground hover:bg-primary">{selectedBook.format}</Badge>
-                  <span className="text-sm text-slate-500 dark:text-slate-300">{selectedBook.category?.trim() || 'Uncategorized'}</span>
+              <div className="elibrary-book-dialog__copy">
+                <div className="elibrary-book-dialog__eyebrow">
+                  <Badge>{selectedBook.format}</Badge>
+                  <span>{selectedBook.category?.trim() || 'Open collection'}</span>
                   {selectedBook.seriesName && (
                     <Badge variant="outline">{selectedBook.seriesName}{selectedBook.seriesNumber != null ? ` · Vol. ${selectedBook.seriesNumber}` : ''}</Badge>
                   )}
                 </div>
-                <DialogTitle className="mt-7 text-3xl font-bold leading-tight text-slate-950 dark:text-white">{selectedBook.title}</DialogTitle>
-                <p className="mt-2 text-lg font-medium text-slate-500 dark:text-slate-300">{selectedBook.author || 'Unknown author'}</p>
-                <DialogDescription className="mt-7 text-base leading-7 text-slate-600 dark:text-slate-300">
+                <DialogTitle>{selectedBook.title}</DialogTitle>
+                <p className="elibrary-book-dialog__author">{selectedBook.author || 'Unknown author'}</p>
+                <DialogDescription>
                   {selectedBook.description?.trim() || 'No description is available for this book yet.'}
                 </DialogDescription>
-                <dl className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-                  {selectedBook.language && <div><dt className="inline text-slate-400">Language: </dt><dd className="inline font-medium text-slate-700 dark:text-slate-200">{selectedBook.language}</dd></div>}
-                  {selectedBook.fileSize && <div><dt className="inline text-slate-400">Size: </dt><dd className="inline font-medium text-slate-700 dark:text-slate-200">{fmtSize(selectedBook.fileSize)}</dd></div>}
-                  {!selectedBook.downloadAllowed && <div className="inline-flex items-center gap-1 font-medium text-slate-500"><Lock className="h-3.5 w-3.5" /> Read only</div>}
+                <dl className="elibrary-book-dialog__facts">
+                  {selectedBook.language && <div><dt>Language</dt><dd>{selectedBook.language}</dd></div>}
+                  {selectedBook.fileSize && <div><dt>File size</dt><dd>{fmtSize(selectedBook.fileSize)}</dd></div>}
+                  <div><dt>Access</dt><dd>{selectedBook.downloadAllowed ? 'Read + download' : 'Read online only'}</dd></div>
                 </dl>
-                <div className="mt-auto grid gap-3 pt-8 sm:grid-cols-[minmax(0,1fr)_auto]">
-                  <Button className="min-h-12 bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => navigate(`/elibrary/${selectedBook.id}/read`)}>
+                <div className="elibrary-book-dialog__actions">
+                  <Button onClick={() => navigate(`/elibrary/${selectedBook.id}/read`)}>
                     <BookOpen className="mr-2 h-5 w-5" /> Read now
                   </Button>
                   {selectedBook.downloadAllowed && (
-                    <Button variant="outline" className="min-h-12 px-5" disabled={downloadingId === selectedBook.id} onClick={() => handleDownload(selectedBook)}>
+                    <Button variant="outline" disabled={downloadingId === selectedBook.id} onClick={() => handleDownload(selectedBook)}>
                       <Download className="mr-2 h-5 w-5" /> {downloadingId === selectedBook.id ? 'Downloading…' : 'Download'}
                     </Button>
                   )}
                 </div>
                 {(canAssignHomework || canManage) && (
-                  <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-200 pt-4 dark:border-surface-raised">
+                  <div className="elibrary-book-dialog__staff-actions">
                     {canAssignHomework && (
                       <Button variant="outline" className="min-h-11" onClick={() => navigate('/teacher/homework', { state: { prefill: ebookHomeworkPrefill(selectedBook) } })}>
                         <ClipboardList className="mr-2 h-4 w-4" /> Assign
