@@ -104,6 +104,10 @@ import {
   parseGradeItemMaxMarks,
 } from "./shared/gradebook";
 import {
+  HOMEWORK_MAX_MARKS,
+  parseHomeworkMaxMarks,
+} from "./shared/homework";
+import {
   activeTimetableTeacherNames,
   normalizeTimetableTeacherReferences,
 } from "./shared/timetableTeacherIntegrity";
@@ -21831,12 +21835,6 @@ async function startServer() {
     return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value ? null : date;
   };
 
-  const parseHomeworkMaxMarks = (value: unknown): number | null | undefined => {
-    if (value === null || value === undefined || value === "") return null;
-    const parsed = Number(value);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
-  };
-
   /** The requesting teacher's record, or null. */
   const ownTeacher = (userId: string) => prisma.teacher.findUnique({ where: { userId } });
 
@@ -21910,13 +21908,21 @@ async function startServer() {
     if (!cleanTitle || typeof classId !== "string" || !due) { res.status(400).json({ error: "Title, class and a valid due date are required" }); return; }
     if (cleanTitle.length > HOMEWORK_TITLE_MAX) { res.status(400).json({ error: `Title must be ${HOMEWORK_TITLE_MAX} characters or fewer` }); return; }
     if (String(instructions ?? "").length > HOMEWORK_INSTRUCTIONS_MAX) { res.status(400).json({ error: "Instructions are too long" }); return; }
-    if (parsedMaxMarks === undefined) { res.status(400).json({ error: "Max marks must be a number greater than 0" }); return; }
+    if (parsedMaxMarks === undefined) { res.status(400).json({ error: `Max marks must be greater than 0 and no more than ${HOMEWORK_MAX_MARKS.toLocaleString()}` }); return; }
     if (attachmentUrl && !parsedAttachment) { res.status(400).json({ error: "Invalid homework attachment" }); return; }
     try {
       const classRecord = await prisma.class.findUnique({ where: { id: classId }, select: { id: true } });
       if (!classRecord) { res.status(404).json({ error: "Class not found" }); return; }
       if (!(await canManageExamClass(jwtUser, classId))) {
         res.status(403).json({ error: "Forbidden: not your class" });
+        return;
+      }
+      if (
+        parsedAttachment &&
+        parseHomeworkMediaUrl(parsedAttachment) &&
+        homeworkMediaOwnerId(parsedAttachment) !== jwtUser.userId
+      ) {
+        res.status(403).json({ error: "You can only assign files you uploaded" });
         return;
       }
       if (subjectId) {
@@ -22038,6 +22044,15 @@ async function startServer() {
       if (b.attachmentUrl !== undefined) {
         const attachment = parseHomeworkAttachmentUrl(b.attachmentUrl, true);
         if (b.attachmentUrl && !attachment) { res.status(400).json({ error: "Invalid homework attachment" }); return; }
+        if (
+          attachment !== existing.attachmentUrl &&
+          attachment &&
+          parseHomeworkMediaUrl(attachment) &&
+          homeworkMediaOwnerId(attachment) !== jwtUser.userId
+        ) {
+          res.status(403).json({ error: "You can only assign files you uploaded" });
+          return;
+        }
         data.attachmentUrl = attachment;
       }
       if (b.subjectId !== undefined) {
@@ -22054,7 +22069,7 @@ async function startServer() {
       }
       if (b.maxMarks !== undefined) {
         const maxMarks = parseHomeworkMaxMarks(b.maxMarks);
-        if (maxMarks === undefined) { res.status(400).json({ error: "Max marks must be a number greater than 0" }); return; }
+        if (maxMarks === undefined) { res.status(400).json({ error: `Max marks must be greater than 0 and no more than ${HOMEWORK_MAX_MARKS.toLocaleString()}` }); return; }
         if (maxMarks === null && existing.gradeItemId) {
           res.status(409).json({ error: "Max marks cannot be removed after this homework has been synced to the gradebook" });
           return;

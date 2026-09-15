@@ -7,6 +7,17 @@ import {
   homeworkCsv,
   homeworkDraftKey,
 } from "../../src/lib/homeworkWorkspace";
+import {
+  HOMEWORK_MAX_MARKS,
+  parseHomeworkMaxMarks,
+} from "../../shared/homework";
+
+test("homework marks stay compatible with gradebook limits", () => {
+  assert.equal(parseHomeworkMaxMarks(""), null);
+  assert.equal(parseHomeworkMaxMarks("20.5"), 20.5);
+  assert.equal(parseHomeworkMaxMarks(0), undefined);
+  assert.equal(parseHomeworkMaxMarks(HOMEWORK_MAX_MARKS + 1), undefined);
+});
 
 test("homework date buckets use calendar days, with today not overdue", () => {
   const item = { status: "OPEN", dueDate: "2026-09-14T00:00:00Z" };

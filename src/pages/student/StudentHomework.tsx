@@ -669,6 +669,7 @@ export default function StudentHomework() {
                 className="mt-3"
                 variant="outline"
                 onClick={() => {
+                  setSearchParams({});
                   setView("all");
                   setSubject("all");
                   setQuery("");

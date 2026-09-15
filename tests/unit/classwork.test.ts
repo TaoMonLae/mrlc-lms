@@ -4,6 +4,7 @@ import {
   classworkResourceTarget,
   studentCanSeeClassworkExam,
   filterClasswork,
+  resolveClassworkSelection,
   sortClasswork,
   type ClassworkItem,
 } from "../../shared/classwork";
@@ -96,6 +97,13 @@ test("filtering and sorting preserve source rows and put pins first", () => {
   assert.equal(filterClasswork(items, "", "ALL", "unfiled")[0].id, "2");
   assert.equal(sortClasswork(items, "deadline")[0].id, "2");
   assert.equal(items[0].id, "1");
+});
+test("classwork falls back safely when a bookmarked class is no longer available", () => {
+  const classes = [{ id: "current" }, { id: "other" }];
+  assert.equal(resolveClassworkSelection("other", classes), "other");
+  assert.equal(resolveClassworkSelection("removed", classes), "current");
+  assert.equal(resolveClassworkSelection(null, classes), "current");
+  assert.equal(resolveClassworkSelection("removed", []), "");
 });
 
 function harness(

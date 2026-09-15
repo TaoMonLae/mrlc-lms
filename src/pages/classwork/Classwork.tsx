@@ -19,6 +19,7 @@ import { apiGet, apiSend } from "../../lib/api";
 import { formatDateOnly } from "../../lib/dates";
 import {
   filterClasswork,
+  resolveClassworkSelection,
   sortClasswork,
   type ClassworkClass,
   type ClassworkItem,
@@ -73,7 +74,8 @@ export default function Classwork() {
   const [retry, setRetry] = useState(0);
   const requestId = useRef(0);
   const writePending = useRef(false);
-  const selected = params.get("class") || classes[0]?.id || "";
+  const requestedClass = params.get("class");
+  const selected = resolveClassworkSelection(requestedClass, classes);
   const currentClass = classes.find((c) => c.id === selected);
 
   useEffect(() => {
@@ -92,6 +94,10 @@ export default function Classwork() {
       });
     return () => controller.abort();
   }, [retry]);
+  useEffect(() => {
+    if (!classesLoading && selected && requestedClass !== selected)
+      setParams({ class: selected }, { replace: true });
+  }, [classesLoading, requestedClass, selected, setParams]);
   useEffect(() => {
     const version = ++requestId.current;
     writePending.current = false;

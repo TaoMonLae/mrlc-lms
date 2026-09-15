@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import {
   BookOpenCheck,
   CalendarDays,
@@ -31,6 +31,10 @@ import {
   uploadHomeworkFile,
 } from "../../lib/homeworkMedia";
 import {
+  HOMEWORK_MAX_MARKS,
+  parseHomeworkMaxMarks,
+} from "../../../shared/homework";
+import {
   HomeworkFocus,
   HomeworkMasthead,
 } from "../../components/homework/HomeworkWorkspace";
@@ -50,17 +54,16 @@ interface HomeworkRow {
 export default function HomeworkList() {
   const { isAdmin } = usePermissions();
   const location = useLocation();
-  const classworkState = location.state as {
+  const navigate = useNavigate();
+  const navigationState = location.state as {
     classId?: string;
     openComposer?: boolean;
+    prefill?: { title: string; instructions: string; attachmentUrl: string };
   } | null;
+  const classworkState = navigationState;
   // Arrives here from "Assign as Homework" on a News article — see
   // NewsFeed.tsx / ArticleReader.tsx, which navigate with this shape.
-  const prefill = (
-    location.state as {
-      prefill?: { title: string; instructions: string; attachmentUrl: string };
-    } | null
-  )?.prefill;
+  const prefill = navigationState?.prefill;
   const [rows, setRows] = useState<HomeworkRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -133,6 +136,38 @@ export default function HomeworkList() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    if (!navigationState) return;
+    if (
+      navigationState.openComposer ||
+      navigationState.classId ||
+      navigationState.prefill
+    ) {
+      setShowForm(true);
+      setForm((current) => ({
+        ...current,
+        ...(navigationState.prefill
+          ? {
+              title: navigationState.prefill.title,
+              instructions: navigationState.prefill.instructions,
+              attachmentUrl: navigationState.prefill.attachmentUrl,
+            }
+          : {}),
+        ...(navigationState.classId
+          ? { classId: navigationState.classId }
+          : {}),
+      }));
+      navigate(`${location.pathname}${location.search}`, {
+        replace: true,
+        state: null,
+      });
+    }
+  }, [
+    location.pathname,
+    location.search,
+    navigate,
+    navigationState,
+  ]);
 
   const uploadAttachment = async (file: File) => {
     setUploading(true);
@@ -177,11 +212,10 @@ export default function HomeworkList() {
       toast.error("Title, class and due date are required");
       return;
     }
-    if (
-      form.maxMarks !== "" &&
-      (!Number.isFinite(Number(form.maxMarks)) || Number(form.maxMarks) <= 0)
-    ) {
-      toast.error("Max marks must be a number greater than 0");
+    if (parseHomeworkMaxMarks(form.maxMarks) === undefined) {
+      toast.error(
+        `Max marks must be greater than 0 and no more than ${HOMEWORK_MAX_MARKS.toLocaleString()}`,
+      );
       return;
     }
     setSaving(true);
@@ -386,6 +420,8 @@ export default function HomeworkList() {
                 aria-label="Maximum marks"
                 type="number"
                 min="1"
+                max={HOMEWORK_MAX_MARKS}
+                step="any"
                 value={form.maxMarks}
                 onChange={(e) => setForm({ ...form, maxMarks: e.target.value })}
                 placeholder="e.g. 20"
@@ -591,9 +627,22 @@ export default function HomeworkList() {
       ) : (
         <div className="hw-assignment-list">
           {filteredRows.length === 0 && (
-            <p className="rounded-xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-400 dark:border-surface-raised">
-              No homework matches these filters.
-            </p>
+            <div className="rounded-xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-400 dark:border-surface-raised">
+              <p>No homework matches these filters.</p>
+              <Button
+                className="mt-3"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setQuery("");
+                  setFilter("all");
+                  setClassFilter("all");
+                  setSort("due");
+                }}
+              >
+                Clear filters
+              </Button>
+            </div>
           )}
           {filteredRows.map((r) => {
             const { total, submitted, marked } = summarize(r);

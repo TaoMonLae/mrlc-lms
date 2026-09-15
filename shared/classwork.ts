@@ -29,6 +29,18 @@ export interface ClassworkPayload {
   items: ClassworkItem[];
 }
 
+export function resolveClassworkSelection(
+  requestedClassId: string | null,
+  classes: Pick<ClassworkClass, "id">[],
+): string {
+  if (
+    requestedClassId &&
+    classes.some((classroom) => classroom.id === requestedClassId)
+  )
+    return requestedClassId;
+  return classes[0]?.id ?? "";
+}
+
 export function classworkResourceTarget(raw: unknown): {
   type: "NEWS" | "EBOOK" | "COURSE" | "EXTERNAL";
   id?: string;

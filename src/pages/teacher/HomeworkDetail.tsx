@@ -40,6 +40,10 @@ import {
   type HomeworkUploadedFile,
 } from "../../lib/homeworkMedia";
 import { homeworkCsv, homeworkReviewDraft } from "../../lib/homeworkWorkspace";
+import {
+  HOMEWORK_MAX_MARKS,
+  parseHomeworkMaxMarks,
+} from "../../../shared/homework";
 import { HomeworkMasthead } from "../../components/homework/HomeworkWorkspace";
 
 interface Submission {
@@ -167,12 +171,10 @@ export default function HomeworkDetail() {
       toast.error("Title and due date are required");
       return;
     }
-    if (
-      editForm.maxMarks !== "" &&
-      (!Number.isFinite(Number(editForm.maxMarks)) ||
-        Number(editForm.maxMarks) <= 0)
-    ) {
-      toast.error("Max marks must be a number greater than 0");
+    if (parseHomeworkMaxMarks(editForm.maxMarks) === undefined) {
+      toast.error(
+        `Max marks must be greater than 0 and no more than ${HOMEWORK_MAX_MARKS.toLocaleString()}`,
+      );
       return;
     }
     if (data?.gradeItemId && editForm.maxMarks === "") {
@@ -449,6 +451,8 @@ export default function HomeworkDetail() {
                 <Input
                   type="number"
                   min="1"
+                  max={HOMEWORK_MAX_MARKS}
+                  step="any"
                   value={editForm.maxMarks}
                   onChange={(e) =>
                     setEditForm({ ...editForm, maxMarks: e.target.value })
@@ -903,6 +907,7 @@ export default function HomeworkDetail() {
                     type="number"
                     min="0"
                     max={data.maxMarks}
+                    step="any"
                     value={reviewDraft.score}
                     placeholder="Optional"
                     onChange={(e) =>
