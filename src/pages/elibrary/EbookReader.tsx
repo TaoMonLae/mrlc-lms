@@ -157,17 +157,33 @@ export default function EbookReader() {
 
   // Full page (browser Fullscreen API) support for distraction-free reading.
   useEffect(() => {
-    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    const onChange = () => setIsFullscreen(!!currentFullscreenElement());
     document.addEventListener('fullscreenchange', onChange);
-    return () => document.removeEventListener('fullscreenchange', onChange);
+    document.addEventListener('webkitfullscreenchange', onChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange);
+      document.removeEventListener('webkitfullscreenchange', onChange);
+    };
   }, []);
 
   const toggleFullscreen = async () => {
     try {
-      if (!document.fullscreenElement) {
-        await readerRef.current?.requestFullscreen();
+      if (!currentFullscreenElement()) {
+        const reader = readerRef.current as SafariFullscreenElement | null;
+        if (reader?.requestFullscreen) {
+          await reader.requestFullscreen();
+        } else if (reader?.webkitRequestFullscreen) {
+          await reader.webkitRequestFullscreen();
+        } else {
+          throw new Error('Fullscreen is unavailable');
+        }
       } else {
-        await document.exitFullscreen();
+        const fullscreenDocument = document as SafariFullscreenDocument;
+        if (fullscreenDocument.exitFullscreen) {
+          await fullscreenDocument.exitFullscreen();
+        } else if (fullscreenDocument.webkitExitFullscreen) {
+          await fullscreenDocument.webkitExitFullscreen();
+        }
       }
     } catch {
       toast.error('Full page view is not supported in this browser.');
@@ -373,12 +389,26 @@ interface ReaderMonWord { word: string; ipa: string | null; thaiGloss: string | 
 interface ReaderLookupResult { word: string; entries: ReaderDictEntry[]; translations: ReaderTranslation[]; monMatches: ReaderMonWord[]; }
 const READER_MON_LANG_LABEL: Record<string, string> = { eng: 'English', mya: 'Myanmar', tha: 'Thai' };
 
+type SafariFullscreenDocument = Document & {
+  webkitFullscreenElement?: Element | null;
+  webkitExitFullscreen?: () => Promise<void> | void;
+};
+
+type SafariFullscreenElement = HTMLElement & {
+  webkitRequestFullscreen?: () => Promise<void> | void;
+};
+
+function currentFullscreenElement(): Element | null {
+  const fullscreenDocument = document as SafariFullscreenDocument;
+  return fullscreenDocument.fullscreenElement || fullscreenDocument.webkitFullscreenElement || null;
+}
+
 // Per the Fullscreen API spec, only descendants of the fullscreened element
 // are rendered -- a dialog portaled to document.body as usual would be
 // invisible while reading in the reader's "Full page view". Portal into the
 // fullscreened element itself when there is one.
 function fullscreenPortalContainer(): HTMLElement | undefined {
-  return (document.fullscreenElement as HTMLElement | null) || undefined;
+  return (currentFullscreenElement() as HTMLElement | null) || undefined;
 }
 
 /* ─────────────────────── Shared: quick define popover ─────────────────────── */
@@ -659,7 +689,7 @@ function AddToFlashcardsDialog({ token, defaultDefinition, onClose }: {
               <Label>Deck</Label>
               <Select value={deckId} onValueChange={setDeckId}>
                 <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                <SelectContent>
+                <SelectContent container={fullscreenPortalContainer()}>
                   {decks.map((d) => <SelectItem key={d.id} value={d.id}>{d.title}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -913,11 +943,11 @@ function ComicView({ id, token, format }: { id: string; token: string | null; fo
         <Button variant="outline" size="icon" onClick={zoomIn} title="Zoom in (+)"><ZoomIn className="h-4 w-4" /></Button>
         <Select value={pageView} onValueChange={(value) => changePageView(value as ReaderPageView)}>
           <SelectTrigger className="h-9 w-[126px]" title="Page view"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="single">Single Page</SelectItem><SelectItem value="two">Two Page</SelectItem></SelectContent>
+          <SelectContent container={fullscreenPortalContainer()}><SelectItem value="single">Single Page</SelectItem><SelectItem value="two">Two Page</SelectItem></SelectContent>
         </Select>
         <Select value={fitMode} onValueChange={(value) => { setFitMode(value as ComicFitMode); setScale(1); }}>
           <SelectTrigger className="h-9 w-[120px]" title="Fit mode"><SelectValue /></SelectTrigger>
-          <SelectContent>
+          <SelectContent container={fullscreenPortalContainer()}>
             <SelectItem value="page">Fit Page</SelectItem>
             <SelectItem value="width">Fit Width</SelectItem>
             <SelectItem value="height">Fit Height</SelectItem>
@@ -925,7 +955,7 @@ function ComicView({ id, token, format }: { id: string; token: string | null; fo
         </Select>
         <Select value={direction} onValueChange={(value) => setDirection(value as ComicDirection)}>
           <SelectTrigger className="h-9 w-[142px]" title="Reading direction"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="ltr">Left to Right</SelectItem><SelectItem value="rtl">Right to Left</SelectItem></SelectContent>
+          <SelectContent container={fullscreenPortalContainer()}><SelectItem value="ltr">Left to Right</SelectItem><SelectItem value="rtl">Right to Left</SelectItem></SelectContent>
         </Select>
       </div>
     </div>
@@ -1177,14 +1207,14 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards }: {
         <div className="w-px h-5 bg-slate-200 dark:bg-surface-raised mx-1" />
         <Select value={pageView} onValueChange={(value) => changePageView(value as ReaderPageView)}>
           <SelectTrigger className="h-9 w-[132px]" title="Page view"><SelectValue /></SelectTrigger>
-          <SelectContent>
+          <SelectContent container={fullscreenPortalContainer()}>
             <SelectItem value="single">Single Page</SelectItem>
             <SelectItem value="two">Two Page</SelectItem>
           </SelectContent>
         </Select>
         <Select value={fitMode} onValueChange={(value) => { setFitMode(value as ReaderFitMode); setScale(1); }}>
           <SelectTrigger className="h-9 w-[125px]" title="Fit mode"><SelectValue /></SelectTrigger>
-          <SelectContent>
+          <SelectContent container={fullscreenPortalContainer()}>
             <SelectItem value="width">Fit to Width</SelectItem>
             <SelectItem value="height">Fit to Height</SelectItem>
           </SelectContent>
@@ -1243,6 +1273,17 @@ const HIGHLIGHT_FILL: Record<string, string> = {
 type EpubAppearance = 'light' | 'warm' | 'dark';
 
 const EPUB_APPEARANCE_KEY = 'ebook_epub_appearance';
+const EPUB_SELECTION_STYLE_ID = 'mrlc-epub-selection-style';
+const EPUB_SELECTION_CSS = `
+  html, body, html body * {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+  }
+  ::selection, *::selection {
+    background: rgba(250, 204, 21, 0.58) !important;
+    color: #111827 !important;
+  }
+`;
 const EPUB_APPEARANCE_SURFACE: Record<EpubAppearance, string> = {
   light: 'bg-white',
   warm: 'bg-[#f5efe4]',
@@ -1250,16 +1291,19 @@ const EPUB_APPEARANCE_SURFACE: Record<EpubAppearance, string> = {
 };
 const EPUB_APPEARANCE_CSS: Record<EpubAppearance, string> = {
   light: `
+    ${EPUB_SELECTION_CSS}
     html, body { background: #ffffff !important; color: #1e293b !important; }
     html body * { color: #1e293b !important; }
     a { color: #2563eb !important; }
   `,
   warm: `
+    ${EPUB_SELECTION_CSS}
     html, body { background: #f5efe4 !important; color: #3d3427 !important; }
     html body * { color: #3d3427 !important; }
     a { color: #8a4b22 !important; }
   `,
   dark: `
+    ${EPUB_SELECTION_CSS}
     html, body { background: #171717 !important; color: #e5e7eb !important; }
     html body * { color: #e5e7eb !important; }
     a { color: #93c5fd !important; }
@@ -1287,6 +1331,17 @@ function applyEpubContentAppearance(contents: any, appearance: EpubAppearance) {
   const doc = contents.document as Document | undefined;
   if (!doc) return;
 
+  // EPUBs can ship their own selection rules (including user-select: none).
+  // Keep word selection visible and enabled in each chapter iframe, including
+  // Safari where the native selection colour can otherwise be suppressed.
+  let selectionStyle = doc.getElementById(EPUB_SELECTION_STYLE_ID) as HTMLStyleElement | null;
+  if (!selectionStyle) {
+    selectionStyle = doc.createElement('style');
+    selectionStyle.id = EPUB_SELECTION_STYLE_ID;
+    (doc.head || doc.documentElement).appendChild(selectionStyle);
+  }
+  selectionStyle.textContent = EPUB_SELECTION_CSS;
+
   doc.documentElement.style.setProperty('background-color', colors.background, 'important');
   doc.querySelectorAll<HTMLElement>('body *').forEach((element) => {
     element.style.setProperty('color', colors.text, 'important');
@@ -1306,6 +1361,26 @@ function applyEpubAppearance(rendition: Rendition, appearance: EpubAppearance) {
   themes.select('reader-appearance');
   for (const contents of (rendition as any).getContents?.() ?? []) {
     applyEpubContentAppearance(contents, appearance);
+  }
+}
+
+interface EpubSelectionSnapshot {
+  cfiRange: string;
+  text: string;
+  contents: any;
+}
+
+function readEpubSelection(contents: any, knownCfi?: string): EpubSelectionSnapshot | null {
+  try {
+    const selected = contents?.window?.getSelection?.() as Selection | null | undefined;
+    if (!selected || selected.rangeCount === 0 || selected.isCollapsed) return null;
+    const text = selected.toString().trim();
+    if (!text) return null;
+    const range = selected.getRangeAt(0);
+    const cfiRange = knownCfi || contents?.cfiFromRange?.(range);
+    return typeof cfiRange === 'string' && cfiRange ? { cfiRange, text, contents } : null;
+  } catch {
+    return null;
   }
 }
 
@@ -1370,6 +1445,7 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
 
   useEffect(() => {
     let destroyed = false;
+    const contentCleanups = new Set<() => void>();
     (async () => {
       try {
         setReady(false);
@@ -1392,10 +1468,36 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
           // EPUB chapters render inside iframes, so their input events do not
           // bubble to the outer reader. Forward activity without exposing book
           // content so legitimate iframe reading continues the time heartbeat.
+          const doc = contents.document as Document | undefined;
+          if (!doc) return;
           const activity = () => window.dispatchEvent(new Event('ebook-reader-activity'));
-          ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach((event) =>
-            contents.document?.addEventListener(event, activity, { passive: true }),
-          );
+          const activityEvents = ['pointerdown', 'keydown', 'wheel', 'touchstart'] as const;
+          activityEvents.forEach((event) => doc.addEventListener(event, activity, { passive: true }));
+
+          // EPUB.js derives its `selected` event from a delayed selectionchange.
+          // WebKit can omit or delay that event inside the chapter iframe, so
+          // also capture the final DOM selection directly after mouse/touch use.
+          let selectionTimer: number | undefined;
+          const captureSelection = () => {
+            window.clearTimeout(selectionTimer);
+            selectionTimer = window.setTimeout(() => {
+              if (destroyed) return;
+              const nextSelection = readEpubSelection(contents);
+              if (nextSelection) setSelection(nextSelection);
+            }, 80);
+          };
+          doc.addEventListener('selectionchange', captureSelection, { passive: true });
+          doc.addEventListener('mouseup', captureSelection, { passive: true });
+          doc.addEventListener('touchend', captureSelection, { passive: true });
+
+          const cleanup = () => {
+            window.clearTimeout(selectionTimer);
+            activityEvents.forEach((event) => doc.removeEventListener(event, activity));
+            doc.removeEventListener('selectionchange', captureSelection);
+            doc.removeEventListener('mouseup', captureSelection);
+            doc.removeEventListener('touchend', captureSelection);
+          };
+          contentCleanups.add(cleanup);
         });
         rendition.on('relocated', (loc: any) => {
           const href = loc?.start?.href || '';
@@ -1414,8 +1516,8 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
           }
         });
         rendition.on('selected', (cfiRange: string, contents: any) => {
-          const text = contents?.window?.getSelection?.()?.toString()?.trim() || '';
-          if (text) setSelection({ cfiRange, text, contents });
+          const nextSelection = readEpubSelection(contents, cfiRange);
+          if (nextSelection) setSelection(nextSelection);
         });
         await rendition.display(savedProgress?.location || undefined);
         // Build a lightweight location map so reflowable EPUBs report a real
@@ -1453,6 +1555,8 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
     return () => {
       destroyed = true;
       window.removeEventListener('keyup', onKey);
+      contentCleanups.forEach((cleanup) => cleanup());
+      contentCleanups.clear();
       try { rendRef.current?.destroy(); bookRef.current?.destroy(); } catch { /* noop */ }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1592,7 +1696,7 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
                 <SelectValue placeholder="Contents" className="truncate min-w-0" />
               </div>
             </SelectTrigger>
-            <SelectContent className="max-h-72 min-w-[260px]">
+            <SelectContent container={fullscreenPortalContainer()} className="max-h-72 min-w-[260px]">
               {toc.map((t, i) => (
                 <SelectItem key={`${t.href}-${i}`} value={t.href}>{t.label || `Section ${i + 1}`}</SelectItem>
               ))}
@@ -1606,14 +1710,14 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
         <Button variant="outline" size="icon" onClick={() => setZoom((value) => Math.min(200, value + 10))} title="Zoom in" disabled={!ready}><ZoomIn className="h-4 w-4" /></Button>
         <Select value={pageView} onValueChange={(value) => setPageView(value as ReaderPageView)} disabled={!ready}>
           <SelectTrigger className="h-9 w-[132px]" title="Page view"><SelectValue /></SelectTrigger>
-          <SelectContent>
+          <SelectContent container={fullscreenPortalContainer()}>
             <SelectItem value="single">Single Page</SelectItem>
             <SelectItem value="two">Two Page</SelectItem>
           </SelectContent>
         </Select>
         <Select value={fitMode} onValueChange={(value) => setFitMode(value as ReaderFitMode)} disabled={!ready}>
           <SelectTrigger className="h-9 w-[125px]" title="Fit mode"><SelectValue /></SelectTrigger>
-          <SelectContent>
+          <SelectContent container={fullscreenPortalContainer()}>
             <SelectItem value="width">Fit to Width</SelectItem>
             <SelectItem value="height">Fit to Height</SelectItem>
           </SelectContent>
