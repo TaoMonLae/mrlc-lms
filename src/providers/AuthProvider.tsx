@@ -61,6 +61,7 @@ function mapApiUser(apiUser: Record<string, any>): User {
     mfaRecommended: Boolean(apiUser.mfaRecommended) || (['ADMIN', 'ACCOUNTANT'].includes(apiUser.role) && !apiUser.mfaEnabled),
     studentId: apiUser.studentId ?? undefined,
     boardingType: apiUser.boardingType ?? null,
+    studentCouncilRole: apiUser.studentCouncilRole ?? null,
     createdAt: apiUser.createdAt ?? new Date().toISOString(),
     updatedAt: apiUser.updatedAt ?? new Date().toISOString(),
   };

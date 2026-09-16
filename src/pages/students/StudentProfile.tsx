@@ -27,6 +27,7 @@ import { apiSend } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../../providers/AuthProvider';
 import { usePermissions } from '@/src/lib/permissions';
+import { studentCouncilRoleLabel } from '../../../shared/studentCouncil';
 
 export default function StudentProfile() {
   const { id } = useParams<{ id: string }>();
@@ -163,6 +164,8 @@ export default function StudentProfile() {
     emergencyContact: student.emergencyContact || 'Unspecified',
     notes: student.notes || 'No notes available.',
     profilePhotoUrl: student.profilePhotoUrl || student.user?.profilePhotoUrl || null,
+    boardingType: student.boardingType || 'DAY',
+    studentCouncilRole: studentCouncilRoleLabel(student.studentCouncilRole),
   };
 
   // "Left the school" — soft-remove (reversible). See StudentsList.tsx for
@@ -298,6 +301,16 @@ export default function StudentProfile() {
                 <span className="text-slate-500">Country</span>
                 <span className="font-medium text-slate-900 dark:text-slate-300">{s.country}</span>
               </div>
+              <div className="flex justify-between items-center gap-4 text-sm">
+                <span className="text-slate-500">Residence</span>
+                <span className="font-medium text-right text-slate-900 dark:text-slate-300">{s.boardingType === 'BOARDING' ? 'Boarding' : 'Day student'}</span>
+              </div>
+              {s.studentCouncilRole && (
+                <div className="flex justify-between items-center gap-4 text-sm">
+                  <span className="text-slate-500">Student Council</span>
+                  <Badge variant="outline" className="border-academic-teal/30 bg-academic-teal/10 text-right text-academic-teal">{s.studentCouncilRole}</Badge>
+                </div>
+              )}
               <div className="flex justify-between items-center text-sm">
                 <span className="text-slate-500">{s.identityType ? s.identityType.replace('_', ' ') : 'ID Number'}</span>
                 <span className="font-medium text-slate-900 dark:text-slate-300">{s.identityNumber}</span>

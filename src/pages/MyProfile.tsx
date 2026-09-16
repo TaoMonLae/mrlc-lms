@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { MousePointerClick, KeyRound, Mail, ShieldCheck, AlertTriangle, Eye } from 'lucide-react';
 import { useReducedMotion } from 'motion/react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -20,6 +21,7 @@ import { MfaSettings } from '@/src/components/profile/MfaSettings';
 import { useSettings } from '../providers/SettingsProvider';
 import { CURSOR_EFFECT_LABELS, previewCursorEffect } from '../lib/cursorEffects';
 import type { CursorEffect } from '../types/settings';
+import { studentCouncilRoleLabel } from '../../shared/studentCouncil';
 
 type CursorSelection = CursorEffect | 'SCHOOL_DEFAULT';
 
@@ -96,6 +98,11 @@ export default function MyProfile() {
             <div className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
               <ShieldCheck className="h-3.5 w-3.5" /> {user?.role}
             </div>
+            {studentCouncilRoleLabel(user?.studentCouncilRole) && (
+              <Badge variant="outline" className="mt-2 border-academic-teal/30 bg-academic-teal/10 text-academic-teal">
+                Student Council · {studentCouncilRoleLabel(user?.studentCouncilRole)}
+              </Badge>
+            )}
           </div>
         </div>
 

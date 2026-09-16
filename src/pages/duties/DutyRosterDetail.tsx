@@ -16,11 +16,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { usePermissions } from '../../lib/permissions';
 import { toast } from 'sonner';
+import CookingDutyDivider from './CookingDutyDivider';
 
 interface Student {
   id: string;
   studentCode: string;
   preferredName?: string;
+  boardingType?: string | null;
+  studentCouncilRole?: string | null;
+  status?: string | null;
   user?: { firstName: string; lastName: string };
 }
 
@@ -29,6 +33,7 @@ interface DutyDefinition {
   name: string;
   type: string;
   isActive: boolean;
+  requiredStudents?: number;
 }
 
 interface Assignment {
@@ -82,10 +87,10 @@ export default function DutyRosterDetail() {
 
   const token = () => sessionStorage.getItem('auth_token');
 
-  const fetchAll = () => {
-    setLoading(true);
+  const fetchAll = (silent = false) => {
+    if (!silent) setLoading(true);
     const headers = { Authorization: `Bearer ${token()}` };
-    Promise.all([
+    return Promise.all([
       fetch(`/api/duty-rosters/${id}`, { headers }).then((r) => r.json()),
       fetch('/api/students', { headers }).then((r) => (r.ok ? r.json() : [])),
       fetch('/api/duty-definitions?isActive=true', { headers }).then((r) => r.json()),
@@ -98,10 +103,10 @@ export default function DutyRosterDetail() {
       .catch(() => {
         toast.error('Failed to load roster');
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (!silent) setLoading(false); });
   };
 
-  useEffect(fetchAll, [id]);
+  useEffect(() => { fetchAll(); }, [id]);
 
   const toggleStudent = (studentId: string) => {
     setSelectedStudentIds((prev) => (prev.includes(studentId) ? prev.filter((s) => s !== studentId) : [...prev, studentId]));
@@ -283,6 +288,18 @@ export default function DutyRosterDetail() {
           </Button>
         )}
       </div>
+
+      <CookingDutyDivider
+        rosterId={roster.id}
+        startDate={roster.startDate}
+        endDate={roster.endDate}
+        rosterStatus={roster.status}
+        students={students}
+        definitions={definitions}
+        assignments={roster.assignments}
+        canManage={canManage}
+        onChanged={() => fetchAll(true)}
+      />
 
       {canManage && isDraft && (
         <Card>

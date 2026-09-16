@@ -81,6 +81,9 @@ export default function ExpensesDashboard() {
                           (e.vendor?.name && e.vendor.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
                           (e.merchantName && e.merchantName.toLowerCase().includes(searchTerm.toLowerCase())) ||
                           (studentName && studentName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (e.student?.preferredName && e.student.preferredName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (e.student?.studentCode && e.student.studentCode.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (e.receiptReference && e.receiptReference.toLowerCase().includes(searchTerm.toLowerCase())) ||
                           (e.vendorInvoiceNo && e.vendorInvoiceNo.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus = statusFilter === 'ALL' || e.status === statusFilter;
     const matchesCategory = categoryFilter === 'ALL' || e.category === categoryFilter;
@@ -437,7 +440,7 @@ export default function ExpensesDashboard() {
               <tr>
                 <th className="text-left p-2">Title</th>
                 <th className="text-left p-2">Category</th>
-                <th className="text-left p-2">Vendor</th>
+                <th className="text-left p-2">Student / payee</th>
                 <th className="text-left p-2">Date</th>
                 <th className="text-right p-2">Amount</th>
                 <th className="text-left p-2">Status</th>
@@ -458,7 +461,7 @@ export default function ExpensesDashboard() {
                       )}
                     </td>
                     <td className="p-2">{getCategoryLabel(expense.category)}</td>
-                    <td className="p-2">{expense.vendor?.name || '-'}</td>
+                    <td className="p-2">{expense.source === 'STUDENT_DUTY' && <div>Student duty · {expense.student?.preferredName || `${expense.student?.user?.firstName || ''} ${expense.student?.user?.lastName || ''}`.trim()} {expense.student?.studentCode}</div>}{expense.merchantName || expense.vendor?.name || '-'}</td>
                     <td className="p-2">{new Date(expense.expenseDate).toLocaleDateString()}</td>
                     <td className="text-right p-2">{formatMoney(expenseGrossAmount(expense), expense.currency || currency)}</td>
                     <td className="p-2">{expense.status.replace('_', ' ')}</td>

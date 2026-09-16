@@ -16,7 +16,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { formatMoney } from '../../lib/locale';
-import { localToday } from '../../lib/dates';
+import { formatDateOnly } from '../../lib/dates';
+import { dutyExpenseAssignmentEligible, dutyExpenseIsNotFuture, dutyExpenseRosterEligible } from '../../../shared/dutyExpenses';
+import { validateMoney } from '../../../shared/financeControls';
 
 interface DutyAssignment {
   id: string;
@@ -74,6 +76,7 @@ const dateKey = (value: string) => value.slice(0, 10);
 
 export default function StudentDutyExpenses() {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [eligible, setEligible] = useState(true);
   const [currency, setCurrency] = useState('MYR');
@@ -86,6 +89,7 @@ export default function StudentDutyExpenses() {
 
   const load = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [expenseResponse, assignmentResponse] = await Promise.all([
         fetch('/api/student-duty-expenses', { headers: headers() }),
@@ -100,6 +104,7 @@ export default function StudentDutyExpenses() {
       setExpenses(Array.isArray(expenseBody.expenses) ? expenseBody.expenses : []);
       setAssignments(Array.isArray(assignmentBody) ? assignmentBody : []);
     } catch (error: any) {
+      setLoadError(error.message || 'Could not load duty expenses');
       toast.error(error.message || 'Could not load duty expenses');
     } finally {
       setLoading(false);
@@ -109,9 +114,9 @@ export default function StudentDutyExpenses() {
   useEffect(() => { void load(); }, []);
 
   const eligibleAssignments = useMemo(() => assignments
-    .filter((assignment) => assignment.roster?.status === 'PUBLISHED')
-    .filter((assignment) => ['ASSIGNED', 'IN_PROGRESS', 'COMPLETED'].includes(assignment.status))
-    .filter((assignment) => dateKey(assignment.scheduledDate) <= localToday())
+    .filter((assignment) => dutyExpenseRosterEligible(assignment.roster?.status))
+    .filter((assignment) => dutyExpenseAssignmentEligible(assignment.status))
+    .filter((assignment) => dutyExpenseIsNotFuture(dateKey(assignment.scheduledDate)))
     .sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate)), [assignments]);
 
   const selectedAssignment = eligibleAssignments.find((assignment) => assignment.id === form.dutyAssignmentId);
@@ -134,10 +139,13 @@ export default function StudentDutyExpenses() {
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!form.dutyAssignmentId || !form.title.trim() || !form.description.trim() || Number(form.amount) <= 0) {
+    if (submitting) return;
+    if (!selectedAssignment || form.title.trim().length < 2 || form.description.trim().length < 2) {
       toast.error('Choose a duty and complete the required expense details');
       return;
     }
+    try { validateMoney(Number(form.amount)); }
+    catch { toast.error('Enter a positive amount with at most two decimal places'); return; }
     setSubmitting(true);
     try {
       const response = await fetch('/api/student-duty-expenses', {
@@ -159,6 +167,7 @@ export default function StudentDutyExpenses() {
   };
 
   if (loading) return <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">Loading duty expenses…</div>;
+  if (loadError) return <div role="alert" className="space-y-3 p-6"><p>{loadError}</p><Button onClick={() => void load()}>Retry loading expenses</Button></div>;
 
   if (!eligible) {
     return (
@@ -182,9 +191,10 @@ export default function StudentDutyExpenses() {
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">My duty expenses</h1>
           <p className="mt-1 text-sm text-muted-foreground">Record money spent while completing cooking, supply, or daily-needs duties.</p>
         </div>
-        <Button onClick={() => setShowForm((current) => !current)} disabled={eligibleAssignments.length === 0}>
+        <div className="flex gap-2"><Button variant="outline" onClick={() => void load()} disabled={submitting}>Refresh status</Button>
+        <Button onClick={() => setShowForm((current) => !current)} disabled={submitting || eligibleAssignments.length === 0}>
           <Plus className="mr-2 h-4 w-4" /> {showForm ? 'Close form' : 'Add expense'}
-        </Button>
+        </Button></div>
       </header>
 
       <section className="grid gap-px border border-border bg-border sm:grid-cols-3" aria-label="Duty expense summary">
@@ -194,7 +204,7 @@ export default function StudentDutyExpenses() {
       </section>
 
       {eligibleAssignments.length === 0 && (
-        <div className="border-l-4 border-academic-gold bg-muted p-4 text-sm">You do not have a published duty on or before today. An expense can be added after a duty is assigned.</div>
+        <div className="border-l-4 border-academic-gold bg-muted p-4 text-sm">No eligible duty is assigned on or before today. Ask the school in-charge to assign your duty and publish the roster. Published, active, and completed rosters accept expenses.</div>
       )}
 
       {showForm && (
@@ -244,7 +254,7 @@ export default function StudentDutyExpenses() {
                 <article key={expense.id} className="grid gap-3 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2"><h3 className="font-medium">{expense.title}</h3><Badge variant="outline" className={statusClass[expense.status] || ''}>{readableStatus(expense.status)}</Badge></div>
-                    <p className="mt-1 text-sm text-muted-foreground">{expense.dutyAssignment?.dutyDefinition.name || 'Duty'} · {new Date(expense.expenseDate).toLocaleDateString()}{expense.merchantName ? ` · ${expense.merchantName}` : ''}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{expense.dutyAssignment?.dutyDefinition.name || 'Duty'} · {formatDateOnly(expense.expenseDate)}{expense.merchantName ? ` · ${expense.merchantName}` : ''}</p>
                     {expense.status === 'REJECTED' && expense.rejectionReason && <p className="mt-2 text-sm text-rose-700">Finance note: {expense.rejectionReason}</p>}
                   </div>
                   <div className="flex items-center justify-between gap-4 sm:block sm:text-right">

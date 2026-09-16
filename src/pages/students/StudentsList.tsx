@@ -28,6 +28,7 @@ import { EmptySearchState } from '../../components/ui/empty-state';
 import { getErrorMessage } from '../../lib/errors';
 import { apiSend } from '../../lib/api';
 import { useAuth } from '../../providers/AuthProvider';
+import { studentCouncilRoleLabel } from '../../../shared/studentCouncil';
 
 export default function StudentsList() {
   const { user } = useAuth();
@@ -129,14 +130,16 @@ export default function StudentsList() {
     class: s.class?.name || 'Unassigned',
     status: s.status || 'ACTIVE',
     gender: s.gender || 'MALE',
-    enrollmentDate: s.enrollmentDate
+    enrollmentDate: s.enrollmentDate,
+    studentCouncilRole: studentCouncilRoleLabel(s.studentCouncilRole),
   }));
 
   const filteredStudents = mappedStudents.filter(student => {
     const matchesSearch =
       student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.studentId.toLowerCase().includes(searchTerm.toLowerCase());
+      student.studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (student.studentCouncilRole || '').toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesClass = classFilter === 'ALL' || student.class === classFilter;
     const matchesStatus = statusFilter === 'ALL' || student.status === statusFilter;
@@ -252,6 +255,11 @@ export default function StudentsList() {
                                 <Link to={`/students/${student.id}`} className="font-semibold text-slate-900 dark:text-white hover:text-aubergine-600 dark:hover:text-aubergine-400">
                                   {student.firstName} {student.lastName}
                                 </Link>
+                                {student.studentCouncilRole && (
+                                  <Badge variant="outline" className="mt-1 block w-fit border-academic-teal/30 bg-academic-teal/10 text-[10px] text-academic-teal">
+                                    {student.studentCouncilRole}
+                                  </Badge>
+                                )}
                               </div>
                             </div>
                           </td>
@@ -362,6 +370,11 @@ export default function StudentsList() {
                         {student.firstName} {student.lastName}
                       </Link>
                       <span className="text-xs text-slate-500 font-mono">{student.studentId}</span>
+                      {student.studentCouncilRole && (
+                        <Badge variant="outline" className="mt-1 block w-fit border-academic-teal/30 bg-academic-teal/10 text-[10px] text-academic-teal">
+                          {student.studentCouncilRole}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   <DropdownMenu>

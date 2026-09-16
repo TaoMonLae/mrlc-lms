@@ -4,8 +4,12 @@ import {
   DUTY_EXPENSE_CATEGORIES,
   dutyExpenseIsNotFuture,
   dutyExpenseMatchesAssignmentDate,
+  dutyExpenseRosterEligible,
+  dutyExpenseAssignmentEligible,
   isBoardingStudent,
 } from './shared/dutyExpenses';
+import { dutyDateIsWithinRoster } from './shared/cookingDutyBoard';
+import { STUDENT_COUNCIL_ROLES, parseStudentCouncilRole } from './shared/studentCouncil';
 import express from "express";
 import compression from "compression";
 import path from "path";
@@ -1098,6 +1102,7 @@ const schemas = {
     medicalInformation: nullableStr, allergies: nullableStr, notes: optStr,
     classId: optStr, gender: optStr, status: optStr,
     boardingType: z.enum(["DAY", "BOARDING"]).optional().default("DAY"),
+    studentCouncilRole: z.enum(STUDENT_COUNCIL_ROLES).nullable().optional(),
   }),
   userCreate: z.object({
     firstName: reqStr, lastName: reqStr, email,
@@ -1429,6 +1434,7 @@ const schemas = {
     medicalInformation: nullableStr, allergies: nullableStr, notes: optStr,
     classId: optStr, gender: optStr, status: optStr,
     boardingType: z.enum(["DAY", "BOARDING"]).optional(),
+    studentCouncilRole: z.enum(STUDENT_COUNCIL_ROLES).nullable().optional(),
   }),
   subjectCreate: z.object({
     name: reqStr, code: reqStr, level: optStr, description: optStr, status: optStr,
@@ -2472,7 +2478,7 @@ async function startServer() {
       // this cast.
       const user = await prisma.user.findFirst({
         where: { OR: [{ email: identifier }, { username: identifier } as any] },
-        include: { studentProfile: { select: { id: true, boardingType: true } } },
+        include: { studentProfile: { select: { id: true, boardingType: true, studentCouncilRole: true } } },
       });
 
       if (!user || !user.passwordHash) {
@@ -2582,6 +2588,7 @@ async function startServer() {
           mfaRecommended: ["ADMIN", "ACCOUNTANT"].includes(user.role) && !user.mfaEnabled,
           studentId: user.studentProfile?.id || null,
           boardingType: user.studentProfile?.boardingType || null,
+          studentCouncilRole: user.studentProfile?.studentCouncilRole || null,
         },
       });
     } catch (err) {
@@ -2645,7 +2652,7 @@ async function startServer() {
           cursorEffect: true,
           mfaEnabled: true,
           lastLoginAt: true,
-          studentProfile: { select: { id: true, boardingType: true } },
+          studentProfile: { select: { id: true, boardingType: true, studentCouncilRole: true } },
         },
       } as any);
       if (!user || !user.isActive) {
@@ -2669,6 +2676,7 @@ async function startServer() {
           ...userPayload,
           studentId: studentProfile?.id || null,
           boardingType: studentProfile?.boardingType || null,
+          studentCouncilRole: studentProfile?.studentCouncilRole || null,
         },
       });
     } catch (err) {
@@ -3142,7 +3150,7 @@ async function startServer() {
       contactNumber, country, identityType, identityNumber, legalDocumentationStatus,
       address, emergencyContact, emergencyContactName, emergencyContactPhone, emergencyContactRelationship,
       previousSchool, previousEducationLevel, educationLevel, medicalInformation, allergies,
-      notes, classId, gender, status, boardingType,
+      notes, classId, gender, status, boardingType, studentCouncilRole,
     } = req.body;
     if (!firstName || !lastName || !email) {
       res.status(400).json({ error: "First name, last name, and email are required" });
@@ -3193,6 +3201,7 @@ async function startServer() {
             gender,
             status: status || "ACTIVE",
             boardingType: boardingType || "DAY",
+            studentCouncilRole: studentCouncilRole || null,
           },
           include: {
             user: { select: { id: true, firstName: true, lastName: true, email: true, username: true, role: true, isActive: true, profilePhotoUrl: true } },
@@ -3278,6 +3287,12 @@ async function startServer() {
 
       const gender = s(r.gender).toUpperCase() || null;
       const status = s(r.status).toUpperCase() === "INACTIVE" ? "INACTIVE" : "ACTIVE";
+      const councilRoleInput = s(r.studentCouncilRole);
+      const councilRoleValue = parseStudentCouncilRole(councilRoleInput);
+      if (councilRoleInput && !councilRoleValue) {
+        errors.push({ row: rowNo, message: `Unknown student council role "${s(r.studentCouncilRole)}"` });
+        continue;
+      }
       const dob = s(r.dateOfBirth);
       const dateOfBirth = dob && !isNaN(Date.parse(dob)) ? new Date(dob) : null;
 
@@ -3301,6 +3316,7 @@ async function startServer() {
             data: {
               userId: user.id, studentCode, gender, status, dateOfBirth, classId,
               boardingType: s(r.boardingType).toUpperCase() === "BOARDING" ? "BOARDING" : "DAY",
+              studentCouncilRole: councilRoleValue || null,
               guardianName: s(r.guardianName) || null,
               guardianPhone: s(r.guardianPhone) || null,
               address: s(r.address) || null,
@@ -3499,7 +3515,7 @@ async function startServer() {
       contactNumber, country, identityType, identityNumber, legalDocumentationStatus,
       address, emergencyContact, emergencyContactName, emergencyContactPhone, emergencyContactRelationship,
       previousSchool, previousEducationLevel, educationLevel, medicalInformation, allergies,
-      notes, classId, gender, status, boardingType,
+      notes, classId, gender, status, boardingType, studentCouncilRole,
     } = req.body;
     try {
       const existingStudent = await prisma.student.findUnique({ where: { id }, include: { user: true } });
@@ -3555,6 +3571,7 @@ async function startServer() {
             gender,
             status,
             boardingType,
+            studentCouncilRole,
           },
           include: {
             user: { select: { id: true, firstName: true, lastName: true, email: true, username: true, role: true, isActive: true, profilePhotoUrl: true } },
@@ -10435,11 +10452,11 @@ async function startServer() {
           res.status(403).json({ error: "Choose one of your own duty assignments" });
           return;
         }
-        if (assignment.roster.status !== "PUBLISHED") {
-          res.status(400).json({ error: "Expenses can only be submitted for a published duty roster" });
+        if (!dutyExpenseRosterEligible(assignment.roster.status)) {
+          res.status(400).json({ error: "Expenses require a published, active, or completed duty roster" });
           return;
         }
-        if (!["ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(assignment.status)) {
+        if (!dutyExpenseAssignmentEligible(assignment.status)) {
           res.status(400).json({ error: "This duty is not eligible for an expense submission" });
           return;
         }
@@ -10529,6 +10546,11 @@ async function startServer() {
 
       const where: any = {};
       if (req.query.currency) where.currency = String(req.query.currency).toUpperCase();
+      if (req.query.source) {
+        const source = String(req.query.source);
+        if (!['FINANCE', 'STUDENT_DUTY'].includes(source)) { res.status(400).json({ error: 'Invalid expense source' }); return; }
+        where.source = source;
+      }
       if (status) where.status = { in: (status as string).split(',') };
       if (category) where.category = { in: (category as string).split(',') };
       if (vendorId) where.vendorId = vendorId;
@@ -10549,6 +10571,16 @@ async function startServer() {
           { title: { contains: search, mode: 'insensitive' } },
           { description: { contains: search, mode: 'insensitive' } },
           { vendorInvoiceNo: { contains: search, mode: 'insensitive' } },
+          { merchantName: { contains: String(search), mode: 'insensitive' } },
+          { receiptReference: { contains: String(search), mode: 'insensitive' } },
+          { student: { is: { OR: [
+            { studentCode: { contains: String(search), mode: 'insensitive' } },
+            { preferredName: { contains: String(search), mode: 'insensitive' } },
+            { user: { is: { OR: [
+              { firstName: { contains: String(search), mode: 'insensitive' } },
+              { lastName: { contains: String(search), mode: 'insensitive' } },
+            ] } } },
+          ] } } },
         ];
       }
 
@@ -12415,7 +12447,7 @@ async function startServer() {
             orderBy: { scheduledDate: "asc" },
             include: {
               dutyDefinition: true,
-              student: { select: { id: true, studentCode: true, preferredName: true, user: { select: { firstName: true, lastName: true } } } },
+              student: { select: { id: true, studentCode: true, preferredName: true, boardingType: true, studentCouncilRole: true, status: true, user: { select: { firstName: true, lastName: true } } } },
             },
           },
         },
@@ -12721,7 +12753,7 @@ async function startServer() {
         include: {
           dutyDefinition: true,
           roster: { select: { id: true, name: true, status: true } },
-          student: { select: { id: true, studentCode: true, preferredName: true, user: { select: { firstName: true, lastName: true } } } },
+          student: { select: { id: true, studentCode: true, preferredName: true, boardingType: true, studentCouncilRole: true, status: true, user: { select: { firstName: true, lastName: true } } } },
         },
       });
       res.json(assignments);
@@ -12739,10 +12771,46 @@ async function startServer() {
     }
     try {
       const { scheduledDate, ...rest } = req.body;
+      const [roster, definition, student] = await Promise.all([
+        prisma.dutyRoster.findUnique({ where: { id: rest.rosterId } }),
+        prisma.dutyDefinition.findUnique({ where: { id: rest.dutyDefinitionId } }),
+        prisma.student.findUnique({ where: { id: rest.studentId } }),
+      ]);
+      if (!roster || !definition || !student) {
+        res.status(404).json({ error: "Roster, duty, or student was not found" });
+        return;
+      }
+      if (roster.status !== "DRAFT") {
+        res.status(400).json({ error: "Assignments can only be changed while the roster is in draft" });
+        return;
+      }
+      if (!definition.isActive) {
+        res.status(400).json({ error: "This duty type is inactive" });
+        return;
+      }
+      if (!dutyDateIsWithinRoster(scheduledDate, roster.startDate, roster.endDate)) {
+        res.status(400).json({ error: "Assignment date must be inside the roster period" });
+        return;
+      }
+      const assignmentDate = new Date(scheduledDate);
+      const conflict = await prisma.dutyAssignment.findFirst({
+        where: { rosterId: roster.id, studentId: student.id, scheduledDate: assignmentDate },
+      });
+      if (conflict) {
+        res.status(409).json({ error: "This student already has a duty on that date" });
+        return;
+      }
+      const dutyTeamSize = await prisma.dutyAssignment.count({
+        where: { rosterId: roster.id, dutyDefinitionId: definition.id, scheduledDate: assignmentDate },
+      });
+      if (dutyTeamSize >= definition.requiredStudents) {
+        res.status(409).json({ error: "This duty team is already full for that date" });
+        return;
+      }
       const assignment = await prisma.dutyAssignment.create({
         data: {
           ...rest,
-          scheduledDate: new Date(scheduledDate),
+          scheduledDate: assignmentDate,
         },
         include: { dutyDefinition: true, student: true },
       });
@@ -12771,7 +12839,10 @@ async function startServer() {
   app.put("/api/duty-assignments/:id", authMiddleware, validate(schemas.dutyAssignmentUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
-      const existing = await prisma.dutyAssignment.findUnique({ where: { id: req.params.id } });
+      const existing = await prisma.dutyAssignment.findUnique({
+        where: { id: req.params.id },
+        include: { roster: true },
+      });
       if (!existing) {
         res.status(404).json({ error: "Duty assignment not found" });
         return;
@@ -12817,6 +12888,46 @@ async function startServer() {
         data.ratedByName = jwtUser.email;
       }
       if (scheduledDate !== undefined) data.scheduledDate = new Date(scheduledDate);
+
+      if (scheduledDate !== undefined) {
+        if (!isManager) {
+          res.status(403).json({ error: "Only duty managers can reschedule assignments" });
+          return;
+        }
+        if (existing.roster.status !== "DRAFT") {
+          res.status(400).json({ error: "Assignments can only be moved while the roster is in draft" });
+          return;
+        }
+        if (!dutyDateIsWithinRoster(scheduledDate, existing.roster.startDate, existing.roster.endDate)) {
+          res.status(400).json({ error: "Assignment date must be inside the roster period" });
+          return;
+        }
+        const conflict = await prisma.dutyAssignment.findFirst({
+          where: {
+            rosterId: existing.rosterId,
+            studentId: existing.studentId,
+            scheduledDate: new Date(scheduledDate),
+            id: { not: existing.id },
+          },
+        });
+        if (conflict) {
+          res.status(409).json({ error: "This student already has a duty on that date" });
+          return;
+        }
+        const definition = await prisma.dutyDefinition.findUnique({ where: { id: existing.dutyDefinitionId } });
+        const dutyTeamSize = await prisma.dutyAssignment.count({
+          where: {
+            rosterId: existing.rosterId,
+            dutyDefinitionId: existing.dutyDefinitionId,
+            scheduledDate: new Date(scheduledDate),
+            id: { not: existing.id },
+          },
+        });
+        if (definition && dutyTeamSize >= definition.requiredStudents) {
+          res.status(409).json({ error: "This duty team is already full for that date" });
+          return;
+        }
+      }
 
       const assignment = await prisma.dutyAssignment.update({
         where: { id: req.params.id },
@@ -12931,7 +13042,7 @@ async function startServer() {
 
       const assignments = await prisma.dutyAssignment.findMany({
         where: { scheduledDate: { gte, lte } },
-        include: { student: { select: { id: true, studentCode: true, preferredName: true, user: { select: { firstName: true, lastName: true } } } } },
+        include: { student: { select: { id: true, studentCode: true, preferredName: true, boardingType: true, studentCouncilRole: true, status: true, user: { select: { firstName: true, lastName: true } } } } },
       });
 
       const byStudent = new Map<string, { student: any; totalAssigned: number; totalCompleted: number; totalPoints: number; ratings: number[] }>();

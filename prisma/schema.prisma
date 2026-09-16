@@ -394,6 +394,7 @@ model Student {
   profilePhotoUrl              String?
   status                       String?   @default("ACTIVE")
   boardingType                 String    @default("DAY") // DAY | BOARDING
+  studentCouncilRole           String? // See shared/studentCouncil.ts
 
   classId String?
   class   Class?  @relation(fields: [classId], references: [id])
@@ -426,6 +427,7 @@ model Student {
 
   @@index([studentCode])
   @@index([classId])
+  @@index([studentCouncilRole])
 }
 
 model Teacher {

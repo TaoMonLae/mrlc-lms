@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { ProfilePhotoUploader } from '@/src/components/profile/ProfilePhotoUploader';
 import { ProfilePhotoCropDialog } from '@/src/components/profile/ProfilePhotoCropDialog';
 import { localToday } from '../../lib/dates';
+import { STUDENT_COUNCIL_ROLES, STUDENT_COUNCIL_ROLE_LABELS } from '../../../shared/studentCouncil';
 
 interface StudentFormProps {
   initialData?: any;
@@ -62,6 +63,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
   const [selectedGender, setSelectedGender] = useState<string>('MALE');
   const [selectedStatus, setSelectedStatus] = useState<string>('ACTIVE');
   const [selectedBoardingType, setSelectedBoardingType] = useState<string>(initialData?.boardingType || 'DAY');
+  const [selectedCouncilRole, setSelectedCouncilRole] = useState<string>(initialData?.studentCouncilRole || 'NONE');
   const [selectedCountry, setSelectedCountry] = useState<string>(initialData?.country || '');
   const [selectedIdType, setSelectedIdType] = useState<string>(initialData?.identityType || '');
   const [selectedLegalStatus, setSelectedLegalStatus] = useState<string>(initialData?.legalDocumentationStatus || '');
@@ -93,6 +95,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
       if (initialData.gender) setSelectedGender(initialData.gender);
       if (initialData.status) setSelectedStatus(initialData.status);
       if (initialData.boardingType) setSelectedBoardingType(initialData.boardingType);
+      setSelectedCouncilRole(initialData.studentCouncilRole || 'NONE');
       if (initialData.country) setSelectedCountry(initialData.country);
       if (initialData.identityType) setSelectedIdType(initialData.identityType);
       if (initialData.legalDocumentationStatus) setSelectedLegalStatus(initialData.legalDocumentationStatus);
@@ -187,6 +190,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
         enrollmentDate: val(form, 'enrollmentDate') ? new Date(val(form, 'enrollmentDate')).toISOString() : new Date().toISOString(),
         status: selectedStatus,
         boardingType: selectedBoardingType,
+        studentCouncilRole: selectedCouncilRole === 'NONE' ? null : selectedCouncilRole,
         // Guardian
         guardianName: val(form, 'guardianName'),
         guardianRelationship: val(form, 'guardianRelationship'),
@@ -421,6 +425,19 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
               </SelectContent>
             </Select>
             <p className="text-xs text-slate-500">Boarding students can submit spending for their assigned daily duties.</p>
+          </div>
+          <div className="space-y-2">
+            <Label>Student Council Role</Label>
+            <Select value={selectedCouncilRole} onValueChange={setSelectedCouncilRole}>
+              <SelectTrigger><SelectValue placeholder="No council role" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NONE">No council role</SelectItem>
+                {STUDENT_COUNCIL_ROLES.map((role) => (
+                  <SelectItem key={role} value={role}>{STUDENT_COUNCIL_ROLE_LABELS[role]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-slate-500">Shown on the student profile and duty-planning board.</p>
           </div>
         </div>
       </div>
