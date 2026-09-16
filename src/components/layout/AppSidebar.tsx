@@ -39,6 +39,8 @@ export function AppSidebar() {
   const { unreadCount: socialUnreadCount } = useSocial();
   const { isMobile, setOpenMobile, state: sidebarState } = useSidebar();
   const closeOnMobile = () => { if (isMobile) setOpenMobile(false); };
+  const isNavItemVisible = (item: { url: string }) =>
+    item.url !== '/student/duty-expenses' || user?.boardingType === 'BOARDING';
 
   // Exactly one nav item may be highlighted: the LONGEST url that prefix-matches
   // the current path. Plain prefix matching lit up both "Gradebook" (/gradebook)
@@ -46,7 +48,7 @@ export function AppSidebar() {
   const activeUrl = useMemo(() => {
     const grouped = user ? ROLE_NAV[user.role] : undefined;
     const urls = grouped
-      ? grouped.flatMap((e) => (isNavGroup(e) ? e.items.map((i) => i.url) : [e.url]))
+      ? grouped.flatMap((e) => (isNavGroup(e) ? e.items.filter(isNavItemVisible).map((i) => i.url) : [e.url]))
       : NAVIGATION_ITEMS.filter((i) => user && (!i.roles || i.roles.includes(user.role))).map((i) => i.url);
     const matches = urls.filter((u) => location.pathname === u || location.pathname.startsWith(u + '/'));
     return matches.sort((a, b) => b.length - a.length)[0] ?? null;
@@ -174,7 +176,7 @@ export function AppSidebar() {
                       </SidebarMenuButton>
                       {open && (
                         <SidebarMenuSub className="mx-0 ml-5 border-white/15 pl-2.5 pr-0">
-                          {entry.items.map((item) => (
+                          {entry.items.filter(isNavItemVisible).map((item) => (
                             <SidebarMenuSubItem key={item.url + item.title}>
                               <SidebarMenuSubButton
                                 render={<Link to={item.url} onClick={closeOnMobile} />}
@@ -199,7 +201,7 @@ export function AppSidebar() {
               ) : (
                 // ── Flat navigation (other staff roles, or icon-collapsed sidebar) ──
                 (groupedNav
-                  ? groupedNav.flatMap((e) => (isNavGroup(e) ? e.items : [e]))
+                  ? groupedNav.flatMap((e) => (isNavGroup(e) ? e.items.filter(isNavItemVisible) : [e]))
                   : filteredNavItems
                 ).map((item) => (
                   <SidebarMenuItem key={item.url + item.title}>

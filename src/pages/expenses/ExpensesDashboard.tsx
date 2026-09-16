@@ -32,6 +32,7 @@ export default function ExpensesDashboard() {
   const [searchParams] = useSearchParams();
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [sourceFilter, setSourceFilter] = useState('ALL');
   const [monthFilter, setMonthFilter] = useState('ALL');
   const [expenses, setExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,13 +76,17 @@ export default function ExpensesDashboard() {
   }, []);
 
   const filteredExpenses = expenses.filter(e => {
+    const studentName = `${e.student?.user?.firstName || ''} ${e.student?.user?.lastName || ''}`.trim();
     const matchesSearch = e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (e.vendor?.name && e.vendor.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (e.merchantName && e.merchantName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (studentName && studentName.toLowerCase().includes(searchTerm.toLowerCase())) ||
                           (e.vendorInvoiceNo && e.vendorInvoiceNo.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus = statusFilter === 'ALL' || e.status === statusFilter;
     const matchesCategory = categoryFilter === 'ALL' || e.category === categoryFilter;
     const matchesMonth = monthFilter === 'ALL' || String(e.expenseDate || '').slice(0, 7) === monthFilter;
-    return matchesSearch && matchesStatus && matchesCategory && matchesMonth;
+    const matchesSource = sourceFilter === 'ALL' || e.source === sourceFilter;
+    return matchesSearch && matchesStatus && matchesCategory && matchesMonth && matchesSource;
   });
 
   const trackableExpenses = filteredExpenses.filter((expense) => expense.currency === currency && !['REJECTED', 'CANCELLED'].includes(expense.status));
@@ -137,11 +142,12 @@ export default function ExpensesDashboard() {
       sections: [
         {
           heading: 'Expenses',
-          columns: ['Title', 'Category', 'Vendor', 'Date', 'Amount', 'Status'],
+          columns: ['Title', 'Category', 'Source', 'Payee', 'Date', 'Amount', 'Status'],
           rows: filteredExpenses.map((e) => [
             e.title,
             getCategoryLabel(e.category),
-            e.vendor?.name || '-',
+            e.source === 'STUDENT_DUTY' ? 'Student duty' : 'Finance',
+            e.vendor?.name || e.merchantName || '-',
             new Date(e.expenseDate).toLocaleDateString(),
             formatMoney(expenseGrossAmount(e), e.currency || currency),
             e.status.replace('_', ' '),
@@ -178,6 +184,7 @@ export default function ExpensesDashboard() {
   if (statusFilter !== 'ALL') activeFilters['Status'] = statusFilter.replace('_', ' ');
   if (categoryFilter !== 'ALL') activeFilters['Category'] = getCategoryLabel(categoryFilter);
   if (monthFilter !== 'ALL') activeFilters['Month'] = feeMonthLabel(monthFilter);
+  if (sourceFilter !== 'ALL') activeFilters['Source'] = sourceFilter === 'STUDENT_DUTY' ? 'Student duty' : 'Finance';
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -296,6 +303,16 @@ export default function ExpensesDashboard() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={sourceFilter} onValueChange={setSourceFilter}>
+          <SelectTrigger className="w-full sm:w-[170px]">
+            <SelectValue placeholder="All Sources" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Sources</SelectItem>
+            <SelectItem value="FINANCE">Finance Office</SelectItem>
+            <SelectItem value="STUDENT_DUTY">Student Duty</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Expenses Table */}
@@ -306,7 +323,8 @@ export default function ExpensesDashboard() {
               <tr className="border-b border-slate-200 dark:border-slate-700">
                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Title</th>
                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Category</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Vendor</th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Source</th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Payee</th>
                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Date</th>
                 <th className="text-right py-3 px-4 text-sm font-medium text-slate-500">Amount</th>
                 <th className="text-center py-3 px-4 text-sm font-medium text-slate-500">Status</th>
@@ -316,12 +334,12 @@ export default function ExpensesDashboard() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-8 text-slate-500">Loading...</td>
+                  <td colSpan={8} className="text-center py-8 text-slate-500">Loading...</td>
                 </tr>
               ) : filteredExpenses.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-8 text-slate-500">
-                    {searchTerm || statusFilter !== 'ALL' || categoryFilter !== 'ALL' || monthFilter !== 'ALL'
+                  <td colSpan={8} className="text-center py-8 text-slate-500">
+                    {searchTerm || statusFilter !== 'ALL' || categoryFilter !== 'ALL' || monthFilter !== 'ALL' || sourceFilter !== 'ALL'
                       ? 'No expenses found matching your filters.'
                       : 'No expenses yet. Create your first expense to get started.'}
                   </td>
@@ -340,8 +358,16 @@ export default function ExpensesDashboard() {
                         {getCategoryLabel(expense.category)}
                       </Badge>
                     </td>
+                    <td className="py-3 px-4">
+                      {expense.source === 'STUDENT_DUTY' ? (
+                        <div>
+                          <Badge variant="outline" className="border-academic-teal/30 bg-academic-teal/10 text-academic-teal">Student duty</Badge>
+                          <p className="mt-1 text-xs text-slate-500">{expense.student?.preferredName || `${expense.student?.user?.firstName || ''} ${expense.student?.user?.lastName || ''}`.trim() || expense.student?.studentCode}</p>
+                        </div>
+                      ) : <span className="text-sm text-slate-500">Finance office</span>}
+                    </td>
                     <td className="py-3 px-4 text-slate-600 dark:text-slate-300">
-                      {expense.vendor?.name || '—'}
+                      {expense.vendor?.name || expense.merchantName || '—'}
                     </td>
                     <td className="py-3 px-4 text-slate-600 dark:text-slate-300">
                       {new Date(expense.expenseDate).toLocaleDateString()}

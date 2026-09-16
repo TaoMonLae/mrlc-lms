@@ -393,6 +393,7 @@ model Student {
   gender                       String?
   profilePhotoUrl              String?
   status                       String?   @default("ACTIVE")
+  boardingType                 String    @default("DAY") // DAY | BOARDING
 
   classId String?
   class   Class?  @relation(fields: [classId], references: [id])
@@ -411,6 +412,7 @@ model Student {
   homeworkSubmissions HomeworkSubmission[]
   badges              StudentBadge[]
   dutyAssignments     DutyAssignment[]
+  dutyExpenses        Expense[]              @relation("StudentDutyExpenses")
   flashcardMastery    FlashcardCardMastery[]
   flashcardAttempts   FlashcardAttempt[]
   ruleViolations      RuleViolation[]
@@ -3143,10 +3145,12 @@ model Expense {
   id String @id @default(uuid())
 
   // Basic Information
-  title       String
-  description String?
-  category    ExpenseCategory
-  status      ExpenseStatus   @default(DRAFT)
+  title        String
+  description  String?
+  category     ExpenseCategory
+  status       ExpenseStatus   @default(DRAFT)
+  source       String          @default("FINANCE") // FINANCE | STUDENT_DUTY
+  merchantName String?
 
   // Financial Details
   amount      Float
@@ -3182,6 +3186,7 @@ model Expense {
   // Supporting Documents
   receiptUrl         String?
   receiptFileName    String?
+  receiptReference   String?
   attachmentUrls     String[] @default([])
   attachmentMetadata Json? // Array of {fileName, fileSize, mimeType}
 
@@ -3207,12 +3212,19 @@ model Expense {
   payments         BillPayment[]
   recurringExpense RecurringExpense? @relation("ExpenseToRecurring", fields: [recurringExpenseId], references: [id])
   budget           Budget?           @relation(fields: [budgetId], references: [id])
+  studentId        String?
+  student          Student?          @relation("StudentDutyExpenses", fields: [studentId], references: [id], onDelete: SetNull)
+  dutyAssignmentId String?
+  dutyAssignment   DutyAssignment?   @relation(fields: [dutyAssignmentId], references: [id], onDelete: SetNull)
 
   @@index([category])
   @@index([status])
   @@index([expenseDate])
   @@index([dueDate])
   @@index([vendorId])
+  @@index([source])
+  @@index([studentId])
+  @@index([dutyAssignmentId])
   @@index([budgetId])
   @@index([submittedById])
   @@index([academicYear])
@@ -3513,6 +3525,8 @@ model DutyAssignment {
   ratedByName  String?
 
   notes String?
+
+  expenses Expense[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

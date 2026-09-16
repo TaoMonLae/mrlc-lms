@@ -127,6 +127,7 @@ const DutyDefinitionsPage = lazy(() => import("./pages/duties/DutyDefinitionsPag
 const DutyRostersPage = lazy(() => import("./pages/duties/DutyRostersPage"));
 const DutyRosterDetail = lazy(() => import("./pages/duties/DutyRosterDetail"));
 const StudentDutyView = lazy(() => import("./pages/duties/StudentDutyView"));
+const StudentDutyExpenses = lazy(() => import("./pages/duties/StudentDutyExpenses"));
 const DutyPerformancePage = lazy(() => import("./pages/duties/DutyPerformancePage"));
 const CasesDashboard = lazy(() => import("./pages/cases/CasesDashboard"));
 const ConductDashboard = lazy(() => import("./pages/conduct/ConductDashboard"));
@@ -737,6 +738,7 @@ export default function App() {
 
                 <Route element={<ProtectedRoute requiredPermission="view_own_duties" />}>
                   <Route path="/student/duties" element={<StudentDutyView />} />
+                  <Route path="/student/duty-expenses" element={<StudentDutyExpenses />} />
                 </Route>
 
               </Route>

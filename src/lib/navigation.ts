@@ -277,6 +277,7 @@ export const STUDENT_NAV: AdminNavEntry[] = [
       { title: "My Documents", url: "/student/documents", icon: FileText },
       { title: "My Fees", url: "/student/fees", icon: Wallet },
       { title: "My Duties", url: "/student/duties", icon: ClipboardList },
+      { title: "Duty Expenses", url: "/student/duty-expenses", icon: Wallet },
       { title: "Flashcards", url: "/student/flashcards", icon: Layers },
     ],
   },

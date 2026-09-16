@@ -3,7 +3,7 @@ import { Label } from '@/components/ui/label';
 import { paymentPosition } from '../../../shared/financeControls';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
-import { ArrowLeft, Edit, CheckCircle2, XCircle, DollarSign, FileText, Calendar, Building2, Wallet } from 'lucide-react';
+import { ArrowLeft, Edit, CheckCircle2, XCircle, DollarSign, FileText, Calendar, Building2, Wallet, ReceiptText, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -254,6 +254,26 @@ export default function ExpenseDetail() {
           {expense.status.replace('_', ' ')}
         </Badge>
       </div>
+
+      {expense.source === 'STUDENT_DUTY' && (
+        <Card className="rounded-none border-academic-teal/40">
+          <CardHeader className="border-b border-border bg-academic-teal/5">
+            <CardTitle className="flex items-center gap-2 text-base"><ReceiptText className="h-4 w-4 text-academic-teal" /> Boarding duty submission</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 pt-5 sm:grid-cols-2">
+            <div className="flex items-start gap-3">
+              <UserRound className="mt-0.5 h-5 w-5 text-slate-400" />
+              <div><p className="text-sm text-slate-500">Submitted by student</p><p className="font-medium">{expense.student?.preferredName || `${expense.student?.user?.firstName || ''} ${expense.student?.user?.lastName || ''}`.trim() || 'Student'}{expense.student?.studentCode ? ` · ${expense.student.studentCode}` : ''}</p></div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Calendar className="mt-0.5 h-5 w-5 text-slate-400" />
+              <div><p className="text-sm text-slate-500">Assigned duty</p><p className="font-medium">{expense.dutyAssignment?.dutyDefinition?.name || 'Duty assignment'} · {new Date(expense.dutyAssignment?.scheduledDate || expense.expenseDate).toLocaleDateString()}</p></div>
+            </div>
+            <div><p className="text-sm text-slate-500">Shop or payee</p><p className="font-medium">{expense.merchantName || 'Not provided'}</p></div>
+            <div><p className="text-sm text-slate-500">Receipt / reference</p><p className="font-medium">{expense.receiptReference || 'Not provided'}</p></div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Expense Details */}

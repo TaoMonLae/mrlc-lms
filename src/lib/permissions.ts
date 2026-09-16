@@ -36,6 +36,7 @@ export interface User {
   mfaEnabled?: boolean;
   mfaRecommended?: boolean;
   studentId?: string;
+  boardingType?: 'DAY' | 'BOARDING' | null;
   teacherId?: string;
   lastLoginAt?: string;
   createdAt: string;

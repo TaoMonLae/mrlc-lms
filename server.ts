@@ -1,5 +1,11 @@
 import { collectSchoolFee, syncDonationCampaign, financeTransaction, reviewExpense, recordExpensePayment } from './lib/financeOperations';
 import { FinanceControlError, validateMoney } from './shared/financeControls';
+import {
+  DUTY_EXPENSE_CATEGORIES,
+  dutyExpenseIsNotFuture,
+  dutyExpenseMatchesAssignmentDate,
+  isBoardingStudent,
+} from './shared/dutyExpenses';
 import express from "express";
 import compression from "compression";
 import path from "path";
@@ -1091,6 +1097,7 @@ const schemas = {
     previousSchool: nullableStr, previousEducationLevel: nullableStr, educationLevel: nullableStr,
     medicalInformation: nullableStr, allergies: nullableStr, notes: optStr,
     classId: optStr, gender: optStr, status: optStr,
+    boardingType: z.enum(["DAY", "BOARDING"]).optional().default("DAY"),
   }),
   userCreate: z.object({
     firstName: reqStr, lastName: reqStr, email,
@@ -1421,6 +1428,7 @@ const schemas = {
     previousSchool: nullableStr, previousEducationLevel: nullableStr, educationLevel: nullableStr,
     medicalInformation: nullableStr, allergies: nullableStr, notes: optStr,
     classId: optStr, gender: optStr, status: optStr,
+    boardingType: z.enum(["DAY", "BOARDING"]).optional(),
   }),
   subjectCreate: z.object({
     name: reqStr, code: reqStr, level: optStr, description: optStr, status: optStr,
@@ -1695,6 +1703,17 @@ const schemas = {
     attachmentUrls: z.array(z.string()).optional(),
   }),
   expenseSubmit: z.object({}),
+  studentDutyExpenseCreate: z.object({
+    dutyAssignmentId: reqStr,
+    title: z.string().trim().min(2, "is required").max(160, "is too long"),
+    description: z.string().trim().min(2, "is required").max(1000, "is too long"),
+    category: z.enum(DUTY_EXPENSE_CATEGORIES),
+    amount: financeAmount,
+    expenseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "must use YYYY-MM-DD"),
+    merchantName: z.string().trim().max(160, "is too long").nullable().optional(),
+    receiptReference: z.string().trim().max(160, "is too long").nullable().optional(),
+    notes: z.string().trim().max(1000, "is too long").nullable().optional(),
+  }),
   expenseApprove: z.object({
     notes: nullableStr,
   }),
@@ -2453,6 +2472,7 @@ async function startServer() {
       // this cast.
       const user = await prisma.user.findFirst({
         where: { OR: [{ email: identifier }, { username: identifier } as any] },
+        include: { studentProfile: { select: { id: true, boardingType: true } } },
       });
 
       if (!user || !user.passwordHash) {
@@ -2560,6 +2580,8 @@ async function startServer() {
           cursorEffect: (user as any).cursorEffect || null,
           mfaEnabled: user.mfaEnabled,
           mfaRecommended: ["ADMIN", "ACCOUNTANT"].includes(user.role) && !user.mfaEnabled,
+          studentId: user.studentProfile?.id || null,
+          boardingType: user.studentProfile?.boardingType || null,
         },
       });
     } catch (err) {
@@ -2623,6 +2645,7 @@ async function startServer() {
           cursorEffect: true,
           mfaEnabled: true,
           lastLoginAt: true,
+          studentProfile: { select: { id: true, boardingType: true } },
         },
       } as any);
       if (!user || !user.isActive) {
@@ -2640,8 +2663,14 @@ async function startServer() {
           .catch((e) => logger.warn(`Could not update lastLoginAt for ${user.email}: ${e?.message}`));
       }
 
-      const { lastLoginAt: _omit, ...userPayload } = user as any;
-      res.json({ user: userPayload });
+      const { lastLoginAt: _omit, studentProfile, ...userPayload } = user as any;
+      res.json({
+        user: {
+          ...userPayload,
+          studentId: studentProfile?.id || null,
+          boardingType: studentProfile?.boardingType || null,
+        },
+      });
     } catch (err) {
       logger.error("Error fetching user profile:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -3113,7 +3142,7 @@ async function startServer() {
       contactNumber, country, identityType, identityNumber, legalDocumentationStatus,
       address, emergencyContact, emergencyContactName, emergencyContactPhone, emergencyContactRelationship,
       previousSchool, previousEducationLevel, educationLevel, medicalInformation, allergies,
-      notes, classId, gender, status,
+      notes, classId, gender, status, boardingType,
     } = req.body;
     if (!firstName || !lastName || !email) {
       res.status(400).json({ error: "First name, last name, and email are required" });
@@ -3163,6 +3192,7 @@ async function startServer() {
             classId: classId || null,
             gender,
             status: status || "ACTIVE",
+            boardingType: boardingType || "DAY",
           },
           include: {
             user: { select: { id: true, firstName: true, lastName: true, email: true, username: true, role: true, isActive: true, profilePhotoUrl: true } },
@@ -3270,6 +3300,7 @@ async function startServer() {
           await tx.student.create({
             data: {
               userId: user.id, studentCode, gender, status, dateOfBirth, classId,
+              boardingType: s(r.boardingType).toUpperCase() === "BOARDING" ? "BOARDING" : "DAY",
               guardianName: s(r.guardianName) || null,
               guardianPhone: s(r.guardianPhone) || null,
               address: s(r.address) || null,
@@ -3468,7 +3499,7 @@ async function startServer() {
       contactNumber, country, identityType, identityNumber, legalDocumentationStatus,
       address, emergencyContact, emergencyContactName, emergencyContactPhone, emergencyContactRelationship,
       previousSchool, previousEducationLevel, educationLevel, medicalInformation, allergies,
-      notes, classId, gender, status,
+      notes, classId, gender, status, boardingType,
     } = req.body;
     try {
       const existingStudent = await prisma.student.findUnique({ where: { id }, include: { user: true } });
@@ -3523,6 +3554,7 @@ async function startServer() {
             classId: classId || null,
             gender,
             status,
+            boardingType,
           },
           include: {
             user: { select: { id: true, firstName: true, lastName: true, email: true, username: true, role: true, isActive: true, profilePhotoUrl: true } },
@@ -10315,6 +10347,157 @@ async function startServer() {
   const expenseCanView = (role: string) => ["ADMIN", "ACCOUNTANT", "STAFF"].includes(role);
   const expenseCanApprove = (role: string) => role === "ADMIN" || role === "ACCOUNTANT";
 
+  const dutyExpenseInclude = {
+    student: {
+      select: {
+        id: true,
+        studentCode: true,
+        preferredName: true,
+        user: { select: { firstName: true, lastName: true } },
+      },
+    },
+    dutyAssignment: {
+      include: {
+        dutyDefinition: { select: { id: true, name: true, type: true } },
+        roster: { select: { id: true, name: true, status: true } },
+      },
+    },
+  } as const;
+
+  // Boarding students submit daily purchases against a duty assignment. The
+  // result is a normal pending Expense so Finance/Admin review, reporting and
+  // payment controls stay in one audited ledger.
+  app.get("/api/student-duty-expenses", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const where: any = { source: "STUDENT_DUTY" };
+      let eligible = true;
+
+      if (jwtUser.role === "STUDENT") {
+        const student = await prisma.student.findUnique({
+          where: { userId: jwtUser.userId },
+          select: { id: true, boardingType: true },
+        });
+        if (!student) { res.status(404).json({ error: "Student profile not found" }); return; }
+        eligible = isBoardingStudent(student.boardingType);
+        if (!eligible) {
+          res.json({ eligible: false, currency: "MYR", expenses: [] });
+          return;
+        }
+        where.studentId = student.id;
+      } else if (!["ADMIN", "ACCOUNTANT"].includes(jwtUser.role)) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+
+      if (req.query.status) where.status = { in: String(req.query.status).split(",") };
+      const [expenses, profile] = await Promise.all([
+        prisma.expense.findMany({
+          where,
+          orderBy: [{ expenseDate: "desc" }, { createdAt: "desc" }],
+          include: dutyExpenseInclude,
+        }),
+        prisma.schoolProfile.findFirst({ select: { currency: true } }),
+      ]);
+      res.json({ eligible, currency: profile?.currency || "MYR", expenses });
+    } catch (error) {
+      logger.error("Error fetching student duty expenses:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post(
+    "/api/student-duty-expenses",
+    authMiddleware,
+    validate(schemas.studentDutyExpenseCreate),
+    async (req, res) => {
+      const jwtUser = (req as any).user as JwtPayload;
+      if (jwtUser.role !== "STUDENT") {
+        res.status(403).json({ error: "Only boarding students can submit duty expenses" });
+        return;
+      }
+      try {
+        const student = await prisma.student.findUnique({
+          where: { userId: jwtUser.userId },
+          select: { id: true, studentCode: true, boardingType: true },
+        });
+        if (!student) { res.status(404).json({ error: "Student profile not found" }); return; }
+        if (!isBoardingStudent(student.boardingType)) {
+          res.status(403).json({ error: "Duty expenses are available to boarding students only" });
+          return;
+        }
+
+        const assignment = await prisma.dutyAssignment.findUnique({
+          where: { id: req.body.dutyAssignmentId },
+          include: { dutyDefinition: true, roster: true },
+        });
+        if (!assignment || assignment.studentId !== student.id) {
+          res.status(403).json({ error: "Choose one of your own duty assignments" });
+          return;
+        }
+        if (assignment.roster.status !== "PUBLISHED") {
+          res.status(400).json({ error: "Expenses can only be submitted for a published duty roster" });
+          return;
+        }
+        if (!["ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(assignment.status)) {
+          res.status(400).json({ error: "This duty is not eligible for an expense submission" });
+          return;
+        }
+        if (!dutyExpenseMatchesAssignmentDate(req.body.expenseDate, assignment.scheduledDate)) {
+          res.status(400).json({ error: "The expense date must match the assigned duty date" });
+          return;
+        }
+        if (!dutyExpenseIsNotFuture(req.body.expenseDate)) {
+          res.status(400).json({ error: "Future duty expenses cannot be submitted" });
+          return;
+        }
+
+        const profile = await prisma.schoolProfile.findFirst({ select: { currency: true } });
+        const amount = Number(req.body.amount);
+        const expense = await prisma.expense.create({
+          data: {
+            title: req.body.title,
+            description: req.body.description,
+            category: req.body.category,
+            amount,
+            taxAmount: 0,
+            totalAmount: amount,
+            currency: profile?.currency || "MYR",
+            expenseDate: new Date(`${req.body.expenseDate}T00:00:00.000Z`),
+            paymentMethod: "CASH",
+            merchantName: req.body.merchantName || null,
+            receiptReference: req.body.receiptReference || null,
+            notes: req.body.notes || null,
+            source: "STUDENT_DUTY",
+            studentId: student.id,
+            dutyAssignmentId: assignment.id,
+            tags: ["student-duty", assignment.dutyDefinition.type.toLowerCase()],
+            status: "PENDING_APPROVAL",
+            submittedAt: new Date(),
+            submittedById: jwtUser.userId,
+            submittedByName: jwtUser.email,
+          },
+          include: dutyExpenseInclude,
+        });
+
+        await createAuditLog(
+          jwtUser.userId,
+          jwtUser.email,
+          "CREATE",
+          "EXPENSE",
+          expense.id,
+          `Boarding duty expense submitted: ${expense.title} (${assignment.dutyDefinition.name})`,
+          req.ip,
+          req.headers["user-agent"] || null,
+        );
+        res.status(201).json(expense);
+      } catch (error) {
+        logger.error("Error submitting student duty expense:", error);
+        res.status(500).json({ error: "Could not submit the duty expense" });
+      }
+    },
+  );
+
   // ---- Expenses ----
   app.get("/api/expenses", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
@@ -10379,6 +10562,7 @@ async function startServer() {
             vendor: true,
             budget: true,
             payments: true,
+            ...dutyExpenseInclude,
           },
         }),
         prisma.expense.count({ where }),
@@ -10438,6 +10622,7 @@ async function startServer() {
           vendor: true,
           budget: true,
           payments: true,
+          ...dutyExpenseInclude,
         },
       });
       if (!expense) {

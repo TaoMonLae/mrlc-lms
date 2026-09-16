@@ -61,6 +61,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
   const [selectedClass, setSelectedClass] = useState<string>('');
   const [selectedGender, setSelectedGender] = useState<string>('MALE');
   const [selectedStatus, setSelectedStatus] = useState<string>('ACTIVE');
+  const [selectedBoardingType, setSelectedBoardingType] = useState<string>(initialData?.boardingType || 'DAY');
   const [selectedCountry, setSelectedCountry] = useState<string>(initialData?.country || '');
   const [selectedIdType, setSelectedIdType] = useState<string>(initialData?.identityType || '');
   const [selectedLegalStatus, setSelectedLegalStatus] = useState<string>(initialData?.legalDocumentationStatus || '');
@@ -91,6 +92,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
       else if (initialData.class?.id) setSelectedClass(initialData.class.id);
       if (initialData.gender) setSelectedGender(initialData.gender);
       if (initialData.status) setSelectedStatus(initialData.status);
+      if (initialData.boardingType) setSelectedBoardingType(initialData.boardingType);
       if (initialData.country) setSelectedCountry(initialData.country);
       if (initialData.identityType) setSelectedIdType(initialData.identityType);
       if (initialData.legalDocumentationStatus) setSelectedLegalStatus(initialData.legalDocumentationStatus);
@@ -184,6 +186,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
         previousEducationLevel: selectedPrevEduLevel || null,
         enrollmentDate: val(form, 'enrollmentDate') ? new Date(val(form, 'enrollmentDate')).toISOString() : new Date().toISOString(),
         status: selectedStatus,
+        boardingType: selectedBoardingType,
         // Guardian
         guardianName: val(form, 'guardianName'),
         guardianRelationship: val(form, 'guardianRelationship'),
@@ -407,6 +410,17 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
                 <SelectItem value="DROPPED">Dropped</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Residence Type</Label>
+            <Select value={selectedBoardingType} onValueChange={setSelectedBoardingType}>
+              <SelectTrigger><SelectValue placeholder="Select residence type" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="DAY">Day Student</SelectItem>
+                <SelectItem value="BOARDING">Boarding Student</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-slate-500">Boarding students can submit spending for their assigned daily duties.</p>
           </div>
         </div>
       </div>
