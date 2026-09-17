@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { VideoCard } from '../../components/video/VideoCard';
+import { VideoPlaylists } from '../../components/video/VideoPlaylists';
 import { VideoLessonMenu } from '../../components/video/VideoLessonMenu';
 import { Plus, Search, Filter, Video, Trash2, CheckSquare, Square, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -167,6 +168,7 @@ export default function VideoList() {
       </div>
 
       {/* Bulk actions bar */}
+      <VideoPlaylists videos={videos} />
       {selectedIds.size > 0 && (isAdmin || isTeacher) && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 flex items-center justify-between">
           <span className="text-sm text-blue-700 dark:text-blue-300 font-medium">

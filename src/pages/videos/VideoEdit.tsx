@@ -24,6 +24,7 @@ import {
 import type { VideoLesson } from '../../lib/video/types';
 import { useVideoFileUpload } from '../../hooks/useVideoFileUpload';
 import { CaptionUploadButton } from '../../components/video/CaptionUploadButton';
+import { VideoSourcePreview } from '../../components/video/VideoSourcePreview';
 import {
   discardTemporaryVideoAsset,
   isValidThumbnailUrl,
@@ -345,6 +346,7 @@ export default function VideoEdit() {
             </div>
           )}
 
+          <VideoSourcePreview source={videoUrl || ''} />
           <div className="space-y-2">
             <Label htmlFor="title">Title *</Label>
             <Input id="title" {...register('title')} />

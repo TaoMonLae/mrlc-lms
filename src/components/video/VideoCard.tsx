@@ -37,6 +37,7 @@ export function VideoCard({ video, progress, isSelected = false, onSelect, showS
         {video.visibility === 'TEACHERS_ONLY' && <Badge variant="outline">Teachers Only</Badge>}
       </div>
       {progress && !completed && percent > 0 && <div className="space-y-1.5"><p className="text-xs text-muted-foreground">{Math.round(percent)}% watched</p><div className="h-1 rounded-full bg-muted" role="progressbar" aria-label="Watch progress" aria-valuenow={Math.round(percent)} aria-valuemin={0} aria-valuemax={100}><div className="h-full rounded-full bg-academic-teal" style={{ width: `${percent}%` }} /></div></div>}
+      {progress && !completed && (progress.resumePosition ?? progress.currentPosition) > 0 && <Link className="text-sm font-medium text-academic-teal hover:underline" to={`/videos/${video.id}`}>Continue Watching · {formatDuration(progress.resumePosition ?? progress.currentPosition)}</Link>}
     </div>
     <footer className="flex flex-wrap justify-between gap-2 border-t border-border px-4 py-3 text-xs text-muted-foreground"><span className="min-w-0 truncate">By {video.uploadedByName}</span><time dateTime={video.createdAt}>{format(new Date(video.createdAt), 'dd MMM yyyy')}</time></footer>
   </article>;

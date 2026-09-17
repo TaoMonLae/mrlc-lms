@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { VideoCard } from '../../components/video/VideoCard';
+import { VideoPlaylists } from '../../components/video/VideoPlaylists';
 import { Video, Search, Filter } from 'lucide-react';
 import { apiGet, apiSend } from '../../lib/api';
 import { Button } from '@/components/ui/button';
@@ -73,6 +74,7 @@ export default function StudentVideos() {
         </div>
       </div>
 
+      <VideoPlaylists />
       <div className="flex flex-col md:flex-row gap-4 bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />

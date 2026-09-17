@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
 test.use({ serviceWorkers: 'block' });
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    (window as any).YT = { Player: class { constructor() {} getCurrentTime() { return 0; } getDuration() { return 540; } getPlayerState() { return 2; } seekTo() {} destroy() {} } };
+  });
+});
 const video = { id: 'cave-lesson', title: 'Homework for cave', description: 'Watch the lesson before class.\nWrite down the safety advice.', videoUrl: 'https://www.youtube.com/watch?v=-mzqQ_vNiKg DO NOT ENTER CAVES or LAVA TUBES!', thumbnailUrl: null, duration: 540, className: 'GED Year 1', subjectName: 'Science', subjectId: 'science', status: 'PUBLISHED', visibility: 'ALL', isRequired: true, dueDate: '2026-09-30', uploadedById: 'teacher-test', uploadedByName: 'Malay Mon', createdAt: '2026-09-17T06:00:00Z' };
 
 test('ADMIN: saves teacher-owned lessons with unassigned class and subject, and retries server errors', async ({ page }) => {
@@ -25,6 +30,7 @@ test('ADMIN: saves teacher-owned lessons with unassigned class and subject, and 
       }
       return route.fulfill({ json: lesson });
     }
+    if (path.endsWith('/learning')) return route.fulfill({ json: { examId: null, homeworkId: null, requireQuiz: false, chapters: [], quiz: null, homework: null, learningComplete: false } });
     if (path.endsWith('/analytics')) return route.fulfill({ json: { total: 0, completed: 0, inProgress: 0, notStarted: 0, scope: 'all', roster: [] } });
     if (path.includes('settings')) return route.fulfill({ json: {} });
     return route.fulfill({ json: [] });
@@ -90,6 +96,7 @@ for (const role of ['ADMIN', 'TEACHER', 'STUDENT']) test(`${role}: repaired YouT
       if (route.request().method() === 'PUT') lesson = { ...lesson, ...route.request().postDataJSON() };
       return route.fulfill({ json: lesson });
     }
+    if (path.endsWith('/learning')) return route.fulfill({ json: { examId: null, homeworkId: null, requireQuiz: false, chapters: [], quiz: null, homework: null, learningComplete: false } });
     if (path.endsWith('/analytics')) return route.fulfill({ json: { total: 0, completed: 0, inProgress: 0, notStarted: 0, scope: 'all', roster: [] } });
     if (path === '/api/videos/progress') return route.fulfill({ json: [] });
     if (path.endsWith('/progress')) return route.fulfill({ json: { currentPosition: 0, isCompleted: false } });
@@ -102,7 +109,7 @@ for (const role of ['ADMIN', 'TEACHER', 'STUDENT']) test(`${role}: repaired YouT
   await page.addStyleTag({ content: '*,*::before,*::after{transition:none!important;animation:none!important}' });
   await expect(page.getByRole('heading', { name: video.title, exact: true })).toBeVisible();
   const frame = page.locator('iframe');
-  await expect(frame).toHaveAttribute('src', 'https://www.youtube.com/embed/-mzqQ_vNiKg?rel=0&playsinline=1');
+  await expect(frame).toHaveAttribute('src', /youtube\.com\/embed\/-mzqQ_vNiKg\?rel=0&playsinline=1&enablejsapi=1&origin=/);
   await expect(frame).toHaveAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
   const original = page.getByRole('link', { name: 'Open Original Video', exact: true });
   await expect(original).toHaveAttribute('href', 'https://www.youtube.com/watch?v=-mzqQ_vNiKg');

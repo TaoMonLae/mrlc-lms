@@ -68,6 +68,7 @@ export interface VideoProgress {
   userId: string;
   videoId: string;
   currentPosition: number; // seconds
+  resumePosition?: number | null;
   isCompleted: boolean;
   lastWatchedAt: string;
   createdAt: string;

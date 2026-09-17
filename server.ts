@@ -37,6 +37,7 @@ import JSZip from "jszip";
 import sharp from "sharp";
 import { registerExamPhase2Routes } from "./examPhase2";
 import { registerClassworkRoutes } from "./classworkRoutes";
+import { registerVideoLearningRoutes, canReadVideo } from "./videoLearningRoutes";
 import { composeQuestionSet, registerExamBankRoutes } from "./examBank";
 import { registerNewsRoutes } from "./news";
 import { registerPayrollPdfRoutes } from "./payrollPdf";
@@ -1953,7 +1954,7 @@ async function startServer() {
             useDefaults: true,
             directives: {
               "default-src": ["'self'"],
-              "script-src": ["'self'", "https://static.cloudflareinsights.com"],
+              "script-src": ["'self'", "https://static.cloudflareinsights.com", "https://www.youtube.com", "https://s.ytimg.com"],
               "style-src": ["'self'", "'unsafe-inline'", "blob:", "https://fonts.googleapis.com"],
               "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
               "img-src": ["'self'", "data:", "https:", "blob:"],
@@ -6946,6 +6947,25 @@ async function startServer() {
     }
   });
 
+  // Register the static progress path before /:id, otherwise "progress" is
+  // interpreted as a lesson ID and the library can never resume saved lessons.
+  app.get("/api/videos/progress", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const student = jwtUser.role === 'STUDENT' ? await prisma.student.findUnique({ where: { userId: jwtUser.userId }, select: { classId: true } }) : null;
+      if (!['ADMIN', 'TEACHER'].includes(jwtUser.role) && !student) { res.json([]); return; }
+      const progress = await prisma.videoProgress.findMany({
+        where: { userId: jwtUser.userId, ...(student ? { video: { status: 'PUBLISHED', visibility: { in: ['ALL', 'STUDENTS'] }, OR: [{ classId: null }, { classId: student.classId }] } } : {}) },
+        include: { video: { select: { id: true, title: true, thumbnailUrl: true, duration: true } } },
+        orderBy: { lastWatchedAt: 'desc' },
+      });
+      res.json(progress);
+    } catch (err) {
+      logger.error('Error fetching video progress:', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
   app.get("/api/videos/:id", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
@@ -7003,7 +7023,12 @@ async function startServer() {
         return;
       }
 
-      const updated = await prisma.videoLesson.update({
+      const updated = await prisma.$transaction(async (tx) => {
+        // Changing audience must not retain activities belonging to another class.
+        if (classId !== undefined && (classId || null) !== currentVideo.classId) {
+          await tx.videoLearning.updateMany({ where: { videoId: id }, data: { examId: null, homeworkId: null, requireQuiz: false } });
+        }
+        return tx.videoLesson.update({
         where: { id },
         data: {
           ...(title && { title }),
@@ -7019,6 +7044,7 @@ async function startServer() {
           ...(isRequired !== undefined && { isRequired: parseBoolean(isRequired) }),
           ...(dueDate !== undefined && { dueDate: dueDate ? new Date(dueDate) : null }),
         },
+        });
       });
 
       // Delete the superseded file only after the database update commits. If
@@ -7157,27 +7183,13 @@ async function startServer() {
   });
 
   // ── Video Progress API ────────────────────────────────────────────────────────
-  // Get progress for all videos (for the current user)
-  app.get("/api/videos/progress", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    try {
-      const progress = await prisma.videoProgress.findMany({
-        where: { userId: jwtUser.userId },
-        include: { video: { select: { id: true, title: true, thumbnailUrl: true, duration: true } } },
-        orderBy: { lastWatchedAt: "desc" },
-      });
-      res.json(progress);
-    } catch (err) {
-      logger.error("Error fetching video progress:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
   // Get progress for a specific video
   app.get("/api/videos/:id/progress", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
     try {
+      const video = await prisma.videoLesson.findUnique({ where: { id } });
+      if (!video || !await canReadVideo(prisma, jwtUser, video)) { res.status(404).json({ error: 'Video lesson not found' }); return; }
       const progress = await prisma.videoProgress.findUnique({
         where: { userId_videoId: { userId: jwtUser.userId, videoId: id } },
       });
@@ -7222,6 +7234,7 @@ async function startServer() {
         res.status(404).json({ error: "Video not found" });
         return;
       }
+      if (!await canReadVideo(prisma, jwtUser, video)) { res.status(404).json({ error: 'Video lesson not found' }); return; }
 
       const nextProgress = resolveVideoProgressUpdate({
         currentPosition,
@@ -7245,10 +7258,12 @@ async function startServer() {
           userId: jwtUser.userId,
           videoId: id,
           currentPosition: nextProgress.currentPosition,
+          resumePosition: Math.min(nextProgress.duration ?? 86400, Math.round(currentPosition)),
           isCompleted: nextProgress.isCompleted,
           lastWatchedAt: now,
         },
         update: {
+          resumePosition: Math.min(nextProgress.duration ?? 86400, Math.round(currentPosition)),
           lastWatchedAt: now,
         },
       });
@@ -7300,6 +7315,7 @@ async function startServer() {
     try {
       const video = await prisma.videoLesson.findUnique({ where: { id } });
       if (!video) { res.status(404).json({ error: "Video lesson not found" }); return; }
+      if (jwtUser.role === 'TEACHER' && (video.uploadedById !== jwtUser.userId || video.classId && !await canManageExamClass(jwtUser, video.classId))) { res.status(403).json({ error: 'Only the lesson owner/admin can view analytics.' }); return; }
 
       const students = await prisma.student.findMany({
         where: { status: "ACTIVE", userId: { not: null }, ...(video.classId ? { classId: video.classId } : {}) },
@@ -20332,6 +20348,7 @@ async function startServer() {
   // ── Phase 2 advanced exam routes (registered before the SPA catch-all) ──────
   registerExamPhase2Routes({ app, prisma, authMiddleware, createAuditLog, logger, canManageExamClass });
   registerClassworkRoutes({ app, prisma, authMiddleware, logger, canManageExamClass });
+  registerVideoLearningRoutes({ app, prisma, authMiddleware, logger, canManageExamClass });
   // ── Phase 3 reusable question bank routes ───────────────────────────────────
   registerExamBankRoutes({ app, prisma, authMiddleware, createAuditLog, logger, canManageExamClass });
   // ── News / Daily Digest (RSS aggregation) ───────────────────────────────────

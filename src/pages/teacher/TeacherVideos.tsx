@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { VideoCard } from '../../components/video/VideoCard';
+import { VideoPlaylists } from '../../components/video/VideoPlaylists';
 import { VideoLessonMenu } from '../../components/video/VideoLessonMenu';
 import { Video, Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -81,6 +82,7 @@ export default function TeacherVideos() {
         </div>
       </div>
 
+      <VideoPlaylists videos={videos} />
       {loading ? <p role="status" className="py-12 text-center text-sm text-muted-foreground">Loading video lessons…</p> : loadError ? <div role="alert" className="rounded-xl border border-border bg-card p-6 text-card-foreground"><p>Could not load video lessons.</p><Button variant="outline" className="mt-3" onClick={() => setReloadKey(value => value + 1)}>Retry Lessons</Button></div> : filtered.length === 0 ? (
         <div className="text-center py-20 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl">
           <Video className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600 mb-4" />

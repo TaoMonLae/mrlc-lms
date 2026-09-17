@@ -66,27 +66,38 @@ export function useVideoProgress({
 }: UseVideoProgressOptions) {
   const [progress, setProgress] = useState<VideoProgress | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadedFor, setLoadedFor] = useState('');
+  const [error, setError] = useState('');
+  const activeVideoRef = useRef(videoId);
+  activeVideoRef.current = videoId;
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pendingSaveRef = useRef<PendingVideoProgress | null>(null);
   const mountedRef = useRef(true);
 
   // Fetch progress on mount
   useEffect(() => {
+    const controller = new AbortController();
+    setProgress(null);
+    setError('');
+    setLoading(true);
     if (!enabled || !videoId) {
       setLoading(false);
+      setLoadedFor('');
       return;
     }
 
-    apiGet<VideoProgress>(`/api/videos/${videoId}/progress`)
+    apiGet<VideoProgress>(`/api/videos/${videoId}/progress`, { signal: controller.signal })
       .then((data) => {
+        if (controller.signal.aborted) return;
         setProgress(data);
       })
       .catch((error) => {
-        // Silently handle missing progress (first time watching)
-        console.debug('No existing progress found for video:', videoId);
+        if (controller.signal.aborted) return;
+        setError('Saved playback could not load. Your resume point may be unavailable.');
         setProgress(null);
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (!controller.signal.aborted) { setLoadedFor(videoId); setLoading(false); } });
+    return () => controller.abort();
   }, [videoId, enabled]);
 
   const buildPayload = useCallback(
@@ -118,10 +129,12 @@ export function useVideoProgress({
           `/api/videos/${videoId}/progress`,
           'POST',
           payload,
+          { keepalive: true },
         );
-        if (updateState && mountedRef.current) setProgress(updated);
+        if (updateState && mountedRef.current && activeVideoRef.current === videoId) { setProgress(updated); setError(''); }
       } catch (error) {
         console.warn('Failed to save video progress:', error);
+        if (updateState && mountedRef.current && activeVideoRef.current === videoId) setError('Watch progress could not be saved. Check your connection; saving will retry while you watch.');
       }
     },
     [videoId],
@@ -177,10 +190,11 @@ export function useVideoProgress({
 
   return {
     progress,
-    loading,
+    error,
+    loading: loading || enabled && loadedFor !== videoId,
     saveProgress,
     saveProgressImmediate,
-    startPosition: progress?.currentPosition ?? 0,
+    startPosition: progress?.resumePosition ?? progress?.currentPosition ?? 0,
     isCompleted: progress?.isCompleted ?? false,
   };
 }

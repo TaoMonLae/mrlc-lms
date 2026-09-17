@@ -24,6 +24,7 @@ import {
 } from '../../lib/video/constants';
 import { useVideoFileUpload } from '../../hooks/useVideoFileUpload';
 import { CaptionUploadButton } from '../../components/video/CaptionUploadButton';
+import { VideoSourcePreview } from '../../components/video/VideoSourcePreview';
 import {
   discardTemporaryVideoAsset,
   isValidThumbnailUrl,
@@ -299,6 +300,7 @@ export default function VideoNew() {
           )}
 
           {/* Title */}
+          <VideoSourcePreview source={videoUrl || ''} />
           <div className="space-y-2">
             <Label htmlFor="title">Title *</Label>
             <Input id="title" {...register('title')} placeholder="e.g. Introduction to Algebra" />

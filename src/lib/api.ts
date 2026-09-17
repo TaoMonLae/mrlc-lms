@@ -56,13 +56,14 @@ export async function apiSend<T = any>(
   path: string,
   method: 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   body?: unknown,
-  options: { signal?: AbortSignal } = {},
+  options: { signal?: AbortSignal; keepalive?: boolean } = {},
 ): Promise<T> {
   const res = await fetch(path, {
     method,
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: body !== undefined ? JSON.stringify(body) : undefined,
     signal: options.signal,
+    keepalive: options.keepalive,
   });
   if (!res.ok) {
     throw await responseError(res);

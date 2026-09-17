@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import { apiGet, apiSend } from '../../lib/api';
 import { Button } from '@/components/ui/button';
@@ -27,11 +27,12 @@ const INITIAL_SETTINGS: ExamSettings = {
  */
 export default function ExamNew() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
 
   const [title, setTitle] = useState('');
   const [classId, setClassId] = useState('');
   const [subjectId, setSubjectId] = useState('');
-  const [examType, setExamType] = useState('FINAL');
+  const [examType, setExamType] = useState(() => params.get('type') === 'QUIZ' ? 'QUIZ' : 'FINAL');
   const [duration, setDuration] = useState('60');
 
   const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);

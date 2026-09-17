@@ -12,6 +12,10 @@ import { useVideoProgress } from '../../hooks/useVideoProgress';
 import { VideoPlayerControls } from '../../components/VideoPlayerControls';
 import { VIDEO_RESUME_MIN_SECONDS } from '../../lib/video/constants';
 import type { VideoLesson, VideoAnalytics } from '../../lib/video/types';
+import { getYouTubeVideoId } from '../../../shared/videoSource';
+import { YouTubeLessonPlayer, type LessonPlayerHandle } from '../../components/video/YouTubeLessonPlayer';
+import { VideoLearningWorkspace } from '../../components/video/VideoLearningWorkspace';
+import { VideoPlaylists } from '../../components/video/VideoPlaylists';
 
 export default function VideoDetail() {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +27,7 @@ export default function VideoDetail() {
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState<VideoAnalytics | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const youtubeRef = useRef<LessonPlayerHandle>(null);
   const restoredVideoRef = useRef<string | null>(null);
 
   // Enable progress tracking for students and teachers (not admins)
@@ -34,9 +39,10 @@ export default function VideoDetail() {
     startPosition,
     isCompleted,
     loading: progressLoading,
+    error: progressError,
   } = useVideoProgress({
     videoId: id || '',
-    enabled: shouldTrackProgress && !!id,
+    enabled: shouldTrackProgress && !!video,
     duration: video?.duration,
   });
 
@@ -230,6 +236,7 @@ export default function VideoDetail() {
 
   const canManage = isAdmin || (isTeacher && (video.uploadedById === user?.id || video.uploadedById === user?.teacherId));
   const embedUrl = getVideoEmbedUrl(video.videoUrl);
+  const isYouTube = !!getYouTubeVideoId(video.videoUrl);
   const originalUrl = normalizeVideoSourceUrl(video.videoUrl);
   const safeOriginalUrl = isValidVideoSourceUrl(originalUrl) ? originalUrl : null;
   const backPath = isAdmin ? '/videos' : isTeacher ? '/teacher/videos' : '/student/videos';
@@ -273,7 +280,10 @@ export default function VideoDetail() {
       <div className="min-w-0 space-y-5">
       {/* Video Player */}
       <div className="relative aspect-video min-h-[200px] w-full overflow-hidden rounded-xl border border-border bg-black group" aria-label="Lesson video player">
-        {embedUrl ? (
+        {isYouTube && shouldTrackProgress && progressLoading ? <p className="flex h-full items-center justify-center text-sm text-white">Loading saved position…</p> : isYouTube ? <YouTubeLessonPlayer
+          key={`${video.id}-${playbackRevision}`} ref={youtubeRef} source={video.videoUrl} title={video.title}
+          track={shouldTrackProgress} startPosition={startPosition} onProgress={saveProgress} onFlush={saveProgressImmediate}
+        /> : embedUrl ? (
           <iframe
             key={`${embedUrl}-${playbackRevision}`}
             src={embedUrl}
@@ -366,6 +376,7 @@ export default function VideoDetail() {
           </div>
         )}
       </div>
+      {progressError && <p role="alert" className="text-xs text-destructive">{progressError}</p>}
       {embedUrl && <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 text-card-foreground">
         <p className="text-xs text-muted-foreground">Trouble playing? Retry the player or open the original video.</p>
         <Button variant="outline" size="sm" onClick={() => setPlaybackRevision(value => value + 1)}><RotateCcw className="size-4" />Retry Player</Button>
@@ -434,12 +445,16 @@ export default function VideoDetail() {
             <ExternalLink className="h-4 w-4" />
             Open Original Video
           </a>}
-          {embedUrl && <p className="mt-3 text-xs leading-relaxed text-muted-foreground">External videos use the provider’s own controls. If the provider restricts embedding or your browser blocks playback, try the original video link. Automatic watch tracking is available for uploaded videos.</p>}
+          {embedUrl && <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{isYouTube ? 'YouTube playback position is saved automatically for students and teachers.' : 'This provider uses its own controls; automatic tracking is unavailable.'} If playback is blocked, try the original link. Watching outside this app is not tracked.</p>}
         </div>
       </aside>
       </div>
 
       {/* Watch analytics (teachers/admins) */}
+      <VideoLearningWorkspace key={video.id} video={video} canManage={canManage} userId={user?.id} watched={isCompleted}
+        seek={seconds => { if (isYouTube) youtubeRef.current?.seek(seconds); else if (videoRef.current) videoRef.current.currentTime = seconds; else toast.info('Timestamp navigation is available for YouTube and uploaded videos.'); }}
+        currentTime={() => isYouTube ? youtubeRef.current?.currentTime() ?? 0 : videoRef.current?.currentTime ?? 0} />
+      <VideoPlaylists currentVideoId={video.id} />
       {canManage && analytics && (
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between gap-2 flex-wrap">

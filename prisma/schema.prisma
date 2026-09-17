@@ -1585,6 +1585,8 @@ model VideoLesson {
   updatedAt DateTime @updatedAt
 
   progressRecords VideoProgress[]
+  learning        VideoLearning?
+  notes           VideoNote[]
   socialPosts     SocialPost[]
 
   @@index([classId])
@@ -1598,8 +1600,9 @@ model VideoProgress {
   videoId String
   video   VideoLesson @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
-  // Position in seconds where the user stopped watching
+  // Furthest playback position in seconds (not proof every second was watched)
   currentPosition Int      @default(0)
+  resumePosition  Int?     // last playback point, separate from furthest watched
   // Whether the user has completed the video (watched 90%+)
   isCompleted     Boolean  @default(false)
   // Last time this progress was updated
@@ -1611,6 +1614,40 @@ model VideoProgress {
   @@unique([userId, videoId])
   @@index([userId])
   @@index([videoId])
+}
+
+model VideoLearning {
+  videoId     String @id
+  video       VideoLesson @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  examId      String?
+  homeworkId  String?
+  requireQuiz Boolean @default(false)
+  chapters    Json @default("[]")
+  updatedAt   DateTime @updatedAt
+}
+
+model VideoPlaylist {
+  id          String @id @default(uuid())
+  title       String
+  ownerId     String
+  videoIds    String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([ownerId])
+}
+
+model VideoNote {
+  id           String @id @default(uuid())
+  videoId      String
+  video        VideoLesson @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  userId       String
+  seconds      Int
+  body         String
+  isQuestion   Boolean @default(false)
+  reply        String?
+  repliedById  String?
+  createdAt    DateTime @default(now())
+  @@index([videoId, userId])
 }
 
 model AuditLog {
