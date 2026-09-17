@@ -147,6 +147,7 @@ const SchoolOperations = lazy(() => import("./pages/operations/SchoolOperations"
 const TeacherMyProfile = lazy(() => import("./pages/teacher/MyProfile"));
 const HomeworkList = lazy(() => import("./pages/teacher/HomeworkList"));
 const HomeworkDetail = lazy(() => import("./pages/teacher/HomeworkDetail"));
+const HomeworkReview = lazy(() => import("./pages/teacher/HomeworkReview"));
 const StudentHomework = lazy(() => import("./pages/student/StudentHomework"));
 const FlashcardDecks = lazy(() => import("./pages/flashcards/FlashcardDecks"));
 const FlashcardDeckForm = lazy(() => import("./pages/flashcards/FlashcardDeckForm"));
@@ -378,6 +379,7 @@ export default function App() {
                   <Route path="/teacher/profile" element={<TeacherMyProfile />} />
                   <Route path="/teacher/homework" element={<HomeworkList />} />
                   <Route path="/teacher/homework/:id" element={<HomeworkDetail />} />
+                  <Route path="/teacher/homework/:id/review/:studentId" element={<HomeworkReview />} />
                 </Route>
 
                 <Route element={<ProtectedRoute allowedRoles={['STUDENT', 'ADMIN']} />}>

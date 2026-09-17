@@ -50,6 +50,14 @@ export function isAllowedHomeworkFile(name: string, mimeType: string): boolean {
   return Boolean(allowed?.includes(mimeType));
 }
 
+export function validateHomeworkFile(file: { name: string; size: number }): string | null {
+  if (!cleanOriginalName(file.name)) return 'Use a file name of 180 characters or fewer, without control characters';
+  if (!HOMEWORK_ALLOWED_FILE_TYPES[homeworkFileExtension(file.name)]) return 'Choose an image, PDF, Word, PowerPoint, Excel, text or OpenDocument file';
+  if (file.size === 0) return 'File is empty. Choose a file with content';
+  if (file.size > HOMEWORK_FILE_MAX_BYTES) return 'File must be 10 MB or smaller';
+  return null;
+}
+
 export function parseHomeworkMediaUrl(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();

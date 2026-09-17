@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { authHeaders } from "../../lib/api";
+import { HomeworkFileLink } from "../../components/homework/HomeworkFileLink";
 import { Link, useNavigate, useParams } from "react-router";
 import {
   ArrowLeft,
@@ -101,7 +103,8 @@ function filesForSubmission(
 }
 
 export default function HomeworkDetail() {
-  const { id } = useParams();
+  const { id, studentId: routeStudentId } = useParams();
+  const reviewing = Boolean(routeStudentId);
   const navigate = useNavigate();
   const [data, setData] = useState<Detail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -120,8 +123,11 @@ export default function HomeworkDetail() {
   const [studentFilter, setStudentFilter] = useState<
     "all" | "submitted" | "marked" | "redo" | "missing"
   >("all");
-  const [reviewStudentId, setReviewStudentId] = useState<string | null>(null);
+  const reviewStudentId = routeStudentId ?? null;
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewBlob, setPreviewBlob] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState("");
+  useEffect(() => { setPreviewUrl(null); document.getElementById('main-content')?.scrollTo(0, 0); }, [routeStudentId]);
   const [editForm, setEditForm] = useState({
     title: "",
     subjectId: "",
@@ -204,9 +210,8 @@ export default function HomeworkDetail() {
     data?.submissions.find((s) => s.studentId === studentId) ?? null;
 
   const openReview = (studentId: string) => {
-    const files = filesForSubmission(subFor(studentId));
-    setReviewStudentId(studentId);
-    setPreviewUrl(files[0]?.url ?? null);
+    if (reviewStudentId && drafts[reviewStudentId] && !confirm("Leave without saving your feedback changes?")) return;
+    navigate(`/teacher/homework/${id}/review/${studentId}`);
   };
 
   const mark = async (
@@ -249,10 +254,9 @@ export default function HomeworkDetail() {
         return next;
       });
       if (advance) {
-        if (nextStudent) openReview(nextStudent.id);
+        if (nextStudent) navigate(`/teacher/homework/${id}/review/${nextStudent.id}`);
         else {
-          setReviewStudentId(null);
-          setPreviewUrl(null);
+          navigate(`/teacher/homework/${id}`);
           toast.success("Review queue complete");
         }
       }
@@ -313,12 +317,37 @@ export default function HomeworkDetail() {
     }
   };
 
+  const selectedSubmission = data?.submissions.find(sub => sub.studentId === routeStudentId) ?? null;
+  const selectedFiles = filesForSubmission(selectedSubmission);
+  const selectedFile = selectedFiles.find(file => file.url === previewUrl) ?? selectedFiles[0];
+  useEffect(() => {
+    const controller = new AbortController();
+    let objectUrl: string | null = null;
+    setPreviewBlob(null); setPreviewError("");
+    if (selectedFile) {
+      fetch(selectedFile.url, { headers: authHeaders(), signal: controller.signal }).then(async response => {
+        if (!response.ok) throw new Error('Could not load this document. Try downloading it instead.');
+        return response.blob();
+      }).then(blob => {
+        if (controller.signal.aborted) return;
+        objectUrl = URL.createObjectURL(blob); setPreviewBlob(objectUrl);
+      }).catch(error => { if (!controller.signal.aborted) setPreviewError(error.message); });
+    }
+    return () => { controller.abort(); if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [selectedFile?.url]);
+  useEffect(() => {
+    const guard = (event: BeforeUnloadEvent) => { if (reviewStudentId && drafts[reviewStudentId]) { event.preventDefault(); event.returnValue = ''; } };
+    window.addEventListener('beforeunload', guard);
+    return () => window.removeEventListener('beforeunload', guard);
+  }, [drafts, reviewStudentId]);
+
   if (loading)
-    return <p className="py-14 text-center text-sm text-slate-500">Loading…</p>;
+    return <p role="status" className="py-14 text-center text-sm text-slate-500">Loading homework…</p>;
   if (!data)
     return (
       <div className="py-14 text-center text-sm text-slate-500">
-        <p>{loadError || "Homework not found."}</p>
+        <p role="alert">{loadError || "Homework not found."}</p>
+        <Link to="/teacher/homework" className="mt-3 inline-block underline">Back to Homework</Link>
         {loadError && (
           <Button variant="outline" size="sm" className="mt-3" onClick={load}>
             Try again
@@ -389,17 +418,19 @@ export default function HomeworkDetail() {
           variant="ghost"
           size="sm"
           className="-ml-3 mb-2 text-slate-500"
-          render={<Link to="/teacher/homework" />}
+          role="link"
+          render={<Link to={reviewing ? `/teacher/homework/${id}` : "/teacher/homework"} onClick={event => { if (reviewStudentId && drafts[reviewStudentId] && !confirm('Leave without saving feedback changes?')) event.preventDefault(); }} />}
           nativeButton={false}
         >
-          <ArrowLeft className="mr-2 h-4 w-4" /> All Homework
+          <ArrowLeft className="mr-2 h-4 w-4" /> {reviewing ? "Back to assignment" : "All Homework"}
         </Button>
         {editing ? (
           <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-surface-raised dark:bg-surface-indigo">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
-                <Label>Title *</Label>
+                <Label htmlFor="edit-homework-title">Title *</Label>
                 <Input
+                  id="edit-homework-title"
                   maxLength={200}
                   value={editForm.title}
                   onChange={(e) =>
@@ -408,7 +439,7 @@ export default function HomeworkDetail() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Subject</Label>
+                <Label htmlFor="edit-homework-subject">Subject</Label>
                 <Select
                   value={editForm.subjectId || "none"}
                   onValueChange={(v) =>
@@ -418,7 +449,7 @@ export default function HomeworkDetail() {
                     })
                   }
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger id="edit-homework-subject" className="w-full">
                     <SelectValue placeholder="Optional" />
                   </SelectTrigger>
                   <SelectContent>
@@ -432,8 +463,9 @@ export default function HomeworkDetail() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Due date *</Label>
+                <Label htmlFor="edit-homework-due">Due date *</Label>
                 <Input
+                  id="edit-homework-due"
                   type="date"
                   value={editForm.dueDate}
                   onChange={(e) =>
@@ -442,13 +474,14 @@ export default function HomeworkDetail() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>
+                <Label htmlFor="edit-homework-marks">
                   Max marks{" "}
                   <span className="text-xs text-slate-400">
                     (leave blank for check-off only)
                   </span>
                 </Label>
                 <Input
+                  id="edit-homework-marks"
                   type="number"
                   min="1"
                   max={HOMEWORK_MAX_MARKS}
@@ -466,8 +499,9 @@ export default function HomeworkDetail() {
                 )}
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label>Instructions</Label>
+                <Label htmlFor="edit-homework-instructions">Instructions</Label>
                 <Textarea
+                  id="edit-homework-instructions"
                   rows={3}
                   maxLength={20000}
                   value={editForm.instructions}
@@ -495,12 +529,12 @@ export default function HomeworkDetail() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <HomeworkMasthead
-                audience="Review studio"
+                audience={reviewing ? "Submission review" : "Assignment overview"}
                 title={data.title}
                 description={
                   data.status === "CLOSED"
                     ? "Closed to new submissions. You can still review and return feedback."
-                    : "Read the work. Recognize progress. Make the next step clear."
+                    : "Review submitted work and return private feedback to your students."
                 }
               />
               <p className="mt-1 text-sm text-slate-500">
@@ -511,13 +545,13 @@ export default function HomeworkDetail() {
                   ? ` · out of ${data.maxMarks}`
                   : " · check-off (no marks)"}
               </p>
-              {data.instructions && (
+              {!reviewing && data.instructions && (
                 <p className="mt-2 max-w-2xl whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">
                   {data.instructions}
                 </p>
               )}
               {data.attachmentUrl && (
-                <a
+                <HomeworkFileLink
                   href={data.attachmentUrl}
                   target="_blank"
                   rel="noreferrer"
@@ -536,10 +570,10 @@ export default function HomeworkDetail() {
                       <Paperclip className="h-3.5 w-3.5" /> Worksheet attachment
                     </>
                   )}
-                </a>
+                </HomeworkFileLink>
               )}
             </div>
-            <div className="flex flex-wrap gap-2">
+            {!reviewing && <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -594,12 +628,12 @@ export default function HomeworkDetail() {
               >
                 <Trash2 className="mr-2 h-4 w-4" /> Delete
               </Button>
-            </div>
+            </div>}
           </div>
         )}
       </div>
 
-      <div className="hw-stats">
+      {!reviewing && <><div className="hw-stats">
         {[
           ["Needs review", submittedCount, "text-sky-600"],
           ["Marked", markedCount, "text-emerald-600"],
@@ -701,7 +735,9 @@ export default function HomeworkDetail() {
         </Select>
       </div>
 
-      {reviewStudent && reviewSubmission && (
+      </>}
+      {reviewing && (!reviewStudent || !reviewSubmission) && <section className="hw-review p-8"><h2>Submission not found</h2><p className="hw-description">This student has not submitted work for this assignment.</p><Link to={`/teacher/homework/${id}`}>Back to assignment</Link></section>}
+      {reviewing && reviewStudent && reviewSubmission && (
         <section className="hw-review">
           <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-5 py-4 dark:border-surface-raised dark:bg-surface-raised/40 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -759,8 +795,7 @@ export default function HomeworkDetail() {
                 size="sm"
                 className="ml-2 h-8 w-8 p-0"
                 onClick={() => {
-                  setReviewStudentId(null);
-                  setPreviewUrl(null);
+                  if (!drafts[reviewStudent.id] || confirm('Leave without saving feedback changes?')) navigate(`/teacher/homework/${id}`);
                 }}
                 aria-label="Close review"
               >
@@ -827,7 +862,7 @@ export default function HomeworkDetail() {
                             className="h-8"
                             render={
                               <a
-                                href={reviewFile.url}
+                                href={previewBlob || undefined}
                                 target="_blank"
                                 rel="noreferrer"
                               />
@@ -841,7 +876,7 @@ export default function HomeworkDetail() {
                             size="sm"
                             className="h-8"
                             render={
-                              <a
+                              <HomeworkFileLink
                                 href={reviewFile.url}
                                 download={reviewFile.originalName}
                               />
@@ -852,10 +887,10 @@ export default function HomeworkDetail() {
                           </Button>
                         </div>
                       </div>
-                      {isHomeworkImage(reviewFile) ? (
+                      {previewError ? <p role="alert" className="p-6 text-sm text-rose-600">{previewError}</p> : !previewBlob ? <p role="status" className="p-6 text-sm">Loading document…</p> : isHomeworkImage(reviewFile) ? (
                         <div className="flex min-h-64 items-center justify-center p-3">
                           <img
-                            src={reviewFile.url}
+                            src={previewBlob}
                             alt={reviewFile.originalName}
                             className="max-h-[560px] max-w-full rounded object-contain"
                           />
@@ -863,7 +898,7 @@ export default function HomeworkDetail() {
                       ) : reviewFile.mimeType === "application/pdf" ||
                         /\.pdf$/i.test(reviewFile.url) ? (
                         <iframe
-                          src={reviewFile.url}
+                          src={previewBlob}
                           title={reviewFile.originalName}
                           className="h-[520px] w-full bg-white"
                         />
@@ -1006,7 +1041,7 @@ export default function HomeworkDetail() {
         </section>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo">
+      {!reviewing && <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo">
         <table className="min-w-[760px] w-full text-left text-sm">
           <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:bg-surface-raised/50">
             <tr>
@@ -1141,7 +1176,9 @@ export default function HomeworkDetail() {
                           variant="outline"
                           className="h-8"
                           disabled={busy !== null}
-                          onClick={() => openReview(st.id)}
+                          render={<Link to={`/teacher/homework/${id}/review/${st.id}`} />}
+                          role="link"
+                          nativeButton={false}
                         >
                           <Eye className="mr-1 h-3.5 w-3.5" /> Review
                         </Button>
@@ -1184,7 +1221,7 @@ export default function HomeworkDetail() {
             )}
           </tbody>
         </table>
-      </div>
+      </div>}
     </div>
   );
 }

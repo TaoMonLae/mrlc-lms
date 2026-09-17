@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { HomeworkFileLink } from "../../components/homework/HomeworkFileLink";
+import AnimatedContent from "../../components/react-bits/AnimatedContent";
 import { Link, useSearchParams } from "react-router";
 import {
   BookOpen,
   BookOpenCheck,
-  Camera,
   CheckCircle2,
   Clock,
   Newspaper,
@@ -36,6 +37,7 @@ import {
   formatHomeworkFileSize,
   removeUnusedHomeworkMedia,
   uploadHomeworkFile,
+  validateHomeworkFile,
   type HomeworkUploadedFile,
 } from "../../lib/homeworkMedia";
 
@@ -83,6 +85,11 @@ export default function StudentHomework() {
   const [attachments, setAttachments] = useState<SubmissionFile[]>([]);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [dragging, setDragging] = useState(false);
+  const uploadLock = useRef(false);
+  const submitLock = useRef(false);
+  const mounted = useRef(true);
   const stagedUploads = useRef<string[]>([]);
 
   const load = () => {
@@ -99,11 +106,11 @@ export default function StudentHomework() {
       .finally(() => setLoading(false));
   };
   useEffect(() => {
+    mounted.current = true;
     load();
     return () => {
-      for (const url of stagedUploads.current) {
-        void removeUnusedHomeworkMedia(url).catch(() => {});
-      }
+      mounted.current = false;
+      if (!submitLock.current) for (const url of stagedUploads.current) void removeUnusedHomeworkMedia(url).catch(() => {});
     };
   }, []);
 
@@ -135,6 +142,7 @@ export default function StudentHomework() {
     }
     stagedUploads.current = [];
     setOpenId(item.id);
+    setUploadError("");
     let recovered: string | null = null;
     try {
       if (user)
@@ -150,15 +158,21 @@ export default function StudentHomework() {
   };
 
   const upload = async (files: File[]) => {
+    if (uploadLock.current || submitting || !openId || !files.length) return;
+    setUploadError("");
     if (attachments.length + files.length > HOMEWORK_SUBMISSION_FILE_LIMIT) {
-      toast.error(`Attach up to ${HOMEWORK_SUBMISSION_FILE_LIMIT} files`);
+      setUploadError(`Attach up to ${HOMEWORK_SUBMISSION_FILE_LIMIT} files. Remove a file before adding more.`);
       return;
     }
+    const invalid = files.map(file => { const error = validateHomeworkFile(file); return error ? `${file.name}: ${error}` : null; }).find(Boolean);
+    if (invalid) { setUploadError(invalid); return; }
+    uploadLock.current = true;
     setUploading(true);
     let uploadedCount = 0;
     try {
       for (const file of files) {
         const result = await uploadHomeworkFile(file);
+        if (!mounted.current) { await removeUnusedHomeworkMedia(result.url).catch(() => {}); break; }
         stagedUploads.current.push(result.url);
         setAttachments((current) => [...current, result]);
         uploadedCount += 1;
@@ -172,8 +186,10 @@ export default function StudentHomework() {
           `${uploadedCount} file${uploadedCount === 1 ? "" : "s"} attached before the upload stopped`,
         );
       toast.error(e.message || "Upload failed");
+      if (mounted.current) setUploadError(e.message || "Upload failed. Your attached files have been kept; try again.");
     } finally {
-      setUploading(false);
+      uploadLock.current = false;
+      if (mounted.current) setUploading(false);
     }
   };
 
@@ -196,15 +212,18 @@ export default function StudentHomework() {
     }
     stagedUploads.current = [];
     setAttachments([]);
+    setUploadError("");
     setOpenId(null);
     setText("");
   };
 
   const submit = async (id: string) => {
+    if (submitLock.current || uploadLock.current) return;
     if (!text.trim() && attachments.length === 0) {
       toast.error("Write something or attach your work");
       return;
     }
+    submitLock.current = true;
     setSubmitting(true);
     try {
       await apiSend(`/api/homework/${id}/submit`, "POST", {
@@ -227,9 +246,11 @@ export default function StudentHomework() {
       setAttachments([]);
       load();
     } catch (e: any) {
+      if (!mounted.current) for (const url of stagedUploads.current) void removeUnusedHomeworkMedia(url).catch(() => {});
       toast.error(e.message || "Failed to submit");
     } finally {
-      setSubmitting(false);
+      submitLock.current = false;
+      if (mounted.current) setSubmitting(false);
     }
   };
 
@@ -331,7 +352,7 @@ export default function StudentHomework() {
               </details>
             )}
             {item.attachmentUrl && (
-              <a
+              <HomeworkFileLink
                 href={item.attachmentUrl}
                 target="_blank"
                 rel="noreferrer"
@@ -350,7 +371,7 @@ export default function StudentHomework() {
                     <Paperclip className="h-3 w-3" /> Worksheet
                   </>
                 )}
-              </a>
+              </HomeworkFileLink>
             )}
             {item.mySubmission?.feedback && (
               <p className="mt-2 rounded-lg bg-slate-50 p-2 text-xs text-slate-600 dark:bg-surface-raised dark:text-slate-300">
@@ -361,7 +382,7 @@ export default function StudentHomework() {
             {!isOpen && filesForSubmission(item.mySubmission).length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">
                 {filesForSubmission(item.mySubmission).map((file) => (
-                  <a
+                  <HomeworkFileLink
                     key={file.url}
                     href={file.url}
                     target="_blank"
@@ -370,7 +391,7 @@ export default function StudentHomework() {
                   >
                     <Paperclip className="h-3 w-3 shrink-0" />
                     <span className="truncate">{file.originalName}</span>
-                  </a>
+                  </HomeworkFileLink>
                 ))}
               </div>
             )}
@@ -395,7 +416,7 @@ export default function StudentHomework() {
         </div>
 
         {isOpen && (
-          <div className="hw-answer mt-5 space-y-3">
+          <AnimatedContent className="hw-answer mt-5 space-y-3">
             <div className="flex flex-wrap justify-between gap-2">
               <h4 className="font-semibold">Your submission</h4>
               <span className="text-xs text-slate-500">
@@ -435,20 +456,21 @@ export default function StudentHomework() {
                 : "Text drafts stay in this tab when storage is available."}{" "}
               Unsubmitted attachments are removed when you close the workspace.
             </p>
-            <div className="space-y-2">
+            <div className="space-y-2" onDragOver={event => { event.preventDefault(); if (!uploading && !submitting) setDragging(true); }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false); }} onDrop={event => { event.preventDefault(); setDragging(false); void upload(Array.from(event.dataTransfer.files)); }}>
               <label
-                className={`inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 dark:border-surface-raised dark:text-slate-300 ${
+                className={`hw-upload-zone ${dragging ? 'is-dragging' : ''} ${
                   uploading ||
                   attachments.length >= HOMEWORK_SUBMISSION_FILE_LIMIT
                     ? "cursor-not-allowed opacity-60"
                     : "cursor-pointer hover:bg-slate-50 dark:hover:bg-surface-raised"
                 }`}
               >
-                <Camera className="h-4 w-4" />
+                <Paperclip className="h-5 w-5" />
                 {uploading
                   ? "Uploading…"
-                  : `Add documents (${attachments.length}/${HOMEWORK_SUBMISSION_FILE_LIMIT})`}
+                  : `Drop files here or browse (${attachments.length}/${HOMEWORK_SUBMISSION_FILE_LIMIT})`}
                 <input
+                  aria-label="Attach homework files"
                   type="file"
                   multiple
                   accept={HOMEWORK_FILE_ACCEPT}
@@ -465,6 +487,7 @@ export default function StudentHomework() {
                   }}
                 />
               </label>
+              {uploadError && <p role="alert" className="text-sm text-rose-600 dark:text-rose-300">{uploadError}</p>}
               <p className="text-[11px] text-slate-400">
                 Up to 5 files, 10 MB each. Images, PDF, Word, PowerPoint, Excel,
                 text and OpenDocument are accepted.
@@ -477,7 +500,7 @@ export default function StudentHomework() {
                       className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 dark:border-surface-raised"
                     >
                       <Paperclip className="h-4 w-4 shrink-0 text-aubergine-600" />
-                      <a
+                      <HomeworkFileLink
                         href={file.url}
                         target="_blank"
                         rel="noreferrer"
@@ -491,7 +514,7 @@ export default function StudentHomework() {
                             {formatHomeworkFileSize(file.size)}
                           </span>
                         )}
-                      </a>
+                      </HomeworkFileLink>
                       <Button
                         type="button"
                         variant="ghost"
@@ -508,6 +531,7 @@ export default function StudentHomework() {
                 </div>
               )}
             </div>
+            <p className="text-sm" role="status">{attachments.length} {attachments.length === 1 ? 'file' : 'files'} attached{text.trim() ? ' + written answer' : ''}. Files are sent to your teacher only when you turn in.</p>
             <div className="flex justify-end gap-2">
               <Button
                 variant="outline"
@@ -530,7 +554,7 @@ export default function StudentHomework() {
                 {submitting ? "Submitting…" : "Turn in"}
               </Button>
             </div>
-          </div>
+          </AnimatedContent>
         )}
       </article>
     );

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { HomeworkFileLink } from "../../components/homework/HomeworkFileLink";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
   BookOpenCheck,
@@ -81,6 +82,8 @@ export default function HomeworkList() {
   const [classFilter, setClassFilter] = useState("all");
   const [sort, setSort] = useState("due");
   const stagedUpload = useRef("");
+  const mounted = useRef(true);
+  const saveLock = useRef(false);
   const [form, setForm] = useState({
     title: prefill?.title || "",
     instructions: prefill?.instructions || "",
@@ -106,6 +109,7 @@ export default function HomeworkList() {
   };
 
   useEffect(() => {
+    mounted.current = true;
     load();
     if (isAdmin) {
       apiGet<any[]>("/api/classes")
@@ -131,7 +135,8 @@ export default function HomeworkList() {
       )
       .catch((e: any) => toast.error(e?.message || "Failed to load subjects"));
     return () => {
-      if (stagedUpload.current)
+      mounted.current = false;
+      if (stagedUpload.current && !saveLock.current)
         void removeUnusedHomeworkMedia(stagedUpload.current).catch(() => {});
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -173,6 +178,7 @@ export default function HomeworkList() {
     setUploading(true);
     try {
       const uploaded = await uploadHomeworkFile(file);
+      if (!mounted.current) { await removeUnusedHomeworkMedia(uploaded.url).catch(() => {}); return; }
       const previous = stagedUpload.current;
       stagedUpload.current = uploaded.url;
       setForm((f) => ({ ...f, attachmentUrl: uploaded.url }));
@@ -182,7 +188,7 @@ export default function HomeworkList() {
     } catch (e: any) {
       toast.error(e.message || "Upload failed");
     } finally {
-      setUploading(false);
+      if (mounted.current) setUploading(false);
     }
   };
 
@@ -208,6 +214,7 @@ export default function HomeworkList() {
   };
 
   const create = async () => {
+    if (saveLock.current || uploading) return;
     if (!form.title.trim() || !form.classId || !form.dueDate) {
       toast.error("Title, class and due date are required");
       return;
@@ -218,6 +225,7 @@ export default function HomeworkList() {
       );
       return;
     }
+    saveLock.current = true;
     setSaving(true);
     try {
       await apiSend("/api/homework", "POST", {
@@ -243,9 +251,11 @@ export default function HomeworkList() {
       });
       load();
     } catch (e: any) {
+      if (!mounted.current && stagedUpload.current) void removeUnusedHomeworkMedia(stagedUpload.current).catch(() => {});
       toast.error(e.message || "Failed to create homework");
     } finally {
-      setSaving(false);
+      saveLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
@@ -296,8 +306,8 @@ export default function HomeworkList() {
     <div className="hw-workspace">
       <HomeworkMasthead
         audience="Teacher desk"
-        title="Homework, in focus."
-        description="Set a clear brief. Follow your class’s progress. Give feedback that moves learning forward."
+        title="Homework"
+        description="Your assignments and submission queue. Only you and admins can manage your homework."
         action={
           <Button
             className="hw-primary"
@@ -315,7 +325,7 @@ export default function HomeworkList() {
           title={
             reviewCount
               ? `${reviewCount} submission${reviewCount === 1 ? "" : "s"} ready for your attention.`
-              : "Room for the next learning moment."
+              : "No submissions waiting for review."
           }
         >
           <div>
@@ -504,7 +514,7 @@ export default function HomeworkList() {
                   />
                 )}
                 {form.attachmentUrl && (
-                  <a
+                  <HomeworkFileLink
                     href={form.attachmentUrl}
                     target="_blank"
                     rel="noreferrer"
@@ -516,7 +526,7 @@ export default function HomeworkList() {
                       : form.attachmentUrl.startsWith("/elibrary/")
                         ? "open book"
                         : "attached"}
-                  </a>
+                  </HomeworkFileLink>
                 )}
                 {form.attachmentUrl.startsWith("/uploads/homework-media/") && (
                   <Button

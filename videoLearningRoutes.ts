@@ -3,6 +3,7 @@ import type { PrismaClient, VideoLesson } from '@prisma/client';
 import { z } from 'zod';
 import { videoLearningSchema, quizPassed } from './shared/videoLearning';
 import { studentCanSeeClassworkExam } from './shared/classwork';
+import { homeworkTeacherScope } from './shared/homeworkAccess';
 
 export type VideoActor = { userId: string; role: string };
 export async function canReadVideo(prisma: PrismaClient, actor: VideoActor, video: VideoLesson) {
@@ -45,7 +46,7 @@ export function registerVideoLearningRoutes({ app, prisma, authMiddleware, canMa
     if (!video.classId) { res.json({ exams: [], homeworks: [] }); return; }
     const [exams, homeworks] = await Promise.all([
       prisma.exam.findMany({ where: { classId: video.classId, type: 'QUIZ', status: { not: 'ARCHIVED' } }, select: { id: true, title: true, status: true, passMark: true }, orderBy: { title: 'asc' } }),
-      prisma.homework.findMany({ where: { classId: video.classId }, select: { id: true, title: true, status: true }, orderBy: { dueDate: 'desc' } }),
+      prisma.homework.findMany({ where: { classId: video.classId, ...homeworkTeacherScope(actor(req)) }, select: { id: true, title: true, status: true }, orderBy: { dueDate: 'desc' } }),
     ]);
     res.json({ exams, homeworks });
   }));
@@ -59,7 +60,7 @@ export function registerVideoLearningRoutes({ app, prisma, authMiddleware, canMa
       if (config.requireQuiz && exam.passMark == null) throw new VideoError(400, 'Set a pass mark in the quiz settings before requiring a passing score.');
     }
     if (config.homeworkId) {
-      const homework = await prisma.homework.findUnique({ where: { id: config.homeworkId } });
+      const homework = await prisma.homework.findFirst({ where: { id: config.homeworkId, ...homeworkTeacherScope(actor(req)) } });
       if (!homework || homework.classId !== video.classId) throw new VideoError(400, 'Choose homework for the same class.');
     }
     if (video.duration && config.chapters.some(c => c.seconds >= video.duration!)) throw new VideoError(400, 'Chapter timestamps must be before the end of the video.');
@@ -72,7 +73,7 @@ export function registerVideoLearningRoutes({ app, prisma, authMiddleware, canMa
     const isStudent = actor(req).role === 'STUDENT';
     const student = isStudent ? await prisma.student.findUnique({ where: { userId: actor(req).userId }, select: { id: true, classId: true } }) : null;
     const exam = config.examId ? await prisma.exam.findUnique({ where: { id: config.examId }, select: { id: true, title: true, classId: true, status: true, passMark: true, _count: { select: { assignments: true } }, assignments: { where: { studentId: student?.id ?? '__none__' }, select: { id: true } } } }) : null;
-    const homework = config.homeworkId ? await prisma.homework.findUnique({ where: { id: config.homeworkId }, select: { id: true, title: true, classId: true, status: true, dueDate: true } }) : null;
+    const homework = config.homeworkId ? await prisma.homework.findFirst({ where: { id: config.homeworkId, ...homeworkTeacherScope(actor(req)) }, select: { id: true, title: true, classId: true, status: true, dueDate: true } }) : null;
     const completedAttempt = student && exam ? await prisma.examAttempt.findFirst({ where: { examId: exam.id, studentId: student.id, isCompleted: true, invalidatedAt: null, state: { not: 'INVALIDATED' } }, select: { id: true } }) : null;
     const availableExam = exam && exam.classId === video.classId && (!isStudent || (exam.classId === student?.classId && studentCanSeeClassworkExam({ status: exam.status, assignmentCount: exam._count.assignments, assignedToStudent: !!exam.assignments.length, completed: !!completedAttempt }))) ? exam : null;
     const availableHomework = homework && homework.classId === video.classId && (!isStudent || homework.classId === student?.classId) ? homework : null;
@@ -81,7 +82,7 @@ export function registerVideoLearningRoutes({ app, prisma, authMiddleware, canMa
     const quizStatus = releasedPass ? 'passed' : attempts.some(a => a.isCompleted) ? 'submitted' : attempts.length ? 'in_progress' : 'not_started';
     const submission = student && availableHomework ? await prisma.homeworkSubmission.findUnique({ where: { homeworkId_studentId: { homeworkId: availableHomework.id, studentId: student.id } }, select: { status: true } }) : null;
     const watch = await prisma.videoProgress.findUnique({ where: { userId_videoId: { userId: actor(req).userId, videoId: video.id } } });
-    res.json({ ...config,
+    res.json({ ...config, homeworkId: availableHomework?.id ?? null,
       quiz: availableExam ? { id: availableExam.id, title: availableExam.title, status: quizStatus, href: isStudent ? `/exams/${availableExam.id}/take` : `/exams/${availableExam.id}` } : null,
       homework: availableHomework ? { id: availableHomework.id, title: availableHomework.title, status: submission?.status ?? 'not_submitted', href: isStudent ? `/student/homework?assignment=${availableHomework.id}` : `/teacher/homework/${availableHomework.id}` } : null,
       learningComplete: !!watch?.isCompleted && (!config.requireQuiz || releasedPass),
@@ -147,10 +148,10 @@ export function registerVideoLearningRoutes({ app, prisma, authMiddleware, canMa
     if (!['ADMIN', 'TEACHER'].includes(actor(req).role) || actor(req).role !== 'ADMIN' && row.ownerId !== actor(req).userId) throw new VideoError(403, 'Only the playlist owner/admin can delete.');
     await prisma.videoPlaylist.delete({ where: { id: row.id } }); res.json({ ok: true });
   }));
-  const reportFor = async (video: VideoLesson) => {
+  const reportFor = async (video: VideoLesson, viewer: VideoActor) => {
     const config = await configFor(video.id);
     const attachedExam = config.examId ? await prisma.exam.findUnique({ where: { id: config.examId } }) : null;
-    const attachedHomework = config.homeworkId ? await prisma.homework.findUnique({ where: { id: config.homeworkId } }) : null;
+    const attachedHomework = config.homeworkId ? await prisma.homework.findFirst({ where: { id: config.homeworkId, ...homeworkTeacherScope(viewer) } }) : null;
     if (attachedExam?.classId !== video.classId) config.examId = null;
     if (attachedHomework?.classId !== video.classId) config.homeworkId = null;
     if (video.visibility === 'TEACHERS_ONLY') return [];
@@ -172,7 +173,7 @@ export function registerVideoLearningRoutes({ app, prisma, authMiddleware, canMa
       };
     });
   };
-  app.get('/api/videos/:id/learning/report', authMiddleware, wrap(async (req, res) => { const video = await lessonFor(req, true); res.json(await reportFor(video)); }));
+  app.get('/api/videos/:id/learning/report', authMiddleware, wrap(async (req, res) => { const video = await lessonFor(req, true); res.json(await reportFor(video, actor(req))); }));
   app.post('/api/videos/:id/learning/reminders', authMiddleware, wrap(async (req, res) => {
     const video = await lessonFor(req, true);
     if (video.status !== 'PUBLISHED') throw new VideoError(400, 'Publish this lesson before sending reminders.');
@@ -184,10 +185,10 @@ export function registerVideoLearningRoutes({ app, prisma, authMiddleware, canMa
       if (!exam || exam.classId !== video.classId || !['PUBLISHED', 'ACTIVE', 'SCHEDULED'].includes(exam.status)) throw new VideoError(400, 'The quiz must be available before sending reminders.');
     }
     if (target === 'homework') {
-      const homework = await prisma.homework.findUnique({ where: { id: config.homeworkId! }, select: { classId: true, status: true } });
+      const homework = await prisma.homework.findFirst({ where: { id: config.homeworkId!, ...homeworkTeacherScope(actor(req)) }, select: { classId: true, status: true } });
       if (!homework || homework.classId !== video.classId || homework.status !== 'OPEN') throw new VideoError(400, 'The homework must be open before sending reminders.');
     }
-    const rows = (await reportFor(video)).filter(r => target === 'watch' ? !r.watched : target === 'quiz' ? !['passed', 'not_assigned'].includes(r.quiz) : ['not_submitted', 'REDO'].includes(r.homework));
+    const rows = (await reportFor(video, actor(req))).filter(r => target === 'watch' ? !r.watched : target === 'quiz' ? !['passed', 'not_assigned'].includes(r.quiz) : ['not_submitted', 'REDO'].includes(r.homework));
     const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kuala_Lumpur' }).format(new Date());
     const result = await prisma.notification.createMany({ data: rows.map(r => ({ userId: r.userId, type: 'VIDEO_LESSON', title: 'Video lesson reminder', message: `Please ${target === 'watch' ? 'watch' : target === 'quiz' ? 'complete the quiz for' : 'submit the homework for'} “${video.title}”.`, href: `/videos/${video.id}`, sourceId: `video:${video.id}:${target}:${day}` })), skipDuplicates: true });
     res.json({ sent: result.count });

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import AnimatedContent from "@/components/AnimatedContent";
+import AnimatedContent from "../react-bits/AnimatedContent";
 import "./homework.css";
 
 export function HomeworkMasthead({
@@ -35,12 +35,7 @@ export function HomeworkFocus({
   children: ReactNode;
 }) {
   return (
-    <AnimatedContent
-      container="main"
-      distance={14}
-      duration={0.45}
-      threshold={0}
-    >
+    <AnimatedContent>
       <section className="hw-focus">
         <div>
           <p className="hw-eyebrow">{eyebrow}</p>

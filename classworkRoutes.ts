@@ -1,5 +1,6 @@
 import type { Express, Request, RequestHandler, Response } from "express";
 import type { PrismaClient } from "@prisma/client";
+import { homeworkTeacherScope } from "./shared/homeworkAccess";
 import {
   classworkResourceTarget,
   studentCanSeeClassworkExam,
@@ -193,7 +194,7 @@ export function registerClassworkRoutes({
             orderBy: { createdAt: "desc" },
           }),
           prisma.homework.findMany({
-            where: { classId },
+            where: { classId, ...homeworkTeacherScope(actor) },
             select: {
               id: true,
               title: true,
@@ -482,7 +483,7 @@ export function registerClassworkRoutes({
     "/api/classwork/classes/:classId/placement",
     authMiddleware,
     wrap(async (req, res) => {
-      const { classId } = await access(req, true);
+      const { classId, actor } = await access(req, true);
       const { sourceType, sourceId, pinned } = req.body ?? {};
       if (
         !["HOMEWORK", "EXAM", "RESOURCE"].includes(sourceType) ||
@@ -497,7 +498,7 @@ export function registerClassworkRoutes({
             ? prisma.exam
             : prisma.classworkResource;
       const source = await (model as any).findFirst({
-        where: { id: sourceId, classId },
+        where: { id: sourceId, classId, ...(sourceType === "HOMEWORK" ? homeworkTeacherScope(actor) : {}) },
         select: { id: true },
       });
       if (!source)

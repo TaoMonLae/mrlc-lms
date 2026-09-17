@@ -3,13 +3,14 @@ import {
   HOMEWORK_FILE_ACCEPT,
   HOMEWORK_FILE_MAX_BYTES,
   HOMEWORK_SUBMISSION_FILE_LIMIT,
-  homeworkFileExtension,
+  validateHomeworkFile,
 } from '../../shared/homeworkAttachments';
 
 export {
   HOMEWORK_FILE_ACCEPT,
   HOMEWORK_FILE_MAX_BYTES,
   HOMEWORK_SUBMISSION_FILE_LIMIT,
+  validateHomeworkFile,
 };
 
 export interface HomeworkUploadedFile {
@@ -17,19 +18,6 @@ export interface HomeworkUploadedFile {
   originalName: string;
   mimeType: string;
   size: number;
-}
-
-const allowedExtensions = new Set(
-  HOMEWORK_FILE_ACCEPT.split(',').map((extension) => extension.slice(1)),
-);
-
-export function validateHomeworkFile(file: File): string | null {
-  const extension = homeworkFileExtension(file.name);
-  if (!allowedExtensions.has(extension)) {
-    return 'Choose an image, PDF, Word, PowerPoint, Excel, text or OpenDocument file';
-  }
-  if (file.size > HOMEWORK_FILE_MAX_BYTES) return 'File must be 10 MB or smaller';
-  return null;
 }
 
 export async function uploadHomeworkFile(file: File): Promise<HomeworkUploadedFile> {

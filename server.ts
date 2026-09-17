@@ -79,11 +79,13 @@ import {
 } from "./shared/videoProgress";
 import {
   HOMEWORK_FILE_MAX_BYTES,
+  HOMEWORK_SUBMISSION_FILE_LIMIT,
   HOMEWORK_MEDIA_URL,
   homeworkMediaOwnerId,
   isAllowedHomeworkFile,
   parseHomeworkMediaUrl,
   parseHomeworkSubmissionAttachments,
+  validateHomeworkFile,
 } from "./shared/homeworkAttachments";
 import {
   copyArtifactOffsite,
@@ -120,6 +122,7 @@ import {
   HOMEWORK_MAX_MARKS,
   parseHomeworkMaxMarks,
 } from "./shared/homework";
+import { homeworkTeacherScope, ownsHomework } from "./shared/homeworkAccess";
 import {
   activeTimetableTeacherNames,
   normalizeTimetableTeacherReferences,
@@ -307,7 +310,9 @@ const homeworkMediaUpload = multer({
   }),
   limits: { fileSize: HOMEWORK_FILE_MAX_BYTES },
   fileFilter: (_req, file, cb) => {
-    if (isAllowedHomeworkFile(file.originalname, file.mimetype)) cb(null, true);
+    const nameError = validateHomeworkFile({ name: file.originalname, size: 1 });
+    if (nameError) cb(new Error(nameError));
+    else if (isAllowedHomeworkFile(file.originalname, file.mimetype)) cb(null, true);
     else cb(new Error("Upload an image, PDF, Word, PowerPoint, Excel, text or OpenDocument file"));
   },
 });
@@ -2007,10 +2012,29 @@ async function startServer() {
     immutable: isProduction,
     setHeaders: setPassiveUploadHeaders,
   }));
-  app.use("/uploads/homework-media", express.static(HOMEWORK_MEDIA_DIR, {
-    maxAge: isProduction ? "30d" : 0,
-    immutable: isProduction,
-  }));
+  // Never expose coursework via a public static directory.
+  app.get("/uploads/homework-media/:filename", authMiddleware, async (req, res) => {
+    const actor = (req as any).user as JwtPayload;
+    const url = parseHomeworkMediaUrl(`/uploads/homework-media/${req.params.filename}`);
+    if (!url || !["ADMIN", "TEACHER", "STUDENT"].includes(actor.role)) { res.status(404).json({ error: "File not found" }); return; }
+    try {
+      let allowed = actor.role === "ADMIN" || homeworkMediaOwnerId(url) === actor.userId;
+      if (!allowed && actor.role === "TEACHER") {
+        const scope = { ...homeworkTeacherScope(actor), class: { teachers: { some: { teacher: { userId: actor.userId } } } } };
+        allowed = !!await prisma.homework.findFirst({ where: { ...scope, OR: [{ attachmentUrl: url }, { submissions: { some: { OR: [{ attachmentUrl: url }, { attachments: { some: { url } } }] } } }] }, select: { id: true } });
+      }
+      if (!allowed && actor.role === "STUDENT") {
+        const student = await prisma.student.findUnique({ where: { userId: actor.userId }, select: { id: true, classId: true } });
+        allowed = !!student && ((!!student.classId && !!await prisma.homework.findFirst({ where: { classId: student.classId, attachmentUrl: url }, select: { id: true } })) || !!await prisma.homeworkSubmission.findFirst({ where: { studentId: student.id, OR: [{ attachmentUrl: url }, { attachments: { some: { url } } }] }, select: { id: true } }));
+      }
+      if (!allowed) { res.status(404).json({ error: "File not found" }); return; }
+      res.setHeader("Cache-Control", "private, no-store");
+      res.vary("Authorization");
+      res.setHeader("Content-Security-Policy", "default-src 'none'; sandbox");
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.sendFile(path.join(HOMEWORK_MEDIA_DIR, url.split("/").pop()!), err => { if (err && !res.headersSent) res.status(404).end(); });
+    } catch (err) { logger.error("Homework file access failed", err); res.status(500).json({ error: "Could not load file" }); }
+  });
   app.use("/uploads/exam-media", express.static(EXAM_MEDIA_DIR, {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
@@ -18643,6 +18667,17 @@ async function startServer() {
     return { categoryAverages, overall };
   };
 
+  // Linked homework must not bypass ownership through generic gradebook endpoints.
+  const hiddenHomeworkGradeIds = async (actor: JwtPayload | undefined, classId: string): Promise<string[]> => {
+    if (actor?.role !== "TEACHER") return [];
+    const rows = await prisma.homework.findMany({ where: { classId, gradeItemId: { not: null }, NOT: homeworkTeacherScope(actor) }, select: { gradeItemId: true } });
+    return rows.map(row => row.gradeItemId!).filter(Boolean);
+  };
+  const canManageHomeworkGradeItem = async (actor: JwtPayload, gradeItemId: string) => {
+    const homework = await prisma.homework.findFirst({ where: { gradeItemId }, select: { teacher: { select: { userId: true } } } });
+    return !homework || ownsHomework(actor, homework.teacher.userId);
+  };
+
   // GET gradebook matrix for a class (optionally filtered to one subject).
   app.get("/api/gradebook", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
     const { classId, subjectId } = req.query as { classId?: string; subjectId?: string };
@@ -18652,10 +18687,11 @@ async function startServer() {
       return;
     }
     try {
+      const hiddenItemIds = await hiddenHomeworkGradeIds((req as any).user, classId);
       const [students, items, weights] = await Promise.all([
         prisma.student.findMany({ where: { classId }, include: { user: true }, orderBy: { studentCode: "asc" } }),
         prisma.gradeItem.findMany({
-          where: { classId, ...(subjectId ? { subjectId } : {}) },
+          where: { classId, id: { notIn: hiddenItemIds }, ...(subjectId ? { subjectId } : {}) },
           orderBy: [{ date: "asc" }, { createdAt: "asc" }],
         }),
         weightsForClass(classId),
@@ -18746,6 +18782,7 @@ async function startServer() {
       const existingItem = await prisma.gradeItem.findUnique({ where: { id }, select: { classId: true } });
       if (!existingItem) { res.status(404).json({ error: "Grade item not found" }); return; }
       if (!(await canManageExamClass(jwtUser, existingItem.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      if (!await canManageHomeworkGradeItem(jwtUser, id)) { res.status(403).json({ error: "Only the homework owner or admin can manage its grade item" }); return; }
       const normalizedTitle = title === undefined ? undefined : normalizeGradeItemTitle(title);
       const normalizedMaxMarks = maxMarks === undefined ? undefined : parseGradeItemMaxMarks(maxMarks);
       const normalizedDate = date === undefined ? undefined : parseGradeItemDate(date);
@@ -18784,7 +18821,11 @@ async function startServer() {
       const existingItem = await prisma.gradeItem.findUnique({ where: { id }, select: { classId: true } });
       if (!existingItem) { res.status(404).json({ error: "Grade item not found" }); return; }
       if (!(await canManageExamClass(jwtUser, existingItem.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
-      await prisma.gradeItem.delete({ where: { id } });
+      if (!await canManageHomeworkGradeItem(jwtUser, id)) { res.status(403).json({ error: "Only the homework owner or admin can manage its grade item" }); return; }
+      await prisma.$transaction(async tx => {
+        await tx.homework.updateMany({ where: { gradeItemId: id }, data: { gradeItemId: null } });
+        await tx.gradeItem.delete({ where: { id } });
+      });
       await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "GRADE_ITEM", id,
         `Grade item ${id} deleted.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
       res.json({ message: "Grade item deleted" });
@@ -18808,6 +18849,7 @@ async function startServer() {
       const item = await prisma.gradeItem.findUnique({ where: { id: gradeItemId } });
       if (!item) { res.status(404).json({ error: "Grade item not found" }); return; }
       if (!(await canManageExamClass(jwtUser, item.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      if (!await canManageHomeworkGradeItem(jwtUser, gradeItemId)) { res.status(403).json({ error: "Only the homework owner or admin can manage its grades" }); return; }
       const classStudentIds = new Set(
         (await prisma.student.findMany({ where: { classId: item.classId }, select: { id: true } })).map((s) => s.id),
       );
@@ -18910,10 +18952,11 @@ async function startServer() {
   });
 
   // Build a full progress payload for one student (used by teacher + student views).
-  const buildStudentProgress = async (studentId: string) => {
+  const buildStudentProgress = async (studentId: string, viewer?: JwtPayload) => {
     const student = await prisma.student.findUnique({ where: { id: studentId }, include: { user: true, class: true } });
     if (!student) return null;
     const classId = student.classId;
+    const hiddenItemIds = new Set(classId ? await hiddenHomeworkGradeIds(viewer, classId) : []);
     const items = classId
       ? await prisma.gradeItem.findMany({ where: { classId }, include: { subject: true }, orderBy: [{ date: "asc" }] })
       : [];
@@ -18944,14 +18987,14 @@ async function startServer() {
 
     // Trend: each graded item's percentage over time.
     const trend = items
-      .filter((it: any) => gByItem[it.id]?.marks != null && it.maxMarks > 0)
+      .filter((it: any) => !hiddenItemIds.has(it.id) && gByItem[it.id]?.marks != null && it.maxMarks > 0)
       .map((it: any) => ({
         date: it.date, title: it.title, category: it.category,
         percent: round1((gByItem[it.id].marks / it.maxMarks) * 100),
       }));
 
     const comments = items
-      .filter((it: any) => gByItem[it.id]?.comment)
+      .filter((it: any) => !hiddenItemIds.has(it.id) && gByItem[it.id]?.comment)
       .map((it: any) => ({ item: it.title, subject: it.subject?.name || "General", comment: gByItem[it.id].comment }));
 
     const readiness = await prisma.gedReadiness.findMany({ where: { studentId } });
@@ -19161,7 +19204,7 @@ async function startServer() {
         res.status(403).json({ error: "Forbidden: not your class" });
         return;
       }
-      const data = await buildStudentProgress(req.params.studentId);
+      const data = await buildStudentProgress(req.params.studentId, (req as any).user);
       if (!data) { res.status(404).json({ error: "Student not found" }); return; }
       res.json(data);
     } catch (err: any) {
@@ -22212,6 +22255,15 @@ async function startServer() {
       await deleteHomeworkMedia(parsed);
     }
   };
+  const homeworkFilesExist = async (urls: string[]) => {
+    for (const url of new Set(urls)) {
+      const parsed = parseHomeworkMediaUrl(url);
+      if (!parsed) return false;
+      const stat = await fs.promises.stat(path.join(HOMEWORK_MEDIA_DIR, parsed.split("/").pop()!)).catch(() => null);
+      if (!stat?.isFile() || stat.size <= 0 || stat.size > HOMEWORK_FILE_MAX_BYTES) return false;
+    }
+    return true;
+  };
 
   const parseHomeworkDueDate = (value: unknown): Date | null => {
     if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
@@ -22221,6 +22273,10 @@ async function startServer() {
 
   /** The requesting teacher's record, or null. */
   const ownTeacher = (userId: string) => prisma.teacher.findUnique({ where: { userId } });
+  const canManageHomework = async (actor: JwtPayload, homework: { teacherId: string; classId: string }) => {
+    const teacher = await prisma.teacher.findUnique({ where: { id: homework.teacherId }, select: { userId: true } });
+    return ownsHomework(actor, teacher?.userId) && await canManageExamClass(actor, homework.classId);
+  };
 
   // Upload an attachment (teacher worksheet or student photo of paper work).
   app.post("/api/homework-media", authMiddleware, (req, res, next) => {
@@ -22238,6 +22294,7 @@ async function startServer() {
   }, (req, res) => {
     const file = (req as any).file as Express.Multer.File | undefined;
     if (!file) { res.status(400).json({ error: "File is required" }); return; }
+    if (!file.size) { void fs.promises.unlink(file.path).catch(() => {}); res.status(400).json({ error: "File is empty" }); return; }
     res.status(201).json({
       url: `/uploads/homework-media/${file.filename}`,
       originalName: file.originalname,
@@ -22322,6 +22379,7 @@ async function startServer() {
       }
       if (!teacher) { res.status(400).json({ error: "No teacher profile available to own this homework" }); return; }
 
+      if (parsedAttachment && parseHomeworkMediaUrl(parsedAttachment) && !await homeworkFilesExist([parsedAttachment])) { res.status(400).json({ error: "The uploaded worksheet is missing. Please upload it again." }); return; }
       const created = await hw().create({
         data: {
           title: cleanTitle,
@@ -22350,7 +22408,7 @@ async function startServer() {
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") { res.status(403).json({ error: "Forbidden" }); return; }
     const { classId } = req.query as Record<string, string | undefined>;
     try {
-      const where: any = {};
+      const where: any = { ...homeworkTeacherScope(jwtUser) };
       if (classId) where.classId = classId;
       if (jwtUser.role === "TEACHER") {
         const classIds = await getTeacherClassIds(jwtUser.userId);
@@ -22369,7 +22427,7 @@ async function startServer() {
       });
       res.json(rows);
     } catch (err: any) {
-      if (err?.code === "P2021" || err?.code === "P2022") { res.json([]); return; }
+      if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Homework needs its database update. Deploy pending migrations." }); return; }
       logger.error("Error listing homework:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
@@ -22383,7 +22441,7 @@ async function startServer() {
       const row = await hw().findUnique({
         where: { id: req.params.id },
         include: {
-          class: { include: { students: { include: { user: { select: { firstName: true, lastName: true } } }, orderBy: { studentCode: "asc" } } } },
+          class: { select: { id: true, name: true, students: { select: { id: true, studentCode: true, user: { select: { firstName: true, lastName: true } } }, orderBy: { studentCode: "asc" } } } },
           subject: { select: { id: true, name: true } },
           submissions: {
             include: {
@@ -22393,8 +22451,8 @@ async function startServer() {
         },
       });
       if (!row) { res.status(404).json({ error: "Homework not found" }); return; }
-      if (!(await canManageExamClass(jwtUser, row.classId))) {
-        res.status(403).json({ error: "Forbidden: not your class" });
+      if (!(await canManageHomework(jwtUser, row))) {
+        res.status(403).json({ error: "Only the homework owner or admin can access this assignment" });
         return;
       }
       res.json(row);
@@ -22412,7 +22470,7 @@ async function startServer() {
     try {
       const existing = await hw().findUnique({ where: { id: req.params.id } });
       if (!existing) { res.status(404).json({ error: "Homework not found" }); return; }
-      if (!(await canManageExamClass(jwtUser, existing.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      if (!(await canManageHomework(jwtUser, existing))) { res.status(403).json({ error: "Only the homework owner or admin can manage this assignment" }); return; }
       const data: any = {};
       if (b.title !== undefined) {
         const title = String(b.title).trim();
@@ -22437,6 +22495,7 @@ async function startServer() {
           res.status(403).json({ error: "You can only assign files you uploaded" });
           return;
         }
+        if (attachment && parseHomeworkMediaUrl(attachment) && !await homeworkFilesExist([attachment])) { res.status(400).json({ error: "Worksheet file is missing. Upload it again." }); return; }
         data.attachmentUrl = attachment;
       }
       if (b.subjectId !== undefined) {
@@ -22518,7 +22577,7 @@ async function startServer() {
         },
       });
       if (!existing) { res.status(404).json({ error: "Homework not found" }); return; }
-      if (!(await canManageExamClass(jwtUser, existing.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      if (!(await canManageHomework(jwtUser, existing))) { res.status(403).json({ error: "Only the homework owner or admin can manage this assignment" }); return; }
       await prisma.$transaction(async (tx) => {
         if (existing.gradeItemId) await tx.gradeItem.deleteMany({ where: { id: existing.gradeItemId } });
         await (tx as any).homework.delete({ where: { id: req.params.id } });
@@ -22570,7 +22629,7 @@ async function startServer() {
         mySubmission: r.submissions[0] ?? null,
       })));
     } catch (err: any) {
-      if (err?.code === "P2021" || err?.code === "P2022") { res.json([]); return; }
+      if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Homework needs its database update. Deploy pending migrations." }); return; }
       logger.error("Error listing student homework:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
@@ -22627,6 +22686,12 @@ async function startServer() {
         markedAt: null,
         markedById: null,
       };
+      const fileUrls = [...new Set([primaryAttachment, ...parsedAttachments.map(file => file.url)].filter((url): url is string => !!url))];
+      if (fileUrls.length > HOMEWORK_SUBMISSION_FILE_LIMIT || !await homeworkFilesExist(fileUrls)) { res.status(400).json({ error: "An attached file is missing or invalid. Upload it again (up to 5 files)." }); return; }
+      for (const file of parsedAttachments) {
+        const stat = await fs.promises.stat(path.join(HOMEWORK_MEDIA_DIR, file.url.split("/").pop()!));
+        if (stat.size !== file.size) { res.status(400).json({ error: "Attachment size does not match the uploaded file" }); return; }
+      }
       const sub = await prisma.$transaction(async (tx) => {
         const saved = existing
           ? await (tx as any).homeworkSubmission.update({ where: { id: existing.id }, data })
@@ -22684,7 +22749,7 @@ async function startServer() {
     try {
       const homework = await hw().findUnique({ where: { id: req.params.id } });
       if (!homework) { res.status(404).json({ error: "Homework not found" }); return; }
-      if (!(await canManageExamClass(jwtUser, homework.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      if (!(await canManageHomework(jwtUser, homework))) { res.status(403).json({ error: "Only the homework owner or admin can manage this assignment" }); return; }
       const student = await prisma.student.findUnique({ where: { id: String(studentId) }, select: { id: true, classId: true, userId: true } });
       if (!student || student.classId !== homework.classId) { res.status(400).json({ error: "Student is not in this homework class" }); return; }
 
@@ -22754,7 +22819,7 @@ async function startServer() {
     try {
       const homework = await hw().findUnique({ where: { id: req.params.id }, include: { submissions: true } });
       if (!homework) { res.status(404).json({ error: "Homework not found" }); return; }
-      if (!(await canManageExamClass(jwtUser, homework.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      if (!(await canManageHomework(jwtUser, homework))) { res.status(403).json({ error: "Only the homework owner or admin can manage this assignment" }); return; }
       if (homework.maxMarks == null) { res.status(400).json({ error: "Set max marks on this homework before syncing to the gradebook" }); return; }
       const scored = homework.submissions.filter((s: any) => s.status === "MARKED" && s.score != null);
       if (scored.length === 0 && !homework.gradeItemId) { res.status(400).json({ error: "No scored submissions to sync yet" }); return; }
