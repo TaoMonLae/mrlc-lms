@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { usePermissions, useUser } from '../../lib/permissions';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { getVideoEmbedUrl, getVideoPlaybackSrc, isDirectVideoUrl, formatDurationVerbose } from '../../lib/video';
+import { getVideoEmbedUrl, getVideoPlaybackSrc, isDirectVideoUrl, formatDurationVerbose, normalizeVideoSourceUrl, isValidVideoSourceUrl } from '../../lib/video';
 import { apiGet } from '../../lib/api';
 import { useVideoProgress } from '../../hooks/useVideoProgress';
 import { VideoPlayerControls } from '../../components/VideoPlayerControls';
@@ -42,26 +42,30 @@ export default function VideoDetail() {
 
   useEffect(() => {
     if (!id) return;
+    const controller = new AbortController();
+    setLoading(true); setVideo(null); setAnalytics(null);
     const fetchVideo = async () => {
       try {
-        const token = sessionStorage.getItem('auth_token');
-        await fetch('/api/videos/media-session', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const v = await apiGet<VideoLesson>(`/api/videos/${id}`);
+        const v = await apiGet<VideoLesson>(`/api/videos/${id}`, { signal: controller.signal });
+        if (v.videoUrl.startsWith('/uploads/videos/')) {
+          const token = sessionStorage.getItem('auth_token');
+          await fetch('/api/videos/media-session', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, signal: controller.signal });
+        }
+        if (controller.signal.aborted) return;
         setVideo(v);
       } catch (error) {
+        if (controller.signal.aborted) return;
         console.error('Error fetching video:', error);
         if ((error as Error).message !== 'Request failed (404)') {
           toast.error('Failed to load video');
         }
         setVideo(null);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
     fetchVideo();
+    return () => controller.abort();
   }, [id]);
 
   // Teachers/admins: load watch analytics for the intended audience.
@@ -160,7 +164,7 @@ export default function VideoDetail() {
       videoEl.removeEventListener('pause', handlePause);
       videoEl.removeEventListener('ended', handleEnded);
     };
-  }, [shouldTrackProgress, saveProgress, saveProgressImmediate, isCompleted]);
+  }, [shouldTrackProgress, saveProgress, saveProgressImmediate, isCompleted, transcode, playbackRevision, video?.videoUrl, playbackError]);
 
   useEffect(() => {
     const videoEl = videoRef.current;
@@ -226,6 +230,9 @@ export default function VideoDetail() {
 
   const canManage = isAdmin || (isTeacher && (video.uploadedById === user?.id || video.uploadedById === user?.teacherId));
   const embedUrl = getVideoEmbedUrl(video.videoUrl);
+  const originalUrl = normalizeVideoSourceUrl(video.videoUrl);
+  const safeOriginalUrl = isValidVideoSourceUrl(originalUrl) ? originalUrl : null;
+  const backPath = isAdmin ? '/videos' : isTeacher ? '/teacher/videos' : '/student/videos';
   const isDirectVideo = !embedUrl && isDirectVideoUrl(video.videoUrl);
   const rawPlaybackSrc = getVideoPlaybackSrc(video.videoUrl);
   const playbackSrc = video.videoUrl.startsWith('/uploads/videos/') && playbackRevision
@@ -233,13 +240,13 @@ export default function VideoDetail() {
     : rawPlaybackSrc;
 
   return (
-    <div className="space-y-6 max-w-[900px] mx-auto pb-10">
-      <div className="flex items-center justify-between">
+    <div className="mx-auto max-w-[1200px] min-w-0 space-y-6 pb-10">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <Button
           variant="ghost"
           size="sm"
           className="-ml-3 text-slate-500 hover:text-slate-900 dark:hover:text-white"
-          render={<Link to="/videos" />}
+          render={<Link to={backPath} />}
           nativeButton={false}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -257,15 +264,22 @@ export default function VideoDetail() {
           </Button>
         )}
       </div>
-
+      <header className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wider text-academic-teal">Video lesson{video.subjectName ? ` · ${video.subjectName}` : ''}</p>
+        <h1 className="break-words text-balance text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">{video.title}</h1>
+        <p className="text-sm text-muted-foreground">By {video.uploadedByName}</p>
+      </header>
+      <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="min-w-0 space-y-5">
       {/* Video Player */}
-      <div className="bg-black rounded-xl overflow-hidden aspect-video w-full shadow-lg relative group">
+      <div className="relative aspect-video min-h-[200px] w-full overflow-hidden rounded-xl border border-border bg-black group" aria-label="Lesson video player">
         {embedUrl ? (
           <iframe
+            key={`${embedUrl}-${playbackRevision}`}
             src={embedUrl}
             title={video.title}
             className="w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             referrerPolicy="strict-origin-when-cross-origin"
             allowFullScreen
           />
@@ -300,11 +314,13 @@ export default function VideoDetail() {
               ref={videoRef}
               className="w-full h-full object-contain"
               src={playbackSrc}
+              playsInline
+              preload="metadata"
               onError={() => setPlaybackError(true)}
               onClick={(e) => {
                 const video = e.currentTarget;
                 if (video.paused) {
-                  video.play();
+                  video.play().catch(() => toast.error('Could not start playback. Please try again.'));
                 } else {
                   video.pause();
                 }
@@ -338,24 +354,29 @@ export default function VideoDetail() {
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-slate-400">
             <p className="text-sm">Preview not available for this URL.</p>
-            <a
-              href={video.videoUrl}
+            {safeOriginalUrl && <a
+              href={safeOriginalUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-blue-400 hover:underline text-sm"
             >
               <ExternalLink className="h-4 w-4" />
               Open in new tab
-            </a>
+            </a>}
           </div>
         )}
       </div>
-
+      {embedUrl && <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 text-card-foreground">
+        <p className="text-xs text-muted-foreground">Trouble playing? Retry the player or open the original video.</p>
+        <Button variant="outline" size="sm" onClick={() => setPlaybackRevision(value => value + 1)}><RotateCcw className="size-4" />Retry Player</Button>
+      </div>}
+      <section className="space-y-2" aria-label="About this lesson"><h2 className="font-semibold text-foreground">About This Lesson</h2><p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{video.description || 'No description has been added for this lesson.'}</p></section>
+      </div>
       {/* Metadata */}
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
+      <aside className="min-w-0 space-y-4 rounded-xl border border-border bg-card p-5 text-card-foreground" aria-label="Lesson details">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white">{video.title}</h1>
+            <h2 className="font-semibold text-foreground">Lesson Details</h2>
             <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
               <span>By {video.uploadedByName}</span>
               <span>·</span>
@@ -403,23 +424,19 @@ export default function VideoDetail() {
           </div>
         </div>
 
-        {video.description && (
-          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-surface-raised pt-4">
-            {video.description}
-          </p>
-        )}
-
         <div className="border-t border-slate-100 dark:border-surface-raised pt-4">
-          <a
-            href={video.videoUrl}
+          {safeOriginalUrl && <a
+            href={safeOriginalUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline w-fit"
+            className="flex min-h-10 items-center gap-2 text-sm font-medium text-academic-teal hover:underline w-fit"
           >
             <ExternalLink className="h-4 w-4" />
-            Open original link
-          </a>
+            Open Original Video
+          </a>}
+          {embedUrl && <p className="mt-3 text-xs leading-relaxed text-muted-foreground">External videos use the provider’s own controls. If the provider restricts embedding or your browser blocks playback, try the original video link. Automatic watch tracking is available for uploaded videos.</p>}
         </div>
+      </aside>
       </div>
 
       {/* Watch analytics (teachers/admins) */}

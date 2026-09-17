@@ -3,6 +3,8 @@ import { Camera, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProfilePhotoCropDialog } from './ProfilePhotoCropDialog';
 import { toast } from 'sonner';
+import { useAuth } from '../../providers/AuthProvider';
+import { canChangeProfilePhoto } from '../../../shared/profilePhotoPolicy';
 
 type ProfilePhotoUploaderProps = {
   currentUrl?: string | null;
@@ -25,6 +27,8 @@ export function ProfilePhotoUploader({
   imageClassName = 'h-24 w-24 rounded-full',
   buttonLabel = 'Change Photo',
 }: ProfilePhotoUploaderProps) {
+  const { user } = useAuth();
+  const canEdit = canChangeProfilePhoto(user?.role, targetType);
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
@@ -32,6 +36,7 @@ export function ProfilePhotoUploader({
   const [cropFile, setCropFile] = useState<File | null>(null);
 
   const handleRemove = async () => {
+    if (!canEdit) return;
     if (!confirm('Remove this profile picture?')) return;
     const token = sessionStorage.getItem('auth_token');
     const params = new URLSearchParams({ targetType });
@@ -59,6 +64,7 @@ export function ProfilePhotoUploader({
   }, [currentUrl]);
 
   const uploadPhoto = async (file: File) => {
+    if (!canEdit) return;
     const token = sessionStorage.getItem('auth_token');
     const formData = new FormData();
     formData.append('file', file);
@@ -88,6 +94,7 @@ export function ProfilePhotoUploader({
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!canEdit) return;
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -118,15 +125,15 @@ export function ProfilePhotoUploader({
           <ImageIcon className="h-8 w-8 text-slate-400" />
         )}
       </div>
-      <input
+      {canEdit && <input
         ref={inputRef}
         type="file"
         accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
         className="hidden"
         onChange={handleFileChange}
         disabled={uploading}
-      />
-      <div className="flex items-center gap-2">
+      />}
+      {canEdit ? <div className="flex items-center gap-2">
         <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={uploading || removing}>
           <Camera className="mr-2 h-4 w-4" />
           {uploading ? 'Uploading...' : buttonLabel}
@@ -136,11 +143,11 @@ export function ProfilePhotoUploader({
             <Trash2 className="h-4 w-4" />
           </Button>
         )}
-      </div>
+      </div> : <p className="text-xs text-muted-foreground">Photo managed by admin</p>}
     </div>
     <ProfilePhotoCropDialog
       file={cropFile}
-      open={Boolean(cropFile)}
+      open={canEdit && Boolean(cropFile)}
       onCancel={() => {
         setCropFile(null);
         if (inputRef.current) inputRef.current.value = '';

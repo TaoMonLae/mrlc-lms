@@ -46,6 +46,8 @@ import { registerConductRoutes } from "./conduct";
 import { registerConductPdfRoutes } from "./conductPdf";
 import { loadPdfLogo } from "./pdfBranding";
 import { renderStudentCardPdf } from "./studentCardPdf";
+import { canChangeProfilePhoto } from './shared/profilePhotoPolicy';
+import { isValidVideoSourceUrl, normalizeVideoSourceUrl } from './shared/videoSource';
 import {
   PERSONNEL_CARD_RASTER_HEIGHT_PX,
   PERSONNEL_CARD_RASTER_WIDTH_PX,
@@ -1406,7 +1408,7 @@ const schemas = {
     subjectId: nullableStr, externalUrl: nullableStr,
   }),
   video: z.object({
-    title: reqStr, videoUrl: reqStr,
+    title: reqStr, videoUrl: reqStr.refine(isValidVideoSourceUrl, 'Invalid video URL or YouTube video ID').transform(normalizeVideoSourceUrl),
     description: nullableStr, thumbnailUrl: nullableStr, captionsUrl: nullableStr, duration: optNum,
     classId: nullableStr, subjectId: nullableStr, visibility: nullableStr,
     status: nullableStr, uploadedByName: nullableStr,
@@ -1447,7 +1449,7 @@ const schemas = {
     classId: nullableStr, subjectId: nullableStr, externalUrl: nullableStr,
   }),
   videoUpdate: z.object({
-    title: optStr, description: nullableStr, videoUrl: optStr, thumbnailUrl: nullableStr, captionsUrl: nullableStr,
+    title: optStr, description: nullableStr, videoUrl: z.string().trim().min(1).refine(isValidVideoSourceUrl, 'Invalid video URL or YouTube video ID').transform(normalizeVideoSourceUrl).optional(), thumbnailUrl: nullableStr, captionsUrl: nullableStr,
     duration: optNum, classId: nullableStr, subjectId: nullableStr, visibility: nullableStr, status: nullableStr,
     isRequired: z.union([z.boolean(), z.string()]).optional(), dueDate: nullableStr,
   }),
@@ -1972,6 +1974,7 @@ async function startServer() {
           }
         : false, // relax in dev so Vite HMR works
       crossOriginEmbedderPolicy: false,
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
       // Allow the SPA to embed cross-origin media (YouTube/Vimeo) without COEP blocking.
       crossOriginResourcePolicy: { policy: "cross-origin" },
       // Keep xFrameOptions on (default is SAMEORIGIN) — blocks clickjacking
@@ -2189,9 +2192,13 @@ async function startServer() {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
   }));
-  app.use("/uploads/student-docs", express.static(STUDENT_DOC_DIR, {
-    maxAge: isProduction ? "30d" : 0,
-    immutable: isProduction,
+  app.use("/uploads/student-docs", authMiddleware, (req, res, next) => {
+    const actor = (req as any).user as JwtPayload;
+    if (!['ADMIN', 'TEACHER'].includes(actor.role)) { res.status(403).json({ error: 'Forbidden' }); return; }
+    next();
+  }, express.static(STUDENT_DOC_DIR, {
+    maxAge: 0,
+    setHeaders: response => response.setHeader('Cache-Control', 'private, no-store'),
   }));
   app.use("/uploads/ebook-covers", express.static(EBOOK_COVER_DIR, {
     maxAge: isProduction ? "30d" : 0,
@@ -2862,7 +2869,16 @@ async function startServer() {
     });
   };
 
-  app.post("/api/profile-photo", authMiddleware, uploadProfilePhoto, async (req, res) => {
+  const restrictStudentPhotoChanges = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const actor = (req as any).user as JwtPayload;
+    if (!canChangeProfilePhoto(actor.role, 'user')) {
+      res.status(403).json({ error: 'Only admins can change student profile pictures' });
+      return;
+    }
+    next();
+  };
+
+  app.post("/api/profile-photo", authMiddleware, restrictStudentPhotoChanges, uploadProfilePhoto, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const file = (req as any).file as Express.Multer.File | undefined;
     const targetType = String(req.body?.targetType || "user");
@@ -2886,9 +2902,9 @@ async function startServer() {
           res.status(404).json({ error: "Student profile not found" });
           return;
         }
-        if (jwtUser.role !== "ADMIN" && student.userId !== jwtUser.userId) {
+        if (!canChangeProfilePhoto(jwtUser.role, 'student')) {
           await deleteUploaded();
-          res.status(403).json({ error: "You can only update your own profile picture" });
+          res.status(403).json({ error: "Only admins can change student profile pictures" });
           return;
         }
         await prisma.$transaction(async (tx) => {
@@ -2913,6 +2929,11 @@ async function startServer() {
         if (jwtUser.role !== "ADMIN" && teacher.userId !== jwtUser.userId) {
           await deleteUploaded();
           res.status(403).json({ error: "You can only update your own profile picture" });
+          return;
+        }
+        if (jwtUser.role !== 'ADMIN' && teacher.userId && await prisma.student.findUnique({ where: { userId: teacher.userId }, select: { id: true } })) {
+          await deleteUploaded();
+          res.status(403).json({ error: 'Only admins can change student profile pictures' });
           return;
         }
         await prisma.$transaction(async (tx) => {
@@ -2942,6 +2963,12 @@ async function startServer() {
         return;
       }
 
+      if (!canChangeProfilePhoto(jwtUser.role, 'user', user.role === 'STUDENT' || Boolean(user.studentProfile))) {
+        await deleteUploaded();
+        res.status(403).json({ error: 'Only admins can change student profile pictures' });
+        return;
+      }
+
       await prisma.$transaction(async (tx) => {
         await tx.user.update({ where: { id: user.id }, data: { profilePhotoUrl: photoUrl } });
         if (user.studentProfile) {
@@ -2959,13 +2986,17 @@ async function startServer() {
     }
   });
 
-  // Remove a profile picture (own photo, or any if ADMIN).
-  app.delete("/api/profile-photo", authMiddleware, async (req, res) => {
+  // Students cannot remove their identity photo through either target alias.
+  app.delete("/api/profile-photo", authMiddleware, restrictStudentPhotoChanges, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const targetType = String(req.query?.targetType || req.body?.targetType || "user");
     const requestedTargetId = (req.query?.targetId || req.body?.targetId)
       ? String(req.query?.targetId || req.body?.targetId) : null;
     try {
+      if (!canChangeProfilePhoto(jwtUser.role, targetType)) {
+        res.status(403).json({ error: 'Only admins can change student profile pictures' });
+        return;
+      }
       if (targetType === "student" || targetType === "teacher") {
         const model: any = targetType === "student" ? prisma.student : prisma.teacher;
         const row = requestedTargetId
@@ -2974,6 +3005,10 @@ async function startServer() {
         if (!row) { res.status(404).json({ error: "Profile not found" }); return; }
         if (jwtUser.role !== "ADMIN" && row.userId !== jwtUser.userId) {
           res.status(403).json({ error: "You can only remove your own profile picture" });
+          return;
+        }
+        if (jwtUser.role !== 'ADMIN' && targetType === 'teacher' && row.userId && await prisma.student.findUnique({ where: { userId: row.userId }, select: { id: true } })) {
+          res.status(403).json({ error: 'Only admins can change student profile pictures' });
           return;
         }
         await prisma.$transaction(async (tx) => {
@@ -2995,6 +3030,10 @@ async function startServer() {
         include: { studentProfile: true, teacherProfile: true },
       });
       if (!user) { res.status(404).json({ error: "User not found" }); return; }
+      if (!canChangeProfilePhoto(jwtUser.role, 'user', user.role === 'STUDENT' || Boolean(user.studentProfile))) {
+        res.status(403).json({ error: 'Only admins can change student profile pictures' });
+        return;
+      }
       await prisma.$transaction(async (tx) => {
         await tx.user.update({ where: { id: user.id }, data: { profilePhotoUrl: null } });
         if (user.studentProfile) await tx.student.update({ where: { id: user.studentProfile.id }, data: { profilePhotoUrl: null } });
@@ -7843,8 +7882,24 @@ async function startServer() {
   });
 
   // ── Student Documents API ────────────────────────────────────────────────────
-  // PII — only ADMIN and TEACHER may read; only ADMIN (or manage permission) may write.
-  const canManageDocuments = (role: string) => role === "ADMIN" || role === "TEACHER";
+  // PII — only ADMIN and TEACHER may read; only ADMIN may write.
+  const canManageDocuments = (role: string) => role === "ADMIN";
+
+  app.get('/api/students/:studentId/documents/:id/file', authMiddleware, async (req, res) => {
+    const actor = (req as any).user as JwtPayload;
+    if (!['ADMIN', 'TEACHER'].includes(actor.role)) { res.status(403).json({ error: 'Forbidden' }); return; }
+    try {
+      const document = await prisma.studentDocument.findFirst({ where: { id: req.params.id, studentId: req.params.studentId } });
+      if (!document || !document.fileUrl.startsWith('/uploads/student-docs/')) { res.status(404).json({ error: 'Document file not found' }); return; }
+      const fileName = path.basename(document.fileUrl);
+      const filePath = path.join(STUDENT_DOC_DIR, fileName);
+      if (!fileName || !fs.existsSync(filePath)) { res.status(404).json({ error: 'Document file not found' }); return; }
+      await createAuditLog(actor.userId, actor.email, 'DOWNLOAD', 'STUDENT_DOCUMENT', document.id,
+        `Downloaded document: ${document.title}`, req.ip, req.headers['user-agent'] || null);
+      res.setHeader('Cache-Control', 'private, no-store');
+      res.download(filePath, document.fileName);
+    } catch (error) { logger.error('Error downloading student document:', error); if (!res.headersSent) res.status(500).json({ error: 'Could not download document' }); }
+  });
 
   app.get("/api/students/:studentId/documents", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
@@ -7877,19 +7932,31 @@ async function startServer() {
     });
   };
 
-  app.post("/api/students/:studentId/documents/upload", authMiddleware, uploadStudentDoc, async (req, res) => {
+  app.post("/api/students/:studentId/documents/upload", authMiddleware, (req, res, next) => {
+    if (!canManageDocuments(((req as any).user as JwtPayload).role)) { res.status(403).json({ error: 'Forbidden' }); return; }
+    next();
+  }, uploadStudentDoc, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (!canManageDocuments(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     const { studentId } = req.params;
     const file = (req as any).file as Express.Multer.File | undefined;
     const { title, documentType, expiryDate } = req.body || {};
     if (!file) { res.status(400).json({ error: "A file is required" }); return; }
-    if (!title) { res.status(400).json({ error: "title is required" }); return; }
+    const deleteUploaded = () => fs.promises.unlink(file.path).catch(() => {});
+    if (typeof title !== 'string' || !title.trim() || title.trim().length > 160) {
+      await deleteUploaded(); res.status(400).json({ error: 'Document title must contain 1 to 160 characters' }); return;
+    }
+    if (expiryDate && Number.isNaN(new Date(expiryDate).getTime())) {
+      await deleteUploaded(); res.status(400).json({ error: 'Invalid expiry date' }); return;
+    }
     try {
+      if (!await prisma.student.findUnique({ where: { id: studentId }, select: { id: true } })) {
+        await deleteUploaded(); res.status(404).json({ error: 'Student not found' }); return;
+      }
       const document = await prisma.studentDocument.create({
         data: {
           studentId,
-          title,
+          title: title.trim(),
           documentType: documentType || "OTHER",
           fileUrl: `/uploads/student-docs/${file.filename}`,
           fileName: file.originalname,
@@ -7904,6 +7971,7 @@ async function startServer() {
         `Document '${title}' uploaded for student ${studentId}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
       res.status(201).json(document);
     } catch (err) {
+      await deleteUploaded();
       logger.error("Error uploading student document:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
@@ -7955,11 +8023,14 @@ async function startServer() {
     }
     const { id } = req.params;
     const { title, documentType, expiryDate, status } = req.body;
+    if (title !== undefined && (typeof title !== 'string' || !title.trim() || title.trim().length > 160)) {
+      res.status(400).json({ error: 'Document title must contain 1 to 160 characters' }); return;
+    }
     try {
       const document = await prisma.studentDocument.update({
-        where: { id },
+        where: { id, studentId: req.params.studentId },
         data: {
-          ...(title !== undefined ? { title } : {}),
+          ...(title !== undefined ? { title: title.trim() } : {}),
           ...(documentType !== undefined ? { documentType } : {}),
           ...(expiryDate !== undefined ? { expiryDate: expiryDate ? new Date(expiryDate) : null } : {}),
           ...(status !== undefined ? { status } : {}),
@@ -7988,7 +8059,7 @@ async function startServer() {
     }
     const { id } = req.params;
     try {
-      await prisma.studentDocument.delete({ where: { id } });
+      await prisma.studentDocument.delete({ where: { id, studentId: req.params.studentId } });
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "DELETE", "STUDENT_DOCUMENT", id,
         `Document ID ${id} deleted.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"

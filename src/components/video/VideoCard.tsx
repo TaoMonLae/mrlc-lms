@@ -1,184 +1,43 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { Video, Play, Clock, BookOpen, Check, CheckSquare, Square, AlertTriangle } from 'lucide-react';
+import { Video, Play, BookOpen, Check, CheckSquare, Square } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { formatDistanceToNow, format } from 'date-fns';
-import { formatDuration } from '../../lib/video';
+import { format } from 'date-fns';
+import { formatDuration, autoGenerateThumbnail } from '../../lib/video';
 import type { VideoLesson, VideoProgress } from '../../lib/video/types';
 
-/**
- * Props for the VideoCard component
- */
 interface VideoCardProps {
-  /** The video lesson data to display */
-  video: VideoLesson;
-  /** Optional progress data for showing watch progress */
-  progress?: VideoProgress;
-  /** Whether the card is selected in bulk selection mode */
-  isSelected?: boolean;
-  /** Callback when the card is selected/deselected */
-  onSelect?: (id: string) => void;
-  /** Whether to show the selection checkbox */
-  showSelection?: boolean;
-  /** Whether to show the management menu (edit/delete) */
-  showManageMenu?: boolean;
-  /** Whether the current user can manage this video */
-  canManage?: boolean;
-  /** React node for management menu actions */
-  manageMenuContent?: React.ReactNode;
+  video: VideoLesson; progress?: VideoProgress; isSelected?: boolean;
+  onSelect?: (id: string) => void; showSelection?: boolean;
+  showManageMenu?: boolean; canManage?: boolean; manageMenuContent?: React.ReactNode;
 }
-
-/**
- * Reusable video card component for displaying video lessons in a grid.
- * Shows thumbnail, title, duration, progress, and optional selection/management features.
- *
- * @example
- * ```tsx
- * <VideoCard
- *   video={video}
- *   progress={progressMap[video.id]}
- *   showSelection={true}
- *   isSelected={selectedIds.has(video.id)}
- *   onSelect={() => toggleSelection(video.id)}
- * />
- * ```
- */
-export function VideoCard({
-  video,
-  progress,
-  isSelected = false,
-  onSelect,
-  showSelection = false,
-  showManageMenu = false,
-  canManage = false,
-  manageMenuContent,
-}: VideoCardProps) {
-  const progressPercent = progress && video.duration
-    ? Math.min(100, (progress.currentPosition / video.duration) * 100)
-    : 0;
-
-  const isCompleted = progress?.isCompleted ?? false;
-
-  return (
-    <div
-      className={`bg-white dark:bg-surface-indigo border rounded-xl overflow-hidden hover:shadow-md transition-shadow group flex flex-col ${
-        isSelected ? 'border-blue-500 ring-2 ring-blue-500 ring-opacity-50' : 'border-slate-200 dark:border-surface-raised'
-      }`}
-    >
-      {/* Thumbnail */}
-      <div className="relative block bg-slate-900 aspect-video overflow-hidden">
-        {/* Selection checkbox */}
-        {showSelection && onSelect && (
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              onSelect(video.id);
-            }}
-            className="absolute top-2 left-2 z-10 p-1 bg-black/50 rounded hover:bg-black/70 transition-colors"
-            aria-label={`Select ${video.title}`}
-          >
-            {isSelected ? (
-              <CheckSquare className="h-4 w-4 text-white" />
-            ) : (
-              <Square className="h-4 w-4 text-white/70" />
-            )}
-          </button>
-        )}
-
-        <Link to={`/videos/${video.id}`} className="block w-full h-full">
-          {video.thumbnailUrl ? (
-            <img
-              src={video.thumbnailUrl}
-              alt={video.title}
-              className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-700 to-slate-900">
-              <Video className="h-10 w-10 text-slate-500" />
-            </div>
-          )}
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
-              <Play className="h-6 w-6 text-white fill-white" />
-            </div>
-          </div>
-          {video.duration && (
-            <span className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded font-mono">
-              {formatDuration(video.duration)}
-            </span>
-          )}
-          {/* Progress indicators */}
-          {isCompleted && (
-            <div className="absolute top-2 right-2 bg-green-600/90 text-white px-2 py-0.5 rounded text-[10px] font-medium flex items-center gap-1">
-              <Check className="h-2.5 w-2.5" />
-              Completed
-            </div>
-          )}
-          {progress && !isCompleted && progressPercent > 0 && (
-            <div className="absolute top-2 right-2 bg-blue-600/90 text-white px-2 py-0.5 rounded text-[10px] font-medium">
-              {Math.round(progressPercent)}%
-            </div>
-          )}
-        </Link>
-      </div>
-
-      {/* Info */}
-      <div className="p-4 flex-1 flex flex-col">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <Link
-            to={`/videos/${video.id}`}
-            className="font-semibold text-sm text-slate-900 dark:text-white line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex-1"
-          >
-            {video.title}
-          </Link>
-          {showManageMenu && canManage && manageMenuContent}
-        </div>
-
-        <p className="text-xs text-slate-500 dark:text-slate-300 line-clamp-2 mb-3 flex-1">
-          {video.description}
-        </p>
-
-        <div className="flex flex-wrap gap-1.5">
-          {video.isRequired && (
-            <Badge className="text-xs bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 border-0 flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3" />
-              Required{video.dueDate ? ` · ${format(new Date(video.dueDate), 'dd MMM')}` : ''}
-            </Badge>
-          )}
-          {video.subjectName && (
-            <Badge variant="secondary" className="text-xs font-normal">
-              {video.subjectName}
-            </Badge>
-          )}
-          {video.status === 'DRAFT' && (
-            <Badge variant="outline" className="text-xs border-amber-200 text-amber-700 dark:border-amber-800 dark:text-amber-400">
-              Draft
-            </Badge>
-          )}
-          {video.visibility === 'TEACHERS_ONLY' && (
-            <Badge variant="outline" className="text-xs border-purple-200 text-purple-700 dark:border-purple-800 dark:text-purple-300">
-              Teachers Only
-            </Badge>
-          )}
-        </div>
-      </div>
-
-      {/* Progress bar */}
-      {progress && !isCompleted && progressPercent > 0 && (
-        <div className="h-1 bg-slate-100 dark:bg-slate-700">
-          <div
-            className="h-full bg-blue-500 transition-all duration-300"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-      )}
-      {isCompleted && <div className="h-1 bg-green-500" />}
-
-      {/* Footer */}
-      <div className="bg-slate-50 dark:bg-surface-raised/50 px-4 py-3 border-t border-slate-100 dark:border-surface-raised flex items-center justify-between text-xs text-slate-500">
-        <span className="truncate max-w-[130px]">By {video.uploadedByName}</span>
-        <span>{formatDistanceToNow(new Date(video.createdAt))} ago</span>
-      </div>
+export function VideoCard({ video, progress, isSelected = false, onSelect, showSelection = false, showManageMenu = false, canManage = false, manageMenuContent }: VideoCardProps) {
+  const thumbnail = autoGenerateThumbnail(video.videoUrl, video.thumbnailUrl || undefined);
+  const [failedThumbnail, setFailedThumbnail] = React.useState<string | null>(null);
+  const completed = Boolean(progress?.isCompleted);
+  const percent = video.duration && progress ? Math.max(0, Math.min(100, (progress.currentPosition / video.duration) * 100)) : 0;
+  return <article className={`group flex min-w-0 flex-col overflow-hidden rounded-xl border bg-card text-card-foreground transition-colors ${isSelected ? 'border-academic-teal ring-1 ring-academic-teal' : 'border-border hover:border-muted-foreground/40'}`}>
+    <div className="relative aspect-video overflow-hidden bg-[#141a20]">
+      <Link to={`/videos/${video.id}`} aria-label={`Watch ${video.title}`} className="block h-full w-full focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-white">
+        {thumbnail && failedThumbnail !== thumbnail ? <img src={thumbnail} alt="" width={480} height={270} loading="lazy" className="h-full w-full object-cover" onError={() => setFailedThumbnail(thumbnail)} /> : <div className="flex h-full items-center justify-center"><Video className="size-10 text-white/30" /></div>}
+        <div className="absolute inset-0 flex items-center justify-center"><span className="flex size-11 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white transition-colors group-hover:bg-black/80"><Play className="ml-0.5 size-5 fill-current" /></span></div>
+        {!!video.duration && <span className="absolute bottom-3 right-3 rounded bg-black/80 px-2 py-1 text-xs tabular-nums text-white">{formatDuration(video.duration)}</span>}
+        {completed && <span className="absolute right-3 top-3 flex items-center gap-1 rounded bg-emerald-700 px-2 py-1 text-xs text-white"><Check className="size-3" />Completed</span>}
+      </Link>
+      {showSelection && onSelect && <button type="button" aria-label={`Select ${video.title}`} aria-pressed={isSelected} onClick={() => onSelect(video.id)} className="absolute left-3 top-3 flex size-9 items-center justify-center rounded-md border border-white/20 bg-black/70 text-white focus-visible:outline-2 focus-visible:outline-white">{isSelected ? <CheckSquare className="size-4" /> : <Square className="size-4" />}</button>}
     </div>
-  );
+    <div className="flex flex-1 flex-col gap-3 p-4">
+      <div className="flex items-start justify-between gap-2"><h2 className="min-w-0 font-semibold leading-snug"><Link to={`/videos/${video.id}`} className="line-clamp-2 break-words hover:underline">{video.title}</Link></h2>{showManageMenu && canManage && manageMenuContent}</div>
+      <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">{video.description || 'Open this lesson to start watching.'}</p>
+      <div className="mt-auto flex flex-wrap gap-2">
+        {video.isRequired && <Badge variant="outline" className="text-amber-700 dark:text-amber-300">Required{video.dueDate ? ` · ${format(new Date(video.dueDate), 'dd MMM')}` : ''}</Badge>}
+        {video.subjectName && <Badge variant="secondary">{video.subjectName}</Badge>}
+        {video.className && <Badge variant="outline"><BookOpen className="size-3" />{video.className}</Badge>}
+        {video.status !== 'PUBLISHED' && <Badge variant="outline">{video.status === 'DRAFT' ? 'Draft' : 'Archived'}</Badge>}
+        {video.visibility === 'TEACHERS_ONLY' && <Badge variant="outline">Teachers Only</Badge>}
+      </div>
+      {progress && !completed && percent > 0 && <div className="space-y-1.5"><p className="text-xs text-muted-foreground">{Math.round(percent)}% watched</p><div className="h-1 rounded-full bg-muted" role="progressbar" aria-label="Watch progress" aria-valuenow={Math.round(percent)} aria-valuemin={0} aria-valuemax={100}><div className="h-full rounded-full bg-academic-teal" style={{ width: `${percent}%` }} /></div></div>}
+    </div>
+    <footer className="flex flex-wrap justify-between gap-2 border-t border-border px-4 py-3 text-xs text-muted-foreground"><span className="min-w-0 truncate">By {video.uploadedByName}</span><time dateTime={video.createdAt}>{format(new Date(video.createdAt), 'dd MMM yyyy')}</time></footer>
+  </article>;
 }

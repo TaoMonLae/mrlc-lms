@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useUser } from '../../lib/permissions';
-import { isValidVideoSourceUrl, getVideoThumbnailUrl } from '../../lib/video';
+import { isValidVideoSourceUrl, getVideoThumbnailUrl, normalizeVideoSourceUrl } from '../../lib/video';
 import {
   MAX_VIDEO_FILE_SIZE_DISPLAY,
   ALLOWED_VIDEO_EXTENSIONS,
@@ -31,10 +31,10 @@ import {
   VideoThumbnailField,
 } from '../../components/video/VideoThumbnailField';
 
-const videoUrlSchema = z.string().min(1, 'Video URL is required').refine(
+const videoUrlSchema = z.string().trim().min(1, 'Video URL is required').refine(
   isValidVideoSourceUrl,
   'Must be a YouTube, Vimeo, direct video URL, or uploaded video file'
-);
+).transform(normalizeVideoSourceUrl);
 
 const videoSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),

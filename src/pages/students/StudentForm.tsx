@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { ProfilePhotoUploader } from '@/src/components/profile/ProfilePhotoUploader';
 import { ProfilePhotoCropDialog } from '@/src/components/profile/ProfilePhotoCropDialog';
 import { localToday } from '../../lib/dates';
+import { useAuth } from '../../providers/AuthProvider';
 import { STUDENT_COUNCIL_ROLES, STUDENT_COUNCIL_ROLE_LABELS } from '../../../shared/studentCouncil';
 
 interface StudentFormProps {
@@ -57,6 +58,8 @@ const sectionClass = 'bg-white dark:bg-surface-indigo rounded-xl border border-s
 const headingClass = 'text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 border-b border-slate-100 dark:border-surface-raised pb-2';
 
 export default function StudentForm({ initialData, isEdit = false }: StudentFormProps) {
+  const { user } = useAuth();
+  const canEditPhoto = user?.role === 'ADMIN';
   const navigate = useNavigate();
   const [classes, setClasses] = useState<any[]>([]);
   const [selectedClass, setSelectedClass] = useState<string>('');
@@ -110,6 +113,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
   }, [pendingProfilePhotoPreview]);
 
   const handlePendingPhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!canEditPhoto) return;
     const file = event.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) { toast.error('Profile picture must be 5 MB or smaller'); event.target.value = ''; return; }
@@ -126,7 +130,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
   };
 
   const uploadPendingProfilePhoto = async (studentId: string) => {
-    if (!pendingProfilePhoto) return;
+    if (!pendingProfilePhoto || !canEditPhoto) return;
     const token = sessionStorage.getItem('auth_token') ?? '';
     const body = new FormData();
     body.append('file', pendingProfilePhoto);
@@ -257,7 +261,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
               imageClassName="h-24 w-24 rounded-full"
             />
           </div>
-        ) : (
+        ) : canEditPhoto ? (
           <div className="mb-6 flex flex-col items-start gap-3">
             <Label>Profile Photo</Label>
             <div className="flex items-center gap-4">
@@ -279,7 +283,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
               </div>
             </div>
           </div>
-        )}
+        ) : <p className="mb-6 text-xs text-muted-foreground">Student photos are managed by admin.</p>}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="space-y-2">
@@ -513,7 +517,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
       </div>
       <ProfilePhotoCropDialog
         file={pendingCropFile}
-        open={Boolean(pendingCropFile)}
+        open={canEditPhoto && Boolean(pendingCropFile)}
         onCancel={() => setPendingCropFile(null)}
         onCropped={acceptPendingCrop}
       />

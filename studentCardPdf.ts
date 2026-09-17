@@ -127,10 +127,7 @@ function drawFittedSingleLine(
 function drawFront(doc: PDFKit.PDFDocument, data: StudentCardPdfData): void {
   cardPage(doc);
   const headerHeight = 82;
-  const header = doc.linearGradient(0, 0, STUDENT_CARD_WIDTH_PT, headerHeight);
-  header.stop(0, "#0f172a").stop(0.55, "#312e81").stop(1, "#0f766e");
-  doc.rect(0, 0, STUDENT_CARD_WIDTH_PT, headerHeight).fill(header);
-  doc.circle(STUDENT_CARD_WIDTH_PT + 12, -8, 48).lineWidth(9).strokeOpacity(0.08).stroke("#ffffff").strokeOpacity(1);
+  doc.rect(0, 0, STUDENT_CARD_WIDTH_PT, headerHeight).fill('#0b293b');
 
   drawLogo(doc, data, 11, 10, 23);
   doc.font("Helvetica-Bold").fontSize(7.2).fillColor("#ffffff")
@@ -148,19 +145,17 @@ function drawFront(doc: PDFKit.PDFDocument, data: StudentCardPdfData): void {
   if (data.photo) {
     doc.image(data.photo, photoX, photoY, { fit: [photoW, photoH], align: "center", valign: "center" });
   } else {
-    doc.rect(photoX, photoY, photoW, photoH).fill("#eef2ff");
+    doc.rect(photoX, photoY, photoW, photoH).fill("#f1f5f9");
     const initials = data.studentName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("");
-    doc.font("Helvetica-Bold").fontSize(22).fillColor("#a5b4fc")
+    doc.font("Helvetica-Bold").fontSize(22).fillColor("#64748b")
       .text(initials || "?", photoX, photoY + 26, { width: photoW, align: "center" });
   }
   doc.restore();
 
-  doc.font("Helvetica-Bold").fontSize(11).fillColor("#0f172a")
-    .text(data.studentName, 10, 137, { width: STUDENT_CARD_WIDTH_PT - 20, align: "center", ellipsis: true, lineBreak: false });
-  const codeWidth = 82;
-  doc.roundedRect((STUDENT_CARD_WIDTH_PT - codeWidth) / 2, 153, codeWidth, 15, 7.5).fill("#eef2ff");
-  doc.font("Courier-Bold").fontSize(7.5).fillColor("#3730a3")
-    .text(data.studentCode, (STUDENT_CARD_WIDTH_PT - codeWidth) / 2, 157, { width: codeWidth, align: "center", lineBreak: false });
+  doc.fillColor('#0f172a');
+  drawFittedSingleLine(doc, data.studentName, 10, 137, STUDENT_CARD_WIDTH_PT - 20, { font: 'Helvetica-Bold', maxFontSize: 11, minFontSize: 6, align: 'center' });
+  doc.fillColor('#0b293b');
+  drawFittedSingleLine(doc, data.studentCode, 10, 157, STUDENT_CARD_WIDTH_PT - 20, { font: 'Courier-Bold', maxFontSize: 7.5, minFontSize: 5, align: 'center' });
 
   const gap = 5;
   const boxW = (STUDENT_CARD_WIDTH_PT - 24 - gap) / 2;
@@ -184,9 +179,7 @@ function drawFront(doc: PDFKit.PDFDocument, data: StudentCardPdfData): void {
 
 function drawBack(doc: PDFKit.PDFDocument, data: StudentCardPdfData): void {
   cardPage(doc);
-  const header = doc.linearGradient(0, 0, STUDENT_CARD_WIDTH_PT, 54);
-  header.stop(0, "#0f766e").stop(0.5, "#312e81").stop(1, "#0f172a");
-  doc.rect(0, 0, STUDENT_CARD_WIDTH_PT, 54).fill(header);
+  doc.rect(0, 0, STUDENT_CARD_WIDTH_PT, 54).fill('#0b293b');
   doc.font("Helvetica-Bold").fontSize(7).fillColor("#ffffff")
     .text("AUTHENTIC AND VERIFIABLE", 10, 15, { width: STUDENT_CARD_WIDTH_PT - 20, align: "center", characterSpacing: 0.8 });
   doc.font("Helvetica").fontSize(5.2).fillColor("#cbd5e1")

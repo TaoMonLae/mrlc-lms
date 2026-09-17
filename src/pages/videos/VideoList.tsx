@@ -1,17 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
-import { Plus, Search, Filter, Video, Play, Clock, MoreVertical, Edit2, Trash2, Eye, BookOpen, CheckSquare, Square, Archive, AlertTriangle } from 'lucide-react';
+import { VideoCard } from '../../components/video/VideoCard';
+import { VideoLessonMenu } from '../../components/video/VideoLessonMenu';
+import { Plus, Search, Filter, Video, Trash2, CheckSquare, Square, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -20,9 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { usePermissions, useUser } from '../../lib/permissions';
-import { formatDistanceToNow, format } from 'date-fns';
 import { toast } from 'sonner';
-import { formatDuration } from '../../lib/video';
 import { apiGet, apiSend } from '../../lib/api';
 import type { VideoLesson } from '../../lib/video/types';
 
@@ -217,6 +208,7 @@ export default function VideoList() {
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
+            aria-label="Search video lessons"
             placeholder="Search by title or description..."
             className="pl-9"
             value={searchTerm}
@@ -287,117 +279,8 @@ export default function VideoList() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredVideos.map((video) => (
-            <div
-              key={video.id}
-              className={`bg-white dark:bg-surface-indigo border rounded-xl overflow-hidden hover:shadow-md transition-shadow group flex flex-col ${
-                selectedIds.has(video.id) ? 'border-blue-500 ring-2 ring-blue-500 ring-opacity-50' : 'border-slate-200 dark:border-surface-raised'
-              }`}
-            >
-              {/* Thumbnail with checkbox overlay */}
-              <div className="relative block bg-slate-900 aspect-video overflow-hidden">
-                {(isAdmin || isTeacher) && (
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      toggleSelection(video.id);
-                    }}
-                    className="absolute top-2 left-2 z-10 p-1 bg-black/50 rounded hover:bg-black/70 transition-colors"
-                  >
-                    {selectedIds.has(video.id) ? (
-                      <CheckSquare className="h-4 w-4 text-white" />
-                    ) : (
-                      <Square className="h-4 w-4 text-white/70" />
-                    )}
-                  </button>
-                )}
-                <Link to={`/videos/${video.id}`} className="block w-full h-full">
-                  {video.thumbnailUrl ? (
-                    <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-700 to-slate-900">
-                      <Video className="h-10 w-10 text-slate-500" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
-                      <Play className="h-6 w-6 text-white fill-white" />
-                    </div>
-                  </div>
-                  {video.duration && (
-                    <span className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded font-mono">
-                      {formatDuration(video.duration)}
-                    </span>
-                  )}
-                </Link>
-              </div>
-
-              {/* Info */}
-              <div className="p-4 flex-1 flex flex-col">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <Link to={`/videos/${video.id}`} className="font-semibold text-sm text-slate-900 dark:text-white line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex-1">
-                    {video.title}
-                  </Link>
-                  {canManage(video) && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        render={<Button variant="ghost" size="sm" className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />}
-                        nativeButton={true}
-                      >
-                        <MoreVertical className="h-4 w-4 text-slate-400" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem render={<Link to={`/videos/${video.id}`} className="flex w-full" />} nativeButton={false}>
-                          <Eye className="h-4 w-4 mr-2" /> View
-                        </DropdownMenuItem>
-                        <DropdownMenuItem render={<Link to={`/videos/${video.id}/edit`} className="flex w-full" />} nativeButton={false}>
-                          <Edit2 className="h-4 w-4 mr-2" /> Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(video.id)}>
-                          <Trash2 className="h-4 w-4 mr-2" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                </div>
-
-                <p className="text-xs text-slate-500 dark:text-slate-300 line-clamp-2 mb-3 flex-1">
-                  {video.description}
-                </p>
-
-                <div className="flex flex-wrap gap-1.5 mt-auto">
-                  {video.isRequired && (
-                    <Badge className="text-xs bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 border-0 flex items-center gap-1">
-                      <AlertTriangle className="h-3 w-3" />
-                      Required{video.dueDate ? ` · ${format(new Date(video.dueDate), 'dd MMM')}` : ''}
-                    </Badge>
-                  )}
-                  {video.subjectName && (
-                    <Badge variant="secondary" className="text-xs font-normal">
-                      {video.subjectName}
-                    </Badge>
-                  )}
-                  {video.status === 'DRAFT' && (
-                    <Badge variant="outline" className="text-xs font-normal border-amber-200 text-amber-700 dark:border-amber-800 dark:text-amber-400">
-                      Draft
-                    </Badge>
-                  )}
-                  {video.visibility === 'TEACHERS_ONLY' && (
-                    <Badge variant="outline" className="text-xs font-normal border-purple-200 text-purple-700 dark:border-purple-800 dark:text-purple-300">
-                      Teachers Only
-                    </Badge>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-slate-50 dark:bg-surface-raised/50 px-4 py-3 border-t border-slate-100 dark:border-surface-raised flex items-center justify-between text-xs text-slate-500">
-                <span className="truncate max-w-[130px]">By {video.uploadedByName}</span>
-                <span>{formatDistanceToNow(new Date(video.createdAt))} ago</span>
-              </div>
-            </div>
-          ))}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredVideos.map(video => <VideoCard key={video.id} video={video} showSelection={isAdmin || isTeacher} isSelected={selectedIds.has(video.id)} onSelect={toggleSelection} showManageMenu canManage={canManage(video)} manageMenuContent={<VideoLessonMenu video={video} onDelete={handleDelete} />} />)}
         </div>
       )}
     </div>

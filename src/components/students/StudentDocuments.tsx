@@ -1,426 +1,98 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  FileText, 
-  Upload, 
-  MoreVertical, 
-  Download, 
-  Trash2, 
-  Edit2, 
-  File, 
-  FileImage, 
-  Shield, 
-  Calendar,
-  AlertCircle,
-  FileCheck,
-  Search,
-  Plus
-} from 'lucide-react';
+import React from 'react';
+import { FileText, Upload, Download, Trash2, Edit2, Shield, Search, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import { usePermissions } from '@/src/lib/permissions';
-import { format, isPast, isWithinInterval, addDays } from 'date-fns';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { useAuth } from '../../providers/AuthProvider';
+import { apiGet, apiSend, downloadAuthenticatedFile } from '../../lib/api';
+import { formatDateOnly } from '../../lib/dates';
 import { toast } from 'sonner';
+import { studentDocumentExpiryStatus } from '../../../shared/studentDocumentExpiry';
 
-// Types
-export type DocumentType = 
-  | 'UNHCR' 
-  | 'PASSPORT' 
-  | 'BIRTH_CERTIFICATE' 
-  | 'SCHOOL_RECORD' 
-  | 'GUARDIAN_DOC' 
-  | 'MEDICAL' 
-  | 'OTHER';
-
+const DOCUMENT_TYPES = ['UNHCR', 'PASSPORT', 'BIRTH_CERTIFICATE', 'SCHOOL_RECORD', 'GUARDIAN_DOC', 'MEDICAL', 'OTHER'] as const;
+export type DocumentType = typeof DOCUMENT_TYPES[number];
 export interface StudentDocument {
-  id: string;
-  studentId: string;
-  title: string;
-  documentType: DocumentType;
-  fileUrl: string;
-  fileName: string;
-  fileSize: number; // in bytes
-  mimeType: string;
-  expiryDate?: string;
-  uploadedById: string;
-  uploadedByName: string;
-  status: 'ACTIVE' | 'ARCHIVED';
-  createdAt: string;
+  id: string; studentId: string; title: string; documentType: DocumentType; fileUrl: string;
+  fileName: string; fileSize: number; mimeType: string; expiryDate?: string; uploadedById: string;
+  uploadedByName: string; status: 'ACTIVE' | 'ARCHIVED'; createdAt: string;
 }
+const initialUpload = { title: '', documentType: 'OTHER' as DocumentType, expiryDate: '', file: null as File | null };
+const fileSize = (bytes: number) => bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 
-// Helper to get icon based on mime type
-const getFileIcon = (mimeType: string) => {
-  if (mimeType.includes('image')) return <FileImage className="h-8 w-8 text-blue-500" />;
-  if (mimeType.includes('pdf')) return <FileText className="h-8 w-8 text-rose-500" />;
-  return <File className="h-8 w-8 text-slate-400" />;
-};
-
-// Helper to format file size
-const formatFileSize = (bytes: number) => {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-};
-
-interface StudentDocumentsProps {
-  studentId: string;
-}
-
-export function StudentDocuments({ studentId }: StudentDocumentsProps) {
-  const { isAdmin, hasPermission } = usePermissions();
-  const [documents, setDocuments] = useState<StudentDocument[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-
-  // Upload dialog
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [upload, setUpload] = useState<{ title: string; documentType: DocumentType; expiryDate: string; file: File | null }>(
-    { title: '', documentType: 'OTHER', expiryDate: '', file: null }
-  );
-
-  // Filter based on user request "ADMIN can manage, TEACHER can view if allowed"
-  const canManage = isAdmin || hasPermission('manage_documents');
-  const canView = isAdmin || hasPermission('view_documents');
-
-  useEffect(() => {
-    if (!studentId || !canView) {
-      setLoading(false);
-      return;
-    }
-    const fetchDocuments = async () => {
-      try {
-        const token = sessionStorage.getItem('auth_token');
-        const res = await fetch(`/api/students/${studentId}/documents`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error('Failed to fetch documents');
-        const data = await res.json();
-        setDocuments(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error('Error fetching student documents:', error);
-        toast.error('Failed to load documents');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDocuments();
-  }, [studentId, canView]);
-
-  const filteredDocs = documents.filter(doc => 
-    doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doc.fileName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const stats = {
-    total: filteredDocs.length,
-    expired: filteredDocs.filter(d => d.expiryDate && isPast(new Date(d.expiryDate))).length,
-    expiringSoon: filteredDocs.filter(d => {
-      if (!d.expiryDate) return false;
-      const date = new Date(d.expiryDate);
-      return !isPast(date) && isWithinInterval(date, {
-        start: new Date(),
-        end: addDays(new Date(), 30)
-      });
-    }).length
+export function StudentDocuments({ studentId }: { studentId: string }) {
+  const { user } = useAuth();
+  // These are private supporting records, not the student's issued official documents.
+  const canManage = user?.role === 'ADMIN';
+  const canView = canManage || user?.role === 'TEACHER';
+  const [documents, setDocuments] = React.useState<StudentDocument[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [loadError, setLoadError] = React.useState(false);
+  const [reloadKey, setReloadKey] = React.useState(0);
+  const [search, setSearch] = React.useState('');
+  const [uploadOpen, setUploadOpen] = React.useState(false);
+  const [upload, setUpload] = React.useState(initialUpload);
+  const [uploading, setUploading] = React.useState(false);
+  const [renaming, setRenaming] = React.useState<StudentDocument | null>(null);
+  const [title, setTitle] = React.useState('');
+  const [busyId, setBusyId] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    const controller = new AbortController();
+    setDocuments([]); setLoading(true); setLoadError(false); setUploadOpen(false); setRenaming(null);
+    if (!studentId || !canView) { setLoading(false); return () => controller.abort(); }
+    apiGet<StudentDocument[]>(`/api/students/${studentId}/documents`, { signal: controller.signal })
+      .then(data => setDocuments(Array.isArray(data) ? data : []))
+      .catch(error => { if (error?.name !== 'AbortError') setLoadError(true); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [studentId, canView, reloadKey]);
+  const filtered = documents.filter(document => `${document.title} ${document.fileName} ${document.documentType}`.toLowerCase().includes(search.toLowerCase()));
+  const download = async (document: StudentDocument) => {
+    setBusyId(document.id);
+    try { await downloadAuthenticatedFile(`/api/students/${studentId}/documents/${document.id}/file`, document.fileName); }
+    catch (error: any) { toast.error(error.message || 'Could not download document'); }
+    finally { setBusyId(null); }
   };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this document?')) return;
-    try {
-      const token = sessionStorage.getItem('auth_token');
-      const res = await fetch(`/api/students/${studentId}/documents/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error('Failed to delete');
-      setDocuments(prev => prev.filter(d => d.id !== id));
-      toast.success('Document deleted successfully');
-    } catch {
-      toast.error('Failed to delete document');
-    }
+  const remove = async (document: StudentDocument) => {
+    if (!canManage || !confirm(`Delete “${document.title}”? This cannot be undone.`)) return;
+    setBusyId(document.id);
+    try { await apiSend(`/api/students/${studentId}/documents/${document.id}`, 'DELETE'); setDocuments(current => current.filter(item => item.id !== document.id)); toast.success('Document deleted'); }
+    catch (error: any) { toast.error(error.message || 'Could not delete document'); }
+    finally { setBusyId(null); }
   };
-
-  const handleDownload = (doc: StudentDocument) => {
-    if (doc.fileUrl && doc.fileUrl !== '#') {
-      window.open(doc.fileUrl, '_blank', 'noopener,noreferrer');
-    } else {
-      toast.info(`No file available for ${doc.fileName}`);
-    }
+  const rename = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!renaming || !canManage || !title.trim()) return;
+    setBusyId(renaming.id);
+    try { const updated = await apiSend<StudentDocument>(`/api/students/${studentId}/documents/${renaming.id}`, 'PUT', { title: title.trim() }); setDocuments(current => current.map(item => item.id === updated.id ? updated : item)); setRenaming(null); toast.success('Document renamed'); }
+    catch (error: any) { toast.error(error.message || 'Could not rename document'); }
+    finally { setBusyId(null); }
   };
-
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!upload.file) { toast.error('Choose a file to upload'); return; }
-    if (!upload.title.trim()) { toast.error('Enter a document title'); return; }
+  const submitUpload = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!canManage || !upload.file || !upload.title.trim()) return;
     if (upload.file.size > 25 * 1024 * 1024) { toast.error('File must be 25 MB or smaller'); return; }
     setUploading(true);
     try {
-      const token = sessionStorage.getItem('auth_token');
-      const body = new FormData();
-      body.append('file', upload.file);
-      body.append('title', upload.title.trim());
-      body.append('documentType', upload.documentType);
-      if (upload.expiryDate) body.append('expiryDate', upload.expiryDate);
-      const res = await fetch(`/api/students/${studentId}/documents/upload`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body,
-      });
-      const payload = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(payload.error || 'Upload failed');
-      setDocuments((prev) => [payload, ...prev]);
-      toast.success('Document uploaded');
-      setUploadOpen(false);
-      setUpload({ title: '', documentType: 'OTHER', expiryDate: '', file: null });
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to upload document');
-    } finally {
-      setUploading(false);
-    }
+      const body = new FormData(); body.append('file', upload.file); body.append('title', upload.title.trim()); body.append('documentType', upload.documentType); if (upload.expiryDate) body.append('expiryDate', upload.expiryDate);
+      const response = await fetch(`/api/students/${studentId}/documents/upload`, { method: 'POST', headers: { Authorization: `Bearer ${sessionStorage.getItem('auth_token')}` }, body });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Could not upload document');
+      setDocuments(current => [data, ...current]); setUploadOpen(false); setUpload(initialUpload); toast.success('Document uploaded');
+    } catch (error: any) { toast.error(error.message || 'Could not upload document'); }
+    finally { setUploading(false); }
   };
-
-  if (!canView) {
-    return (
-      <div className="p-8 text-center bg-slate-50 dark:bg-surface-indigo/50 rounded-xl border border-dashed border-slate-300 dark:border-surface-raised">
-        <Shield className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Strict Access Only</h3>
-        <p className="text-sm text-slate-500 mt-2">You don't have permission to view this student's private documents.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Search & Stats Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input 
-            placeholder="Search documents by title or file name..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-11 border-slate-200 dark:border-surface-raised focus:ring-aubergine-500"
-          />
-        </div>
-        
-        <div className="flex flex-wrap items-center gap-3">
-          <Badge variant="outline" className="h-9 px-3 border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900/50 flex gap-2 items-center">
-            <FileCheck className="h-3.5 w-3.5" />
-            {stats.total} Total
-          </Badge>
-          
-          {stats.expired > 0 && (
-            <Badge variant="outline" className="h-9 px-3 border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-900/50 flex gap-2 items-center">
-              <AlertCircle className="h-3.5 w-3.5" />
-              {stats.expired} Expired
-            </Badge>
-          )}
-
-          {stats.expiringSoon > 0 && (
-            <Badge variant="outline" className="h-9 px-3 border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900/50 flex gap-2 items-center">
-              <Calendar className="h-3.5 w-3.5" />
-              {stats.expiringSoon} Expiring Soon
-            </Badge>
-          )}
-
-          {canManage && (
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground h-11" onClick={() => setUploadOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Upload Document
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading && (
-          <div className="col-span-full py-20 text-center text-slate-500">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3"></div>
-            Loading documents...
-          </div>
-        )}
-
-        {!loading && filteredDocs.map((doc) => {
-          const isExpired = doc.expiryDate && isPast(new Date(doc.expiryDate));
-          const isExpiring = doc.expiryDate && !isExpired && isWithinInterval(new Date(doc.expiryDate), {
-            start: new Date(),
-            end: addDays(new Date(), 30)
-          });
-
-          return (
-            <Card key={doc.id} className={`group border-slate-200 dark:border-surface-raised shadow-sm hover:shadow-md transition-all relative overflow-hidden ${isExpired ? 'bg-rose-50/10' : ''}`}>
-              {/* Expiry Stripe */}
-              {isExpired && <div className="absolute top-0 left-0 w-full h-1 bg-rose-500" />}
-              {isExpiring && <div className="absolute top-0 left-0 w-full h-1 bg-amber-500" />}
-
-              <CardHeader className="pb-3 flex flex-row items-start justify-between space-y-0">
-                <div className="flex gap-4">
-                  <div className="mt-1">
-                    {getFileIcon(doc.mimeType)}
-                  </div>
-                  <div>
-                    <CardTitle className="text-base font-bold text-slate-900 dark:text-white line-clamp-1">
-                      {doc.title}
-                    </CardTitle>
-                    <CardDescription className="text-xs font-medium text-slate-500 dark:text-slate-300 mt-1 uppercase tracking-wider">
-                      {doc.documentType.replace('_', ' ')}
-                    </CardDescription>
-                  </div>
-                </div>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-white" />}>
-                    <MoreVertical className="h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-40">
-                    <DropdownMenuItem onClick={() => handleDownload(doc)}>
-                      <Download className="mr-2 h-4 w-4" /> Download
-                    </DropdownMenuItem>
-                    {canManage && (
-                      <>
-                        <DropdownMenuItem onClick={() => toast.info('Rename logic')}>
-                          <Edit2 className="mr-2 h-4 w-4" /> Rename
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-rose-600" onClick={() => handleDelete(doc.id)}>
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </CardHeader>
-              
-              <CardContent className="space-y-4">
-                <div className="bg-slate-50 dark:bg-surface-raised/50 p-2.5 rounded-lg border border-slate-100 dark:border-surface-raised">
-                  <p className="text-xs font-medium text-slate-600 dark:text-slate-300 flex items-center gap-2 truncate">
-                    <span className="truncate">{doc.fileName}</span>
-                    <span className="shrink-0 text-[10px] text-slate-400 font-bold">• {formatFileSize(doc.fileSize)}</span>
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between text-xs font-medium">
-                    <span className="text-slate-500">Uploaded</span>
-                    <span className="text-slate-900 dark:text-slate-300">{format(new Date(doc.createdAt), 'MMM d, yyyy')}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs font-medium">
-                    <span className="text-slate-500">Expiry</span>
-                    {doc.expiryDate ? (
-                      <div className="flex items-center gap-1.5">
-                        <span className={`
-                          ${isExpired ? 'text-rose-600' : isExpiring ? 'text-amber-600' : 'text-slate-900 dark:text-slate-300'}
-                        `}>
-                          {format(new Date(doc.expiryDate), 'MMM d, yyyy')}
-                        </span>
-                        {isExpired && <Badge variant="destructive" className="h-4 px-1 text-[8px] uppercase tracking-tighter">Expired</Badge>}
-                        {isExpiring && <Badge variant="secondary" className="h-4 px-1 text-[8px] bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 uppercase tracking-tighter">Due Soon</Badge>}
-                      </div>
-                    ) : (
-                      <span className="text-slate-400 italic">No expiry</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="pt-2 border-t border-slate-100 dark:border-surface-raised flex items-center gap-2">
-                  <div className="h-5 w-5 rounded-full bg-slate-100 dark:bg-surface-raised flex items-center justify-center text-[10px] font-bold text-slate-500">
-                    {doc.uploadedByName.charAt(0)}
-                  </div>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">By {doc.uploadedByName}</span>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-
-        {!loading && filteredDocs.length === 0 && (
-          <div className="col-span-full py-20 text-center bg-white dark:bg-surface-indigo rounded-xl border border-dashed border-slate-300 dark:border-surface-raised">
-            <FileText className="h-12 w-12 text-slate-200 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">No documents found</h3>
-            <p className="text-sm text-slate-500 mt-2">Upload student documents to keep them organized.</p>
-            {canManage && (
-              <Button variant="outline" className="mt-6 font-bold" onClick={() => setUploadOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" /> Upload First Document
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Info Warning */}
-      <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30 flex gap-4 items-start">
-        <Shield className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-        <div className="text-xs text-blue-800 dark:text-blue-400 leading-relaxed">
-          <p className="font-bold uppercase tracking-widest mb-1 text-[10px]">Security Notice</p>
-          <p>These documents contain PII (Personally Identifiable Information). Access is logged, and unauthorized downloads are strictly prohibited as per school policy.</p>
-        </div>
-      </div>
-
-      {/* Upload dialog */}
-      {uploadOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => !uploading && setUploadOpen(false)}>
-          <form
-            onSubmit={handleUpload}
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md bg-white dark:bg-surface-indigo rounded-xl shadow-2xl p-6 space-y-4"
-          >
-            <div className="flex items-center gap-2">
-              <Upload className="h-5 w-5 text-aubergine-600" />
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Upload Document</h3>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Title</label>
-              <Input value={upload.title} onChange={(e) => setUpload({ ...upload, title: e.target.value })} placeholder="e.g. UNHCR ID Card" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Type</label>
-                <select
-                  value={upload.documentType}
-                  onChange={(e) => setUpload({ ...upload, documentType: e.target.value as DocumentType })}
-                  className="h-10 w-full rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo px-3 text-sm"
-                >
-                  {['UNHCR', 'PASSPORT', 'BIRTH_CERTIFICATE', 'SCHOOL_RECORD', 'GUARDIAN_DOC', 'MEDICAL', 'OTHER'].map((t) => (
-                    <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Expiry (optional)</label>
-                <Input type="date" value={upload.expiryDate} onChange={(e) => setUpload({ ...upload, expiryDate: e.target.value })} />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">File</label>
-              <Input
-                type="file"
-                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp,.gif,.txt"
-                onChange={(e) => setUpload({ ...upload, file: e.target.files?.[0] || null })}
-              />
-              <p className="text-xs text-slate-400">PDF, Word, image or text. Max 25 MB.</p>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => setUploadOpen(false)} disabled={uploading}>Cancel</Button>
-              <Button type="submit" className="bg-primary text-primary-foreground" disabled={uploading}>
-                {uploading ? 'Uploading…' : 'Upload'}
-              </Button>
-            </div>
-          </form>
-        </div>
-      )}
-    </div>
-  );
+  if (!canView) return <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-5"><Shield className="size-5 shrink-0 text-muted-foreground" /><div><h3 className="font-semibold">Private school records</h3><p className="mt-1 text-sm text-muted-foreground">Supporting identity and medical documents are available only to authorized school staff. Your issued student card is shown separately.</p></div></div>;
+  return <section className="min-w-0 space-y-4" aria-label="Supporting documents">
+    <header className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-semibold">Supporting documents</h2><p className="mt-1 text-sm text-muted-foreground">Identity, school, and guardian records · {documents.length} files</p></div>{canManage && <Button variant="outline" onClick={() => setUploadOpen(true)}><Upload className="size-4" />Upload Document</Button>}</header>
+    <div className="relative"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input aria-label="Search supporting documents" className="pl-9" placeholder="Search title, file name, or type…" value={search} onChange={event => setSearch(event.target.value)} /></div>
+    {documents.some(document => studentDocumentExpiryStatus(document.expiryDate)) && <div className="flex flex-wrap gap-2 text-xs"><Badge variant="outline" className="text-destructive">{documents.filter(document => studentDocumentExpiryStatus(document.expiryDate) === 'EXPIRED').length} expired</Badge><Badge variant="outline" className="text-amber-700 dark:text-amber-300">{documents.filter(document => studentDocumentExpiryStatus(document.expiryDate) === 'EXPIRING_SOON').length} expiring within 30 days</Badge></div>}
+    {loading ? <p role="status" className="p-6 text-center text-sm text-muted-foreground">Loading documents…</p> : loadError ? <div role="alert" className="space-y-3 rounded-lg border border-border p-5"><p className="text-sm">Could not load supporting documents.</p><Button variant="outline" onClick={() => setReloadKey(value => value + 1)}><RefreshCw className="size-4" />Retry documents</Button></div> : <div className="divide-y divide-border rounded-lg border border-border">
+      {filtered.length === 0 ? <div className="p-8 text-center"><FileText className="mx-auto size-8 text-muted-foreground" /><h3 className="mt-3 font-semibold">{search ? 'No matching documents' : 'No supporting documents yet'}</h3><p className="mt-1 text-sm text-muted-foreground">{search ? 'Try a different title or file name.' : canManage ? 'Upload the student’s supporting records here.' : 'Admin can upload supporting records here.'}</p></div> : filtered.map(document => <article key={document.id} className="flex min-w-0 flex-wrap items-center justify-between gap-3 p-4"><div className="flex min-w-0 flex-1 items-start gap-3"><FileText className="mt-1 size-5 shrink-0 text-academic-teal" /><div className="min-w-0"><h3 className="break-words text-sm font-semibold">{document.title}</h3><p className="mt-1 break-all text-xs text-muted-foreground">{document.fileName} · {fileSize(document.fileSize)}</p><div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground"><Badge variant="outline">{document.documentType.replaceAll('_', ' ')}</Badge><span>Uploaded {formatDateOnly(document.createdAt)}</span>{document.expiryDate && <span>Expires {formatDateOnly(document.expiryDate)}</span>}</div></div></div><div className="flex shrink-0 gap-1"><Button variant="ghost" size="icon" aria-label={`Download ${document.title}`} onClick={() => void download(document)} disabled={busyId !== null}><Download className="size-4" /></Button>{canManage && <><Button variant="ghost" size="icon" aria-label={`Rename ${document.title}`} onClick={() => { setRenaming(document); setTitle(document.title); }} disabled={busyId !== null}><Edit2 className="size-4" /></Button><Button variant="ghost" size="icon" aria-label={`Delete ${document.title}`} onClick={() => void remove(document)} disabled={busyId !== null}><Trash2 className="size-4 text-destructive" /></Button></>}</div></article>)}
+    </div>}
+    <p className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground"><Shield className="size-4 shrink-0" />Private records. Downloads require authorization and are logged. Only admin can manage these files.</p>
+    <Dialog open={Boolean(renaming)} onOpenChange={open => { if (!open && !busyId) setRenaming(null); }}><DialogContent showCloseButton={!busyId}><DialogTitle>Rename document</DialogTitle><DialogDescription>Change the title without replacing the original file.</DialogDescription><form onSubmit={rename} className="space-y-4"><div className="space-y-2"><Label htmlFor="document-rename">Document title</Label><Input id="document-rename" required maxLength={160} value={title} onChange={event => setTitle(event.target.value)} /></div><div className="flex justify-end gap-2"><Button variant="outline" type="button" onClick={() => setRenaming(null)} disabled={Boolean(busyId)}>Cancel</Button><Button type="submit" disabled={Boolean(busyId) || !title.trim()}>{busyId ? 'Saving…' : 'Save title'}</Button></div></form></DialogContent></Dialog>
+    <Dialog open={uploadOpen} onOpenChange={open => { if (!uploading) setUploadOpen(open); }}><DialogContent className="max-h-[90dvh] overflow-y-auto" showCloseButton={!uploading}><DialogTitle>Upload document</DialogTitle><DialogDescription>Add a private supporting record. Maximum file size: 25 MB.</DialogDescription><form onSubmit={submitUpload} className="space-y-4"><div className="space-y-2"><Label htmlFor="document-title">Document title</Label><Input id="document-title" required maxLength={160} value={upload.title} onChange={event => setUpload({ ...upload, title: event.target.value })} /></div><div className="space-y-2"><Label htmlFor="document-type">Document type</Label><select id="document-type" className="h-10 w-full rounded-sm border border-border bg-background px-3 text-sm" value={upload.documentType} onChange={event => setUpload({ ...upload, documentType: event.target.value as DocumentType })}>{DOCUMENT_TYPES.map(type => <option key={type} value={type}>{type.replaceAll('_', ' ')}</option>)}</select></div><div className="space-y-2"><Label htmlFor="document-expiry">Expiry date (optional)</Label><Input id="document-expiry" type="date" value={upload.expiryDate} onChange={event => setUpload({ ...upload, expiryDate: event.target.value })} /></div><div className="space-y-2"><Label htmlFor="document-file">File</Label><Input id="document-file" type="file" required accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp,.gif,.txt" onChange={event => setUpload({ ...upload, file: event.target.files?.[0] || null })} /></div><div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setUploadOpen(false)} disabled={uploading}>Cancel</Button><Button type="submit" disabled={uploading}>{uploading ? 'Uploading…' : 'Upload'}</Button></div></form></DialogContent></Dialog>
+  </section>;
 }

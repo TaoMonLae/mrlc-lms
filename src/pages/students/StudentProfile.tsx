@@ -20,14 +20,13 @@ import { HoloProfileHeader } from '@/src/components/profile/HoloProfileHeader';
 import {
   Tabs,
   TabsContent,
-  TabsList,
-  TabsTrigger,
 } from '@/components/ui/tabs';
 import { apiSend } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../../providers/AuthProvider';
 import { usePermissions } from '@/src/lib/permissions';
 import { studentCouncilRoleLabel } from '../../../shared/studentCouncil';
+import { StudentProfileTabsList } from '../../components/students/StudentProfileTabsList';
 
 export default function StudentProfile() {
   const { id } = useParams<{ id: string }>();
@@ -273,12 +272,13 @@ export default function StudentProfile() {
           targetType="student"
           targetId={s.id}
           enableEffects={false}
+          canEditPhoto={isAdmin}
           contactText={isAdmin ? 'Edit Profile' : 'Back to Students'}
           onContactClick={() => navigate(isAdmin ? `/students/${id}/edit` : '/students')}
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-[300px_minmax(0,1fr)] gap-8">
 
         {/* Left Sidebar Info Card */}
         <div className="space-y-6">
@@ -358,25 +358,9 @@ export default function StudentProfile() {
         </div>
 
         {/* Right Main Content Tabs */}
-        <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
-          <Tabs defaultValue="overview" className="w-full">
-            <div className="border-b border-slate-200 dark:border-surface-raised px-2 overflow-x-auto">
-              <TabsList className="h-14 w-full justify-start bg-transparent">
-                <TabsTrigger value="overview" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold">Overview</TabsTrigger>
-                <TabsTrigger value="attendance" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold">Attendance</TabsTrigger>
-                <TabsTrigger value="exams" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold">Exams</TabsTrigger>
-                {canViewFees && (
-                  <TabsTrigger value="fees" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold">Fees</TabsTrigger>
-                )}
-                <TabsTrigger value="documents" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Documents
-                </TabsTrigger>
-                {canViewCases && (
-                  <TabsTrigger value="cases" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold">Cases</TabsTrigger>
-                )}
-              </TabsList>
-            </div>
+        <div className="min-w-0 bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
+          <Tabs defaultValue="overview" className="min-w-0 w-full gap-0">
+            <StudentProfileTabsList canViewFees={canViewFees} canViewCases={canViewCases} />
             
             {/* Overview Tab Content */}
             <TabsContent value="overview" className="p-6 m-0 border-none space-y-8 focus-visible:outline-none focus-visible:ring-0">
