@@ -19,7 +19,7 @@ test('video create/edit normalize pasted YouTube links and reject malformed IDs'
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
   try {
-    for (const role of ['TEACHER', 'STUDENT'] as const) users.push((await db.user.create({ data: { role, email: `${role}-${randomUUID()}@example.test`, firstName: 'Video', lastName: 'Test' } })).id);
+    for (const role of ['TEACHER', 'STUDENT', 'ADMIN', 'TEACHER'] as const) users.push((await db.user.create({ data: { role, email: `${role}-${randomUUID()}@example.test`, firstName: 'Video', lastName: 'Test' } })).id);
     const input = { title: 'Cave safety test', videoUrl: 'https://www.youtube.com/watch?v=-mzqQ_vNiKg DO NOT ENTER CAVES or LAVA TUBES!', visibility: 'ALL', status: 'PUBLISHED' };
     assert.equal((await request('STUDENT', users[1], '/api/videos', 'POST', input)).status, 403);
     const created = await request('TEACHER', users[0], '/api/videos', 'POST', input);
@@ -27,6 +27,18 @@ test('video create/edit normalize pasted YouTube links and reject malformed IDs'
     assert.equal(created.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     const lesson = await created.json(); videos.push(lesson.id);
     assert.equal(lesson.videoUrl, 'https://www.youtube.com/watch?v=-mzqQ_vNiKg');
+    const adminInput = {
+      title: 'Admin edited teacher lesson', description: 'Updated description', videoUrl: lesson.videoUrl,
+      thumbnailUrl: null, captionsUrl: '', duration: null, classId: null, subjectId: null,
+      visibility: 'ALL', status: 'DRAFT', isRequired: false, dueDate: '',
+    };
+    const adminEdited = await request('ADMIN', users[2], `/api/videos/${lesson.id}`, 'PUT', adminInput);
+    assert.equal(adminEdited.status, 200, await adminEdited.clone().text());
+    const persisted = await (await request('ADMIN', users[2], `/api/videos/${lesson.id}`, 'GET')).json();
+    for (const key of ['title', 'description', 'videoUrl', 'duration', 'classId', 'subjectId', 'visibility', 'status', 'isRequired']) assert.equal(persisted[key], adminInput[key]);
+    assert.equal(persisted.dueDate, null);
+    assert.equal((await request('STUDENT', users[1], `/api/videos/${lesson.id}`, 'PUT', { title: 'Forbidden edit' })).status, 403);
+    assert.equal((await request('TEACHER', users[3], `/api/videos/${lesson.id}`, 'PUT', { title: 'Other teacher edit' })).status, 403);
     const edited = await request('TEACHER', users[0], `/api/videos/${lesson.id}`, 'PUT', { videoUrl: 'https://youtu.be/-mzqQ_vNiKg?t=90 Another pasted title' });
     assert.equal(edited.status, 200); assert.equal((await edited.json()).videoUrl, 'https://www.youtube.com/watch?v=-mzqQ_vNiKg&t=90s');
     assert.equal((await request('TEACHER', users[0], `/api/videos/${lesson.id}`, 'PUT', { videoUrl: 'https://youtube.com/watch?v=invalid' })).status, 400);

@@ -148,9 +148,10 @@ export default function VideoEdit() {
           videoUrl: v.videoUrl,
           thumbnailUrl: v.thumbnailUrl || '',
           captionsUrl: v.captionsUrl || '',
-          duration: v.duration,
-          classId: v.classId,
-          subjectId: v.subjectId,
+          // API records use null for unassigned fields; form controls/schema use strings.
+          duration: v.duration ?? undefined,
+          classId: v.classId ?? '',
+          subjectId: v.subjectId ?? '',
           isRequired: v.isRequired ?? false,
           dueDate: v.dueDate ? String(v.dueDate).slice(0, 10) : '',
           visibility: v.visibility,
@@ -236,7 +237,7 @@ export default function VideoEdit() {
         <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Update the details of this video lesson.</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit, () => toast.error('Please check the highlighted fields before saving.'))} className="space-y-6">
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-6">
 
           {/* Upload Method Selector */}
@@ -389,6 +390,7 @@ export default function VideoEdit() {
                   {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
+              {errors.classId && <p className="text-xs text-red-500 font-medium">{errors.classId.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -400,6 +402,7 @@ export default function VideoEdit() {
                   {subjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
+              {errors.subjectId && <p className="text-xs text-red-500 font-medium">{errors.subjectId.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -445,7 +448,7 @@ export default function VideoEdit() {
             await removeUploaded();
             navigate(`/videos/${id}`);
           }}>Cancel</Button>
-          <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
+          <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting || uploadingVideo}>
             {isSubmitting ? 'Saving...' : <><Save className="mr-2 h-4 w-4" />Save Changes</>}
           </Button>
         </div>
