@@ -1,3 +1,4 @@
+import { motion, useReducedMotion } from 'motion/react';
 import React, { useEffect, useState } from 'react';
 import { 
   FileText, 
@@ -20,7 +21,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router';
 import { apiGet } from '../../lib/api';
 
-interface AvailableExam { id: string; title: string; subject: string; duration: string; questions: number; deadline: string; opensAt?: string | null; type: string; }
+interface AvailableExam { id: string; title: string; subject: string; duration: string; questions: number; deadline: string | null; activeAttemptId?: string | null; attemptsUsed?: number; attemptLimit?: number; opensAt?: string | null; type: string; }
 interface SubmittedExam { id: string; attemptId?: string; title: string; subject: string; submittedAt: string; status: string; score: string | null; }
 interface LockdownSettings {
   lockdownBrowserEnabled?: boolean;
@@ -31,6 +32,8 @@ interface LockdownSettings {
 
 export default function StudentExams() {
   const navigate = useNavigate();
+  const reduceMotion = useReducedMotion();
+  const [loading, setLoading] = useState(true);
   const [availableExams, setAvailableExams] = useState<AvailableExam[]>([]);
   const [submittedExams, setSubmittedExams] = useState<SubmittedExam[]>([]);
   const [lockdownSettings, setLockdownSettings] = useState<LockdownSettings | null>(null);
@@ -39,6 +42,7 @@ export default function StudentExams() {
 
   const loadExams = () => {
     setLoadError(null);
+    setLoading(true);
     return Promise.all([
       apiGet<{ available: AvailableExam[]; submitted: SubmittedExam[] }>('/api/student/exams'),
       apiGet<LockdownSettings>('/api/settings').catch(() => null),
@@ -53,21 +57,18 @@ export default function StudentExams() {
         setLoadError(hasLoadedData
           ? 'We could not refresh your exams. The last confirmed information remains visible.'
           : 'We could not load your exams. Retry when your connection is available.');
-      });
+      }).finally(() => setLoading(false));
   };
 
   useEffect(() => {
     void loadExams();
   }, []);
 
-  const handleStartExam = (exam: any) => {
-    toast.info(`Opening ${exam.title}…`);
-    navigate(`/exams/${exam.id}/take`);
-  };
+  const handleStartExam = (exam: AvailableExam) => navigate(`/exam2/resume?exam=${encodeURIComponent(exam.id)}`);
 
   const handleViewDetails = (exam: any) => {
     if (exam.attemptId) navigate(`/exam2/attempts/${exam.attemptId}/result`);
-    else navigate('/exam2/resume');
+    else navigate(`/exams/${exam.id}/results`);
   };
 
   return (
@@ -80,22 +81,27 @@ export default function StudentExams() {
         <p className="text-sm text-slate-500 mt-1">View available exams and your submission history.</p>
       </div>
 
+      {/* Summary/entrance adapted from the installed React Bits Pro dashboard-11. */}
+      {hasLoadedData && <motion.section aria-label="Exam overview" initial={reduceMotion ? false : { opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }} className="grid grid-cols-3 divide-x divide-border border border-border bg-card">
+        {[['Available', availableExams.length], ['In progress', availableExams.filter(e => e.activeAttemptId).length], ['Submitted', submittedExams.length]].map(([label, value]) => <div key={label} className="min-w-0 p-3 sm:p-5"><p className="text-xs sm:text-sm text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-semibold tabular-nums">{value}</p></div>)}
+      </motion.section>}
+      {loading && <p role="status" className="text-sm text-muted-foreground">Loading exams…</p>}
       {loadError && (
         <div role="alert" className="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
             <p className="text-sm font-medium">{loadError}</p>
           </div>
-          <Button type="button" variant="outline" onClick={() => void loadExams()}>Retry</Button>
+          <Button type="button" variant="outline" disabled={loading} onClick={() => void loadExams()}>Retry</Button>
         </div>
       )}
 
       {hasLoadedData && <Tabs defaultValue="available" className="space-y-6">
-        <TabsList className="bg-slate-100 dark:bg-surface-raised p-1 rounded-xl h-12 w-fit">
-          <TabsTrigger value="available" className="rounded-lg h-10 px-6 font-bold text-xs uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">
+        <TabsList className="bg-slate-100 dark:bg-surface-raised p-1 rounded-xl group-data-horizontal/tabs:h-auto w-full sm:w-fit flex-wrap">
+          <TabsTrigger value="available" className="rounded-lg h-10 px-3 sm:px-6 font-bold text-xs uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">
             Available ({availableExams.length})
           </TabsTrigger>
-          <TabsTrigger value="submitted" className="rounded-lg h-10 px-6 font-bold text-xs uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">
+          <TabsTrigger value="submitted" className="rounded-lg h-10 px-3 sm:px-6 font-bold text-xs uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">
             Submitted ({submittedExams.length})
           </TabsTrigger>
         </TabsList>
@@ -105,12 +111,12 @@ export default function StudentExams() {
             {availableExams.map((exam) => (
               <Card key={exam.id} className="border-slate-200 dark:border-surface-raised shadow-sm hover:shadow-md transition-all overflow-hidden group">
                 <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                     <Badge variant="outline" className="text-[9px] uppercase font-bold tracking-widest border-aubergine-200 bg-aubergine-50 text-aubergine-700 dark:bg-aubergine-900/20 dark:text-aubergine-400 dark:border-aubergine-900/50">
                       {exam.subject}
                     </Badge>
-                    <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 uppercase tracking-tighter">
-                      <Clock className="h-3 w-3" /> {exam.opensAt ? `Opens ${exam.opensAt}` : `Due ${exam.deadline}`}
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Clock className="h-3 w-3" /> {exam.opensAt ? `Opens ${new Date(exam.opensAt).toLocaleString()}` : exam.deadline ? `Due ${new Date(exam.deadline).toLocaleString()}` : 'No deadline'}
                     </span>
                   </div>
                   <CardTitle className="text-lg group-hover:text-aubergine-600 dark:group-hover:text-aubergine-400 transition-colors">{exam.title}</CardTitle>
@@ -133,10 +139,7 @@ export default function StudentExams() {
 
                   <div className="flex items-center gap-3">
                     <Button disabled={Boolean(exam.opensAt)} className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold uppercase tracking-widest text-xs h-10" onClick={() => handleStartExam(exam)}>
-                      <Play className="mr-2 h-3 w-3" /> {exam.opensAt ? 'Not open yet' : 'Start Exam'}
-                    </Button>
-                    <Button variant="outline" size="icon" className="h-10 w-10 shrink-0 border-slate-200 dark:border-surface-raised">
-                      <HelpCircle className="h-4 w-4 text-slate-500" />
+                      <Play className="mr-2 h-3 w-3" /> {exam.opensAt ? 'Not open yet' : exam.activeAttemptId ? 'Resume exam' : (exam.attemptsUsed || 0) > 0 ? 'Retake exam' : 'Review & start'}
                     </Button>
                   </div>
                 </CardContent>
@@ -147,7 +150,7 @@ export default function StudentExams() {
               <div className="col-span-full py-20 text-center bg-white dark:bg-surface-indigo rounded-2xl border border-dashed border-slate-200 dark:border-surface-raised">
                 <CheckCircle2 className="h-12 w-12 text-emerald-200 mx-auto mb-4" />
                 <h3 className="text-lg font-bold">All caught up!</h3>
-                <p className="text-sm text-slate-500 mt-1">No pending exams or assignments found.</p>
+                <p className="text-sm text-slate-500 mt-1">No exams are available to start right now.</p>
               </div>
             )}
           </div>
@@ -168,8 +171,9 @@ export default function StudentExams() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                    {submittedExams.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-sm text-muted-foreground">No submissions yet. Completed attempts will appear here.</td></tr>}
                     {submittedExams.map((exam) => (
-                      <tr key={exam.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
+                      <tr key={exam.attemptId || exam.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
                         <td className="px-6 py-4">
                           <p className="text-sm font-bold text-slate-900 dark:text-white">{exam.title}</p>
                           <p className="text-[10px] text-aubergine-600 font-bold uppercase tracking-tighter mt-0.5">{exam.subject}</p>
@@ -206,7 +210,7 @@ export default function StudentExams() {
       </Tabs>}
 
       {/* Security Warning */}
-      <div className="bg-amber-50 dark:bg-amber-900/10 p-5 rounded-2xl border border-amber-100 dark:border-amber-900/30 flex gap-4">
+      {lockdownSettings && <div className="bg-amber-50 dark:bg-amber-900/10 p-5 rounded-2xl border border-amber-100 dark:border-amber-900/30 flex gap-4">
         <ShieldAlert className="h-6 w-6 text-amber-600 shrink-0" />
         <div>
           <h4 className="text-sm font-bold text-amber-900 dark:text-amber-400 uppercase tracking-widest mb-1">Integrity Policy</h4>
@@ -217,7 +221,7 @@ export default function StudentExams() {
                 `Exams are monitored. Stay on the exam page during the attempt.${lockdownSettings?.lockdownAutoSubmitOnViolation === false ? '' : ` The attempt may auto-submit after ${lockdownSettings?.lockdownMaxWarnings || 3} warning(s).`}`}
           </p>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

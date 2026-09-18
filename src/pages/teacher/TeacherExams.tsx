@@ -27,17 +27,25 @@ interface TeacherExam {
 export default function TeacherExams() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [tab, setTab] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
   const [teacherExams, setTeacherExams] = useState<TeacherExam[]>([]);
 
   useEffect(() => {
-    apiGet<TeacherExam[]>('/api/teacher/exams')
-      .then((r) => setTeacherExams(r ?? []))
-      .catch(() => setTeacherExams([]));
-  }, []);
+    const controller = new AbortController();
+    setLoading(true); setError("");
+    apiGet<TeacherExam[]>('/api/teacher/exams', { signal: controller.signal })
+      .then(r => { if (!controller.signal.aborted) setTeacherExams(r ?? []); })
+      .catch(() => { if (!controller.signal.aborted) setError('Could not load assessments. Please retry.'); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [retry]);
 
   const filteredExams = teacherExams.filter(e =>
-    e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.class.toLowerCase().includes(searchTerm.toLowerCase())
+    (tab === 'all' || (tab === 'drafts' ? e.status === 'DRAFT' : ['ACTIVE', 'PUBLISHED', 'SCHEDULED', 'UPCOMING', 'NEEDS_GRADING'].includes(e.status))) &&
+    `${e.title} ${e.class}`.toLowerCase().includes(searchTerm.trim().toLowerCase())
   );
 
   return (
@@ -56,16 +64,17 @@ export default function TeacherExams() {
         </Button>
       </div>
 
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="bg-slate-100/50 dark:bg-surface-indigo/50 p-1 border border-slate-200 dark:border-surface-raised h-11 mb-6">
-          <TabsTrigger value="all" className="px-6 h-full font-bold text-[10px] uppercase tracking-widest">All Assessments</TabsTrigger>
-          <TabsTrigger value="active" className="px-6 h-full font-bold text-[10px] uppercase tracking-widest text-emerald-600">Active / Grading</TabsTrigger>
-          <TabsTrigger value="drafts" className="px-6 h-full font-bold text-[10px] uppercase tracking-widest">Drafts</TabsTrigger>
+      <Tabs value={tab} onValueChange={setTab} className="w-full">
+        <TabsList className="bg-slate-100/50 dark:bg-surface-indigo/50 p-1 border border-slate-200 dark:border-surface-raised group-data-horizontal/tabs:h-auto w-full sm:w-fit flex-wrap gap-1 mb-6">
+          <TabsTrigger value="all" className="px-3 h-10 font-semibold text-xs">All Assessments</TabsTrigger>
+          <TabsTrigger value="active" className="px-3 h-10 font-semibold text-xs">Active / Grading</TabsTrigger>
+          <TabsTrigger value="drafts" className="px-3 h-10 font-semibold text-xs">Drafts</TabsTrigger>
         </TabsList>
 
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input 
+            aria-label="Filter exams by title or class"
             placeholder="Filter exams by title or class..." 
             className="pl-10 h-11 bg-white dark:bg-canvas border-slate-200 dark:border-surface-raised font-medium"
             value={searchTerm}
@@ -73,8 +82,10 @@ export default function TeacherExams() {
           />
         </div>
 
-        <TabsContent value="all" className="space-y-4">
-          {filteredExams.map((exam) => (
+        <TabsContent value={tab} className="space-y-4">
+          {loading && <p role="status" className="py-12 text-center text-muted-foreground">Loading assessments…</p>}
+          {error && <div role="alert" className="rounded-lg border border-destructive/40 p-5"><p>{error}</p><Button variant="outline" className="mt-3" onClick={() => setRetry(n => n + 1)}>Retry</Button></div>}
+          {!loading && !error && filteredExams.map((exam) => (
             <Card key={exam.id} className="group overflow-hidden border-slate-200 dark:border-surface-raised hover:border-aubergine-300 transition-all duration-200">
               <CardContent className="p-0">
                 <div className="flex flex-col lg:flex-row lg:items-center">
@@ -135,7 +146,7 @@ export default function TeacherExams() {
                   <div className="p-5 flex-1 flex gap-2">
                     {exam.status === 'NEEDS_GRADING' ? (
                         <Button
-                          onClick={() => navigate(`/exam2/${exam.id}/analytics`)}
+                          onClick={() => navigate(`/exam2/grading?examId=${encodeURIComponent(exam.id)}`)}
                           className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-[10px] uppercase tracking-widest h-10 shadow-md"
                         >
                             Grade Now
@@ -161,7 +172,7 @@ export default function TeacherExams() {
                       size="icon"
                       onClick={() => navigate(`/exams/${exam.id}`)}
                       className="h-10 w-10 text-slate-400 hover:text-aubergine-600 transition-colors"
-                      title="Open exam"
+                      aria-label={`Open ${exam.title}`} title="Open exam"
                     >
                         <ChevronRight className="h-5 w-5" />
                     </Button>
@@ -171,7 +182,7 @@ export default function TeacherExams() {
             </Card>
           ))}
           
-          {filteredExams.length === 0 && (
+          {!loading && !error && filteredExams.length === 0 && (
              <div className="py-12 border-2 border-dashed border-slate-200 dark:border-surface-raised rounded-2xl flex flex-col items-center justify-center text-center space-y-4">
                 <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-surface-raised flex items-center justify-center text-slate-400">
                     <AlertCircle className="h-6 w-6" />

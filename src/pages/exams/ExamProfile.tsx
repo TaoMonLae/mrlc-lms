@@ -174,6 +174,9 @@ export default function ExamProfile() {
             <Button variant="outline" render={<Link to={`/exam2/${id}/schedule`} />} nativeButton={false}>
               Schedule
             </Button>
+            <Button variant="outline" render={<Link to={`/exam2/grading?examId=${id}`} />} nativeButton={false}>Grade responses</Button>
+            <Button variant="outline" render={<Link to={`/exam2/${id}/invigilator`} />} nativeButton={false}>Monitor attempts</Button>
+            <Button variant="outline" render={<Link to={`/exam2/${id}/print`} />} nativeButton={false}>Print exam</Button>
             <Button variant="outline" onClick={handleSyncGradebook} disabled={syncing}>
               {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BookOpenCheck className="mr-2 h-4 w-4" />}
               Sync to Gradebook

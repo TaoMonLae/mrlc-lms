@@ -1,0 +1,61 @@
+/* Fieldbook reference lock: app surfaces, navy hierarchy, teal active controls.
+   Compact panel rhythm informed by Refero Linear and Acuity's form builder. */
+.guided-studio {
+  --gs-ink:var(--foreground); --gs-muted:var(--muted-foreground); --gs-muted-2:var(--muted-foreground);
+  --gs-border:var(--border); --gs-border-2:var(--border); --gs-border-3:var(--input);
+  --gs-canvas:var(--background); --gs-panel:var(--muted); --gs-surface:var(--card); --gs-preview:var(--muted);
+  --gs-action:#14736d; --gs-purple-text:#14736d;
+  --gs-tint-50:#eef8f6; --gs-tint-100:#dcefeb; --gs-tint-7:#f4faf8; --gs-tint-bar:var(--muted);
+  --gs-green-text:#167046; --gs-green-bg:#eef9f2; --gs-amber-text:#845400; --gs-amber-bg:#fff5de; --gs-blue-bg:#eef4ff;
+  color:var(--gs-ink); padding:0!important; min-height:0!important; color-scheme:light;
+}
+.dark .guided-studio { --gs-purple-text:#82c9c1; --gs-tint-50:#143630; --gs-tint-100:#22463f; --gs-tint-7:#17332e; --gs-green-text:#91d5ac; --gs-green-bg:#17392a; --gs-amber-text:#f2ca7b; --gs-amber-bg:#382c17; --gs-blue-bg:#18334b; color-scheme:dark; }
+.guided-studio .gs-shell { border-radius:8px!important; box-shadow:none!important; }
+.guided-studio input,.guided-studio textarea,.guided-studio select { color:var(--gs-ink); background-color:var(--gs-surface); min-width:0; max-width:100%; }
+.guided-studio button { min-height:36px; }
+.guided-studio button:disabled { opacity:.45!important; cursor:not-allowed!important; }
+.guided-studio :is(button,input,textarea,select,[tabindex]):focus-visible { outline:2px solid var(--gs-purple-text)!important; outline-offset:3px; }
+.gs-breadcrumb { display:flex; align-items:center; gap:12px; padding:10px 20px; border-bottom:1px solid var(--gs-border); font-size:12px; color:var(--gs-muted); flex-wrap:wrap; }
+.gs-breadcrumb button { display:flex; gap:6px; align-items:center; color:var(--gs-ink); }
+.gs-save-state { margin-left:auto; }
+.gs-topbar { flex-wrap:wrap; }
+.gs-topbar > div:nth-child(2) { min-width:220px!important; }
+.gs-readiness { flex-wrap:wrap; font-variant-numeric:tabular-nums; }
+.gs-rail { min-width:0; max-height:calc(100dvh - 260px); position:sticky; top:0; }
+.gs-editor { min-width:0; padding:24px!important; }
+.gs-live-preview { min-width:0; }
+.gs-question-actions { display:flex; gap:8px; align-items:center; margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid var(--gs-border); flex-wrap:wrap; font-size:12px; }
+.gs-question-actions > span { margin-right:auto; color:var(--gs-muted); }
+.gs-question-actions button { display:flex; gap:6px; align-items:center; padding:6px; border:1px solid var(--gs-border); border-radius:5px; }
+.gs-notice { background:var(--gs-amber-bg); color:var(--gs-amber-text); padding:12px; margin-bottom:16px; font-size:13px; }
+.gs-empty { padding:28px 0; }
+.gs-empty h2 { font-size:26px; font-weight:700; letter-spacing:-.03em; margin:12px 0 8px; }
+.gs-empty p { color:var(--gs-muted); font-size:14px; line-height:1.6; max-width:460px; }
+.gs-types { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:24px; }
+.gs-types button { display:flex; gap:10px; text-align:left; padding:15px; border:1px solid var(--gs-border); border-radius:6px; background:var(--gs-surface); align-items:center; }
+.gs-types button:hover { border-color:var(--gs-purple-text); background:var(--gs-tint-50); }
+.gs-types strong { display:block; font-size:13px; }
+.gs-types small { display:block; color:var(--gs-muted); font-size:11px; margin-top:3px; }
+@media(max-width:1250px) { .gs-workspace { grid-template-columns:200px minmax(0,1fr)!important; } .gs-live-preview { display:none; } }
+@media(max-width:720px) {
+ .gs-workspace { display:block!important; } .gs-rail { position:static; max-height:none; border-right:0!important; border-bottom:1px solid var(--gs-border); }
+ .gs-rail > div:first-child > div { display:grid!important; grid-template-columns:1fr 1fr; }
+ .gs-rail > div:last-child > div:nth-child(2) { max-height:140px; flex:none!important; }
+ .gs-editor { padding:18px 14px!important; } .gs-topbar { padding:14px!important; gap:10px!important; }
+ .gs-topbar > div:nth-child(2) { min-width:180px!important; } .gs-topbar > button { flex:1; white-space:nowrap; }
+ .gs-detail-grid { grid-template-columns:1fr!important; } .gs-readiness { padding:12px 14px!important; gap:8px!important; }
+ .gs-readiness > div { min-width:60px; } .gs-readiness > span:last-child { width:100%; margin-left:0!important; }
+ .gs-types { gap:8px; } .gs-types button { padding:12px 8px; } .gs-empty { padding:12px 0; }
+ .gs-breadcrumb { padding:8px 14px; } .gs-save-state { width:100%; margin:0; }
+}
+@media(prefers-reduced-motion:reduce) { .guided-studio * { transition:none!important; animation:none!important; } }
+/* Measure workspace width rather than browser width (the app has its own rail). */
+.gs-shell { container-type:inline-size; }
+@container (max-width:1100px) { .gs-workspace { grid-template-columns:200px minmax(0,1fr)!important; } .gs-live-preview { display:none; } }
+@container (max-width:600px) { .gs-workspace { display:block!important; } }
+
+.gs-tools { display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--gs-purple-text); }
+.gs-tools button { text-align:left; }
+
+.gs-editor-save { display:flex; align-items:center; justify-content:space-between; gap:12px; border-top:1px solid var(--gs-border); margin-top:28px; padding-top:18px; font-size:12px; color:var(--gs-muted); }
+.gs-editor-save button { padding:8px 12px; background:var(--gs-action); color:white; border-radius:6px; white-space:nowrap; }

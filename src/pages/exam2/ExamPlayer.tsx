@@ -56,6 +56,13 @@ export default function ExamPlayer() {
   const [canPause, setCanPause] = useState(false);
   const [savedAt, setSavedAt] = useState<string>('');
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [loadError, setLoadError] = useState('');
+  const saveInFlight = useRef<Promise<boolean> | null>(null);
+  const submitPending = useRef(false);
+  const countdownDeadline = useRef<number | null>(null);
+  const [timerTick, setTimerTick] = useState(0);
+  const lastAutoSubmit = useRef(0);
   const [submitting, setSubmitting] = useState(false);
   const [examTitle, setExamTitle] = useState('');
   const [examSettings, setExamSettings] = useState<ExamSettings>({});
@@ -74,18 +81,26 @@ export default function ExamPlayer() {
   const lastIntegrityEvent = useRef<Record<string, number>>({});
 
   const post = useCallback(async (path: string, body?: any) => {
+    try {
     const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: body ? JSON.stringify(body) : undefined });
     const data = await res.json().catch(() => ({}));
     return { ok: res.ok, status: res.status, data };
+    } catch { return { ok: false, status: 0, data: { error: 'Connection lost. Your answers remain on this page. Retry when connected.' } }; }
   }, []);
 
   // ── load / recover state ───────────────────────────────────────────────────
   const loadState = useCallback(async () => {
+    setLoadError(''); setLoading(true);
+    try {
     const storedToken = attemptId ? sessionStorage.getItem(`exam_attempt_session_${attemptId}`) || '' : '';
     if (!storedToken) { setBlocked('This exam session has expired. Resume the attempt from My Exams.'); setLoading(false); return; }
     const res = await fetch(`/api/attempts/${attemptId}/state`, { headers: { ...authHeaders(), 'X-Exam-Session': storedToken } });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) { setBlocked(data.message || data.error || 'Could not load attempt'); setLoading(false); return; }
+    if (!res.ok) {
+      if (res.status >= 500) setLoadError(data.message || data.error || 'Could not load your exam. Please retry.');
+      else setBlocked(data.message || data.error || 'Could not load attempt');
+      setLoading(false); return;
+    }
     if (data.autoSubmitted) { toast.info('Time expired — your attempt was submitted.'); navigate(`/exam2/attempts/${attemptId}/result`); return; }
     if (data.attempt?.state !== 'IN_PROGRESS') {
       sessionStorage.removeItem(`exam_attempt_session_${attemptId}`);
@@ -98,26 +113,34 @@ export default function ExamPlayer() {
     setSessionToken(data.attempt?.sessionToken || '');
     setCanPause(!!data.attempt?.canPause);
     const seeded = data.attempt?.remainingSeconds ?? 0;
-    if (seeded > 0) timerArmed.current = true;
+    timerArmed.current = seeded > 0;
+    countdownDeadline.current = seeded > 0 ? Date.now() + seeded * 1000 : null;
     setRemaining(seeded);
     setSavedAt(data.attempt?.lastSavedAt || '');
     const map: Record<string, Answer> = {};
     for (const a of data.answers || []) map[a.questionId] = { answerText: a.answerText ?? '', selectedOptions: a.selectedOptions ?? [], flaggedForReview: a.flaggedForReview };
     setAnswers(map);
     setLoading(false);
+    } catch { setLoadError('Could not load your exam. Check your connection and retry.'); setLoading(false); }
   }, [attemptId, navigate]);
 
   useEffect(() => { loadState(); }, [loadState]);
 
   // ── display countdown (re-synced by server on each save) ────────────────────
   useEffect(() => {
-    if (loading || blocked) return;
-    const t = setInterval(() => setRemaining((r) => Math.max(0, r - 1)), 1000);
+    if (loading || blocked || loadError) return;
+    const t = setInterval(() => {
+      if (countdownDeadline.current !== null) setRemaining(Math.max(0, Math.ceil((countdownDeadline.current - Date.now()) / 1000)));
+      setTimerTick(n => n + 1);
+    }, 1000);
     return () => clearInterval(t);
-  }, [loading, blocked]);
+  }, [loading, blocked, loadError]);
 
   const save = useCallback(async (reason: string) => {
-    if (!attemptId) return;
+    if (!attemptId) return false;
+    // Serialize saves so a slow older answer cannot overwrite a newer one.
+    while (saveInFlight.current) { if (!(await saveInFlight.current)) return false; }
+    const performSave = async (): Promise<boolean> => {
     const toSave = Array.from(dirty.current);
     const savedVersions = Object.fromEntries(toSave.map((qid) => [qid, answerVersions.current[qid] || 0]));
     const payload = toSave.map((qid) => ({
@@ -126,20 +149,25 @@ export default function ExamPlayer() {
     setSaving(true);
     const { ok, status, data } = await post(`/api/attempts/${attemptId}/save`, { sessionToken, reason, answers: payload });
     setSaving(false);
-    if (ok) { toSave.forEach((qid) => { if ((answerVersions.current[qid] || 0) === savedVersions[qid]) dirty.current.delete(qid); }); setSavedAt(data.lastSavedAt || new Date().toISOString()); if (typeof data.remainingSeconds === 'number') { if (data.remainingSeconds > 0) timerArmed.current = true; setRemaining(data.remainingSeconds); } return true; }
+    if (ok) { setSaveError(''); toSave.forEach((qid) => { if ((answerVersions.current[qid] || 0) === savedVersions[qid]) dirty.current.delete(qid); }); setSavedAt(data.lastSavedAt || new Date().toISOString()); if (typeof data.remainingSeconds === 'number') { if (data.remainingSeconds > 0) timerArmed.current = true; countdownDeadline.current = timerArmed.current ? Date.now() + data.remainingSeconds * 1000 : null; setRemaining(data.remainingSeconds); } return true; }
     if (status === 409 && data.error === 'SESSION_CONFLICT') { setBlocked('This attempt was opened in another window or device. This session is now read-only.'); return false; }
     if (status === 409 && data.error === 'ATTEMPT_PAUSED') { setBlocked('This attempt has been paused. Resume it from My Exams before continuing.'); return false; }
     if (status === 409 && (data.error === 'TIME_EXPIRED' || data.autoSubmitted)) { toast.info('Time expired — submitted.'); navigate(`/exam2/attempts/${attemptId}/result`); return false; }
+    setSaveError(data.error || 'Your answers could not be saved. Please retry.');
     if (reason !== 'AUTOSAVE') toast.error(data.error || 'Your answers could not be saved. Check your connection and try again.');
     return false;
+    };
+    const pending = performSave();
+    saveInFlight.current = pending;
+    try { return await pending; } finally { if (saveInFlight.current === pending) saveInFlight.current = null; }
   }, [attemptId, sessionToken, post, navigate]);
 
   // autosave loop (every 8s)
   useEffect(() => {
-    if (loading || blocked) return;
-    const t = setInterval(() => { if (dirty.current.size) save('AUTOSAVE'); }, 8000);
+    if (loading || blocked || loadError) return;
+    const t = setInterval(() => { if (dirty.current.size && !saveInFlight.current && !submitPending.current && (!countdownDeadline.current || Date.now() < countdownDeadline.current)) void save('AUTOSAVE'); }, 8000);
     return () => clearInterval(t);
-  }, [loading, blocked, save]);
+  }, [loading, blocked, loadError, save]);
 
   // save on unload
   useEffect(() => {
@@ -153,7 +181,7 @@ export default function ExamPlayer() {
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ sessionToken, reason: 'AUTOSAVE', answers: Object.keys(answersRef.current).map((qid) => ({ questionId: qid, ...answersRef.current[qid] })) }),
         keepalive: true,
-      });
+      }).catch(() => { /* The page may already be closing. */ });
     };
     window.addEventListener('beforeunload', h);
     return () => window.removeEventListener('beforeunload', h);
@@ -211,63 +239,51 @@ export default function ExamPlayer() {
   };
 
   const handleSubmit = async (auto = false) => {
-    if (submitting) return;
+    if (submitPending.current) return;
     if (!auto) {
       const unanswered = questions.filter((question) => !answerIsComplete(question, answersRef.current[question.id])).length;
       const warning = unanswered ? ` ${unanswered} question${unanswered === 1 ? ' is' : 's are'} unanswered.` : '';
       if (!confirm(`Submit your exam?${warning} You will not be able to change your answers.`)) return;
     }
+    submitPending.current = true;
     setSubmitting(true);
     try {
-      if (!(await save('SUBMIT'))) return;
+      // Submit carries the final answer snapshot atomically. A preceding save or
+      // state GET can finalize an expired attempt before these answers arrive.
+      if (saveInFlight.current) await saveInFlight.current;
       const finalAnswers = Object.entries(answersRef.current).map(([questionId, answer]) => ({ questionId, ...answer }));
-      const { ok, data } = await post(`/api/attempts/${attemptId}/submit`, { sessionToken, answers: finalAnswers });
-      if (ok) {
+      const { ok, data } = await post(`/api/attempts/${attemptId}/submit`, { sessionToken, answers: finalAnswers, autoSubmit: auto });
+      if (ok && data.ok === false && typeof data.remainingSeconds === 'number') {
+        setSaveError('');
+        timerArmed.current = data.timed !== false;
+        const reconciled = timerArmed.current ? Math.max(1, data.remainingSeconds) : 0;
+        countdownDeadline.current = timerArmed.current ? Date.now() + reconciled * 1000 : null;
+        setRemaining(reconciled);
+      } else if (ok || ['SUBMITTED', 'AUTO_SUBMITTED', 'PENDING_GRADING', 'FINALIZED', 'RELEASED'].includes(data.state)) {
         sessionStorage.removeItem(`exam_attempt_session_${attemptId}`);
         toast.success(data.autoSubmitted ? 'Time expired — your exam was submitted.' : 'Exam submitted.');
         navigate(`/exam2/attempts/${attemptId}/result`);
-      } else toast.error(data.error || 'Could not submit');
+      } else {
+        if (data.error === 'SESSION_CONFLICT' || data.error === 'ATTEMPT_PAUSED') setBlocked(data.message || data.error);
+        setSaveError(data.error || 'Could not submit. Please retry.');
+        if (!auto) toast.error(data.error || 'Could not submit');
+      }
     } finally {
+      submitPending.current = false;
       setSubmitting(false);
     }
   };
 
   useEffect(() => {
-    // Auto-submit only after a local countdown hit and server-state recheck
-    // confirms the attempt is still active.
-    if (loading || blocked || submitting) return;
-    if (remaining !== 0 || !timerArmed.current) return;
-    const verifyStateBeforeSubmit = async () => {
-      const storedToken = attemptId ? sessionStorage.getItem(`exam_attempt_session_${attemptId}`) || '' : '';
-      if (!storedToken) { setBlocked('This exam session has expired. Resume the attempt from My Exams.'); return; }
-      const res = await fetch(`/api/attempts/${attemptId}/state`, { headers: { ...authHeaders(), 'X-Exam-Session': storedToken } });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        if (data.error === 'SESSION_CONFLICT') { setBlocked('This attempt was opened in another window or device. This session is now read-only.'); return; }
-        if (data.error === 'ATTEMPT_PAUSED') { setBlocked('This attempt has been paused. Resume it from My Exams before continuing.'); return; }
-        if (data.error === 'TIME_EXPIRED' || data.autoSubmitted) { toast.info('Time expired — submitted.'); navigate(`/exam2/attempts/${attemptId}/result`); return; }
-        setBlocked(data.message || data.error || 'Could not verify exam state.');
-        return;
-      }
-      if (data.autoSubmitted) { toast.info('Time expired — your attempt was submitted.'); navigate(`/exam2/attempts/${attemptId}/result`); return; }
-      if (data.attempt?.state !== 'IN_PROGRESS') {
-        sessionStorage.removeItem(`exam_attempt_session_${attemptId}`);
-        navigate(`/exam2/attempts/${attemptId}/result`, { replace: true });
-        return;
-      }
-      if (typeof data.attempt?.remainingSeconds === 'number' && data.attempt.remainingSeconds > 0) {
-        timerArmed.current = true;
-        setRemaining(data.attempt.remainingSeconds);
-        return;
-      }
-      await handleSubmit(true);
-    };
-    void verifyStateBeforeSubmit();
-    // handleSubmit intentionally uses the latest render's answer snapshot.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [remaining, loading, blocked, attemptId, submitting, navigate]);
+    if (loading || loadError || blocked || submitting || remaining !== 0 || !timerArmed.current) return;
+    // Retry a failed expiry submission without a tight request loop.
+    if (Date.now() - lastAutoSubmit.current < 8000) return;
+    lastAutoSubmit.current = Date.now();
+    void handleSubmit(true);
+  }, [remaining, loading, loadError, blocked, submitting, timerTick]);
 
   if (loading) return <div className="flex items-center justify-center py-32 text-slate-500"><Loader2 className="h-6 w-6 animate-spin mr-2" /> Loading exam…</div>;
+  if (loadError) return <div role="alert" className="max-w-xl mx-auto space-y-4 border border-border bg-card p-6"><p>{loadError}</p><Button onClick={() => void loadState()}>Retry</Button></div>;
   if (blocked) return (
     <div className="max-w-xl mx-auto mt-20 p-8 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-900/10 text-center space-y-3">
       <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto" />
@@ -281,7 +297,7 @@ export default function ExamPlayer() {
   const q = questions[idx];
   const mm = String(Math.floor(remaining / 60)).padStart(2, '0');
   const ss = String(remaining % 60).padStart(2, '0');
-  const low = remaining <= 60;
+  const low = timerArmed.current && remaining <= 60;
 
   const selectedChoices = (questionId: string) => {
     const selected = answers[questionId]?.selectedOptions;
@@ -430,13 +446,14 @@ export default function ExamPlayer() {
       <div className="sticky top-0 z-10 mb-6 flex min-w-0 items-center justify-between gap-3 border-b border-slate-200 bg-white/90 py-3 backdrop-blur dark:border-surface-raised dark:bg-canvas/90">
         <div className="min-w-0">
           <h1 className="truncate font-bold text-slate-900 dark:text-white">{examTitle}</h1>
-          <p className="text-[11px] text-slate-400 font-medium">{saving ? 'Saving…' : savedAt ? `Saved ${new Date(savedAt).toLocaleTimeString()}` : 'Not saved yet'}</p>
+          <p className="text-[11px] text-slate-400 font-medium">{saveError ? 'Changes not saved' : saving ? 'Saving…' : dirty.current.size ? 'Unsaved changes' : savedAt ? `Saved ${new Date(savedAt).toLocaleTimeString()}` : 'Not saved yet'}</p>
         </div>
-        <div className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono font-bold ${low ? 'bg-red-500 text-white animate-pulse' : 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'}`}>
-          <Clock className="h-4 w-4" /> {mm}:{ss}
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono font-bold ${low ? 'bg-red-500 text-white motion-safe:animate-pulse' : 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'}`}>
+          <Clock className="h-4 w-4" /> {timerArmed.current ? `${mm}:${ss}` : 'Untimed'}
         </div>
       </div>
 
+      {saveError && <div role="alert" className="mb-4 rounded-lg border border-destructive/40 bg-card p-4 text-sm"><p>{saveError}</p><p className="mt-1 text-muted-foreground">Keep this page open so you can retry without losing your answers.</p><Button variant="outline" className="mt-3" disabled={saving || submitting} onClick={() => timerArmed.current && remaining === 0 ? void handleSubmit(true) : void save('AUTOSAVE')}>Retry</Button></div>}
       {examSettings.lockdownBrowser && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
           <div><span className="font-bold">Integrity monitoring active.</span> Focus, fullscreen, clipboard, print, and restricted shortcut events may be recorded. {securityWarnings > 0 && <span className="ml-1 font-bold">Warnings: {securityWarnings}</span>}</div>
@@ -464,7 +481,7 @@ export default function ExamPlayer() {
             </div>
             <p className="text-base font-medium text-slate-900 dark:text-white whitespace-pre-wrap"><MathText>{q?.text || ''}</MathText></p>
             {q?.imageUrl && <img src={q.imageUrl} alt="Question media" className="max-h-72 rounded-lg border border-slate-200 dark:border-surface-raised" />}
-            {renderAnswerInput()}
+            <fieldset disabled={submitting || (timerArmed.current && remaining === 0)}>{renderAnswerInput()}</fieldset>
           </div>
         </div>
       ) : (
@@ -477,14 +494,14 @@ export default function ExamPlayer() {
           </div>
           <p className="text-base font-medium text-slate-900 dark:text-white whitespace-pre-wrap"><MathText>{q?.text || ''}</MathText></p>
           {q?.imageUrl && <img src={q.imageUrl} alt="Question illustration" className="max-h-80 max-w-full rounded-lg border border-slate-200 object-contain dark:border-surface-raised" />}
-          {renderAnswerInput()}
+          <fieldset disabled={submitting || (timerArmed.current && remaining === 0)}>{renderAnswerInput()}</fieldset>
         </div>
       )}
 
       {/* question navigator */}
       <div className="mt-4 flex flex-wrap items-center gap-1.5" aria-label="Question navigation">
         {questions.map((qq, i) => (
-          <button key={qq.id} type="button" onClick={() => goTo(i)} aria-label={`Question ${i + 1}${answerIsComplete(qq, answers[qq.id]) ? ', answered' : ', unanswered'}${answers[qq.id]?.flaggedForReview ? ', flagged' : ''}`} aria-current={i === idx ? 'step' : undefined}
+          <button key={qq.id} type="button" disabled={saving || submitting} onClick={() => goTo(i)} aria-label={`Question ${i + 1}${answerIsComplete(qq, answers[qq.id]) ? ', answered' : ', unanswered'}${answers[qq.id]?.flaggedForReview ? ', flagged' : ''}`} aria-current={i === idx ? 'step' : undefined}
             className={`h-8 w-8 rounded text-xs font-bold ${i === idx ? 'bg-aubergine-600 text-white' : answers[qq.id]?.flaggedForReview ? 'bg-amber-100 text-amber-700 border border-amber-300' : answerIsComplete(qq, answers[qq.id]) ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 dark:bg-surface-raised text-slate-500'}`}>
             {i + 1}
           </button>
@@ -501,7 +518,7 @@ export default function ExamPlayer() {
           <div className="flex min-w-0 gap-1.5 sm:gap-2">
             <Button variant="outline" size="sm" disabled={saving || submitting} onClick={() => save('AUTOSAVE')} aria-label="Save answers"><Save className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Save</span></Button>
             {canPause && <Button variant="outline" size="sm" disabled={saving || submitting} onClick={handlePause} aria-label="Pause exam"><Pause className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Pause</span></Button>}
-            <Button size="sm" disabled={saving || submitting} className="bg-primary text-primary-foreground" onClick={() => handleSubmit(false)}><Send className="h-4 w-4 sm:mr-1" /><span className="hidden min-[380px]:inline">{submitting ? 'Submitting…' : 'Submit'}</span></Button>
+            <Button size="sm" disabled={saving || submitting} className="bg-primary text-primary-foreground" aria-label="Submit exam" onClick={() => handleSubmit(false)}><Send className="h-4 w-4 sm:mr-1" /><span className="hidden min-[380px]:inline">{submitting ? 'Submitting…' : 'Submit'}</span></Button>
           </div>
         </div>
       </div>

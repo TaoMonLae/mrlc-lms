@@ -14,6 +14,7 @@ export function AppLayout() {
   const location = useLocation();
   const { user } = useAuth();
   const reduceMotion = useReducedMotion();
+  const takingExam = /^\/exam2\/attempts\/[^/]+\/play\/?$/.test(location.pathname);
 
   // Force a password change before any app page is reachable.
   if (user?.mustChangePassword) {
@@ -47,10 +48,10 @@ export function AppLayout() {
             </motion.div>
           </main>
         </SidebarInset>
-        <FloatingPanelProvider>
+        {!takingExam && !/^\/exams\/[^/]+\/(studio|edit)\/?$/.test(location.pathname) && <FloatingPanelProvider>
           <ChatWidget />
           <AIAssistantWidget />
-        </FloatingPanelProvider>
+        </FloatingPanelProvider>}
       </div>
     </SidebarProvider>
     </SocialProvider>

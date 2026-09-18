@@ -3,18 +3,21 @@
  *
  * A three-pane builder (setup rail · focus editor · live student preview) that
  * lets a teacher build, schedule and configure grading for an exam while
- * previewing exactly what students see. Wired to the existing `/api/exams`
+ * trying student answer controls without creating an attempt. Wired to the existing `/api/exams`
  * endpoints (load: GET /api/exams/:id, save: PUT /api/exams/:id) and the AI
  * assistant (POST /api/ai/chat) for "Generate similar".
  *
- * Design reference: "Exam Builder — Guided Studio" handoff.
+ * References and verification: docs/exams/AUDIT-DESIGN.md.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useId, Children, cloneElement, isValidElement } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import {
-  Check, ChevronDown, GripVertical, Loader2, Plus, Sparkles, Trash2, X,
-  FileText, ListChecks, CalendarClock, Award, Smartphone, Monitor, Play,
+  ArrowLeft, ArrowUp, ArrowDown, Copy, Check, ChevronDown, GripVertical, Loader2, Plus, Sparkles, Trash2, X,
+  FileText, ListChecks, CalendarClock, Award, Play,
 } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import './guided-studio.css';
 import { toast } from 'sonner';
 import { apiGet, apiSend } from '../../lib/api';
 import { Switch } from '@/components/ui/switch';
@@ -27,24 +30,7 @@ import QuestionImageField from '../../components/QuestionImageField';
 /* Types & config                                                      */
 /* ------------------------------------------------------------------ */
 
-type UIType = 'MCQ' | 'TF' | 'SHORT' | 'ESSAY' | 'DRAG' | 'DROPDOWN' | 'HOTSPOT' | 'EXTENDED';
-type StepKey = 'details' | 'questions' | 'schedule' | 'grading';
-
-interface Opt { t: string; c: boolean }
-interface Question {
-  id: string;
-  uiType: UIType;
-  /** original backend enum when it can't be reconstructed (e.g. GED_*) */
-  origType?: string;
-  text: string;
-  points: number;
-  options: Opt[];
-  /** model answer / rubric note for manually-graded types */
-  sample?: string;
-  explanation?: string;
-  passageText?: string;
-  imageUrl?: string | null;
-}
+import { fromBackend, toBackend, questionIssue, type Question, type UIType, type StepKey, type Opt } from './studioModel';
 
 type Audience = 'GED' | 'K12_ELEMENTARY' | 'K12_MIDDLE' | 'K12_HIGH';
 type QuestionTheme = 'classic' | 'ged' | 'colorful' | 'focus';
@@ -63,27 +49,27 @@ interface Accom {
 }
 
 /** release-mode mapping between the UI and the ExamResultPolicy model */
-const RELEASE_TO_MODE: Record<'immediately' | 'approve' | 'closed', string> = {
-  immediately: 'IMMEDIATE', approve: 'AFTER_GRADING', closed: 'SCHEDULED',
+const RELEASE_TO_MODE: Record<'immediately' | 'approve' | 'closed' | 'hidden', string> = {
+  immediately: 'IMMEDIATE', approve: 'AFTER_GRADING', closed: 'SCHEDULED', hidden: 'HIDDEN',
 };
-function modeToRelease(mode?: string): 'immediately' | 'approve' | 'closed' {
+function modeToRelease(mode?: string): 'immediately' | 'approve' | 'closed' | 'hidden' {
   if (mode === 'IMMEDIATE') return 'immediately';
   if (mode === 'AFTER_GRADING') return 'approve';
-  return 'closed'; // SCHEDULED | HIDDEN
+  return mode === 'HIDDEN' ? 'hidden' : 'closed';
 }
 const UNLIMITED_ATTEMPTS = 9999;
 
 interface TypeDef { key: UIType; label: string; color: string; ged?: boolean; objective: boolean }
 
 const TYPES: TypeDef[] = [
-  { key: 'MCQ', label: 'MCQ', color: '#7a3dff', objective: true },
+  { key: 'MCQ', label: 'Multiple choice', color: '#168c83', objective: true },
   { key: 'TF', label: 'True/False', color: '#3b89ff', objective: true },
-  { key: 'SHORT', label: 'Short', color: '#ffae13', objective: false },
+  { key: 'SHORT', label: 'Short answer', color: '#4e91bd', objective: false },
   { key: 'ESSAY', label: 'Essay', color: '#ed52cb', objective: false },
-  { key: 'DRAG', label: 'Drag', color: '#00d722', ged: true, objective: true },
+  { key: 'DRAG', label: 'Fill in the blanks', color: '#168c83', ged: true, objective: true },
   { key: 'DROPDOWN', label: 'Drop-down', color: '#146ef5', ged: true, objective: true },
-  { key: 'HOTSPOT', label: 'Hot spot', color: '#ff6b00', ged: true, objective: true },
-  { key: 'EXTENDED', label: 'Extended', color: '#8f5cff', ged: true, objective: false },
+  { key: 'HOTSPOT', label: 'Multi-select', color: '#ff6b00', ged: true, objective: true },
+  { key: 'EXTENDED', label: 'Extended response', color: '#4e91bd', ged: true, objective: false },
 ];
 const typeDef = (t: UIType) => TYPES.find((x) => x.key === t)!;
 const isObjective = (t: UIType) => typeDef(t).objective;
@@ -93,12 +79,12 @@ const isObjective = (t: UIType) => typeDef(t).objective;
 const singleCorrect = (t: UIType) => t === 'MCQ' || t === 'TF' || t === 'DROPDOWN';
 
 const C = {
-  purple: '#7a3dff', purpleText: 'var(--gs-purple-text)', purpleDeep: '#4f1cb8',
+  purple: '#14736d', purpleText: 'var(--gs-purple-text)', purpleDeep: '#155c58',
   tint50: 'var(--gs-tint-50)', tint100: 'var(--gs-tint-100)', tint7: 'var(--gs-tint-7)', tintBar: 'var(--gs-tint-bar)',
   ink: 'var(--gs-ink)', muted: 'var(--gs-muted)', muted2: 'var(--gs-muted-2)',
   border: 'var(--gs-border)', border2: 'var(--gs-border-2)', border3: 'var(--gs-border-3)',
   canvas: 'var(--gs-canvas)', panel: 'var(--gs-panel)', surface: 'var(--gs-surface)', preview: 'var(--gs-preview)', action: 'var(--gs-action)',
-  green: '#00b81d', greenText: 'var(--gs-green-text)', greenBg: 'var(--gs-green-bg)',
+  green: '#168c83', greenText: 'var(--gs-green-text)', greenBg: 'var(--gs-green-bg)',
   amber: '#c88a00', amberText: 'var(--gs-amber-text)', amberBg: 'var(--gs-amber-bg)',
   blue: '#146ef5', blueBg: 'var(--gs-blue-bg)',
 };
@@ -107,121 +93,13 @@ const C = {
 /* Storage mapping — design UI types <-> backend QuestionType enum     */
 /* ------------------------------------------------------------------ */
 
-/** Reconstruct an editor question from a loaded backend question. */
-function fromBackend(q: any, index: number): Question {
-  const id = q.id || `q_${Date.now()}_${index}`;
-  const base: Question = { id, uiType: 'MCQ', text: q.text || '', points: Number(q.points) || 5, options: [], sample: '', explanation: q.explanation || '', passageText: q.passageText || '', imageUrl: q.imageUrl || null };
-  const opts = q.options;
-  const bt = q.type as string;
-
-  const optsToArr = (arr: string[], correct?: string) =>
-    arr.map((t, i) => ({ t, c: String(correct ?? '') === String(i) }));
-
-  if (bt === 'TRUE_FALSE') {
-    base.uiType = 'TF';
-    base.options = [{ t: 'True', c: q.correctAnswer === '0' }, { t: 'False', c: q.correctAnswer === '1' }];
-  } else if (bt === 'SHORT_ANSWER') {
-    base.uiType = 'SHORT'; base.sample = q.correctAnswer || '';
-  } else if (bt === 'ESSAY') {
-    base.uiType = 'ESSAY'; base.sample = q.correctAnswer || '';
-  } else if (bt === 'WRITTEN') {
-    base.uiType = 'EXTENDED'; base.sample = q.correctAnswer || '';
-  } else if (bt === 'DROPDOWN') {
-    base.uiType = 'DROPDOWN';
-    base.options = optsToArr(Array.isArray(opts) ? opts : [], q.correctAnswer);
-  } else if (bt === 'HOTSPOT') {
-    // Multi-select: reconstruct correct regions from correctAnswers (texts),
-    // falling back to a single correctAnswer index for older data.
-    base.uiType = 'HOTSPOT';
-    const arr: string[] = Array.isArray(opts) ? opts : [];
-    const correctTexts: string[] = Array.isArray(q.correctAnswers) ? q.correctAnswers.map((s: any) => String(s)) : [];
-    base.options = correctTexts.length
-      ? arr.map((t) => ({ t, c: correctTexts.includes(t) }))
-      : optsToArr(arr, q.correctAnswer);
-  } else if (bt === 'EXTENDED') {
-    base.uiType = 'EXTENDED'; base.sample = q.correctAnswer || '';
-  } else if (bt === 'DRAG_DROP') {
-    base.uiType = 'DRAG';
-    // options = { text, blanks:[{id,answer}], distractors }
-    const answers: string[] = Array.isArray(opts?.blanks) ? opts.blanks.map((b: any) => b.answer) : [];
-    const distractors: string[] = Array.isArray(opts?.distractors) ? opts.distractors : [];
-    base.options = [
-      ...answers.map((t) => ({ t, c: true })),
-      ...distractors.map((t) => ({ t, c: false })),
-    ];
-    if (typeof opts?.text === 'string' && opts.text) {
-      // convert "{{id}}" tokens back to "___"
-      base.text = opts.text.replace(/\{\{[^}]+\}\}/g, '___');
-    }
-  } else if (bt === 'MCQ' || bt?.startsWith('GED_')) {
-    if (opts && !Array.isArray(opts) && typeof opts === 'object' && opts.ui) {
-      base.uiType = opts.ui === 'DROPDOWN' ? 'DROPDOWN' : 'HOTSPOT';
-      const choices: string[] = Array.isArray(opts.choices) ? opts.choices : [];
-      const correct: number[] = Array.isArray(opts.correct) ? opts.correct : (q.correctAnswer != null ? [Number(q.correctAnswer)] : []);
-      base.options = choices.map((t, i) => ({ t, c: correct.includes(i) }));
-    } else {
-      base.uiType = 'MCQ';
-      if (bt?.startsWith('GED_')) base.origType = bt;
-      base.options = optsToArr(Array.isArray(opts) ? opts : [], q.correctAnswer);
-    }
-  }
-  return base;
-}
-
-/** Produce the backend save payload for one editor question. */
-function toBackend(q: Question) {
-  const firstCorrect = q.options.findIndex((o) => o.c);
-  const media = { passageText: q.passageText?.trim() || null, imageUrl: q.imageUrl || null };
-  switch (q.uiType) {
-    case 'TF':
-      return { questionText: q.text, type: 'TRUE_FALSE', points: q.points, choices: ['True', 'False'], correctAnswer: String(Math.max(0, firstCorrect)), explanation: q.explanation || null, ...media };
-    case 'SHORT':
-      return { questionText: q.text, type: 'SHORT_ANSWER', points: q.points, choices: null, correctAnswer: q.sample || null, explanation: q.explanation || null, ...media };
-    case 'ESSAY':
-      return { questionText: q.text, type: 'ESSAY', points: q.points, choices: null, correctAnswer: q.sample || null, explanation: q.explanation || null, ...media };
-    case 'EXTENDED':
-      return { questionText: q.text, type: 'EXTENDED', points: q.points, choices: null, correctAnswer: q.sample || null, explanation: q.explanation || null, ...media };
-    case 'DRAG': {
-      // Build "[[word]]" raw text by filling each "___" with the correct words in order.
-      const answers = q.options.filter((o) => o.c).map((o) => o.t);
-      let i = 0;
-      const raw = q.text.replace(/_{2,}|___/g, () => (i < answers.length ? `[[${answers[i++]}]]` : '___'));
-      const blanks: { id: string; answer: string }[] = [];
-      let bi = 0;
-      const text = raw.replace(/\[\[([^\]]+)\]\]/g, (_m, w) => { const id = `b${bi++}`; blanks.push({ id, answer: w }); return `{{${id}}}`; });
-      const distractors = q.options.filter((o) => !o.c).map((o) => o.t);
-      return { questionText: text, type: 'DRAG_DROP', points: q.points, choices: { text, blanks, distractors }, correctAnswer: null, explanation: q.explanation || null, ...media };
-    }
-    case 'DROPDOWN':
-      return { questionText: q.text, type: 'DROPDOWN', points: q.points, choices: q.options.map((o) => o.t), correctAnswer: String(Math.max(0, firstCorrect)), explanation: q.explanation || null, ...media };
-    case 'HOTSPOT': {
-      // Multi-select (per design). Player stores the chosen option keys, which
-      // for these string choices are the option texts — so correctAnswers holds
-      // the correct option texts, and partialCredit makes the player render it
-      // as multi-select and the grader score it by set comparison.
-      const correctTexts = q.options.filter((o) => o.c).map((o) => o.t);
-      return {
-        questionText: q.text, type: 'HOTSPOT', points: q.points,
-        choices: q.options.map((o) => o.t),
-        correctAnswer: String(Math.max(0, firstCorrect)),
-        correctAnswers: correctTexts,
-        partialCredit: true,
-        explanation: q.explanation || null,
-        ...media,
-      };
-    }
-    default: // MCQ (and reloaded GED_*)
-      return { questionText: q.text, type: q.origType || 'MCQ', points: q.points, choices: q.options.map((o) => o.t), correctAnswer: String(Math.max(0, firstCorrect)), explanation: q.explanation || null, ...media };
-  }
-}
-
 /** sensible default options when switching a question's type */
 function defaultOptions(t: UIType): Opt[] {
   switch (t) {
     case 'MCQ': return [{ t: '', c: true }, { t: '', c: false }, { t: '', c: false }, { t: '', c: false }];
     case 'TF': return [{ t: 'True', c: true }, { t: 'False', c: false }];
     case 'DROPDOWN': return [{ t: '', c: true }, { t: '', c: false }, { t: '', c: false }];
-    case 'HOTSPOT': return [{ t: 'Region 1', c: true }, { t: 'Region 2', c: false }, { t: 'Region 3', c: false }];
+    case 'HOTSPOT': return [{ t: '', c: true }, { t: '', c: false }, { t: '', c: false }];
     case 'DRAG': return [{ t: '', c: true }, { t: '', c: true }];
     default: return [];
   }
@@ -240,6 +118,19 @@ export default function GuidedStudio() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const [loadVersion, setLoadVersion] = useState(0);
+  const [saveMessage, setSaveMessage] = useState('');
+  const originalSettings = useRef<Record<string, any>>({});
+  const originalPolicy = useRef<Record<string, any>>({});
+  const [releaseAt, setReleaseAt] = useState('');
+  const [dirty, setDirty] = useState(false);
+  const saveLock = useRef(false);
+  useEffect(() => {
+    const guard = (event: BeforeUnloadEvent) => { if (dirty) { event.preventDefault(); event.returnValue = ''; } };
+    window.addEventListener('beforeunload', guard);
+    return () => window.removeEventListener('beforeunload', guard);
+  }, [dirty]);
 
   // exam
   const [title, setTitle] = useState('');
@@ -250,7 +141,7 @@ export default function GuidedStudio() {
   const [instructions, setInstructions] = useState('');
   const [audience, setAudience] = useState<Audience>('GED');
   const [questionTheme, setQuestionTheme] = useState<QuestionTheme>('ged');
-  const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'CLOSED'>('DRAFT');
+  const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'CLOSED' | 'ACTIVE' | 'SCHEDULED' | 'ARCHIVED'>('DRAFT');
   const [hasAttempts, setHasAttempts] = useState(false);
 
   const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
@@ -265,7 +156,6 @@ export default function GuidedStudio() {
   const [closesAt, setClosesAt] = useState('');
   const [attempts, setAttempts] = useState<number>(1); // 0 = unlimited
   const [shuffle, setShuffle] = useState(false);
-  const [allowPause, setAllowPause] = useState(true);
   const [lockdown, setLockdown] = useState(false);
   const [requireFullscreen, setRequireFullscreen] = useState(false);
   const [blockClipboard, setBlockClipboard] = useState(false);
@@ -276,12 +166,8 @@ export default function GuidedStudio() {
 
   // grading
   const [passMark, setPassMark] = useState(65);
-  const [release, setRelease] = useState<'immediately' | 'approve' | 'closed'>('approve');
-  const [autoGrade, setAutoGrade] = useState(true);
+  const [release, setRelease] = useState<'immediately' | 'approve' | 'closed' | 'hidden'>('approve');
   const [showAnswers, setShowAnswers] = useState(false);
-  const [allowRegrade, setAllowRegrade] = useState(false);
-  const [latePenalty, setLatePenalty] = useState(false);
-  const [syncGradebook, setSyncGradebook] = useState(true);
 
   // ui
   const [step, setStep] = useState<StepKey>('questions');
@@ -292,28 +178,43 @@ export default function GuidedStudio() {
   const [playerOpen, setPlayerOpen] = useState(false);
   const [published, setPublished] = useState(false);
 
+  const editSnapshot = JSON.stringify({ title, classId, subjectId, examType, duration, instructions, audience, questionTheme, questions, opensAt, closesAt, attempts, shuffle, lockdown, requireFullscreen, blockClipboard, warnOnFocusLoss, honorAccom, accom, passMark, release, releaseAt, showAnswers });
+  const savedSnapshot = useRef<string | null>(null);
+  useEffect(() => {
+    if (loading || loadError) return;
+    if (savedSnapshot.current === null) savedSnapshot.current = editSnapshot;
+    setDirty(editSnapshot !== savedSnapshot.current);
+  }, [editSnapshot, loading, loadError]);
+
+  const leaveStudio = (path: string) => { if (!dirty || window.confirm('Leave Studio with unsaved changes?')) navigate(path); };
+
   const className = classes.find((c) => c.id === classId)?.name ?? '';
   const subjectName = subjects.find((s) => s.id === subjectId)?.name ?? '';
   const isMathSubject = /math/i.test(subjectName);
 
   /* ---------------- load ---------------- */
   useEffect(() => {
-    Promise.all([
-      apiGet<any[]>('/api/classes').then((r) => setClasses(r.map((c) => ({ id: c.id, name: c.name })))).catch(() => {}),
-      apiGet<any[]>('/api/subjects').then((r) => setSubjects(r.map((s) => ({ id: s.id, name: s.name })))).catch(() => {}),
-    ]);
-  }, []);
-
-  useEffect(() => {
     if (!id) return;
+    let active = true;
     setLoading(true);
+    setLoadError('');
+    savedSnapshot.current = null;
     // Phase-2 tables may not be migrated in every environment; those reads are
     // best-effort and fall back to the settings JSON on the base exam.
     Promise.all([
       apiGet<any>(`/api/exams/${id}`),
-      apiGet<any>(`/api/exams/${id}/result-policy`).catch(() => null),
-      apiGet<any[]>(`/api/accommodations?examId=${id}`).catch(() => []),
-    ]).then(([exam, policy, accoms]) => {
+      apiGet<any>(`/api/exams/${id}/result-policy`),
+      apiGet<any[]>(`/api/accommodations?examId=${id}`),
+      apiGet<any[]>('/api/classes'),
+      apiGet<any[]>('/api/subjects'),
+    ]).then(([exam, policy, accoms, classRows, subjectRows]) => {
+      if (!active) return;
+      setClasses(classRows.map(c => ({ id: c.id, name: c.name })));
+      setSubjects(subjectRows.map(s => ({ id: s.id, name: s.name })));
+      originalSettings.current = exam.settings || {};
+      originalPolicy.current = policy || {};
+      setReleaseAt(policy?.releaseAt ? toLocalInput(policy.releaseAt) : '');
+      setPassMark(65); setRelease('approve'); setShowAnswers(false);
       setTitle(exam.title || '');
       setClassId(exam.classId || '');
       setSubjectId(exam.subjectId || '');
@@ -334,10 +235,9 @@ export default function GuidedStudio() {
 
       // Attempts — column first (9999 sentinel = unlimited).
       const lim = exam.attemptLimit != null ? Number(exam.attemptLimit) : (s.allowedAttempts ?? 1);
-      setAttempts(lim >= 99 || lim === 0 ? 0 : lim);
+      setAttempts(lim >= UNLIMITED_ATTEMPTS || lim === 0 ? 0 : lim);
 
       setShuffle(exam.shuffleQuestions != null ? !!exam.shuffleQuestions : !!s.shuffleQuestions);
-      setAllowPause(s.allowPause !== false);
       setLockdown(!!s.lockdownBrowser);
       setRequireFullscreen(!!s.antiCheat?.requireFullscreen);
       setBlockClipboard(!!s.antiCheat?.blockClipboard);
@@ -346,52 +246,41 @@ export default function GuidedStudio() {
       // Pass mark — exam.passMark is stored in POINTS; convert to a percentage.
       const qs = (exam.questions || []).map(fromBackend);
       const total = qs.reduce((sum: number, q: Question) => sum + (Number(q.points) || 0), 0);
-      if (exam.passMark != null && total > 0) setPassMark(Math.round((Number(exam.passMark) / total) * 100));
+      if (exam.passMark != null && total > 0) setPassMark((Number(exam.passMark) / total) * 100);
       else if (s.passMark != null) setPassMark(Number(s.passMark));
 
       // Release policy — result-policy model first, settings JSON as fallback.
       if (policy?.releaseMode) { setRelease(modeToRelease(policy.releaseMode)); setShowAnswers(!!policy.showCorrectAnswers); }
-      else { if (s.releaseScores) setRelease(s.releaseScores); setShowAnswers(!!s.showCorrectAnswers); }
+      else { if (['immediately', 'approve', 'closed', 'hidden'].includes(s.releaseScores)) setRelease(s.releaseScores); setShowAnswers(!!s.showCorrectAnswers); }
 
-      setAutoGrade(s.autoGrade !== false);
-      setAllowRegrade(!!s.allowRegrade);
-      setLatePenalty(!!s.latePenalty);
-      setSyncGradebook(s.syncGradebook !== false);
 
-      // Accommodations — rebuild from real ExamAccommodation rows when present.
-      if (Array.isArray(accoms) && accoms.length) {
-        setHonorAccom(true);
-        setAccom(accoms.map((a: any) => {
-          const name = `${a.student?.user?.firstName || ''} ${a.student?.user?.lastName || ''}`.trim() || 'Student';
-          const mult = a.extraTimePercent ? 1 + Number(a.extraTimePercent) / 100 : 1;
-          return { id: `a_${a.id}`, accId: a.id, studentId: a.studentId, name, initials: initials(name), multiplier: mult, readAloud: !!a.readerSupport, breaks: !!a.additionalBreaks, note: a.notes || '' } as Accom;
-        }));
-      } else {
-        setHonorAccom(!!s.honorAccommodations);
-        if (Array.isArray(s.accommodations)) setAccom(s.accommodations);
-      }
-
+      setHonorAccom(Boolean(accoms?.length) || !!s.honorAccommodations);
+      setAccom(Array.isArray(accoms) ? accoms.map((a: any) => { const name = `${a.student?.user?.firstName || ''} ${a.student?.user?.lastName || ''}`.trim() || 'Student'; return { id: `a_${a.id}`, accId: a.id, studentId: a.studentId, name, initials: initials(name), multiplier: 1 + Number(a.extraTimePercent || 0) / 100, readAloud: !!a.readerSupport, breaks: !!a.additionalBreaks, note: a.notes || '' }; }) : []);
+      setDirty(false);
       setQuestions(qs);
       setSel(0);
     }).catch((e: any) => {
-      toast.error(e.message || 'Failed to load exam.');
-      navigate('/exams');
-    }).finally(() => setLoading(false));
-  }, [id, navigate]);
+      if (active) setLoadError(e.message || 'Failed to load exam.');
+    }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [id, loadVersion]);
 
   // roster for accommodations (filtered by class)
   useEffect(() => {
     if (!classId) { setRoster([]); return; }
+    let active = true;
     apiGet<any[]>('/api/students').then((rows) => {
+      if (!active) return;
       setRoster(rows.filter((r) => r.classId === classId).map((r) => ({ id: r.id, name: `${r.user?.firstName || ''} ${r.user?.lastName || ''}`.trim() || 'Student' })));
-    }).catch(() => setRoster([]));
+    }).catch(() => { if (active) { setRoster([]); toast.error('Could not load students for accommodations.'); } });
+    return () => { active = false; };
   }, [classId]);
 
   /* ---------------- derived ---------------- */
   const totalPoints = useMemo(() => questions.reduce((s, q) => s + (Number(q.points) || 0), 0), [questions]);
   const autoPoints = useMemo(() => questions.filter((q) => isObjective(q.uiType)).reduce((s, q) => s + (Number(q.points) || 0), 0), [questions]);
   const manualPoints = totalPoints - autoPoints;
-  const passPoints = Math.round((passMark / 100) * totalPoints);
+  const passPoints = Math.round((passMark / 100) * totalPoints * 100) / 100;
   const estMinutes = duration || Math.max(5, questions.length * 2);
 
   const windowInfo = useMemo(() => {
@@ -405,10 +294,10 @@ export default function GuidedStudio() {
   }, [opensAt, closesAt, duration]);
 
   const stepsDone: Record<StepKey, boolean> = {
-    details: !!(title.trim() && subjectId),
-    questions: questions.length > 0,
-    schedule: !!(opensAt && closesAt && !windowInfo?.warning),
-    grading: passMark > 0,
+    details: !!(title.trim() && subjectId && classId && duration >= 1),
+    questions: questions.length > 0 && questions.every(q => !questionIssue(q)),
+    schedule: !(windowInfo && windowInfo.mins <= 0) && (release !== 'closed' || !!releaseAt || !!closesAt),
+    grading: Number.isFinite(passMark) && passMark >= 0 && passMark <= 100,
   };
   const doneCount = Object.values(stepsDone).filter(Boolean).length;
   const readiness = Math.round((doneCount / 4) * 100);
@@ -422,17 +311,19 @@ export default function GuidedStudio() {
   const addQuestion = (t: UIType) => {
     const q: Question = { id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, uiType: t, text: '', points: 5, options: defaultOptions(t), sample: '', explanation: '', passageText: '', imageUrl: null };
     setQuestions((prev) => { const next = [...prev, q]; setSel(next.length - 1); return next; });
+    setDirty(true);
     setShowTypePicker(false);
     setStep('questions');
   };
   const removeQuestion = (i: number) => setQuestions((prev) => {
     const next = prev.filter((_, idx) => idx !== i);
-    setSel((s) => Math.max(0, Math.min(s, next.length - 1)));
+    setSel((s) => Math.max(0, Math.min(s > i ? s - 1 : s, next.length - 1)));
     return next;
   });
   const switchType = (t: UIType) => {
-    if (!cur) return;
-    update(sel, { uiType: t, origType: undefined, options: defaultOptions(t), sample: isObjective(t) ? '' : cur.sample });
+    if (!cur || t === cur.uiType) return;
+    if (!window.confirm('Change question type? Answer options and the answer key will be reset.')) return;
+    update(sel, { original: undefined, uiType: t, origType: undefined, options: defaultOptions(t), sample: isObjective(t) ? '' : cur.sample });
   };
   const setCorrect = (oi: number) => {
     if (!cur) return;
@@ -441,11 +332,11 @@ export default function GuidedStudio() {
   };
   const setOptText = (oi: number, t: string) => cur && update(sel, { options: cur.options.map((o, i) => (i === oi ? { ...o, t } : o)) });
   const addOpt = () => cur && update(sel, { options: [...cur.options, { t: '', c: false }] });
-  const delOpt = (oi: number) => cur && update(sel, { options: cur.options.filter((_, i) => i !== oi) });
+  const delOpt = (oi: number) => { if (!cur || cur.uiType === 'TF' || cur.options.length <= 2) return; update(sel, { options: cur.options.filter((_, i) => i !== oi) }); };
 
   /* ---------------- drag reorder ---------------- */
   const onDrop = () => {
-    if (!drag) return;
+    if (!drag || hasAttempts || saving) return;
     const { from, over } = drag;
     if (from !== over) {
       setQuestions((prev) => { const next = [...prev]; const [m] = next.splice(from, 1); next.splice(over, 0, m); return next; });
@@ -457,13 +348,14 @@ export default function GuidedStudio() {
   /* ---------------- AI generate ---------------- */
   const [generating, setGenerating] = useState(false);
   const generateSimilar = async () => {
-    if (!cur) return;
+    if (!cur || cur.uiType !== 'MCQ' || !cur.text.trim() || generating) return;
     setGenerating(true);
     try {
       const prompt = `Generate 3 new multiple-choice questions similar in topic and difficulty to this one. Return ONLY a JSON array, each item: {"text": string, "options": [{"t": string, "c": boolean}] } with exactly 4 options and exactly one correct (c:true).\n\nReference question: ${cur.text}\nReference options: ${cur.options.map((o) => o.t).join(' | ')}`;
       const res = await apiSend<{ reply: string }>('/api/ai/chat', 'POST', { prompt, systemInstruction: 'You are an exam item writer. Output valid JSON only, no markdown fences.' });
       const raw = (res?.reply || '').replace(/```json|```/g, '').trim();
       const arr = JSON.parse(raw);
+      if (!Array.isArray(arr) || !arr.length || arr.slice(0, 3).some((v: any) => !v.text?.trim() || !Array.isArray(v.options) || v.options.length !== 4 || v.options.some((o: any) => !String(o.t ?? o.text ?? '').trim()) || v.options.filter((o: any) => o.c === true).length !== 1)) throw new Error('Invalid AI response');
       const gen: Question[] = arr.slice(0, 3).map((v: any) => ({
         id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
         uiType: 'MCQ' as UIType, text: String(v.text || ''), points: cur.points,
@@ -471,17 +363,10 @@ export default function GuidedStudio() {
         sample: '', explanation: '',
       }));
       setQuestions((prev) => [...prev, ...gen]);
-      toast.success('Added 3 AI-generated variants.');
+      setDirty(true);
+      toast.success(`Added ${gen.length} questions. Review their wording and answers before publishing.`);
     } catch {
-      // Fallback: local variants so the button always works offline.
-      const gen: Question[] = [1, 2, 3].map((n) => ({
-        id: `q_${Date.now()}_${n}_${Math.random().toString(36).slice(2, 5)}`,
-        uiType: 'MCQ' as UIType, text: `${cur.text || 'New question'} (variant ${n})`, points: cur.points,
-        options: [{ t: 'Option A', c: true }, { t: 'Option B', c: false }, { t: 'Option C', c: false }, { t: 'Option D', c: false }],
-        sample: '', explanation: '',
-      }));
-      setQuestions((prev) => [...prev, ...gen]);
-      toast.message('AI unavailable — added 3 template variants to edit.');
+      toast.error('Could not generate valid questions. Your exam is unchanged; try again.');
     } finally {
       setGenerating(false);
     }
@@ -505,18 +390,19 @@ export default function GuidedStudio() {
 
   /* ---------------- save / publish ---------------- */
   const buildSettings = () => ({
-    enableTimer: true, autoSubmit: true,
-    shuffleQuestions: shuffle, shuffleChoices: false,
+    ...originalSettings.current,
+    enableTimer: originalSettings.current.enableTimer ?? true, autoSubmit: originalSettings.current.autoSubmit ?? true,
+    shuffleQuestions: shuffle, shuffleChoices: originalSettings.current.shuffleChoices ?? false,
     showScoreAfterSubmit: release === 'immediately', showCorrectAnswers: showAnswers,
     startDate: opensAt ? new Date(opensAt).toISOString() : undefined,
     endDate: closesAt ? new Date(closesAt).toISOString() : undefined,
     allowedAttempts: attempts,
     instructions,
-    allowPause, lockdownBrowser: lockdown, honorAccommodations: honorAccom,
+    lockdownBrowser: lockdown, honorAccommodations: honorAccom,
     audience, questionTheme,
-    antiCheat: { requireFullscreen, blockClipboard, warnOnFocusLoss },
+    antiCheat: { ...originalSettings.current.antiCheat, requireFullscreen, blockClipboard, warnOnFocusLoss },
     accommodations: honorAccom ? accom : [],
-    passMark, releaseScores: release, autoGrade, allowRegrade, latePenalty, syncGradebook,
+    passMark, releaseScores: release,
   });
 
   /**
@@ -539,10 +425,11 @@ export default function GuidedStudio() {
         extraTimePercent: Math.round((a.multiplier - 1) * 100),
         readerSupport: a.readAloud, additionalBreaks: a.breaks, notes: a.note || null,
       };
-      if (a.accId) {
-        await apiSend(`/api/accommodations/${a.accId}`, 'PUT', body);
-        keep.add(a.accId);
-        result.push(a);
+      const persistedId = a.accId || existing.find(row => row.studentId === a.studentId)?.id;
+      if (persistedId) {
+        await apiSend(`/api/accommodations/${persistedId}`, 'PUT', body);
+        keep.add(persistedId);
+        result.push({ ...a, accId: persistedId });
       } else {
         const row = await apiSend<any>('/api/accommodations', 'POST', body);
         if (row?.id) { keep.add(row.id); result.push({ ...a, accId: row.id }); }
@@ -557,52 +444,22 @@ export default function GuidedStudio() {
   };
 
   const save = async (nextStatus?: 'DRAFT' | 'PUBLISHED') => {
-    if (!id) return;
+    if (!id || saveLock.current) return;
+    if (!Number.isFinite(passMark) || passMark < 0 || passMark > 100) { toast.error('Pass mark must be between 0 and 100%.'); setStep('grading'); return; }
+    if (windowInfo?.mins != null && windowInfo.mins <= 0) { toast.error(windowInfo.warning); setStep('schedule'); return; }
     if (!title.trim()) { toast.error('Please enter an exam title.'); setStep('details'); return; }
     if (!subjectId) { toast.error('Please select a subject.'); setStep('details'); return; }
     if (!classId) { toast.error('Please select a class.'); setStep('details'); return; }
-    if (!Number.isFinite(duration) || duration < 1) { toast.error('Duration must be at least 1 minute.'); setStep('details'); return; }
-    if ((nextStatus === 'PUBLISHED') && questions.length === 0) { toast.error('Add at least one question before publishing.'); setStep('questions'); return; }
-    // Every auto-graded question with options (MCQ/TF/Drop-down/Hot spot/Drag)
-    // must have at least one correct answer marked — otherwise it can't be
-    // graded (and single-select ones would silently default to option 0).
-    if (nextStatus === 'PUBLISHED') {
-      if (windowInfo?.warning) { toast.error(windowInfo.warning); setStep('schedule'); return; }
-      if (release === 'closed' && !closesAt) { toast.error('Set a close time for scheduled result release.'); setStep('schedule'); return; }
-      const emptyIdx = questions.findIndex((q) => !q.text.trim());
-      if (emptyIdx !== -1) {
-        toast.error(`Question ${emptyIdx + 1} is missing its question text.`);
-        setSel(emptyIdx);
-        setStep('questions');
-        return;
-      }
-      const badIdx = questions.findIndex(
-        (q) => isObjective(q.uiType) && q.options.length > 0 && !q.options.some((o) => o.c)
-      );
-      if (badIdx !== -1) {
-        toast.error(`Question ${badIdx + 1} has no correct answer marked.`);
-        setSel(badIdx);
-        setStep('questions');
-        return;
-      }
-      const emptyOptionIdx = questions.findIndex(
-        (q) => isObjective(q.uiType) && q.options.some((o) => !o.t.trim())
-      );
-      if (emptyOptionIdx !== -1) {
-        toast.error(`Question ${emptyOptionIdx + 1} has an empty answer option.`);
-        setSel(emptyOptionIdx);
-        setStep('questions');
-        return;
-      }
-      const dragIdx = questions.findIndex((q) => q.uiType === 'DRAG' && (q.text.match(/_{2,}/g)?.length || 0) !== q.options.filter((o) => o.c).length);
-      if (dragIdx !== -1) {
-        toast.error(`Question ${dragIdx + 1} needs exactly one marked correct word for each blank.`);
-        setSel(dragIdx); setStep('questions'); return;
-      }
+    if (!Number.isFinite(duration) || duration < 1 || !Number.isInteger(duration)) { toast.error('Duration must be at least 1 minute.'); setStep('details'); return; }
+    if ((nextStatus || status) === 'PUBLISHED' && questions.length === 0) { toast.error('Add at least one question before publishing.'); setStep('questions'); return; }
+    if (release === 'closed' && !releaseAt && !closesAt) { toast.error('Choose a result release time or an exam close time.'); setStep('grading'); return; }
+    if ((nextStatus || status) === 'PUBLISHED') {
+      const invalid = questions.findIndex(q => questionIssue(q));
+      if (invalid !== -1) { toast.error(`Question ${invalid + 1}: ${questionIssue(questions[invalid])}`); setSel(invalid); setStep('questions'); return; }
     }
+    saveLock.current = true;
     setSaving(true);
-    let downstreamWarned = false;
-    const warn = () => { if (!downstreamWarned) { downstreamWarned = true; toast.message('Saved. Some scheduling/grading settings could not sync (exam system may not be fully migrated).'); } };
+    setSaveMessage('Saving exam…');
     try {
       const publishingDraft = nextStatus === 'PUBLISHED' && status !== 'PUBLISHED';
       const basePayload = {
@@ -627,23 +484,22 @@ export default function GuidedStudio() {
         shuffleQuestions: shuffle,
         passMark: passPoints, // stored in points to match attempt.score
       });
-      if (publishingDraft) await scheduleSave; else await scheduleSave.catch(warn);
+      await scheduleSave;
 
       // 3) Result-release policy consumed by isResultReleased().
       const policySave = apiSend(`/api/exams/${id}/result-policy`, 'PUT', {
+        ...originalPolicy.current,
         releaseMode: RELEASE_TO_MODE[release],
-        releaseAt: release === 'closed' && closesAt ? new Date(closesAt).toISOString() : null,
-        showScore: release !== 'closed',
+        releaseAt: release === 'closed' && (releaseAt || closesAt) ? new Date(releaseAt || closesAt).toISOString() : null,
+        showScore: originalPolicy.current.showScore ?? true,
         showCorrectAnswers: showAnswers,
-        showPassFail: true,
+        showPassFail: originalPolicy.current.showPassFail ?? true,
       });
-      if (publishingDraft) await policySave; else await policySave.catch(warn);
+      await policySave;
 
       // 4) Per-student accommodations → effective exam duration for those students.
-      try {
-        const reconciled = await reconcileAccommodations();
-        setAccom(reconciled);
-      } catch { warn(); }
+      const reconciled = await reconcileAccommodations();
+      setAccom(reconciled);
 
       // 5) Publish only after the required downstream settings have succeeded.
       // Omitting `questions` here preserves the just-saved question set.
@@ -651,15 +507,22 @@ export default function GuidedStudio() {
         await apiSend(`/api/exams/${id}`, 'PUT', { ...basePayload, status: 'PUBLISHED' });
       }
 
+      savedSnapshot.current = JSON.stringify({ ...JSON.parse(editSnapshot), accom: reconciled });
+      setDirty(false);
+      setSaveMessage('All changes saved');
       if (nextStatus) setStatus(nextStatus);
-      if (nextStatus === 'PUBLISHED') setPublished(true);
-      else if (!downstreamWarned) toast.success('Saved.');
+      if (publishingDraft) setPublished(true);
+      else toast.success('Saved.');
     } catch (e: any) {
+      setSaveMessage('Save incomplete. Some changes may have saved. Retry to finish.');
       toast.error(e.message || 'Failed to save.');
     } finally {
       setSaving(false);
+      saveLock.current = false;
     }
   };
+
+  if (loadError) return <div role="alert" className="rounded border p-8"><h1 className="text-xl font-semibold">Could not load Exam Studio</h1><p className="my-3">{loadError}</p><button onClick={() => setLoadVersion(v => v + 1)} className="rounded border px-4 py-2">Retry</button></div>;
 
   if (loading) {
     return <div className="flex min-h-[70vh] items-center justify-center" style={{ background: C.canvas }}><Loader2 className="h-7 w-7 animate-spin" style={{ color: C.purple }} /></div>;
@@ -670,15 +533,9 @@ export default function GuidedStudio() {
   /* ================================================================ */
   return (
     <div className="guided-studio" style={{ background: C.canvas, minHeight: '100vh', padding: '20px 16px', fontFamily: 'Inter, ui-sans-serif, system-ui' }}>
-      <style>{`
-        .guided-studio{--gs-ink:#111018;--gs-muted:#66646f;--gs-muted-2:#85828f;--gs-border:#dfdde5;--gs-border-2:#ebe9ef;--gs-border-3:#e4e2e9;--gs-canvas:#f4f3f0;--gs-panel:#fcfcfc;--gs-surface:#fff;--gs-preview:#fbfbfb;--gs-action:#17131d;--gs-purple-text:#6325e6;--gs-tint-50:#f5f0ff;--gs-tint-100:#f0e9ff;--gs-tint-7:#f7f2ff;--gs-tint-bar:#faf8ff;--gs-green-text:#0a7a1c;--gs-green-bg:#f2fcf3;--gs-amber-text:#9a5c00;--gs-amber-bg:#fff8e8;--gs-blue-bg:#eef4ff;color-scheme:light}
-        .guided-studio input,.guided-studio textarea,.guided-studio select{color:var(--gs-ink);background-color:var(--gs-surface)}
-        @media(prefers-color-scheme:dark){.guided-studio{--gs-ink:#f5f3fa;--gs-muted:#b3afbd;--gs-muted-2:#9691a1;--gs-border:#3d3946;--gs-border-2:#34313c;--gs-border-3:#484351;--gs-canvas:#131117;--gs-panel:#1c1921;--gs-surface:#211e27;--gs-preview:#18161d;--gs-action:#7a3dff;--gs-purple-text:#cbb7ff;--gs-tint-50:#2d2340;--gs-tint-100:#3a2b53;--gs-tint-7:#251f30;--gs-tint-bar:#211b2a;--gs-green-text:#74e88a;--gs-green-bg:#18351f;--gs-amber-text:#ffd27a;--gs-amber-bg:#3b2d12;--gs-blue-bg:#172b4f;color-scheme:dark}}
-        @media(max-width:1100px){.gs-workspace{grid-template-columns:220px minmax(0,1fr)!important}.gs-live-preview{display:none}.gs-topbar{flex-wrap:wrap}}
-        @media(max-width:720px){.guided-studio{padding:0!important}.gs-workspace{display:block!important}.gs-rail{border-right:0!important;border-bottom:1px solid var(--gs-border-2);max-height:250px}.gs-editor{padding:20px 16px!important}.gs-topbar{padding:12px!important}.gs-topbar>button{flex:1}.gs-detail-grid{grid-template-columns:1fr!important}}
-      `}</style>
-      <div style={{ maxWidth: 1320, margin: '0 auto', background: C.surface, border: `1px solid ${C.border}`, borderRadius: 20, boxShadow: '0 20px 50px -30px rgba(0,0,0,.35)', overflow: 'hidden' }}>
+      <div className="gs-shell" style={{ maxWidth: 1600, margin: '0 auto', background: C.surface, border: `1px solid ${C.border}`, borderRadius: 20, boxShadow: '0 20px 50px -30px rgba(0,0,0,.35)', overflow: 'hidden' }}>
 
+        <div className="gs-breadcrumb"><button onClick={() => leaveStudio(`/exams/${id}`)}><ArrowLeft size={15} /> Exam overview</button><span> / </span><span>Exam Studio</span><span className="gs-save-state" role="status">{saving || saveMessage.startsWith('Save incomplete') ? saveMessage : dirty ? 'Unsaved changes' : saveMessage || 'Ready to edit'}</span></div>
         {/* ---------- Top bar ---------- */}
         <div className="gs-topbar" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '15px 24px', borderBottom: `1px solid ${C.border2}` }}>
           <div style={{ width: 34, height: 34, borderRadius: 9, background: C.purple, display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 900, flexShrink: 0 }}>
@@ -686,19 +543,15 @@ export default function GuidedStudio() {
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <input
-              value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled exam"
+              aria-label="Exam title" disabled={saving} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled exam"
               style={{ fontSize: 17, fontWeight: 800, color: C.ink, border: 'none', outline: 'none', width: '100%', background: 'transparent' }}
             />
             <div style={{ fontSize: 12, color: C.muted2, marginTop: 1 }}>
-              {[className, subjectName].filter(Boolean).join(' · ') || 'Grade · Subject'} · save changes before leaving
+              {[className, subjectName].filter(Boolean).join(' · ') || 'Grade · Subject'}
             </div>
           </div>
           <StatusPill status={status} />
-          <div style={{ display: 'flex', border: `1px solid ${C.border3}`, borderRadius: 10, overflow: 'hidden' }}>
-            <IconToggle active={previewDevice === 'desktop'} onClick={() => setPreviewDevice('desktop')}><Monitor size={15} /></IconToggle>
-            <IconToggle active={previewDevice === 'phone'} onClick={() => setPreviewDevice('phone')}><Smartphone size={15} /></IconToggle>
-          </div>
-          <button onClick={() => setPlayerOpen(true)}
+          <button disabled={!questions.length} onClick={() => setPlayerOpen(true)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: C.purpleText, background: C.surface, border: `1.5px solid ${C.tint100}`, borderRadius: 10, padding: '8px 13px', cursor: 'pointer' }}>
             <Play size={13} fill="currentColor" /> Preview as student
           </button>
@@ -708,22 +561,22 @@ export default function GuidedStudio() {
           </button>
           <button onClick={() => save('PUBLISHED')} disabled={saving}
             style={{ fontSize: 13, fontWeight: 800, color: '#fff', background: C.action, border: 'none', borderRadius: 10, padding: '9px 18px', cursor: 'pointer' }}>
-            {saving ? '…' : 'Publish'}
+            {saving ? 'Saving…' : status === 'PUBLISHED' ? 'Save & validate' : 'Publish'}
           </button>
         </div>
 
         {/* ---------- Readiness ribbon ---------- */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 24px', background: C.tintBar, borderBottom: '1px solid #efeaff' }}>
+        <div className="gs-readiness" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 24px', background: C.tintBar, borderBottom: `1px solid ${C.border}` }}>
           <span style={{ fontSize: 12, fontWeight: 700, color: C.purpleText, letterSpacing: '.02em' }}>Exam readiness</span>
-          <div style={{ flex: 1, height: 8, borderRadius: 999, background: '#ece6ff', overflow: 'hidden', maxWidth: 420 }}>
-            <div style={{ width: `${readiness}%`, height: '100%', background: 'linear-gradient(90deg,#7a3dff,#a87dff)', transition: 'width .3s' }} />
+          <div style={{ flex: 1, height: 8, borderRadius: 999, background: C.tint100, overflow: 'hidden', maxWidth: 420 }}>
+            <div style={{ width: `${readiness}%`, height: '100%', background: C.purple, transition: 'width .3s' }} />
           </div>
           <span style={{ fontSize: 12, color: C.muted }}>{doneCount} of 4 steps</span>
           <span style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 600, color: C.ink }}>{totalPoints} pts · ~{estMinutes} min</span>
         </div>
 
         {/* ---------- Body grid ---------- */}
-        <div className="gs-workspace" style={{ display: 'grid', gridTemplateColumns: '248px 1fr 320px', minHeight: 640 }}>
+        <div className="gs-workspace" style={{ display: 'grid', gridTemplateColumns: '220px minmax(0, 1fr) 300px', minHeight: 560 }}>
 
           {/* Left rail */}
           <div className="gs-rail" style={{ background: C.panel, borderRight: `1px solid ${C.border2}`, padding: '18px 14px', display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -737,6 +590,7 @@ export default function GuidedStudio() {
               </div>
             </div>
 
+            <div className="gs-tools"><button onClick={() => leaveStudio(`/exam2/${id}/author`)}>Question bank & rubrics ↗</button><button onClick={() => leaveStudio(`/exam2/${id}/schedule`)}>Access codes & advanced schedule ↗</button></div>
             <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <RailLabel>Outline</RailLabel>
@@ -747,8 +601,8 @@ export default function GuidedStudio() {
                   const td = typeDef(q.uiType);
                   const isOver = drag?.over === i && drag.from !== i;
                   return (
-                    <div key={q.id} draggable
-                      onDragStart={() => setDrag({ from: i, over: i })}
+                    <div key={q.id} role="button" tabIndex={0} aria-label={`Edit question ${i + 1}`} aria-current={sel === i ? 'true' : undefined} onKeyDown={e => { if (e.target !== e.currentTarget) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSel(i); setStep('questions'); } }} draggable={!hasAttempts}
+                      onDragStart={() => !hasAttempts && setDrag({ from: i, over: i })}
                       onDragOver={(e) => { e.preventDefault(); setDrag((d) => (d ? { ...d, over: i } : d)); }}
                       onDrop={onDrop} onDragEnd={() => setDrag(null)}
                       onClick={() => { setSel(i); setStep('questions'); }}
@@ -763,10 +617,10 @@ export default function GuidedStudio() {
                       <GripVertical size={13} style={{ color: '#c8c8c8', flexShrink: 0 }} />
                       <span style={{ width: 7, height: 7, borderRadius: 999, background: td.color, flexShrink: 0 }} />
                       <span style={{ fontSize: 12, fontWeight: sel === i ? 700 : 600, color: sel === i ? C.purpleText : C.ink, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {i + 1} · {td.label}
+                        {i + 1} · {q.text || td.label}
                       </span>
                       <span style={{ fontSize: 11, color: C.muted2 }}>{q.points}pt</span>
-                      <button onClick={(e) => { e.stopPropagation(); removeQuestion(i); }} style={{ border: 'none', background: 'transparent', color: '#cdcdcd', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                      <button disabled={hasAttempts || saving} aria-label={`Delete question ${i + 1}`} onClick={(e) => { e.stopPropagation(); if (window.confirm(`Delete question ${i + 1}?`)) { removeQuestion(i); setDirty(true); } }} style={{ border: 'none', background: 'transparent', color: '#cdcdcd', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                         <Trash2 size={13} />
                       </button>
                     </div>
@@ -777,48 +631,40 @@ export default function GuidedStudio() {
               {/* Add question + type picker — kept OUTSIDE the scroll list above so
                   the popover is never clipped; it opens upward for the same reason. */}
               <div style={{ position: 'relative', marginTop: 8, flexShrink: 0 }}>
-                <button onClick={() => setShowTypePicker((v) => !v)}
+                <button disabled={hasAttempts || saving} onClick={() => setShowTypePicker((v) => !v)}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 10, border: `1.5px dashed ${C.tint100}`, background: C.tint7, color: C.purpleText, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                   <Plus size={14} /> Add question
                 </button>
-                {showTypePicker && (
-                  <div style={{ position: 'absolute', bottom: '100%', left: 0, right: 0, marginBottom: 6, zIndex: 30, background: C.surface, border: `1px solid ${C.border3}`, borderRadius: 12, boxShadow: '0 24px 50px -18px rgba(0,0,0,.4)', padding: 6, display: 'flex', flexDirection: 'column', gap: 3 }}>
-                    <div style={{ padding: '4px 8px 6px' }}><RailLabel>Choose a type</RailLabel></div>
-                    {TYPES.map((t) => (
-                      <button key={t.key} onClick={() => addQuestion(t.key)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 9px', borderRadius: 8, border: '1px solid transparent', background: C.surface, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: C.ink, textAlign: 'left', whiteSpace: 'nowrap' }}
-                        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = C.tint7; (e.currentTarget as HTMLButtonElement).style.borderColor = C.tint100; }}
-                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = C.surface; (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; }}>
-                        <span style={{ width: 9, height: 9, borderRadius: 999, background: t.color, flexShrink: 0 }} />
-                        <span style={{ flex: 1 }}>{t.label}</span>
-                        {t.ged && <span style={{ fontSize: 8.5, fontWeight: 800, color: C.blue, background: C.blueBg, padding: '2px 5px', borderRadius: 4, letterSpacing: '.04em' }}>GED</span>}
-                      </button>
-                    ))}
-                  </div>
-                )}
+
               </div>
             </div>
           </div>
 
           {/* Center editor */}
           <div className="gs-editor" style={{ padding: '26px 32px', overflow: 'auto' }}>
-            {step === 'details' && <DetailsStep {...{ title, setTitle, subjectId, setSubjectId, classId, setClassId, examType, setExamType, subjects, classes, duration, setDuration, instructions, setInstructions, audience, questionTheme, setQuestionTheme, applyPreset, goNext: () => setStep('questions') }} />}
+            {hasAttempts && <p className="gs-notice">Students have started this exam. Questions are read-only to protect their answers.</p>}
+            <fieldset disabled={saving} style={{ minWidth: 0 }}>
+            {step === 'details' && <DetailsStep {...{ title, setTitle, subjectId, setSubjectId, classId, setClassId, examType, setExamType, subjects, classes, duration, setDuration, instructions, setInstructions, audience, questionTheme, setQuestionTheme, applyPreset, hasAttempts, goNext: () => setStep('questions') }} />}
             {step === 'questions' && (
               cur ? (
+                <><div className="gs-question-actions"><span>Question {sel + 1} of {questions.length}</span><button disabled={hasAttempts || sel === 0} aria-label="Move question up" onClick={() => { setQuestions(prev => { const next = [...prev]; [next[sel - 1], next[sel]] = [next[sel], next[sel - 1]]; return next; }); setSel(sel - 1); setDirty(true); }}><ArrowUp size={16} /></button><button disabled={hasAttempts || sel === questions.length - 1} aria-label="Move question down" onClick={() => { setQuestions(prev => { const next = [...prev]; [next[sel], next[sel + 1]] = [next[sel + 1], next[sel]]; return next; }); setSel(sel + 1); setDirty(true); }}><ArrowDown size={16} /></button><button disabled={hasAttempts} onClick={() => { setQuestions(prev => [...prev, { ...cur, id: crypto.randomUUID(), options: cur.options.map(o => ({ ...o })) }]); setSel(questions.length); setDirty(true); }}><Copy size={15} /> Duplicate</button></div><fieldset disabled={hasAttempts} style={{ minWidth: 0 }}>
                 <QuestionEditor
                   q={cur} index={sel} total={questions.length}
                   isMathSubject={isMathSubject} showMathTools={showMathTools} setShowMathTools={setShowMathTools}
                   switchType={switchType} setCorrect={setCorrect} setOptText={setOptText} addOpt={addOpt} delOpt={delOpt}
                   update={(patch) => update(sel, patch)} generateSimilar={generateSimilar} generating={generating}
                 />
-              ) : <EmptyEditor onAdd={() => setShowTypePicker(true)} />
+                </fieldset></>
+              ) : <EmptyEditor onAdd={addQuestion} />
             )}
             {step === 'schedule' && (
-              <ScheduleStep {...{ opensAt, setOpensAt, closesAt, setClosesAt, windowInfo, attempts, setAttempts, shuffle, setShuffle, allowPause, setAllowPause, lockdown, setLockdown, requireFullscreen, setRequireFullscreen, blockClipboard, setBlockClipboard, warnOnFocusLoss, setWarnOnFocusLoss, honorAccom, setHonorAccom, accom, setAccom, accomOpen, setAccomOpen, roster, duration, goNext: () => setStep('grading') }} />
+              <ScheduleStep {...{ opensAt, setOpensAt, closesAt, setClosesAt, windowInfo, attempts, setAttempts, shuffle, setShuffle, lockdown, setLockdown, requireFullscreen, setRequireFullscreen, blockClipboard, setBlockClipboard, warnOnFocusLoss, setWarnOnFocusLoss, honorAccom, setHonorAccom, accom, setAccom, accomOpen, setAccomOpen, roster, duration, goNext: () => setStep('grading') }} />
             )}
             {step === 'grading' && (
-              <GradingStep {...{ totalPoints, autoPoints, manualPoints, passMark, setPassMark, passPoints, release, setRelease, autoGrade, setAutoGrade, showAnswers, setShowAnswers, allowRegrade, setAllowRegrade, latePenalty, setLatePenalty, syncGradebook, setSyncGradebook, goPublish: () => save('PUBLISHED') }} />
+              <GradingStep {...{ totalPoints, autoPoints, manualPoints, passMark, setPassMark, passPoints, release, setRelease, releaseAt, setReleaseAt, showAnswers, setShowAnswers, goPublish: () => save('PUBLISHED') }} />
             )}
+            <div className="gs-editor-save"><span>{dirty ? 'Changes are not saved yet.' : 'Your exam is up to date.'}</span><button disabled={saving} onClick={() => save()}>{saving ? 'Saving…' : 'Save this exam'}</button></div>
+            </fieldset>
           </div>
 
           {/* Right live preview */}
@@ -832,11 +678,12 @@ export default function GuidedStudio() {
             <div style={{ maxWidth: previewDevice === 'phone' ? 230 : '100%', margin: previewDevice === 'phone' ? '0 auto' : undefined }}>
               <PreviewCard q={cur} index={sel} total={questions.length} minutes={estMinutes} />
             </div>
-            <p style={{ textAlign: 'center', fontSize: 11.5, color: C.muted2, marginTop: 12 }}>This is exactly what students see.</p>
+            <p style={{ textAlign: 'center', fontSize: 11.5, color: C.muted2, marginTop: 12 }}>Try the answer controls here. Preview answers are not saved.</p>
           </div>
         </div>
       </div>
 
+      <Dialog open={showTypePicker} onOpenChange={setShowTypePicker}><DialogContent className="sm:max-w-xl"><DialogTitle>Add a question</DialogTitle><DialogDescription>Choose how students will respond.</DialogDescription><div className="grid grid-cols-2 gap-2">{TYPES.map(t => <button key={t.key} className="rounded border p-4 text-left hover:bg-muted" onClick={() => addQuestion(t.key)}>{t.label}</button>)}</div></DialogContent></Dialog>
       {/* Player overlay */}
       {playerOpen && <StudentPlayer questions={questions} title={title} minutes={estMinutes} onClose={() => setPlayerOpen(false)} />}
 
@@ -860,7 +707,7 @@ function toLocalInput(iso: string) {
 }
 
 function RailLabel({ children }: { children: React.ReactNode }) {
-  return <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.12em', textTransform: 'uppercase', color: '#9a9a9a' }}>{children}</span>;
+  return <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.12em', textTransform: 'uppercase', color: C.muted }}>{children}</span>;
 }
 
 function StatusPill({ status }: { status: string }) {
@@ -868,16 +715,12 @@ function StatusPill({ status }: { status: string }) {
     ? { bg: '#eafaec', fg: '#0a7a1c', label: 'Published' }
     : status === 'CLOSED' ? { bg: '#f1f1f1', fg: '#666', label: 'Closed' }
     : { bg: '#fff6e6', fg: '#b26a00', label: 'Draft' };
-  return <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: s.fg, background: s.bg, padding: '5px 10px', borderRadius: 999 }}>{s.label}</span>;
-}
-
-function IconToggle({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return <button onClick={onClick} style={{ display: 'grid', placeItems: 'center', width: 34, height: 30, border: 'none', cursor: 'pointer', color: active ? C.purpleText : '#a7a7a7', background: active ? C.tint50 : C.surface }}>{children}</button>;
+  return <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: s.fg, background: s.bg, padding: '5px 10px', borderRadius: 999 }}>{status.charAt(0) + status.slice(1).toLowerCase()}</span>;
 }
 
 function StepRow({ icon, label, done, active, onClick }: { icon: React.ReactNode; label: string; done: boolean; active: boolean; onClick: () => void }) {
   return (
-    <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 9px', borderRadius: 10, border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', background: active ? C.tint100 : 'transparent' }}>
+    <button aria-current={active ? 'step' : undefined} onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 9px', borderRadius: 10, border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', background: active ? C.tint100 : 'transparent' }}>
       <span style={{
         width: 20, height: 20, borderRadius: 999, display: 'grid', placeItems: 'center', flexShrink: 0,
         background: done ? C.green : active ? C.purple : C.surface,
@@ -918,22 +761,12 @@ function QuestionEditor(props: {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
-        <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.13em', textTransform: 'uppercase', color: '#9a9a9a', paddingTop: 6 }}>Question {index + 1} of {total}</span>
-      </div>
-
-      {/* type tabs */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 20 }}>
-        {TYPES.map((t) => {
-          const active = q.uiType === t.key;
-          return (
-            <button key={t.key} onClick={() => switchType(t.key)}
-              style={{ fontSize: 12.5, fontWeight: 700, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', border: `1px solid ${active ? t.color : C.border3}`, background: active ? t.color : C.surface, color: active ? '#fff' : C.ink }}>
-              {t.label}
-            </button>
-          );
-        })}
-      </div>
+      {questionIssue(q) && <p className="gs-notice" role="status">{questionIssue(q)}</p>}
+      <Field label="Question type">
+        <select aria-label="Question type" value={q.uiType} onChange={e => switchType(e.target.value as UIType)} style={{ width: '100%', padding: '10px 12px', border: `1px solid ${C.border}`, borderRadius: 6 }}>
+          {TYPES.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
+        </select>
+      </Field>
 
       {q.uiType === 'MCQ' && (
         <div style={{ maxWidth: 300, marginBottom: 18 }}>
@@ -941,7 +774,7 @@ function QuestionEditor(props: {
           <Select value={q.origType || 'MCQ'} onValueChange={(origType) => update({ origType: origType === 'MCQ' ? undefined : origType })}>
             <SelectTrigger style={{ marginTop: 7 }}><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="MCQ">Standard multiple choice</SelectItem>
+              <SelectItem value="MCQ">Standard multiple choice</SelectItem>{q.origType === 'MULTIPLE_CHOICE' && <SelectItem value="MULTIPLE_CHOICE">Multiple choice (legacy)</SelectItem>}
               <SelectItem value="GED_RLA_PASSAGE">GED Reasoning Through Language Arts</SelectItem>
               <SelectItem value="GED_MATH">GED Mathematical Reasoning</SelectItem>
               <SelectItem value="GED_SCIENCE">GED Science</SelectItem>
@@ -967,7 +800,7 @@ function QuestionEditor(props: {
       />
       <p style={{ fontSize: 11, color: C.muted2, margin: '6px 0 20px' }}>Inline $…$ · display $$…$$</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(180px,.7fr)', gap: 14, marginBottom: 20 }}>
+      <div className="gs-detail-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(180px,.7fr)', gap: 14, marginBottom: 20 }}>
         <div>
           <RailLabel>Reading passage or source (optional)</RailLabel>
           <textarea value={q.passageText || ''} onChange={(e) => update({ passageText: e.target.value })} rows={5}
@@ -984,28 +817,21 @@ function QuestionEditor(props: {
       {/* type-specific editors */}
       {optionLike && (
         <div>
-          <RailLabel>{q.uiType === 'HOTSPOT' ? 'Regions — tap the circle to mark correct' : 'Options — tap the circle to mark correct'}</RailLabel>
-          {q.uiType === 'HOTSPOT' && (
-            <div style={{ margin: '10px 0', height: 120, borderRadius: 12, background: 'linear-gradient(135deg,#eef4ff,#f7f2ff)', position: 'relative', border: `1px solid ${C.border2}` }}>
-              {q.options.map((o, i) => (
-                <span key={i} style={{ position: 'absolute', left: `${12 + (i * 68) % 260}px`, top: `${20 + (i % 2) * 50}px`, width: 26, height: 26, borderRadius: 999, display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 800, color: '#fff', background: o.c ? C.green : '#ff6b00' }}>{i + 1}</span>
-              ))}
-            </div>
-          )}
+          <RailLabel>{q.uiType === 'HOTSPOT' ? 'Answers — select every correct option' : 'Options — tap the circle to mark correct'}</RailLabel>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
             {q.options.map((o, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, border: `1px solid ${o.c ? '#bfead0' : C.border3}`, background: o.c ? C.greenBg : C.surface, borderRadius: 10, padding: '6px 10px' }}>
-                <button onClick={() => setCorrect(i)} title="Mark correct"
+                <button aria-label={`Mark option ${i + 1} correct`} aria-pressed={o.c} onClick={() => setCorrect(i)} title="Mark correct"
                   style={{ width: 24, height: 24, borderRadius: 999, flexShrink: 0, display: 'grid', placeItems: 'center', cursor: 'pointer', border: o.c ? 'none' : '1.5px solid #d3d3d3', background: o.c ? C.green : C.surface, color: '#fff' }}>
                   {o.c && <Check size={13} strokeWidth={3} />}
                 </button>
-                <input value={o.t} onChange={(e) => setOptText(i, e.target.value)} placeholder={`Option ${i + 1}`}
+                <input readOnly={q.uiType === 'TF'} aria-label={`Option ${i + 1}`} value={o.t} onChange={(e) => setOptText(i, e.target.value)} placeholder={`Option ${i + 1}`}
                   style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14, background: 'transparent', color: C.ink }} />
-                <button onClick={() => delOpt(i)} disabled={q.options.length <= 2} style={{ border: 'none', background: 'transparent', color: '#cdcdcd', cursor: q.options.length <= 2 ? 'not-allowed' : 'pointer', opacity: q.options.length <= 2 ? 0.4 : 1 }}><X size={15} /></button>
+                <button aria-label={`Remove option ${i + 1}`} onClick={() => delOpt(i)} disabled={q.options.length <= 2} style={{ border: 'none', background: 'transparent', color: '#cdcdcd', cursor: q.options.length <= 2 ? 'not-allowed' : 'pointer', opacity: q.options.length <= 2 ? 0.4 : 1 }}><X size={15} /></button>
               </div>
             ))}
           </div>
-          <button onClick={addOpt} style={{ marginTop: 9, display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 700, color: C.purpleText, background: 'transparent', border: `1.5px dashed ${C.tint100}`, borderRadius: 9, padding: '7px 12px', cursor: 'pointer' }}>
+          <button disabled={q.uiType === 'TF'} onClick={addOpt} style={{ marginTop: 9, display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 700, color: C.purpleText, background: 'transparent', border: `1.5px dashed ${C.tint100}`, borderRadius: 9, padding: '7px 12px', cursor: 'pointer' }}>
             <Plus size={13} /> Add option
           </button>
         </div>
@@ -1018,9 +844,9 @@ function QuestionEditor(props: {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {q.options.map((o, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, border: `1px solid ${o.c ? '#bfead0' : C.border3}`, background: o.c ? C.greenBg : C.surface, borderRadius: 10, padding: '6px 10px' }}>
-                <button onClick={() => setCorrect(i)} style={{ width: 24, height: 24, borderRadius: 999, flexShrink: 0, display: 'grid', placeItems: 'center', cursor: 'pointer', border: o.c ? 'none' : '1.5px solid #d3d3d3', background: o.c ? C.green : C.surface, color: '#fff' }}>{o.c && <Check size={13} strokeWidth={3} />}</button>
-                <input value={o.t} onChange={(e) => setOptText(i, e.target.value)} placeholder={`Word ${i + 1}`} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14, background: 'transparent' }} />
-                <button onClick={() => delOpt(i)} disabled={q.options.length <= 2} style={{ border: 'none', background: 'transparent', color: '#cdcdcd', cursor: 'pointer', opacity: q.options.length <= 2 ? 0.4 : 1 }}><X size={15} /></button>
+                <button aria-label={`Mark option ${i + 1} correct`} aria-pressed={o.c} onClick={() => setCorrect(i)} style={{ width: 24, height: 24, borderRadius: 999, flexShrink: 0, display: 'grid', placeItems: 'center', cursor: 'pointer', border: o.c ? 'none' : '1.5px solid #d3d3d3', background: o.c ? C.green : C.surface, color: '#fff' }}>{o.c && <Check size={13} strokeWidth={3} />}</button>
+                <input aria-label={`Option ${i + 1}`} value={o.t} onChange={(e) => setOptText(i, e.target.value)} placeholder={`Word ${i + 1}`} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14, background: 'transparent' }} />
+                <button aria-label={`Remove option ${i + 1}`} onClick={() => delOpt(i)} disabled={q.options.length <= 2} style={{ border: 'none', background: 'transparent', color: '#cdcdcd', cursor: 'pointer', opacity: q.options.length <= 2 ? 0.4 : 1 }}><X size={15} /></button>
               </div>
             ))}
           </div>
@@ -1042,10 +868,10 @@ function QuestionEditor(props: {
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 26, paddingTop: 18, borderTop: `1px solid ${C.border2}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <RailLabel>Points</RailLabel>
-          <input type="number" min={1} value={q.points} onChange={(e) => update({ points: Math.max(1, Number(e.target.value) || 1) })}
+          <input aria-label="Question points" type="number" min={1} value={q.points} onChange={(e) => update({ points: Math.max(1, Number(e.target.value) || 1) })}
             style={{ width: 70, border: `1px solid ${C.border3}`, borderRadius: 9, padding: '7px 10px', fontSize: 14, outline: 'none' }} />
         </div>
-        <button onClick={generateSimilar} disabled={generating}
+        <button onClick={generateSimilar} disabled={generating || q.uiType !== 'MCQ' || !q.text.trim()}
           style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: '#fff', background: q.uiType === 'MCQ' ? C.purple : '#9a9a9a', border: 'none', borderRadius: 999, padding: '9px 16px', cursor: q.uiType === 'MCQ' ? 'pointer' : 'not-allowed', opacity: q.uiType === 'MCQ' ? 1 : 0.6 }}
           title={q.uiType === 'MCQ' ? '' : 'Available for MCQ questions'}>
           {generating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />} Generate 3 similar
@@ -1055,16 +881,20 @@ function QuestionEditor(props: {
   );
 }
 
-function EmptyEditor({ onAdd }: { onAdd: () => void }) {
-  return (
-    <div style={{ minHeight: 400, display: 'grid', placeItems: 'center', textAlign: 'center' }}>
-      <div>
-        <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 4 }}>No questions yet</div>
-        <div style={{ fontSize: 13, color: C.muted, marginBottom: 14 }}>Add your first question to get started.</div>
-        <button onClick={onAdd} style={{ fontSize: 13, fontWeight: 700, color: '#fff', background: C.purple, border: 'none', borderRadius: 10, padding: '9px 18px', cursor: 'pointer' }}>Add question</button>
-      </div>
-    </div>
-  );
+function EmptyEditor({ onAdd }: { onAdd: (type: UIType) => void }) {
+  const reduceMotion = useReducedMotion();
+  const labels: Record<UIType, [string, string]> = {
+    MCQ: ['Multiple choice', 'Choose one correct answer'], TF: ['True or false', 'A quick knowledge check'],
+    SHORT: ['Short answer', 'A written response'], ESSAY: ['Essay', 'A longer, graded response'],
+    DRAG: ['Fill in the blanks', 'Place words from a word bank'], DROPDOWN: ['Drop-down', 'Choose from a list'],
+    HOTSPOT: ['Multiple selection', 'Choose all correct answers'], EXTENDED: ['Extended response', 'Evidence and reasoning'],
+  };
+  return <motion.div className="gs-empty" initial={reduceMotion ? false : { opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .18 }}>
+    <ListChecks size={28} style={{ color: C.purpleText }} />
+    <h2>Build your first question</h2>
+    <p>Start with a question type. Add your prompt and answer key, then try it in the student preview.</p>
+    <div className="gs-types">{TYPES.map(t => <button key={t.key} onClick={() => onAdd(t.key)}><Plus size={16} style={{ color: C.purpleText, flexShrink: 0 }} /><span><strong>{labels[t.key][0]}</strong><small>{labels[t.key][1]}</small></span></button>)}</div>
+  </motion.div>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -1086,7 +916,7 @@ function DetailsStep(p: any) {
             ['K12_MIDDLE', 'Grades 6–8', 'Balanced classroom assessment'],
             ['K12_HIGH', 'Grades 9–12', 'Focused high-school exam'],
           ].map(([key, label, note]) => (
-            <button key={key} type="button" onClick={() => p.applyPreset(key)} style={{ textAlign: 'left', padding: '10px 12px', borderRadius: 11, cursor: 'pointer', border: `1.5px solid ${p.audience === key ? C.purple : C.border3}`, background: p.audience === key ? C.tint50 : C.surface, color: C.ink }}>
+            <button key={key} type="button" disabled={p.hasAttempts} onClick={() => p.applyPreset(key)} style={{ textAlign: 'left', padding: '10px 12px', borderRadius: 11, cursor: 'pointer', border: `1.5px solid ${p.audience === key ? C.purple : C.border3}`, background: p.audience === key ? C.tint50 : C.surface, color: C.ink }}>
               <div style={{ fontSize: 13, fontWeight: 800 }}>{label}</div>
               <div style={{ fontSize: 10.5, color: C.muted, marginTop: 2 }}>{note}</div>
             </button>
@@ -1095,22 +925,22 @@ function DetailsStep(p: any) {
       </Field>
 
       <Field label="Title"><input value={p.title} onChange={(e: any) => p.setTitle(e.target.value)} style={inputStyle} placeholder="e.g. Algebra II — Unit 4 Mock" /></Field>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+      <div className="gs-detail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
         <Field label="Subject">
-          <Select value={p.subjectId} onValueChange={p.setSubjectId}>
+          <Select disabled={p.hasAttempts} value={p.subjectId} onValueChange={p.setSubjectId}>
             <SelectTrigger><SelectValue placeholder="Select subject" /></SelectTrigger>
             <SelectContent>{p.subjects.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
         <Field label="Class">
-          <Select value={p.classId} onValueChange={p.setClassId}>
+          <Select disabled={p.hasAttempts} value={p.classId} onValueChange={p.setClassId}>
             <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
             <SelectContent>{p.classes.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
       </div>
       <Field label="Exam type">
-        <Select value={p.examType} onValueChange={p.setExamType}>
+        <Select disabled={p.hasAttempts} value={p.examType} onValueChange={p.setExamType}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="QUIZ">Quiz</SelectItem>
@@ -1138,10 +968,11 @@ function DetailsStep(p: any) {
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  const fieldId = useId();
   return (
     <div style={{ marginBottom: 16 }}>
-      <div style={{ marginBottom: 6 }}><RailLabel>{label}</RailLabel></div>
-      {children}
+      <div id={fieldId} style={{ marginBottom: 6 }}><RailLabel>{label}</RailLabel></div>
+      {Children.map(children, child => isValidElement(child) && typeof child.type === 'string' && ['input', 'textarea', 'select'].includes(child.type) ? cloneElement(child as any, { 'aria-labelledby': fieldId }) : child)}
     </div>
   );
 }
@@ -1159,10 +990,11 @@ function ScheduleStep(p: any) {
       <p style={{ fontSize: 13.5, color: C.muted, margin: '4px 0 22px' }}>When and how students can take the exam.</p>
 
       <RailLabel>Availability window</RailLabel>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, margin: '8px 0 12px' }}>
-        <div><div style={{ fontSize: 11.5, color: C.muted, marginBottom: 4 }}>Opens</div><input type="datetime-local" value={p.opensAt} onChange={(e: any) => p.setOpensAt(e.target.value)} style={inputStyle} /></div>
-        <div><div style={{ fontSize: 11.5, color: C.muted, marginBottom: 4 }}>Closes</div><input type="datetime-local" value={p.closesAt} onChange={(e: any) => p.setClosesAt(e.target.value)} style={inputStyle} /></div>
+      <div className="gs-detail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, margin: '8px 0 12px' }}>
+        <div><div style={{ fontSize: 11.5, color: C.muted, marginBottom: 4 }}>Opens</div><input aria-label="Opens" type="datetime-local" value={p.opensAt} onChange={(e: any) => p.setOpensAt(e.target.value)} style={inputStyle} /></div>
+        <div><div style={{ fontSize: 11.5, color: C.muted, marginBottom: 4 }}>Closes</div><input aria-label="Closes" type="datetime-local" value={p.closesAt} onChange={(e: any) => p.setClosesAt(e.target.value)} style={inputStyle} /></div>
       </div>
+      <p style={{ fontSize: 12, color: C.muted }}>Dates are optional and use your local time zone. Leave blank for no opening or closing restriction.</p>
       {p.windowInfo && !p.windowInfo.warning && (
         <div style={{ display: 'inline-block', fontSize: 12.5, fontWeight: 600, color: C.purpleText, background: C.tint50, borderRadius: 999, padding: '6px 13px', marginBottom: 14 }}>
           {fmt(p.windowInfo.o)} → {fmt(p.windowInfo.c)} · {Math.floor(p.windowInfo.mins / 60)}h {p.windowInfo.mins % 60}m window
@@ -1183,7 +1015,7 @@ function ScheduleStep(p: any) {
 
       <div style={{ marginTop: 8 }}>
         <Toggle on={p.shuffle} onChange={p.setShuffle} label="Shuffle question order" />
-        <Toggle on={p.allowPause} onChange={p.setAllowPause} label="Allow pause & resume" />
+
         <Toggle on={p.lockdown} onChange={p.setLockdown} label="Lockdown browser" />
         {p.lockdown && <div style={{ padding: '4px 14px 10px', border: `1px solid ${C.border2}`, borderRadius: 12, background: C.panel }}>
           <Toggle on={p.requireFullscreen} onChange={p.setRequireFullscreen} label="Require fullscreen during the attempt" />
@@ -1191,6 +1023,7 @@ function ScheduleStep(p: any) {
           <Toggle on={p.warnOnFocusLoss} onChange={p.setWarnOnFocusLoss} label="Record tab and window focus changes" />
           <p style={{ fontSize: 11, color: C.muted, margin: '8px 0 2px' }}>Integrity events are visible to teachers. Browser controls deter common actions but cannot guarantee prevention on every device.</p>
         </div>}
+        <p style={{ fontSize: 12, color: C.muted, marginTop: 12 }}>Students can pause the timer only when they have an extra-breaks accommodation.</p>
         <Toggle on={p.honorAccom} onChange={p.setHonorAccom} label="Honor accommodations" />
       </div>
 
@@ -1207,6 +1040,7 @@ function AccommodationPanel({ accom, setAccom, open, setOpen, roster, duration }
   const add = () => {
     const used = new Set(accom.map((a: Accom) => a.studentId));
     const next = roster.find((r: any) => !used.has(r.id));
+    if (!next) return;
     const name = next?.name || 'New student';
     setAccom([...accom, { id: `a_${Date.now()}`, studentId: next?.id || '', name, initials: initials(name), multiplier: 1.5, readAloud: false, breaks: false, note: '' }]);
   };
@@ -1223,9 +1057,9 @@ function AccommodationPanel({ accom, setAccom, open, setOpen, roster, duration }
             <div key={a.id} style={{ border: `1px solid ${C.border2}`, borderRadius: 12, padding: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                 <span style={{ width: 30, height: 30, borderRadius: 999, background: C.tint100, color: C.purpleText, display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 800 }}>{a.initials}</span>
-                <input value={a.name} onChange={(e) => upd(a.id, { name: e.target.value, initials: initials(e.target.value) })} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14, fontWeight: 600 }} />
+                <select aria-label="Student receiving accommodation" value={a.studentId} onChange={e => { const student = roster.find((r: any) => r.id === e.target.value); if (student) upd(a.id, { studentId: student.id, name: student.name, initials: initials(student.name), accId: undefined }); }} style={{ flex: 1, minWidth: 0 }}>{!roster.some((r: any) => r.id === a.studentId) && <option value={a.studentId}>{a.name}</option>}{roster.filter((r: any) => r.id === a.studentId || !accom.some((other: Accom) => other.studentId === r.id)).map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}</select>
                 <span style={{ fontSize: 11.5, fontWeight: 700, color: C.purpleText, background: C.tint50, borderRadius: 999, padding: '4px 10px' }}>{Math.round(duration * a.multiplier)} min total</span>
-                <button onClick={() => setAccom(accom.filter((x: Accom) => x.id !== a.id))} style={{ border: 'none', background: 'transparent', color: '#cdcdcd', cursor: 'pointer' }}><X size={15} /></button>
+                <button aria-label={`Remove accommodation for ${a.name}`} onClick={() => setAccom(accom.filter((x: Accom) => x.id !== a.id))} style={{ border: 'none', background: 'transparent', color: '#cdcdcd', cursor: 'pointer' }}><X size={15} /></button>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
                 <div style={{ display: 'inline-flex', border: `1px solid ${C.border3}`, borderRadius: 8, overflow: 'hidden' }}>
@@ -1239,7 +1073,7 @@ function AccommodationPanel({ accom, setAccom, open, setOpen, roster, duration }
               </div>
             </div>
           ))}
-          <button onClick={add} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 10, border: `1.5px dashed ${C.tint100}`, background: C.surface, color: C.purpleText, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}><Plus size={13} /> Add student override</button>
+          <button disabled={!roster.some((r: any) => !accom.some((a: Accom) => a.studentId === r.id))} onClick={add} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 10, border: `1.5px dashed ${C.tint100}`, background: C.surface, color: C.purpleText, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}><Plus size={13} /> Add student override</button>
         </div>
       )}
     </div>
@@ -1273,15 +1107,15 @@ function GradingStep(p: any) {
             <div style={{ fontSize: 12, color: C.muted }}>Minimum to pass · {p.passPoints} of {p.totalPoints} points</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <input type="number" min={0} max={100} value={p.passMark} onChange={(e: any) => p.setPassMark(Number(e.target.value))} style={{ width: 64, border: `1px solid ${C.border3}`, borderRadius: 10, padding: '8px 10px', fontSize: 15, fontWeight: 700, textAlign: 'center', outline: 'none' }} />
+            <input aria-label="Pass mark percentage" type="number" min={0} max={100} step="any" value={Number(p.passMark.toFixed(2))} onChange={(e: any) => p.setPassMark(Number(e.target.value))} style={{ width: 64, border: `1px solid ${C.border3}`, borderRadius: 10, padding: '8px 10px', fontSize: 15, fontWeight: 700, textAlign: 'center', outline: 'none' }} />
             <span style={{ fontSize: 14, color: C.muted }}>%</span>
           </div>
         </div>
       </div>
 
       <RailLabel>Release scores</RailLabel>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, margin: '10px 0 20px' }}>
-        {[{ k: 'immediately', l: 'Immediately' }, { k: 'approve', l: 'When I approve' }, { k: 'closed', l: 'After exam closes' }].map((o) => {
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 10, margin: '10px 0 20px' }}>
+        {[{ k: 'immediately', l: 'Immediately' }, { k: 'approve', l: 'After grading' }, { k: 'closed', l: 'At a scheduled time' }, { k: 'hidden', l: 'Keep hidden' }].map((o) => {
           const on = p.release === o.k;
           return (
             <button key={o.k} onClick={() => p.setRelease(o.k)} style={{ padding: '14px 12px', borderRadius: 12, cursor: 'pointer', textAlign: 'left', fontSize: 13, fontWeight: 700, border: `1.5px solid ${on ? C.purple : C.border3}`, background: on ? C.tint50 : C.surface, color: on ? C.purpleText : C.ink }}>{o.l}</button>
@@ -1289,15 +1123,16 @@ function GradingStep(p: any) {
         })}
       </div>
 
+      {p.release === 'closed' && <Field label="Release date and time"><input type="datetime-local" value={p.releaseAt} onChange={e => p.setReleaseAt(e.target.value)} /><p>If left blank, results release at the exam close time.</p></Field>}
       <div>
-        <Toggle on={p.autoGrade} onChange={p.setAutoGrade} label="Auto-grade objective questions" />
+
         <Toggle on={p.showAnswers} onChange={p.setShowAnswers} label="Show correct answers after release" />
-        <Toggle on={p.allowRegrade} onChange={p.setAllowRegrade} label="Allow regrade requests" />
-        <Toggle on={p.latePenalty} onChange={p.setLatePenalty} label="Late submission penalty (10%)" />
-        <Toggle on={p.syncGradebook} onChange={p.setSyncGradebook} label="Sync to gradebook" />
+
+
+
       </div>
 
-      <button onClick={p.goPublish} style={{ marginTop: 22, fontSize: 13, fontWeight: 700, color: '#fff', background: C.action, border: 'none', borderRadius: 10, padding: '10px 18px', cursor: 'pointer' }}>Review & publish →</button>
+      <button onClick={p.goPublish} style={{ marginTop: 22, fontSize: 13, fontWeight: 700, color: '#fff', background: C.action, border: 'none', borderRadius: 10, padding: '10px 18px', cursor: 'pointer' }}>Publish exam →</button>
     </div>
   );
 }
@@ -1320,10 +1155,12 @@ function renderQuestionText(text: string) {
 }
 
 function PreviewCard({ q, index, total, minutes }: { q?: Question; index: number; total: number; minutes: number }) {
+  const [answer, setAnswer] = useState<any>(null);
+  useEffect(() => setAnswer(null), [q]);
   if (!q) return <div style={{ padding: 24, textAlign: 'center', color: C.muted2, fontSize: 13 }}>Select or add a question to preview.</div>;
   return (
     <div style={{ borderRadius: 16, background: C.surface, border: `1px solid ${C.border2}`, boxShadow: '0 8px 24px -14px rgba(0,0,0,.25)', overflow: 'hidden' }}>
-      <div style={{ height: 5, background: 'linear-gradient(90deg,#7a3dff,#ed52cb)' }} />
+      <div style={{ height: 5, background: C.purple }} />
       <div style={{ padding: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: C.muted2 }}>Q{index + 1} / {total}</span>
@@ -1332,7 +1169,7 @@ function PreviewCard({ q, index, total, minutes }: { q?: Question; index: number
         <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 14, lineHeight: 1.4 }}>{renderQuestionText(q.text || 'Your question text appears here.')}</div>
         {q.passageText && <div style={{ fontSize: 12, lineHeight: 1.55, whiteSpace: 'pre-wrap', color: C.muted, background: C.panel, border: `1px solid ${C.border2}`, borderRadius: 10, padding: 10, marginBottom: 12 }}>{q.passageText}</div>}
         {q.imageUrl && <img src={q.imageUrl} alt="Question illustration" style={{ display: 'block', maxWidth: '100%', maxHeight: 180, objectFit: 'contain', borderRadius: 10, marginBottom: 12, border: `1px solid ${C.border2}` }} />}
-        <StudentInput q={q} value={null} onChange={() => {}} small />
+        <StudentInput key={q.id} q={q} value={answer} onChange={setAnswer} small />
       </div>
     </div>
   );
@@ -1340,52 +1177,41 @@ function PreviewCard({ q, index, total, minutes }: { q?: Question; index: number
 
 /** The interactive answer control for one question (used in the player). */
 function StudentInput({ q, value, onChange, small }: { q: Question; value: any; onChange: (v: any) => void; small?: boolean }) {
+  const [selectedWord, setSelectedWord] = useState<number | null>(null);
   const optPad = small ? '9px 12px' : '15px 18px';
   const fs = small ? 13.5 : 16;
 
   if (q.uiType === 'DROPDOWN') {
     return (
-      <select value={value ?? ''} onChange={(e) => onChange(e.target.value)} style={{ width: '100%', border: `1px solid ${C.border3}`, borderRadius: 10, padding: optPad, fontSize: fs, outline: 'none' }}>
+      <select aria-label="Preview answer" value={value ?? ''} onChange={(e) => onChange(e.target.value)} style={{ width: '100%', border: `1px solid ${C.border3}`, borderRadius: 10, padding: optPad, fontSize: fs, outline: 'none' }}>
         <option value="">Select…</option>
         {q.options.map((o, i) => <option key={i} value={i}>{o.t}</option>)}
       </select>
     );
   }
   if (q.uiType === 'SHORT' || q.uiType === 'ESSAY' || q.uiType === 'EXTENDED') {
-    return <textarea value={value ?? ''} onChange={(e) => onChange(e.target.value)} rows={q.uiType === 'SHORT' ? 2 : 5} placeholder="Type your answer…" style={{ width: '100%', border: `1px solid ${C.border3}`, borderRadius: 12, padding: optPad, fontSize: fs, outline: 'none', resize: 'vertical', fontFamily: 'inherit' }} />;
+    return <textarea aria-label="Preview answer" value={value ?? ''} onChange={(e) => onChange(e.target.value)} rows={q.uiType === 'SHORT' ? 2 : 5} placeholder="Type your answer…" style={{ width: '100%', border: `1px solid ${C.border3}`, borderRadius: 12, padding: optPad, fontSize: fs, outline: 'none', resize: 'vertical', fontFamily: 'inherit' }} />;
   }
   if (q.uiType === 'DRAG') {
-    const parts = (q.text || '').split(/_{2,}|___/);
-    return (
-      <div>
-        <div style={{ fontSize: fs, lineHeight: 1.9 }}>
-          {parts.map((seg, i) => (
-            <span key={i}>{seg}{i < parts.length - 1 && <span style={{ display: 'inline-block', minWidth: 60, borderBottom: `2px dashed ${C.purple}`, margin: '0 4px' }}>&nbsp;</span>}</span>
-          ))}
-        </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 12 }}>
-          {q.options.map((o, i) => <span key={i} style={{ fontSize: 13, fontWeight: 600, padding: '6px 12px', borderRadius: 8, background: C.tint50, color: C.purpleText, border: `1px solid ${C.tint100}` }}>{o.t || `word ${i + 1}`}</span>)}
-        </div>
-      </div>
-    );
-  }
-  if (q.uiType === 'HOTSPOT') {
-    return (
-      <div style={{ height: small ? 130 : 200, borderRadius: 12, background: 'linear-gradient(135deg,#eef4ff,#f7f2ff)', position: 'relative', border: `1px solid ${C.border2}` }}>
-        {q.options.map((o, i) => {
-          const on = value === i;
-          return <button key={i} onClick={() => onChange(i)} style={{ position: 'absolute', left: `${12 + (i * 70) % 260}px`, top: `${24 + (i % 2) * 70}px`, width: 30, height: 30, borderRadius: 999, border: 'none', cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 800, color: '#fff', background: on ? C.purple : '#8a8a8a', boxShadow: on ? `0 0 0 5px ${C.tint100}` : 'none' }}>{i + 1}</button>;
-        })}
-      </div>
-    );
+    const parts = (q.text || '').split(/_{2,}/);
+    const matches: Record<number, number> = value || {};
+    const place = (blank: number, word: number) => {
+      if (!q.options[word]) return;
+      const next = Object.fromEntries(Object.entries(matches).filter(([, v]) => v !== word));
+      onChange({ ...next, [blank]: word }); setSelectedWord(null);
+    };
+    return <div><p style={{ color: C.muted, fontSize: 12, marginBottom: 12 }}>Drag a word to a blank, or select a word then a blank. Select a filled blank to clear it.</p>
+      <div style={{ lineHeight: 2.6 }}>{parts.map((part, i) => <span key={i}>{part}{i < parts.length - 1 && <button aria-label={`Blank ${i + 1}`} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); const word = e.dataTransfer.getData('text/plain'); if (word !== '') place(i, Number(word)); }} onClick={() => { if (selectedWord !== null) place(i, selectedWord); else { const next = { ...matches }; delete next[i]; onChange(next); } }} style={{ minWidth: 70, border: `1px dashed ${C.purple}`, margin: '0 4px', padding: '0 8px', borderRadius: 4 }}>{q.options[matches[i]]?.t || '…'}</button>}</span>)}</div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>{q.options.map((o, i) => <button key={i} disabled={Object.values(matches).includes(i)} draggable onDragStart={e => e.dataTransfer.setData('text/plain', String(i))} aria-pressed={selectedWord === i} onClick={() => setSelectedWord(selectedWord === i ? null : i)} style={{ padding: '6px 10px', border: `1px solid ${selectedWord === i ? C.purple : C.border}`, background: C.tint50, color: C.purpleText }}>{o.t || `Word ${i + 1}`}</button>)}</div>
+    </div>;
   }
   // MCQ / TF as big option buttons
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: small ? 8 : 12 }}>
       {q.options.map((o, i) => {
-        const on = value === i;
+        const on = q.uiType === 'HOTSPOT' ? Array.isArray(value) && value.includes(i) : value === i;
         return (
-          <button key={i} onClick={() => onChange(i)} style={{ display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', padding: optPad, borderRadius: 12, cursor: 'pointer', border: `2px solid ${on ? C.purple : C.border3}`, background: on ? C.tint50 : C.surface, fontSize: fs, color: C.ink, transition: 'all .15s' }}>
+          <button key={i} aria-pressed={on} onClick={() => onChange(q.uiType === 'HOTSPOT' ? (on ? value.filter((v: number) => v !== i) : [...(Array.isArray(value) ? value : []), i]) : i)} style={{ display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', padding: optPad, borderRadius: 12, cursor: 'pointer', border: `2px solid ${on ? C.purple : C.border3}`, background: on ? C.tint50 : C.surface, fontSize: fs, color: C.ink, transition: 'all .15s' }}>
             {!small && <span style={{ width: 26, height: 26, borderRadius: 999, border: `1px solid ${on ? C.purple : '#d3d3d3'}`, color: on ? C.purpleText : C.muted, display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{String.fromCharCode(65 + i)}</span>}
             <span style={{ flex: 1 }}><MathText text={o.t || `Option ${String.fromCharCode(65 + i)}`} /></span>
           </button>
@@ -1410,6 +1236,8 @@ function StudentPlayer({ questions, title, minutes, onClose }: { questions: Ques
     return () => { if (timerRef.current) window.clearInterval(timerRef.current); };
   }, []);
 
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => { const dialog = dialogRef.current; dialog?.showModal(); return () => dialog?.close(); }, []);
   const q = questions[pIdx];
   const total = questions.length;
   const frac = minutes > 0 ? remaining / (minutes * 60) : 1;
@@ -1417,27 +1245,27 @@ function StudentPlayer({ questions, title, minutes, onClose }: { questions: Ques
 
   if (!q) {
     return (
-      <div style={overlayStyle}>
+      <dialog ref={dialogRef} onCancel={onClose} aria-label="Student preview" className="guided-studio" style={{ ...overlayStyle, margin: 0, maxWidth: 'none', maxHeight: 'none', width: '100vw', height: '100dvh', border: 0 }}>
         <div style={{ background: C.surface, borderRadius: 16, padding: 40, textAlign: 'center' }}>
           <p style={{ fontSize: 15, color: C.muted }}>No questions to preview yet.</p>
           <button onClick={onClose} style={{ marginTop: 14, fontSize: 13, fontWeight: 700, color: '#fff', background: C.action, border: 'none', borderRadius: 10, padding: '9px 18px', cursor: 'pointer' }}>Close</button>
         </div>
-      </div>
+      </dialog>
     );
   }
 
   return (
-    <div style={overlayStyle}>
+    <dialog ref={dialogRef} onCancel={onClose} aria-label="Student preview" className="guided-studio" style={{ ...overlayStyle, margin: 0, maxWidth: 'none', maxHeight: 'none', width: '100vw', height: '100dvh', border: 0 }}>
       {/* header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 24px' }}>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 15, fontWeight: 800, color: C.ink }}>{title || 'Untitled exam'}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: C.muted, marginTop: 2 }}>
-            <span style={{ width: 7, height: 7, borderRadius: 999, background: C.green }} /> Autosaved · preview mode
+            <span style={{ width: 7, height: 7, borderRadius: 999, background: C.green }} /> Preview only · answers are not saved
           </div>
         </div>
         <TimerRing frac={frac} mm={mm} />
-        <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: 999, border: `1px solid ${C.border3}`, background: C.surface, color: C.ink, cursor: 'pointer', display: 'grid', placeItems: 'center' }}><X size={17} /></button>
+        <button aria-label="Close preview" onClick={onClose} style={{ width: 36, height: 36, borderRadius: 999, border: `1px solid ${C.border3}`, background: C.surface, color: C.ink, cursor: 'pointer', display: 'grid', placeItems: 'center' }}><X size={17} /></button>
       </div>
 
       {/* progress dots */}
@@ -1454,7 +1282,7 @@ function StudentPlayer({ questions, title, minutes, onClose }: { questions: Ques
           <h2 style={{ fontSize: 24, fontWeight: 800, color: C.ink, lineHeight: 1.35, marginBottom: 26 }}>{renderQuestionText(q.text || 'Question text')}</h2>
           {q.passageText && <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, background: C.panel, border: `1px solid ${C.border2}`, borderRadius: 14, padding: 18, marginBottom: 20, color: C.ink }}>{q.passageText}</div>}
           {q.imageUrl && <img src={q.imageUrl} alt="Question illustration" style={{ display: 'block', maxWidth: '100%', maxHeight: 320, objectFit: 'contain', borderRadius: 12, marginBottom: 20 }} />}
-          <StudentInput q={q} value={answers[pIdx] ?? null} onChange={(v) => setAnswers((a) => ({ ...a, [pIdx]: v }))} />
+          <StudentInput key={q.id} q={q} value={answers[pIdx] ?? null} onChange={(v) => setAnswers((a) => ({ ...a, [pIdx]: v }))} />
         </div>
       </div>
 
@@ -1464,10 +1292,10 @@ function StudentPlayer({ questions, title, minutes, onClose }: { questions: Ques
         {pIdx < total - 1 ? (
           <button onClick={() => setPIdx((i) => i + 1)} style={{ fontSize: 13, fontWeight: 700, color: '#fff', background: C.action, border: 'none', borderRadius: 10, padding: '9px 18px', cursor: 'pointer' }}>Next →</button>
         ) : (
-          <button onClick={() => { toast.success('Exam submitted (preview).'); onClose(); }} style={{ fontSize: 13, fontWeight: 800, color: '#fff', background: C.green, border: 'none', borderRadius: 10, padding: '9px 20px', cursor: 'pointer' }}>Submit exam</button>
+          <button onClick={() => { toast.success('Preview complete. No attempt was submitted.'); onClose(); }} style={{ fontSize: 13, fontWeight: 800, color: '#fff', background: C.green, border: 'none', borderRadius: 10, padding: '9px 20px', cursor: 'pointer' }}>Submit exam</button>
         )}
       </div>
-    </div>
+    </dialog>
   );
 }
 
@@ -1493,22 +1321,10 @@ function TimerRing({ frac, mm }: { frac: number; mm: number }) {
 /* ------------------------------------------------------------------ */
 
 function PublishModal({ title, className, count, points, onEdit, onDashboard }: { title: string; className: string; count: number; points: number; onEdit: () => void; onDashboard: () => void }) {
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 70, background: 'rgba(20,16,30,.45)', backdropFilter: 'blur(4px)', display: 'grid', placeItems: 'center', padding: 20 }}>
-      <div style={{ width: '100%', maxWidth: 420, background: C.surface, borderRadius: 20, padding: 30, textAlign: 'center', boxShadow: '0 30px 70px -20px rgba(0,0,0,.5)', animation: 'gs-pop .18s ease' }}>
-        <div style={{ width: 60, height: 60, borderRadius: 999, background: C.greenBg, display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
-          <Check size={30} strokeWidth={3} color={C.greenText} />
-        </div>
-        <div style={{ fontSize: 20, fontWeight: 800, color: C.ink }}>Exam published</div>
-        <p style={{ fontSize: 13.5, color: C.muted, margin: '8px 0 22px' }}>
-          "{title || 'Untitled exam'}" is live{className ? ` for ${className}` : ''} — {count} questions · {points} points.
-        </p>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={onEdit} style={{ flex: 1, fontSize: 13, fontWeight: 700, color: C.ink, background: C.surface, border: `1px solid ${C.border3}`, borderRadius: 11, padding: '11px', cursor: 'pointer' }}>Back to editing</button>
-          <button onClick={onDashboard} style={{ flex: 1, fontSize: 13, fontWeight: 800, color: '#fff', background: C.action, border: 'none', borderRadius: 11, padding: '11px', cursor: 'pointer' }}>View dashboard</button>
-        </div>
-      </div>
-      <style>{`@keyframes gs-pop{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}`}</style>
-    </div>
-  );
+  return <Dialog open onOpenChange={open => { if (!open) onEdit(); }}><DialogContent className="sm:max-w-md">
+    <Check size={32} className="text-academic-teal" />
+    <DialogTitle>Exam published</DialogTitle>
+    <DialogDescription>{title} is published{className ? ` for ${className}` : ''}. Students can start when its availability window opens. {count} questions · {points} points.</DialogDescription>
+    <div className="flex gap-3"><button className="rounded border px-4 py-2" onClick={onEdit}>Back to editing</button><button className="rounded bg-academic-teal px-4 py-2 text-white" onClick={onDashboard}>View dashboard</button></div>
+  </DialogContent></Dialog>;
 }

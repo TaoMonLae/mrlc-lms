@@ -1,3 +1,4 @@
+import { examAvailability } from "./shared/examAvailability";
 import express from "express";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
@@ -547,8 +548,8 @@ export function registerExamPhase2Routes(deps: Deps): void {
       }
 
       // If assignments exist for this exam, the student must be assigned.
-      const assignment = await prisma.examAssignment.findUnique({ where: { examId_studentId: { examId, studentId: student.id } } }).catch(() => null);
-      const anyAssignments = await prisma.examAssignment.count({ where: { examId } }).catch(() => 0);
+      const assignment = await prisma.examAssignment.findUnique({ where: { examId_studentId: { examId, studentId: student.id } } });
+      const anyAssignments = await prisma.examAssignment.count({ where: { examId } });
       if (anyAssignments > 0 && !assignment) { res.status(403).json({ error: "You are not assigned to this exam" }); return; }
       // Without explicit assignments, the exam is scoped to its class roster.
       if (!assignment && exam.classId && student.classId !== exam.classId) {
@@ -814,11 +815,6 @@ export function registerExamPhase2Routes(deps: Deps): void {
         return;
       }
 
-      if (isExpired(attempt)) {
-        const finalized = await finalizeSubmission(attempt.id, true, ipOf(req), uaOf(req));
-        res.status(409).json({ error: "TIME_EXPIRED", autoSubmitted: true, state: finalized.state });
-        return;
-      }
 
       const reason = String(b.reason || "AUTOSAVE").toUpperCase();
       if (!["AUTOSAVE", "NAVIGATE", "PAUSE", "SUBMIT"].includes(reason)) {
@@ -839,6 +835,11 @@ export function registerExamPhase2Routes(deps: Deps): void {
       );
       if (answers.some((answer) => !answer?.questionId || !allowedQuestionIds.has(answer.questionId))) {
         res.status(400).json({ error: "One or more answers do not belong to this attempt" });
+        return;
+      }
+      if (isExpired(attempt)) {
+        const finalized = await finalizeSubmission(attempt.id, true, ipOf(req), uaOf(req), answers, b.sessionToken);
+        res.status(409).json({ error: "TIME_EXPIRED", autoSubmitted: true, state: finalized.state });
         return;
       }
       let lastSavedAt = new Date();
@@ -950,6 +951,12 @@ export function registerExamPhase2Routes(deps: Deps): void {
         }
       }
       const expired = isExpired(attempt);
+      // A display timer can be stale after an invigilator grants more time.
+      // Reconcile without finalizing or discarding the client's final answers.
+      if (req.body?.autoSubmit === true && !expired) {
+        res.json({ ok: false, timed: Boolean(attempt.serverDeadline), remainingSeconds: remainingSeconds(attempt), serverTime: new Date().toISOString() });
+        return;
+      }
       const finalized = await finalizeSubmission(attempt.id, expired, ipOf(req), uaOf(req), answers, req.body?.sessionToken);
       res.json({ ok: true, state: finalized.state, autoSubmitted: expired });
     } catch (err: any) {
@@ -1278,7 +1285,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
       const student = await studentForReq(req);
       if (!student) { res.json([]); return; }
       const now = new Date();
-      const assignments = await prisma.examAssignment.findMany({ where: { studentId: student.id }, include: { exam: true } }).catch(() => []);
+      const assignments = await prisma.examAssignment.findMany({ where: { studentId: student.id }, include: { exam: true } });
       const assignedExamIds = new Set(assignments.map((a: any) => a.examId));
       const assignmentByExam = new Map(assignments.map((a: any) => [a.examId, a]));
       // Class exams with a scheduling window, plus explicit assignments.
@@ -1295,29 +1302,23 @@ export function registerExamPhase2Routes(deps: Deps): void {
       // Batch all attempts in one query instead of one query per exam.
       const allAttempts = await prisma.examAttempt.findMany({
         where: { studentId: student.id, examId: { in: consider.map((e: any) => e.id) } },
-      }).catch(() => []);
+      });
       const attemptsByExam: Record<string, any[]> = {};
       for (const a of allAttempts) (attemptsByExam[a.examId] ||= []).push(a);
       for (const e of consider) {
         if (seen.has(e.id)) continue; seen.add(e.id);
         if ((e._count?.assignments || 0) > 0 && !assignedExamIds.has(e.id)) continue;
         const assignment: any = assignmentByExam.get(e.id);
-        const availableFrom = assignment?.availableFromOverride || e.availableFrom;
-        const availableUntil = assignment?.availableUntilOverride || e.availableUntil;
-        const openNow = (!availableFrom || now >= new Date(availableFrom)) && (!availableUntil || now <= new Date(availableUntil) || e.allowLateStart);
-        const attempts = attemptsByExam[e.id] || [];
-        const attemptsUsed = attempts.filter((a: any) => a.state !== "INVALIDATED").length;
+        const availability = examAvailability(e, assignment, attemptsByExam[e.id] || [], now.getTime());
         out.push({
           id: e.id, title: e.title, durationMinutes: e.durationMinutes,
-          availableFrom, availableUntil,
+          ...availability,
           requiresAccessCode: e.requiresAccessCode, assigned: assignedExamIds.has(e.id),
-          openNow, attemptLimit: assignment?.attemptLimitOverride ?? e.attemptLimit, attemptsUsed,
-          activeAttemptId: attempts.find((a: any) => ["IN_PROGRESS", "PAUSED"].includes(a.state))?.id || null,
         });
       }
       res.json(out);
     } catch (err: any) {
-      if (err?.code === "P2021" || err?.code === "P2022") { res.json([]); return; }
+      if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Exam system is temporarily unavailable" }); return; }
       logger.error(err); res.status(500).json({ error: "Internal Server Error" });
     }
   });

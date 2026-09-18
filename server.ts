@@ -1,3 +1,5 @@
+import { saveStudioQuestions } from "./shared/examStudioPersistence";
+import { examAvailability, teacherExamStatus } from "./shared/examAvailability";
 import { collectSchoolFee, syncDonationCampaign, financeTransaction, reviewExpense, recordExpensePayment } from './lib/financeOperations';
 import { FinanceControlError, validateMoney } from './shared/financeControls';
 import {
@@ -1369,6 +1371,7 @@ const schemas = {
     status: z.enum(["DRAFT", "SCHEDULED", "ACTIVE", "CLOSED", "ARCHIVED", "PUBLISHED"]).optional(),
     settings: z.any().optional(),
     questions: z.array(z.object({
+      id: optStr,
       questionText: optStr,
       type: z.enum(["MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER", "ESSAY", "MCQ", "WRITTEN", "GED_RLA_PASSAGE", "GED_MATH", "GED_SCIENCE", "GED_SOCIAL_STUDIES", "DRAG_DROP", "DROPDOWN", "HOTSPOT", "EXTENDED"]).optional(),
       points: z.coerce.number().min(1).optional(),
@@ -14083,6 +14086,7 @@ async function startServer() {
                 },
               }
             : {
+                orderBy: [{ orderIndex: "asc" }, { createdAt: "asc" }],
                 select: {
                   id: true,
                   text: true,
@@ -14090,6 +14094,9 @@ async function startServer() {
                   points: true,
                   options: true,
                   correctAnswer: true,
+                  correctAnswers: true,
+                  partialCredit: true,
+                  orderIndex: true,
                   passageText: true,
                   explanation: true,
                   imageUrl: true,
@@ -14351,28 +14358,7 @@ async function startServer() {
         });
 
         if (existing.attempts.length === 0 && questions !== undefined) {
-          await tx.question.deleteMany({ where: { examId: id } });
-          if (questions && Array.isArray(questions)) {
-            for (let i = 0; i < questions.length; i++) {
-              const q = questions[i];
-              await tx.question.create({
-                data: {
-                  examId: id,
-                  text: String(q.questionText || ""),
-                  type: q.type || "MCQ",
-                  points: Number(q.points ?? 5),
-                  orderIndex: i,
-                  options: q.choices || null,
-                  correctAnswer: q.correctAnswer != null ? String(q.correctAnswer) : null,
-                  correctAnswers: q.correctAnswers ?? null,
-                  partialCredit: !!q.partialCredit,
-                  passageText: q.passageText || null,
-                  explanation: q.explanation || null,
-                  imageUrl: q.imageUrl || null,
-                },
-              });
-            }
-          }
+          await saveStudioQuestions(tx, id, questions || []);
         }
 
         if (exam.status === "PUBLISHED") {
@@ -18202,7 +18188,7 @@ async function startServer() {
             },
           },
         },
-      }).catch(() => []);
+      });
       const assignedExamIds = new Set(assignedRows.map((row: any) => row.examId));
       const classExams = s.classId
         ? await prisma.exam.findMany({
@@ -18228,8 +18214,9 @@ async function startServer() {
       const available: any[] = [];
       const submitted: any[] = [];
       for (const e of exams) {
-        const attempt = e.attempts[0];
-        if (attempt && attempt.isCompleted) {
+        const assignment = assignedRows.find((row: any) => row.examId === e.id);
+        const availability = examAvailability(e, assignment, e.attempts, now);
+        for (const attempt of e.attempts.filter((a: any) => a.isCompleted && a.state !== "INVALIDATED")) {
           const released = isResultReleased(attempt, e.resultPolicy);
           const showScore = e.resultPolicy?.showScore !== false;
           const scoreVisible = released && showScore && attempt.score != null && e.totalMarks;
@@ -18239,22 +18226,20 @@ async function startServer() {
             status: !released ? "Submitted" : (attempt.score != null ? "Graded" : "Grading"),
             score: scoreVisible ? `${attempt.score}/${e.totalMarks}` : null,
           });
-        } else if (["PUBLISHED", "ACTIVE", "SCHEDULED"].includes(e.status)) {
-          // Skip exams whose window has fully closed and can't be late-started.
-          if (e.availableUntil && now > new Date(e.availableUntil).getTime() && !e.allowLateStart) continue;
-          // Show the real close date when scheduled; otherwise there is no deadline.
-          const deadline = e.availableUntil
-            ? new Date(e.availableUntil).toISOString().slice(0, 10)
-            : "No deadline";
-          const opensAt = e.availableFrom && now < new Date(e.availableFrom).getTime()
-            ? new Date(e.availableFrom).toISOString().slice(0, 10)
-            : null;
+        }
+        if (["PUBLISHED", "ACTIVE", "SCHEDULED"].includes(e.status) && !availability.closed &&
+            (availability.activeAttemptId || availability.attemptsUsed < availability.attemptLimit)) {
+          const deadline = availability.availableUntil ? new Date(availability.availableUntil).toISOString() : null;
+          const opensAt = availability.upcoming && availability.availableFrom ? new Date(availability.availableFrom).toISOString() : null;
           available.push({
             id: e.id, title: e.title, subject: e.subject?.name || "General",
             duration: e.durationMinutes ? `${e.durationMinutes} mins` : "—",
             questions: e.questions.length,
             deadline,
-            opensAt, // non-null when the exam hasn't opened yet
+            opensAt,
+            activeAttemptId: availability.activeAttemptId,
+            attemptsUsed: availability.attemptsUsed,
+            attemptLimit: availability.attemptLimit,
             type: e.type,
           });
         }
@@ -18363,11 +18348,6 @@ async function startServer() {
   // ── Teacher portal API (scoped to the signed-in teacher; ADMIN sees all) ─────
   const teacherOnly = reportRole(["TEACHER", "ADMIN"]);
   const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
-  const examStatus = (date: Date, attempts: { score: number | null }[]): string => {
-    if (attempts.length === 0) return date > new Date() ? "UPCOMING" : "DRAFT";
-    if (attempts.some((a) => a.score == null)) return "NEEDS_GRADING";
-    return "GRADED";
-  };
 
   app.get("/api/teacher/classes", authMiddleware, teacherOnly, async (req, res) => {
     try {
@@ -18522,15 +18502,16 @@ async function startServer() {
         orderBy: { date: "desc" },
       });
       res.json(exams.map((e) => {
-        const graded = e.attempts.filter((a) => a.score != null);
+        const completed = e.attempts.filter((a) => a.isCompleted && a.state !== "INVALIDATED");
+        const graded = completed.filter((a) => a.score != null);
         const tm = e.totalMarks || 100;
         const avg = graded.length ? `${round1(graded.reduce((acc, a) => acc + (a.score! / tm) * 100, 0) / graded.length)}%` : undefined;
         return {
           id: e.id, title: e.title, class: e.class?.name || "—", date: fmtDate(e.date),
           duration: e.durationMinutes ? `${e.durationMinutes}m` : "N/A",
           type: e.subject?.name || e.type,
-          status: e.status === "DRAFT" || e.status === "CLOSED" ? e.status : examStatus(e.date, e.attempts),
-          submissions: e.attempts.length, total: e.class?.students.length || 0,
+          status: teacherExamStatus(e.status, e.attempts),
+          submissions: new Set(completed.map(a => a.studentId)).size, total: e.class?.students.length || 0,
           ...(avg ? { avg } : {}),
         };
       }));

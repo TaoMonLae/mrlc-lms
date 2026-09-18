@@ -100,7 +100,9 @@ export default function ExamsList() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Exams</h1>
           <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage assessments, quizzes, and standard tests.</p>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <Button variant="outline" render={<Link to="/exam2/grading" />} nativeButton={false}>Grading queue</Button>
+          <Button variant="outline" render={<Link to="/exam2/accommodations" />} nativeButton={false}>Accommodations</Button>
           <Button variant="outline" className={showArchived ? 'border-aubergine-400 text-aubergine-600' : ''} onClick={() => setShowArchived((v) => !v)}>
             {showArchived ? 'Show active' : 'Show archived'}
           </Button>
@@ -117,7 +119,7 @@ export default function ExamsList() {
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
-            placeholder="Search exams by title, subject..."
+            aria-label="Search exams by title or subject" placeholder="Search exams by title, subject..."
             className="pl-9"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -150,7 +152,7 @@ export default function ExamsList() {
                     {exam.status}
                   </Badge>
                   <DropdownMenu>
-                    <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="h-8 w-8 p-0" />} nativeButton={true}>
+                    <DropdownMenuTrigger render={<Button variant="ghost" size="sm" aria-label={`Actions for ${exam.title}`} className="h-8 w-8 p-0" />} nativeButton={true}>
                       <MoreHorizontal className="h-4 w-4 text-slate-500" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">

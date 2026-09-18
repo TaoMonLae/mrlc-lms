@@ -8,11 +8,23 @@ export default function ExamResultView() {
   const { attemptId } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
+  const [error, setError] = useState('');
+  const [retry, setRetry] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { apiGet(`/api/attempts/${attemptId}/result`).then(setData).catch(() => setData({ released: false, message: 'Could not load result.' })).finally(() => setLoading(false)); }, [attemptId]);
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true); setError(''); setData(null);
+    apiGet(`/api/attempts/${attemptId}/result`, { signal: controller.signal })
+      .then(d => { if (!controller.signal.aborted) setData(d); })
+      .catch(() => { if (!controller.signal.aborted) setError('Could not load your result. Check your connection and retry.'); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [attemptId, retry]);
 
   if (loading) return <div className="py-20 text-center text-slate-500">Loading…</div>;
+
+  if (error) return <div role="alert" className="max-w-lg mx-auto space-y-4 border border-border bg-card p-6"><h1 className="text-lg font-semibold">Result unavailable</h1><p>{error}</p><Button onClick={() => setRetry(n => n + 1)}>Retry</Button><Button variant="ghost" onClick={() => navigate('/student/exams')}>Back to my exams</Button></div>;
 
   if (!data?.released) return (
     <div className="max-w-lg mx-auto mt-16 p-8 rounded-xl border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo text-center space-y-3">
@@ -20,15 +32,19 @@ export default function ExamResultView() {
       <h2 className="text-lg font-bold text-slate-900 dark:text-white">Results not available yet</h2>
       <p className="text-sm text-slate-500">{data?.message || 'Your teacher has not released results for this exam.'}</p>
       <p className="text-xs text-slate-400">
-        Your answers are safely submitted. Results appear here once your teacher finishes marking and releases them — check back later.
+        {['SUBMITTED', 'AUTO_SUBMITTED', 'PENDING_GRADING', 'FINALIZED', 'RELEASED'].includes(data?.state)
+          ? 'Your answers are submitted. Results appear here once marking and release are complete.'
+          : 'Return to your exams to check the status of this attempt.'}
       </p>
-      <Button onClick={() => navigate('/exam2/resume')}>Back to my exams</Button>
+      <Button onClick={() => navigate('/student/exams')}>Back to my exams</Button>
     </div>
   );
 
   const pass = data.passFail === 'PASS';
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <Button variant="ghost" onClick={() => navigate('/student/exams')}>Back to my exams</Button>
+      <h1 className="text-2xl font-semibold">Exam result</h1>
       <div className="rounded-xl border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo p-8 text-center">
         {data.passFail && (pass ? <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto" /> : <XCircle className="h-12 w-12 text-red-500 mx-auto" />)}
         {data.score != null && <div className="text-4xl font-black text-slate-900 dark:text-white mt-3">{data.score}{data.totalMarks ? ` / ${data.totalMarks}` : ''}</div>}
