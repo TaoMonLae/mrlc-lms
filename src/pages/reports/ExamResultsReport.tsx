@@ -24,6 +24,8 @@ export default function ExamResultsReport() {
   const [data, setData] = useState<ExamReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [applied, setApplied] = useState({ classFilter });
+  const filtersChanged = classFilter !== applied.classFilter;
 
   useEffect(() => {
     apiGet<any[]>('/api/classes')
@@ -37,6 +39,7 @@ export default function ExamResultsReport() {
     try {
       const res = await apiGet<ExamReportData>(`/api/reports/exams${qs({ classId: classFilter })}`);
       setData(res);
+      setApplied({ classFilter });
     } catch (err: any) {
       setError(err.message || 'Failed to load report');
       toast.error('Failed to load exam results report.');
@@ -47,7 +50,7 @@ export default function ExamResultsReport() {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
 
-  const classLabel = classFilter === 'all' ? 'All Classes' : classes.find((c) => c.id === classFilter)?.name || '—';
+  const classLabel = applied.classFilter === 'all' ? 'All Classes' : classes.find((c) => c.id === applied.classFilter)?.name || '—';
   const subjects = data?.subjects ?? [];
   const rows = data?.rows ?? [];
 
@@ -63,7 +66,7 @@ export default function ExamResultsReport() {
         </div>
 
         <div className="flex items-center gap-2">
-           <Button onClick={() => window.print()} disabled={isLoading || !rows.length} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+           <Button onClick={() => window.print()} disabled={isLoading || !!error || !rows.length} className="bg-primary hover:bg-primary/90 text-primary-foreground">
              <Printer className="mr-2 h-4 w-4" /> Print / PDF
            </Button>
         </div>
@@ -85,6 +88,8 @@ export default function ExamResultsReport() {
            <Filter className="mr-2 h-4 w-4" /> Apply Filters
          </Button>
       </div>
+
+      {filtersChanged && <p role="status" className="print:hidden text-sm text-muted-foreground">Filters changed. Apply filters to update the report below.</p>}
 
       {isLoading ? (
         <div className="print:hidden flex items-center justify-center py-12 text-slate-500"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…</div>

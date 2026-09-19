@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from "react";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { TopBar } from "./TopBar";
@@ -12,6 +13,10 @@ import { FloatingPanelProvider } from "../../providers/FloatingPanelProvider";
 
 export function AppLayout() {
   const location = useLocation();
+  const mainRef = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    if (!location.hash && mainRef.current) mainRef.current.scrollTop = 0;
+  }, [location.pathname]);
   const { user } = useAuth();
   const reduceMotion = useReducedMotion();
   const takingExam = /^\/exam2\/attempts\/[^/]+\/play\/?$/.test(location.pathname);
@@ -25,7 +30,7 @@ export function AppLayout() {
     <ChatProvider>
     <SocialProvider>
     <SidebarProvider>
-      <div className="mrlc-app-shell flex h-screen w-full overflow-hidden bg-background font-sans text-foreground">
+      <div className="mrlc-app-shell flex h-dvh w-full overflow-hidden bg-background font-sans text-foreground">
         {/* Skip navigation link for keyboard users */}
         <a
           href="#main-content"
@@ -36,7 +41,7 @@ export function AppLayout() {
         <AppSidebar />
         <SidebarInset className="flex min-w-0 flex-col overflow-hidden bg-background">
           <TopBar />
-          <main id="main-content" className="academic-workspace min-w-0 flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar" tabIndex={-1}>
+          <main ref={mainRef} id="main-content" className="academic-workspace min-w-0 flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar" tabIndex={-1}>
             <motion.div
               key={location.pathname}
               initial={reduceMotion ? false : { opacity: 0, y: 6 }}

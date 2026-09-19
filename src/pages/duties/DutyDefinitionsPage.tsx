@@ -1,3 +1,5 @@
+import { useApiList } from '../../hooks/useApiList';
+import { LoadError } from '../../components/ui/load-error';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { ArrowLeft, Plus, Pencil, Trash2, X } from 'lucide-react';
@@ -54,8 +56,7 @@ const emptyForm = {
 export default function DutyDefinitionsPage() {
   const { hasPermission } = usePermissions();
   const canManage = hasPermission('manage_duties');
-  const [loading, setLoading] = useState(true);
-  const [definitions, setDefinitions] = useState<DutyDefinition[]>([]);
+  const { data: definitions, loading, error, reload: fetchDefinitions } = useApiList<DutyDefinition>('/api/duty-definitions');
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState(emptyForm);
@@ -63,16 +64,7 @@ export default function DutyDefinitionsPage() {
 
   const token = () => sessionStorage.getItem('auth_token');
 
-  const fetchDefinitions = () => {
-    setLoading(true);
-    fetch('/api/duty-definitions', { headers: { Authorization: `Bearer ${token()}` } })
-      .then((r) => r.json())
-      .then((data) => setDefinitions(Array.isArray(data) ? data : []))
-      .catch(() => setDefinitions([]))
-      .finally(() => setLoading(false));
-  };
 
-  useEffect(fetchDefinitions, []);
 
   const openCreate = () => {
     setEditingId(null);
@@ -144,6 +136,8 @@ export default function DutyDefinitionsPage() {
       toast.error(error.message || 'Failed to remove duty type');
     }
   };
+
+  if (error) return <LoadError title="Duty Definitions" message={error} onRetry={fetchDefinitions} />;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

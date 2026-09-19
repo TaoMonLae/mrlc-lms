@@ -1,3 +1,4 @@
+import { LoadError } from '../../components/ui/load-error';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { ArrowLeft, Trophy } from 'lucide-react';
@@ -25,12 +26,13 @@ function studentLabel(student: LeaderboardEntry['student']) {
 
 export default function DutyPerformancePage() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
   const fetchLeaderboard = () => {
-    setLoading(true);
+    setLoading(true); setError('');
     const token = sessionStorage.getItem('auth_token');
     const params = new URLSearchParams();
     if (startDate) params.set('startDate', startDate);
@@ -39,13 +41,15 @@ export default function DutyPerformancePage() {
     fetch(`/api/duty-performance/leaderboard?${params.toString()}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((r) => r.json())
+      .then(async r => { if (!r.ok) throw new Error('Could not load duty performance. Please retry.'); return r.json(); })
       .then((data) => setLeaderboard(Array.isArray(data.leaderboard) ? data.leaderboard : []))
-      .catch(() => setLeaderboard([]))
+      .catch(err => setError(err.message))
       .finally(() => setLoading(false));
   };
 
   useEffect(fetchLeaderboard, []);
+
+  if (error) return <LoadError title="Duty Performance" message={error} onRetry={fetchLeaderboard} />;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

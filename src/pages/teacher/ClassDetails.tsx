@@ -241,13 +241,13 @@ export default function ClassDetails() {
 
       <Tabs defaultValue="students" className="min-w-0 w-full">
         <TabsList className="custom-scrollbar h-12 w-full max-w-2xl justify-start overflow-x-auto bg-slate-100/50 p-1 border border-slate-200 dark:border-surface-raised dark:bg-surface-indigo/50">
-          <TabsTrigger value="students" className="shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-slate-500 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">
+          <TabsTrigger value="students" className="shrink-0 data-active:bg-white dark:data-active:bg-slate-800 data-active:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-slate-500 data-active:text-slate-900 dark:data-active:text-white">
             <Users className="h-4 w-4 mr-2" /> Students
           </TabsTrigger>
-          <TabsTrigger value="attendance" className="shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-slate-500 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">
+          <TabsTrigger value="attendance" className="shrink-0 data-active:bg-white dark:data-active:bg-slate-800 data-active:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-slate-500 data-active:text-slate-900 dark:data-active:text-white">
             <UserCheck className="h-4 w-4 mr-2" /> Attendance Summary
           </TabsTrigger>
-          <TabsTrigger value="exams" className="shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-slate-500 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">
+          <TabsTrigger value="exams" className="shrink-0 data-active:bg-white dark:data-active:bg-slate-800 data-active:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-slate-500 data-active:text-slate-900 dark:data-active:text-white">
             <FileText className="h-4 w-4 mr-2" /> Exam History
           </TabsTrigger>
         </TabsList>

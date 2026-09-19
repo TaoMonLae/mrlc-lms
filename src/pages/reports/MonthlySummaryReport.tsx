@@ -40,12 +40,15 @@ export default function MonthlySummaryReport() {
   const [data, setData] = useState<MonthlyData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [applied, setApplied] = useState({ monthFilter });
+  const filtersChanged = monthFilter !== applied.monthFilter;
 
   const load = async () => {
     setIsLoading(true);
     setError(null);
     try {
       setData(await apiGet<MonthlyData>(`/api/reports/monthly-summary${qs({ month: monthFilter })}`));
+      setApplied({ monthFilter });
     } catch (err: any) {
       setError(err.message || 'Failed to load report');
       toast.error('Failed to load monthly summary.');
@@ -56,7 +59,7 @@ export default function MonthlySummaryReport() {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
 
-  const monthLabel = months.find((m) => m.value === monthFilter)?.label || monthFilter;
+  const monthLabel = months.find((m) => m.value === applied.monthFilter)?.label || applied.monthFilter;
   const cur = data?.currency || 'MYR';
   const cats = data?.casesByCategory ?? [];
 
@@ -72,7 +75,7 @@ export default function MonthlySummaryReport() {
         </div>
 
         <div className="flex items-center gap-2">
-           <Button onClick={() => window.print()} disabled={isLoading} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+           <Button onClick={() => window.print()} disabled={isLoading || !!error || !data} className="bg-primary hover:bg-primary/90 text-primary-foreground">
              <Printer className="mr-2 h-4 w-4" /> Print / PDF
            </Button>
         </div>
@@ -92,6 +95,8 @@ export default function MonthlySummaryReport() {
            <Filter className="mr-2 h-4 w-4" /> Apply Filter
          </Button>
       </div>
+
+      {filtersChanged && <p role="status" className="print:hidden text-sm text-muted-foreground">Filters changed. Apply filters to update the report below.</p>}
 
       {isLoading ? (
         <div className="print:hidden flex items-center justify-center py-12 text-slate-500"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…</div>

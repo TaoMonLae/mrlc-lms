@@ -270,10 +270,10 @@ export default function SubjectProfile() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm">
         <div className="px-6 pt-4 overflow-x-auto">
           <TabsList className="bg-transparent border-b border-slate-100 dark:border-surface-raised w-full justify-start rounded-none h-12 gap-6 min-w-[500px]">
-            <TabsTrigger value="overview" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Overview</TabsTrigger>
-            <TabsTrigger value="classes" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Classes</TabsTrigger>
-            <TabsTrigger value="teachers" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Teachers</TabsTrigger>
-            <TabsTrigger value="exams" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Exams</TabsTrigger>
+            <TabsTrigger value="overview" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Overview</TabsTrigger>
+            <TabsTrigger value="classes" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Classes</TabsTrigger>
+            <TabsTrigger value="teachers" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Teachers</TabsTrigger>
+            <TabsTrigger value="exams" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Exams</TabsTrigger>
           </TabsList>
         </div>
 

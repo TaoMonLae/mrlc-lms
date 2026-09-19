@@ -31,6 +31,8 @@ export default function FeesReport() {
   const [data, setData] = useState<FeesReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [applied, setApplied] = useState({ classFilter, statusFilter, monthFilter });
+  const filtersChanged = classFilter !== applied.classFilter || statusFilter !== applied.statusFilter || monthFilter !== applied.monthFilter;
 
   useEffect(() => {
     apiGet<any[]>('/api/classes')
@@ -44,6 +46,7 @@ export default function FeesReport() {
     try {
       const res = await apiGet<FeesReportData>(`/api/reports/fees${qs({ classId: classFilter, status: statusFilter, month: monthFilter })}`);
       setData(res);
+      setApplied({ classFilter, statusFilter, monthFilter });
     } catch (err: any) {
       setError(err.message || 'Failed to load report');
       toast.error('Failed to load fees report.');
@@ -54,9 +57,9 @@ export default function FeesReport() {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
 
-  const classLabel = classFilter === 'all' ? 'All Classes' : classes.find((c) => c.id === classFilter)?.name || '—';
-  const statusLabel = statusFilter === 'all' ? 'All Statuses' : statusFilter;
-  const monthLabel = monthFilter === 'all' ? 'All Months' : feeMonthLabel(monthFilter);
+  const classLabel = applied.classFilter === 'all' ? 'All Classes' : classes.find((c) => c.id === applied.classFilter)?.name || '—';
+  const statusLabel = applied.statusFilter === 'all' ? 'All Statuses' : applied.statusFilter;
+  const monthLabel = applied.monthFilter === 'all' ? 'All Months' : feeMonthLabel(applied.monthFilter);
   const cur = data?.currency || 'MYR';
   const rows = data?.rows ?? [];
 
@@ -72,7 +75,7 @@ export default function FeesReport() {
         </div>
 
         <div className="flex items-center gap-2">
-           <Button onClick={() => window.print()} disabled={isLoading || !rows.length} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+           <Button onClick={() => window.print()} disabled={isLoading || !!error || !rows.length} className="bg-primary hover:bg-primary/90 text-primary-foreground">
              <Printer className="mr-2 h-4 w-4" /> Print / PDF
            </Button>
         </div>
@@ -115,6 +118,8 @@ export default function FeesReport() {
            <Filter className="mr-2 h-4 w-4" /> Apply
          </Button>
       </div>
+
+      {filtersChanged && <p role="status" className="print:hidden text-sm text-muted-foreground">Filters changed. Apply filters to update the report below.</p>}
 
       {isLoading ? (
         <div className="print:hidden flex items-center justify-center py-12 text-slate-500"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…</div>

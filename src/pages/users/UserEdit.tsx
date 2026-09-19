@@ -1,3 +1,4 @@
+import { LoadError } from '../../components/ui/load-error';
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { ArrowLeft, Save, ShieldAlert } from 'lucide-react';
@@ -44,6 +45,9 @@ interface ProfileOption { id: string; label: string }
 export default function UserEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [loadRevision, setLoadRevision] = useState(0);
   const [teachers, setTeachers] = useState<ProfileOption[]>([]);
   const [students, setStudents] = useState<ProfileOption[]>([]);
 
@@ -68,6 +72,8 @@ export default function UserEdit() {
   });
 
   useEffect(() => {
+    setLoading(true); setLoadError('');
+    const controller = new AbortController();
     const token = sessionStorage.getItem('auth_token');
     const auth = { Authorization: `Bearer ${token}` };
 
@@ -87,9 +93,10 @@ export default function UserEdit() {
       }))))
       .catch(() => {});
 
-    fetch(`/api/users/${id}`, { headers: auth })
-      .then(r => r.json())
+    fetch(`/api/users/${id}`, { headers: auth, signal: controller.signal })
+      .then(async r => { if (!r.ok) throw new Error('Unable to load this user. Please retry.'); return r.json(); })
       .then(u => {
+        if (controller.signal.aborted) return;
         reset({
           name: `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim(),
           username: u.username ?? u.email?.split('@')[0] ?? '',
@@ -100,8 +107,10 @@ export default function UserEdit() {
           studentId: u.studentProfile?.id ?? '',
         });
       })
-      .catch(() => toast.error('Failed to load user'));
-  }, [id, reset]);
+      .catch(err => { if (!controller.signal.aborted) setLoadError(err.message); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [id, reset, loadRevision]);
 
   const onSubmit = async (data: UserFormValues) => {
     const token = sessionStorage.getItem('auth_token');
@@ -127,6 +136,9 @@ export default function UserEdit() {
       toast.error(error.message || 'Failed to update user account');
     }
   };
+
+  if (loadError) return <LoadError title="Unable to open user" message={loadError} onRetry={() => setLoadRevision(n => n + 1)} />;
+  if (loading) return <p role="status">Loading user…</p>;
 
   return (
     <div className="space-y-6 max-w-[800px] mx-auto pb-10">

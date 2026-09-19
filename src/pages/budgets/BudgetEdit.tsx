@@ -1,3 +1,4 @@
+import { LoadError } from '../../components/ui/load-error';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
 import { ArrowLeft, Save, Trash2 } from 'lucide-react';
@@ -20,6 +21,8 @@ export default function BudgetEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [loadRevision, setLoadRevision] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -40,12 +43,15 @@ export default function BudgetEdit() {
   });
 
   useEffect(() => {
+    setLoading(true); setLoadError('');
+    const controller = new AbortController();
     const token = sessionStorage.getItem('auth_token');
     fetch(`/api/budgets/${id}`, {
-      headers: { Authorization: `Bearer ${token}` }
+      signal: controller.signal, headers: { Authorization: `Bearer ${token}` }
     })
-      .then(r => r.json())
+      .then(async r => { if (!r.ok) throw new Error('Unable to load this record. Please retry.'); return r.json(); })
       .then(data => {
+        if (controller.signal.aborted) return;
         if (data) {
           setFormData({
             name: data.name || '',
@@ -65,8 +71,9 @@ export default function BudgetEdit() {
           });
         }
         setLoading(false);
-      });
-  }, [id]);
+      }).catch(err => { if (!controller.signal.aborted) { setLoadError(err.message || 'Unable to load this record.'); setLoading(false); } });
+    return () => controller.abort();
+  }, [id, loadRevision]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,6 +153,8 @@ export default function BudgetEdit() {
 
   const yearOptions = [new Date().getFullYear() - 1, new Date().getFullYear(), new Date().getFullYear() + 1, new Date().getFullYear() + 2];
   const statusOptions = ['ACTIVE', 'ARCHIVED'];
+
+  if (loadError) return <LoadError title="Unable to open editor" message={loadError} onRetry={() => setLoadRevision(n => n + 1)} />;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

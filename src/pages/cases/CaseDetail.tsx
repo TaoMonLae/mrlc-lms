@@ -1,3 +1,5 @@
+import { LoadError } from '../../components/ui/load-error';
+import { apiGet } from '../../lib/api';
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router';
 import { ArrowLeft, Edit2, ShieldAlert, Shield, Clock, CheckCircle2, AlertTriangle, MessageSquare, AlertCircle, Plus, FileText, User, Trash2 } from 'lucide-react';
@@ -29,7 +31,8 @@ export default function CaseDetail() {
   const navigate = useNavigate();
   const { user } = useUser();
   const [newNote, setNewNote] = useState('');
-  const [isPrivateNote, setIsPrivateNote] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const [loadRevision, setLoadRevision] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [caseData, setCaseData] = useState<any>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -37,12 +40,14 @@ export default function CaseDetail() {
   const { hasPermission } = usePermissions();
 
   useEffect(() => {
-    const token = sessionStorage.getItem('auth_token');
-    fetch(`/api/cases/${id}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.json())
-      .then(setCaseData)
-      .catch(() => toast.error('Failed to load case'));
-  }, [id]);
+    const controller = new AbortController();
+    setCaseData(null); setLoadError('');
+    apiGet(`/api/cases/${id}`, { signal: controller.signal }).then(data => {
+      if (!data?.id) throw new Error('Case unavailable.');
+      if (!controller.signal.aborted) setCaseData(data);
+    }).catch(err => { if (!controller.signal.aborted) setLoadError(err.message || 'Could not load case.'); });
+    return () => controller.abort();
+  }, [id, loadRevision]);
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
@@ -83,7 +88,6 @@ export default function CaseDetail() {
       setCaseData((prev: any) => prev ? { ...prev, notes: [...(prev.notes || []), note] } : prev);
       toast.success('Note added successfully');
       setNewNote('');
-      setIsPrivateNote(false);
     } catch (e: any) {
       toast.error(e.message || 'Failed to add note');
     } finally {
@@ -111,6 +115,8 @@ export default function CaseDetail() {
       setConfirmDelete(false);
     }
   };
+
+  if (loadError) return <LoadError title="Case unavailable" message={loadError} onRetry={() => setLoadRevision(n => n + 1)} />;
 
   if (!caseData) {
     return <div className="p-8 text-center text-slate-500">Loading case...</div>;
@@ -283,21 +289,13 @@ export default function CaseDetail() {
                     <Plus className="w-4 h-4 mr-1" /> Add New Note
                   </h4>
                   <Textarea 
-                    placeholder="Type your follow-up note or update here..." 
+                    aria-label="Case note" placeholder="Type your follow-up note or update here..."
                     rows={4}
                     value={newNote}
                     onChange={(e) => setNewNote(e.target.value)}
                   />
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
-                        checked={isPrivateNote}
-                        onChange={(e) => setIsPrivateNote(e.target.checked)}
-                      />
-                      Make this an internal private note
-                    </label>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm text-muted-foreground">Notes are shared with people who can access this case.</p>
                     <Button 
                       className="bg-slate-900 hover:bg-slate-800 text-white" 
                       onClick={handleAddNote}

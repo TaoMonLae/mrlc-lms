@@ -452,13 +452,13 @@ export default function ClassProfile() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm">
         <div className="px-6 pt-4 overflow-x-auto">
           <TabsList className="bg-transparent border-b border-slate-100 dark:border-surface-raised w-full justify-start rounded-none h-12 gap-6 min-w-[600px]">
-            <TabsTrigger value="overview" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Overview</TabsTrigger>
-            <TabsTrigger value="students" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Students</TabsTrigger>
-            <TabsTrigger value="teachers" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Teachers</TabsTrigger>
-            <TabsTrigger value="subjects" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Subjects</TabsTrigger>
-            <TabsTrigger value="attendance" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Attendance</TabsTrigger>
-            <TabsTrigger value="exams" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Exams</TabsTrigger>
-            <TabsTrigger value="timetable" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Timetable</TabsTrigger>
+            <TabsTrigger value="overview" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Overview</TabsTrigger>
+            <TabsTrigger value="students" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Students</TabsTrigger>
+            <TabsTrigger value="teachers" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Teachers</TabsTrigger>
+            <TabsTrigger value="subjects" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Subjects</TabsTrigger>
+            <TabsTrigger value="attendance" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Attendance</TabsTrigger>
+            <TabsTrigger value="exams" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Exams</TabsTrigger>
+            <TabsTrigger value="timetable" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Timetable</TabsTrigger>
           </TabsList>
         </div>
 

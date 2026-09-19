@@ -43,6 +43,8 @@ export default function AttendanceReport() {
   const [data, setData] = useState<AttendanceReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [applied, setApplied] = useState({ classFilter, monthFilter });
+  const filtersChanged = classFilter !== applied.classFilter || monthFilter !== applied.monthFilter;
 
   useEffect(() => {
     apiGet<any[]>('/api/classes')
@@ -58,6 +60,7 @@ export default function AttendanceReport() {
         `/api/reports/attendance${qs({ classId: classFilter, month: monthFilter })}`
       );
       setData(res);
+      setApplied({ classFilter, monthFilter });
     } catch (err: any) {
       setError(err.message || 'Failed to load report');
       toast.error('Failed to load attendance report.');
@@ -68,10 +71,10 @@ export default function AttendanceReport() {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
 
-  const classLabel = classFilter === 'all'
+  const classLabel = applied.classFilter === 'all'
     ? 'All Classes'
-    : classes.find((c) => c.id === classFilter)?.name || '—';
-  const monthLabel = months.find((m) => m.value === monthFilter)?.label || monthFilter;
+    : classes.find((c) => c.id === applied.classFilter)?.name || '—';
+  const monthLabel = months.find((m) => m.value === applied.monthFilter)?.label || applied.monthFilter;
   const rows = data?.rows ?? [];
 
   return (
@@ -86,7 +89,7 @@ export default function AttendanceReport() {
         </div>
 
         <div className="flex items-center gap-2">
-           <Button onClick={() => window.print()} disabled={isLoading || !rows.length} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+           <Button onClick={() => window.print()} disabled={isLoading || !!error || !rows.length} className="bg-primary hover:bg-primary/90 text-primary-foreground">
              <Printer className="mr-2 h-4 w-4" /> Print / PDF
            </Button>
         </div>
@@ -121,7 +124,9 @@ export default function AttendanceReport() {
       {/* Screen Preview */}
       <div className="print:hidden bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm overflow-x-auto">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Preview</h3>
-        {isLoading ? (
+        {filtersChanged && <p role="status" className="print:hidden text-sm text-muted-foreground">Filters changed. Apply filters to update the report below.</p>}
+
+      {isLoading ? (
           <div className="flex items-center justify-center py-12 text-slate-500"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…</div>
         ) : error ? (
           <div className="py-12 text-center text-sm text-red-600">{error}</div>

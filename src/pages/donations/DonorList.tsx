@@ -1,3 +1,4 @@
+import { LoadError } from '../../components/ui/load-error';
 import { useEffect, useState } from "react";
 import { usePermissions } from "@/src/lib/permissions";
 import { useNavigate } from "react-router";
@@ -167,17 +168,7 @@ export default function DonorList() {
     }
   };
 
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <p className="text-center text-red-600">{error}</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  if (error) return <LoadError title="Donors" message={error} onRetry={fetchDonors} />;
 
   if (loading) {
     return (

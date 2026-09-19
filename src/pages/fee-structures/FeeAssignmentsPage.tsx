@@ -1,3 +1,5 @@
+import { useApiList } from '../../hooks/useApiList';
+import { LoadError } from '../../components/ui/load-error';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { DollarSign, Calendar, User, CheckCircle } from 'lucide-react';
@@ -13,26 +15,12 @@ export default function FeeAssignmentsPage() {
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
   const { systemSettings } = useSettings();
-  const [assignments, setAssignments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: assignments, setData: setAssignments, loading, error, reload } = useApiList<any>('/api/fee-assignments');
   const [filter, setFilter] = useState('ALL');
 
   const currency = systemSettings.currency || 'MYR';
 
-  useEffect(() => {
-    const token = sessionStorage.getItem('auth_token');
-    fetch('/api/fee-assignments', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(r => r.json())
-      .then(data => {
-        setAssignments(data || []);
-      })
-      .catch(() => {
-        toast.error('Failed to load assignments');
-      })
-      .finally(() => setLoading(false));
-  }, []);
+
 
   const handlePayment = async (assignmentId: string) => {
     const token = sessionStorage.getItem('auth_token');
@@ -66,6 +54,8 @@ export default function FeeAssignmentsPage() {
     paid: assignments.filter(a => a.status === 'PAID').length,
     outstanding: assignments.reduce((sum, a) => sum + (a.status !== 'PAID' ? a.outstandingAmount : 0), 0),
   };
+
+  if (error) return <LoadError title="Fee Assignments" message={error} onRetry={reload} />;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">

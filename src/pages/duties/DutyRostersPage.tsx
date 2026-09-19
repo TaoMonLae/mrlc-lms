@@ -1,3 +1,5 @@
+import { useApiList } from '../../hooks/useApiList';
+import { LoadError } from '../../components/ui/load-error';
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { ArrowLeft, Plus, X, ArrowRight } from 'lucide-react';
@@ -39,24 +41,14 @@ export default function DutyRostersPage() {
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
   const canManage = hasPermission('manage_duties');
-  const [loading, setLoading] = useState(true);
-  const [rosters, setRosters] = useState<DutyRoster[]>([]);
+  const { data: rosters, loading, error, reload: fetchRosters } = useApiList<DutyRoster>('/api/duty-rosters');
   const [formOpen, setFormOpen] = useState(false);
   const [formData, setFormData] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
 
   const token = () => sessionStorage.getItem('auth_token');
 
-  const fetchRosters = () => {
-    setLoading(true);
-    fetch('/api/duty-rosters', { headers: { Authorization: `Bearer ${token()}` } })
-      .then((r) => r.json())
-      .then((data) => setRosters(Array.isArray(data) ? data : []))
-      .catch(() => setRosters([]))
-      .finally(() => setLoading(false));
-  };
 
-  useEffect(fetchRosters, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,6 +94,8 @@ export default function DutyRostersPage() {
         return 'bg-amber-100 text-amber-800';
     }
   };
+
+  if (error) return <LoadError title="Duty Rosters" message={error} onRetry={fetchRosters} />;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

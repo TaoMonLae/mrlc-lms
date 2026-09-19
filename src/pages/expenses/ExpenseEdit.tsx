@@ -1,3 +1,4 @@
+import { LoadError } from '../../components/ui/load-error';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
 import { ArrowLeft, Save, Trash2 } from 'lucide-react';
@@ -23,6 +24,8 @@ export default function ExpenseEdit() {
   const { hasPermission } = usePermissions();
   const { systemSettings } = useSettings();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [loadRevision, setLoadRevision] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [vendors, setVendors] = useState<any[]>([]);
   const [budgets, setBudgets] = useState<any[]>([]);
@@ -47,12 +50,15 @@ export default function ExpenseEdit() {
   });
 
   useEffect(() => {
+    setLoading(true); setLoadError('');
+    const controller = new AbortController();
     const token = sessionStorage.getItem('auth_token');
     Promise.all([
-      fetch(`/api/expenses/${id}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch('/api/vendors', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch('/api/budgets', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      fetch(`/api/expenses/${id}`, { signal: controller.signal, headers: { Authorization: `Bearer ${token}` } }).then(async r => { if (!r.ok) throw new Error('Unable to load this record. Please retry.'); return r.json(); }),
+      fetch('/api/vendors', { signal: controller.signal, headers: { Authorization: `Bearer ${token}` } }).then(async r => { if (!r.ok) throw new Error('Unable to load this record. Please retry.'); return r.json(); }),
+      fetch('/api/budgets', { signal: controller.signal, headers: { Authorization: `Bearer ${token}` } }).then(async r => { if (!r.ok) throw new Error('Unable to load this record. Please retry.'); return r.json(); }),
     ]).then(([expenseData, vendorsData, budgetsData]) => {
+      if (controller.signal.aborted) return;
       if (expenseData) {
         setFormData({
           title: expenseData.title || '',
@@ -74,8 +80,9 @@ export default function ExpenseEdit() {
       setVendors(vendorsData.filter((v: any) => v.isActive) || []);
       setBudgets(budgetsData.filter((b: any) => b.status === 'ACTIVE') || []);
       setLoading(false);
-    });
-  }, [id]);
+    }).catch(err => { if (!controller.signal.aborted) { setLoadError(err.message || 'Unable to load this record.'); setLoading(false); } });
+    return () => controller.abort();
+  }, [id, loadRevision]);
 
   const totalAmount = (Number(formData.amount) || 0) + (Number(formData.taxAmount) || 0);
 
@@ -137,6 +144,8 @@ export default function ExpenseEdit() {
       toast.error(error.message || 'Failed to delete expense');
     }
   };
+
+  if (loadError) return <LoadError title="Unable to open editor" message={loadError} onRetry={() => setLoadRevision(n => n + 1)} />;
 
   if (loading) {
     return <div className="flex justify-center items-center h-64">Loading...</div>;

@@ -98,10 +98,10 @@ export default function StudentExams() {
 
       {hasLoadedData && <Tabs defaultValue="available" className="space-y-6">
         <TabsList className="bg-slate-100 dark:bg-surface-raised p-1 rounded-xl group-data-horizontal/tabs:h-auto w-full sm:w-fit flex-wrap">
-          <TabsTrigger value="available" className="rounded-lg h-10 px-3 sm:px-6 font-bold text-xs uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">
+          <TabsTrigger value="available" className="rounded-lg h-10 px-3 sm:px-6 font-bold text-xs uppercase tracking-widest data-active:bg-white dark:data-active:bg-slate-700 data-active:shadow-sm">
             Available ({availableExams.length})
           </TabsTrigger>
-          <TabsTrigger value="submitted" className="rounded-lg h-10 px-3 sm:px-6 font-bold text-xs uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">
+          <TabsTrigger value="submitted" className="rounded-lg h-10 px-3 sm:px-6 font-bold text-xs uppercase tracking-widest data-active:bg-white dark:data-active:bg-slate-700 data-active:shadow-sm">
             Submitted ({submittedExams.length})
           </TabsTrigger>
         </TabsList>

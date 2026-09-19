@@ -1,3 +1,5 @@
+import { useApiList } from '../../hooks/useApiList';
+import { LoadError } from '../../components/ui/load-error';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { Plus, Edit, Trash2, Percent, DollarSign } from 'lucide-react';
@@ -13,25 +15,11 @@ export default function FeeDiscountsPage() {
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
   const { systemSettings } = useSettings();
-  const [discounts, setDiscounts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: discounts, setData: setDiscounts, loading, error, reload } = useApiList<any>('/api/fee-discounts');
 
   const currency = systemSettings.currency || 'MYR';
 
-  useEffect(() => {
-    const token = sessionStorage.getItem('auth_token');
-    fetch('/api/fee-discounts', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(r => r.json())
-      .then(data => {
-        setDiscounts(data || []);
-      })
-      .catch(() => {
-        toast.error('Failed to load discounts');
-      })
-      .finally(() => setLoading(false));
-  }, []);
+
 
   const getDiscountTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
@@ -43,6 +31,8 @@ export default function FeeDiscountsPage() {
     };
     return labels[type] || type;
   };
+
+  if (error) return <LoadError title="Fee Discounts" message={error} onRetry={reload} />;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">

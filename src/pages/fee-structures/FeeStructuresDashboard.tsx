@@ -1,3 +1,5 @@
+import { useApiList } from '../../hooks/useApiList';
+import { LoadError } from '../../components/ui/load-error';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { Plus, Search, Filter, Edit, Trash2, Users, Calendar, TrendingUp, CheckCircle2 } from 'lucide-react';
@@ -21,28 +23,14 @@ export default function FeeStructuresDashboard() {
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
   const { systemSettings } = useSettings();
-  const [structures, setStructures] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: structures, setData: setStructures, loading, error, reload } = useApiList<any>('/api/fee-structures');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [yearFilter, setYearFilter] = useState('ALL');
 
   const currency = systemSettings.currency || 'MYR';
 
-  useEffect(() => {
-    const token = sessionStorage.getItem('auth_token');
-    fetch('/api/fee-structures', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(r => r.json())
-      .then(data => {
-        setStructures(data || []);
-      })
-      .catch(() => {
-        toast.error('Failed to load fee structures');
-      })
-      .finally(() => setLoading(false));
-  }, []);
+
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
@@ -92,6 +80,8 @@ export default function FeeStructuresDashboard() {
       default: return 'bg-slate-100 text-slate-800 border-slate-200';
     }
   };
+
+  if (error) return <LoadError title="Fee Structures" message={error} onRetry={reload} />;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">

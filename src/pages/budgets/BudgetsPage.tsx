@@ -1,3 +1,5 @@
+import { useApiList } from '../../hooks/useApiList';
+import { LoadError } from '../../components/ui/load-error';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { Plus, Search, TrendingUp, Wallet, AlertTriangle, PieChart } from 'lucide-react';
@@ -23,25 +25,11 @@ export default function BudgetsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [yearFilter, setYearFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [budgets, setBudgets] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: budgets, setData: setBudgets, loading, error, reload } = useApiList<any>('/api/budgets');
 
   const currency = systemSettings.currency || 'MYR';
 
-  useEffect(() => {
-    const token = sessionStorage.getItem('auth_token');
-    fetch('/api/budgets', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(async r => { if (!r.ok) throw new Error('Unable to load budgets'); return r.json(); })
-      .then(data => {
-        setBudgets(Array.isArray(data) ? data : []);
-      })
-      .catch(() => {
-        setBudgets([]);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+
 
   const filteredBudgets = budgets.filter(b => {
     const matchesSearch = b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -90,6 +78,8 @@ export default function BudgetsPage() {
     if (percentUsed >= 80) return { label: 'Near Limit', color: 'bg-amber-100' };
     return { label: 'On Track', color: 'bg-green-100' };
   };
+
+  if (error) return <LoadError title="Budgets" message={error} onRetry={reload} />;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">

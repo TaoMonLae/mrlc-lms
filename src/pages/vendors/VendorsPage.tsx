@@ -1,3 +1,5 @@
+import { useApiList } from '../../hooks/useApiList';
+import { LoadError } from '../../components/ui/load-error';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { Plus, Search, Building2, Mail, Phone, MapPin, Edit, Trash2, DollarSign } from 'lucide-react';
@@ -22,26 +24,12 @@ export default function VendorsPage() {
   const { systemSettings } = useSettings();
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
-  const [vendors, setVendors] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: vendors, setData: setVendors, loading, error, reload } = useApiList<any>('/api/vendors');
   const [deleteDialog, setDeleteDialog] = useState<string | null>(null);
 
   const currency = systemSettings.currency || 'MYR';
 
-  useEffect(() => {
-    const token = sessionStorage.getItem('auth_token');
-    fetch('/api/vendors', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(r => r.json())
-      .then(data => {
-        setVendors(data || []);
-      })
-      .catch(() => {
-        setVendors([]);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+
 
   const filteredVendors = vendors.filter(v => {
     const matchesSearch = v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -75,6 +63,8 @@ export default function VendorsPage() {
   };
 
   const categoryOptions = Array.from(new Set(vendors.map((v) => v.category).filter(Boolean)));
+
+  if (error) return <LoadError title="Vendors" message={error} onRetry={reload} />;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">

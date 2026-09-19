@@ -252,10 +252,10 @@ export default function TeacherProfile() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm">
         <div className="px-6 pt-4">
           <TabsList className="bg-transparent border-b border-slate-100 dark:border-surface-raised w-full justify-start rounded-none h-12 gap-6">
-            <TabsTrigger value="overview" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Overview</TabsTrigger>
-            <TabsTrigger value="classes" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Assigned Classes</TabsTrigger>
-            <TabsTrigger value="subjects" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Subjects</TabsTrigger>
-            <TabsTrigger value="activity" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Activity Logs</TabsTrigger>
+            <TabsTrigger value="overview" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Overview</TabsTrigger>
+            <TabsTrigger value="classes" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Assigned Classes</TabsTrigger>
+            <TabsTrigger value="subjects" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Subjects</TabsTrigger>
+            <TabsTrigger value="activity" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Activity Logs</TabsTrigger>
           </TabsList>
         </div>
 

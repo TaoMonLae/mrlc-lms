@@ -1,3 +1,5 @@
+import { useApiList } from '../../hooks/useApiList';
+import { LoadError } from '../../components/ui/load-error';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { Plus, TrendingUp, Calendar, Users, DollarSign } from 'lucide-react';
@@ -14,25 +16,11 @@ export default function CampaignsPage() {
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
   const { systemSettings } = useSettings();
-  const [campaigns, setCampaigns] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: campaigns, setData: setCampaigns, loading, error, reload } = useApiList<any>('/api/campaigns');
 
   const currency = systemSettings.currency || 'MYR';
 
-  useEffect(() => {
-    const token = sessionStorage.getItem('auth_token');
-    fetch('/api/campaigns', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(r => r.json())
-      .then(data => {
-        setCampaigns(data || []);
-      })
-      .catch(() => {
-        toast.error('Failed to load campaigns');
-      })
-      .finally(() => setLoading(false));
-  }, []);
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -50,6 +38,8 @@ export default function CampaignsPage() {
     totalGoal: campaigns.reduce((sum, c) => sum + c.goalAmount, 0),
     totalRaised: campaigns.reduce((sum, c) => sum + c.raisedAmount, 0),
   };
+
+  if (error) return <LoadError title="Donation Campaigns" message={error} onRetry={reload} />;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">

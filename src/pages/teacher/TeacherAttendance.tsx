@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +63,12 @@ export default function TeacherAttendance() {
   const [attendance, setAttendance] = useState<Record<string, 'present' | 'late' | 'absent' | 'excused'>>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const [rosterLoading, setRosterLoading] = useState(false);
+  const [rosterError, setRosterError] = useState('');
+  const [sessionError, setSessionError] = useState('');
+  const [classError, setClassError] = useState('');
+  const [retry, setRetry] = useState(0);
 
   // Session attendance state
   const [sessions, setSessions] = useState<TimetableSession[]>([]);
@@ -84,68 +90,55 @@ export default function TeacherAttendance() {
   }, []);
 
   useEffect(() => {
-    apiGet<{ id: string; name: string }[]>('/api/teacher/classes')
-      .then((r) => {
-        const opts = (r ?? []).map((c) => ({ value: c.id, label: c.name }));
+    const controller = new AbortController();
+    setClassError('');
+    apiGet<{ id: string; name: string }[]>('/api/teacher/classes', { signal: controller.signal })
+      .then(r => {
+        if (controller.signal.aborted) return;
+        const opts = (r ?? []).map(c => ({ value: c.id, label: c.name }));
         setClassOptions(opts);
-        setSelectedClass((prev) => prev || opts[0]?.value || "");
-      })
-      .catch(() => { setClassOptions([]); setSelectedClass(""); });
-  }, []);
+        setSelectedClass(prev => opts.some(c => c.value === prev) ? prev : opts[0]?.value || '');
+      }).catch(() => { if (!controller.signal.aborted) setClassError('Could not load your classes.'); });
+    return () => controller.abort();
+  }, [retry]);
 
-  // Load students when class changes (daily mode) or session changes (session mode)
-  useEffect(() => {
-    if (!selectedClass) return;
-    setAttendance({});
-
-    if (mode === 'daily') {
-      apiGet<RosterStudent[]>(`/api/teacher/roster?classId=${selectedClass}`)
-        .then((r) => setStudents(r ?? []))
-        .catch(() => setStudents([]));
-    }
-  }, [selectedClass, mode]);
-
-  // Load sessions for session mode
   useEffect(() => {
     if (mode !== 'session') return;
-
-    // Parse as local time — new Date('YYYY-MM-DD') is UTC midnight, which is the
-    // previous local day in timezones west of UTC, giving the wrong weekday.
+    const controller = new AbortController();
+    setSessions([]); setSessionError('');
     const date = new Date(`${sessionDate}T00:00:00`);
-    const dayNames = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
-    const dayOfWeek = dayNames[date.getDay()];
+    const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    if (Number.isNaN(date.getTime())) return;
+    apiGet<TimetableSession[]>(`/api/timetable?dayOfWeek=${days[date.getDay()]}`, { signal: controller.signal })
+      .then(r => {
+        if (controller.signal.aborted) return;
+        const list = (r ?? []).filter(s => s.scheduleType === 'CLASS' && s.status === 'ACTIVE');
+        setSessions(list);
+        setSelectedSession(prev => list.some(s => s.id === prev) ? prev : list[0]?.id || '');
+      }).catch(() => { if (!controller.signal.aborted) setSessionError('Could not load scheduled sessions.'); });
+    return () => controller.abort();
+  }, [mode, sessionDate, retry]);
 
-    apiGet<TimetableSession[]>(`/api/timetable?dayOfWeek=${dayOfWeek}`)
-      .then((r) => {
-        const teacherSessions = (r ?? []).filter((s: TimetableSession) =>
-          s.scheduleType === 'CLASS' && s.status === 'ACTIVE'
-        );
-        setSessions(teacherSessions);
-        if (teacherSessions.length > 0 && !selectedSession) {
-          setSelectedSession(teacherSessions[0].id);
-        }
-      })
-      .catch(() => setSessions([]));
-  }, [mode, sessionDate]);
-
-  // Load students when session changes
+  // Wait for the deep-linked session to load before resolving its roster.
+  const rosterClassId = mode === 'session' ? sessions.find(s => s.id === selectedSession)?.classId : selectedClass;
   useEffect(() => {
-    if (mode !== 'session' || !selectedSession) return;
-
-    const session = sessions.find(s => s.id === selectedSession);
-    if (!session) return;
-
-    setAttendance({});
-    apiGet<RosterStudent[]>(`/api/teacher/roster?classId=${session.classId}`)
-      .then((r) => setStudents(r ?? []))
-      .catch(() => setStudents([]));
-  }, [selectedSession, mode]);
+    const controller = new AbortController();
+    setStudents([]); setAttendance({}); setRosterError('');
+    setRosterLoading(Boolean(rosterClassId));
+    if (!rosterClassId) return;
+    apiGet<RosterStudent[]>(`/api/teacher/roster?classId=${encodeURIComponent(rosterClassId)}`, { signal: controller.signal })
+      .then(r => { if (!controller.signal.aborted) setStudents(r ?? []); })
+      .catch(() => { if (!controller.signal.aborted) setRosterError('Could not load students. Attendance has not been changed.'); })
+      .finally(() => { if (!controller.signal.aborted) setRosterLoading(false); });
+    return () => controller.abort();
+  }, [rosterClassId, mode, selectedSession, sessionDate, retry]);
 
   const handleStatusChange = (studentId: string, status: 'present' | 'late' | 'absent' | 'excused') => {
     setAttendance(prev => ({ ...prev, [studentId]: status }));
   };
 
   const handleSave = async () => {
+    if (savingRef.current || rosterLoading || !students.length || rosterError || (mode === 'session' ? sessionError : classError)) return;
     const markedCount = Object.keys(attendance).length;
     if (markedCount < students.length) {
       const unmarked = students.length - markedCount;
@@ -163,7 +156,7 @@ export default function TeacherAttendance() {
       return;
     }
 
-    setSaving(true);
+    savingRef.current = true; setSaving(true);
     try {
       const records = students.map((s) => ({
         studentId: s.id,
@@ -196,7 +189,7 @@ export default function TeacherAttendance() {
     } catch (err: any) {
       toast.error(err.message || 'Failed to save attendance.');
     } finally {
-      setSaving(false);
+      savingRef.current = false; setSaving(false);
     }
   };
 
@@ -217,6 +210,8 @@ export default function TeacherAttendance() {
 
   return (
     <div className="space-y-6">
+      {(rosterError || (mode === 'session' ? sessionError : classError)) && <div role="alert" className="rounded-lg border border-destructive/30 p-4 space-y-3"><p>{rosterError || (mode === 'session' ? sessionError : classError)}</p><Button variant="outline" onClick={() => setRetry(n => n + 1)}>Retry</Button></div>}
+      {rosterLoading && <p role="status" className="text-sm text-muted-foreground">Loading students…</p>}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight dark:text-white uppercase">Take Attendance</h1>
@@ -226,7 +221,7 @@ export default function TeacherAttendance() {
           <Button variant="outline" size="sm" onClick={markAllPresent} className="h-10 px-4 font-bold text-[11px] uppercase tracking-widest border-slate-200 dark:border-surface-raised">
             Mark All Present
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={saving} className="h-10 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-[11px] uppercase tracking-widest shadow-lg">
+          <Button size="sm" onClick={handleSave} disabled={saving || rosterLoading || !students.length || Boolean(rosterError || (mode === 'session' ? sessionError : classError))} className="h-10 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-[11px] uppercase tracking-widest shadow-lg">
             <Save className="h-3.5 w-3.5 mr-2" /> Save Attendance
           </Button>
         </div>
@@ -429,7 +424,7 @@ export default function TeacherAttendance() {
             </div>
             <div className="flex items-center gap-3">
               <p className="text-[10px] text-slate-400 font-medium italic">All records are logged with server timestamp.</p>
-              <Button onClick={handleSave} disabled={saving} className="bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[11px] uppercase tracking-widest px-6 h-10 shadow-lg">
+              <Button onClick={handleSave} disabled={saving || rosterLoading || !students.length || Boolean(rosterError || (mode === 'session' ? sessionError : classError))} className="bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[11px] uppercase tracking-widest px-6 h-10 shadow-lg">
                 {saving ? 'Saving…' : 'Finalize & Submit'}
               </Button>
             </div>

@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
+import { LoadError } from '../../components/ui/load-error';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,15 +20,21 @@ export default function QuestionBank() {
   const [items, setItems] = useState<any[]>([]);
   const [topics, setTopics] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const requestId = useRef(0);
   const [f, setF] = useState<any>({ q: '', topicId: '', difficulty: '', status: '', page: 1 });
 
   const load = useCallback(async () => {
+    const request = ++requestId.current;
+    setLoading(true); setError('');
     const params = new URLSearchParams();
     Object.entries(f).forEach(([k, v]) => { if (v) params.set(k, String(v)); });
-    try { const r = await apiGet(`/api/question-bank?${params}`); setItems(r.items || []); setTotal(r.total || 0); }
-    catch { setItems([]); }
+    try { const r = await apiGet(`/api/question-bank?${params}`); if (request === requestId.current) { setItems(r.items || []); setTotal(r.total || 0); } }
+    catch { if (request === requestId.current) setError('Could not load questions. Please retry.'); }
+    finally { if (request === requestId.current) setLoading(false); }
   }, [f]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); return () => { requestId.current++; }; }, [load]);
   useEffect(() => { apiGet('/api/question-topics').then(setTopics).catch(() => setTopics([])); }, []);
 
   const approve = async (id: string) => { try { await apiSend(`/api/question-bank/${id}/approve`, 'POST'); toast.success('Approved'); load(); } catch (e: any) { toast.error(e.message); } };
@@ -38,7 +45,7 @@ export default function QuestionBank() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><Library className="h-6 w-6 text-aubergine-600" /> Question Bank</h1>
-          <p className="text-sm text-slate-500 mt-1">{total} reusable questions.</p>
+          <p className="text-sm text-slate-500 mt-1">{loading ? 'Loading questions…' : error ? 'Questions unavailable' : `${total} reusable questions.`}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => navigate('/bank/topics')}><FolderTree className="h-4 w-4 mr-1" /> Topics</Button>
@@ -49,22 +56,24 @@ export default function QuestionBank() {
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
         <div className="relative sm:col-span-2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input className="pl-9" placeholder="Search text…" value={f.q} onChange={(e) => setF({ ...f, q: e.target.value, page: 1 })} />
+          <Input aria-label="Search questions" className="pl-9" placeholder="Search text…" value={f.q} onChange={(e) => setF({ ...f, q: e.target.value, page: 1 })} />
         </div>
-        <select className="h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-3 text-sm" value={f.topicId} onChange={(e) => setF({ ...f, topicId: e.target.value, page: 1 })}>
+        <select className="h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-3 text-sm" aria-label="Topic" value={f.topicId} onChange={(e) => setF({ ...f, topicId: e.target.value, page: 1 })}>
           <option value="">All topics</option>{topics.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
         <div className="grid grid-cols-2 gap-2">
-          <select className="h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={f.difficulty} onChange={(e) => setF({ ...f, difficulty: e.target.value, page: 1 })}>
+          <select className="h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" aria-label="Difficulty" value={f.difficulty} onChange={(e) => setF({ ...f, difficulty: e.target.value, page: 1 })}>
             <option value="">Difficulty</option>{DIFFICULTY.map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
-          <select className="h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value, page: 1 })}>
+          <select className="h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" aria-label="Question status" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value, page: 1 })}>
             <option value="">Status</option>{STATUS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
       </div>
 
-      <div className="space-y-2">
+      {loading && <p role="status" className="text-sm text-muted-foreground">Loading questions…</p>}
+      {error && <LoadError message={error} onRetry={load} />}
+      {!loading && !error && <div className="space-y-2">
         {items.map((q) => (
           <div key={q.id} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="min-w-0 flex-1">
@@ -77,16 +86,16 @@ export default function QuestionBank() {
               <p className="text-sm text-slate-800 dark:text-slate-200 line-clamp-2">{q.text}</p>
             </div>
             <div className="flex gap-1 shrink-0">
-              <Button variant="outline" size="sm" className="h-8" onClick={() => navigate(`/bank/${q.id}`)}><Pencil className="h-3.5 w-3.5" /></Button>
-              {q.status !== 'APPROVED' && q.status !== 'ARCHIVED' && <Button variant="outline" size="sm" className="h-8 text-emerald-600" onClick={() => approve(q.id)}><CheckCircle2 className="h-3.5 w-3.5" /></Button>}
-              {q.status !== 'ARCHIVED' && <Button variant="outline" size="sm" className="h-8 text-red-500" onClick={() => archive(q.id)}><Archive className="h-3.5 w-3.5" /></Button>}
+              <Button variant="outline" size="sm" className="h-8" aria-label="Edit question" onClick={() => navigate(`/bank/${q.id}`)}><Pencil className="h-3.5 w-3.5" /></Button>
+              {q.status !== 'APPROVED' && q.status !== 'ARCHIVED' && <Button variant="outline" size="sm" className="h-8 text-emerald-600" aria-label="Approve question" onClick={() => approve(q.id)}><CheckCircle2 className="h-3.5 w-3.5" /></Button>}
+              {q.status !== 'ARCHIVED' && <Button variant="outline" size="sm" className="h-8 text-red-500" aria-label="Archive question" onClick={() => archive(q.id)}><Archive className="h-3.5 w-3.5" /></Button>}
             </div>
           </div>
         ))}
         {items.length === 0 && <div className="rounded-xl border border-dashed border-slate-200 dark:border-surface-raised p-10 text-center text-slate-500">No questions match.</div>}
-      </div>
+      </div>}
 
-      {total > 50 && (
+      {!loading && !error && total > 50 && (
         <div className="flex justify-center gap-2">
           <Button variant="outline" size="sm" disabled={f.page <= 1} onClick={() => setF({ ...f, page: f.page - 1 })}>Prev</Button>
           <span className="text-sm text-slate-500 self-center">Page {f.page}</span>
