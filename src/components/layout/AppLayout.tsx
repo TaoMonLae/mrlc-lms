@@ -48,7 +48,7 @@ export function AppLayout() {
             </motion.div>
           </main>
         </SidebarInset>
-        {!takingExam && !/^\/exams\/[^/]+\/(studio|edit)\/?$/.test(location.pathname) && <FloatingPanelProvider>
+        {!takingExam && !/^\/exam2\/grade\//.test(location.pathname) && !/^\/exams\/[^/]+\/(studio|edit)\/?$/.test(location.pathname) && <FloatingPanelProvider>
           <ChatWidget />
           <AIAssistantWidget />
         </FloatingPanelProvider>}

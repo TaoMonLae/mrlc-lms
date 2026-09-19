@@ -55,3 +55,15 @@ Visual QA found floating assistant/chat buttons covering the mobile Generate act
 Verification uses isolated API fixtures, not production student records. Browser coverage includes all eight question types, editing, duplication/reordering/deletion, preview inputs, failed loads, failed publication, retry, accommodations, release times, and AI failure/success. Unit tests cover choice keys (including numeric labels), multiple answers, manual question types, drag blank order, publication readiness, row identity retention and foreign-ID isolation. Backend changes require an application-server restart; no schema migration is needed.
 
 Final follow-up results: TypeScript and production build passed; 349 unit tests passed; 36 combined exam/Studio browser tests passed on desktop and mobile Chromium (Brave). Light and dark editor captures were visually inspected. These checks cover mocked API flows and pure persistence logic; live-database writes and the external AI provider were intentionally not exercised.
+
+## Teacher marking follow-up — 19 September 2026
+
+Reused the existing Refero/Fieldbook design lock for the grading queue and response editor: readable question/answer context, restrained card boundaries, theme tokens, explicit save feedback, and responsive actions. Moderation controls are disclosed separately from ordinary marking. No decorative motion was added to scoring controls.
+
+Fixed failed/missing responses opening an editable blank grade, blank rubric criteria becoming zero, unvalidated criterion scores, foreign rubric associations, partial saves clearing unseen feedback/marker identity, and invalidated attempts being eligible for finalization. Finalization now locks the attempt before the grade so concurrent markers serialize their total recomputation, preserving an already released state. Queue answers are fetched in one batch with frozen question content and original maximum points; unavailable tables return an error instead of a false empty queue.
+
+Teachers can now see the student, exam, original prompt/passage/image, response, and available points; save unfinished drafts; enter explicit zero/decimal marks; and return to the same exam/status filter. Added the missing moderated filter, guarded duplicate saves, labeled controls, and excluded floating chat/assistant buttons that overlapped marking actions on mobile.
+
+Regression coverage includes score validation, partial-save preservation, invalid attempt/rubric rejection, queue failures/batching, attempt-first finalization and released-state preservation. Browser fixtures exercise loading failure/retry, zero marks, feedback, queue context, incomplete rubric drafts, finalization and locked controls on desktop/mobile. Live database concurrency is not exercised by these fixtures. No migration is required; the server must restart to load backend changes.
+
+Follow-up verification: 358 unit tests and 24 combined exam/grading browser checks passed. TypeScript and production build passed. Desktop/mobile grading captures were visually inspected. The initial combined browser run was interrupted by source hot reload; the complete rerun with editing finished passed.
