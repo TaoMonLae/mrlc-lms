@@ -213,7 +213,7 @@ The service binds to `127.0.0.1` by default. Do not expose port `8810` publicly.
 ### E-Library
 
 - PDF and EPUB batch upload with metadata and cover extraction.
-- PDF/EPUB files up to 100 MB may be uploaded and files over 50 MB are compressed automatically. CBR and CBZ support uploads up to 500 MB; comic archives at or above 50 MB are automatically optimized to a 100 MB stored-file ceiling. CBR files that require optimization are converted to CBZ.
+- PDF/EPUB files up to 100 MB may be uploaded. Files over 50 MB are compressed when possible; the smaller result is stored, or the original is kept if compression does not help. CBR and CBZ support uploads up to 500 MB; comic archives at or above 50 MB are automatically optimized to a 100 MB stored-file ceiling. CBR files that require optimization are converted to CBZ.
 - Books are grouped by genre, and books assigned to a series appear in expandable series cards ordered by volume. Titles are unique across the E-Library regardless of letter case or extra spacing.
 - PDF compression uses Ghostscript. EPUB compression rebuilds the archive and optimizes embedded images.
 - PDF and EPUB readers support zoom in/out, Single Page, Two Page, Fit to Width, and Fit to Height modes.
@@ -331,7 +331,7 @@ The production build creates:
 ### Required for all production features
 
 - `ffmpeg` and `ffprobe` — non-browser video conversion and output validation
-- Ghostscript (`gs`) — PDF compression above the 50 MB stored-file limit
+- Ghostscript (`gs`) — PDF compression above the 50 MB compression threshold
 - `pg_dump` matching the database server major version — manual and automatic backups
 
 CBR reading includes a bundled WebAssembly RAR fallback, so `bsdtar` is optional. The Docker image still installs `libarchive-tools` as a native accelerator.
@@ -443,9 +443,9 @@ Password-reset requests are stored in a retryable email outbox. Configure SMTP i
 ### E-books
 
 - Accepted formats: PDF, EPUB, CBR, and CBZ.
-- PDF/EPUB maximum incoming size: 100 MB; stored-file target: 50 MB or less.
+- PDF/EPUB maximum incoming and stored size: 100 MB. Files over 50 MB are compressed when possible; if the output is not smaller, the original is stored.
 - CBR/CBZ maximum incoming size: 500 MB; browser uploads are sent in 20 MB chunks to work through common reverse-proxy limits. Archives at or above 50 MB are rebuilt with optimized page images and must finish at 100 MB or less. CBR files that require optimization are stored as CBZ because the portable runtime can read but cannot safely create RAR archives.
-- Upload fails with an actionable error if compression cannot reach the format's stored-file target.
+- Comic uploads fail with an actionable error if compression cannot reach the 100 MB stored-file limit. PDF/EPUB uploads fail if processing errors occur.
 - Very large or damaged PDFs may require repair outside the LMS before upload.
 
 ### Videos
@@ -642,11 +642,11 @@ Confirm `DATABASE_URL`, `SESSION_SECRET`, `APP_URL`, port availability, and writ
 - Ensure `VIDEO_FILES_DIR` is writable and persistent.
 - Re-upload conversions marked as interrupted after a process restart.
 
-### A PDF over 50 MB cannot be stored
+### A PDF over 50 MB fails during processing
 
 - Verify `gs --version` works for the application user.
-- The source may already be highly compressed; the upload is rejected if the output remains over 50 MB.
-- Optimize scanned pages externally or split the PDF before retrying.
+- Check the application logs for the Ghostscript error and confirm the PDF opens correctly in a PDF reader.
+- Repair a damaged PDF before retrying; PDFs up to 100 MB are accepted even when compression cannot reduce their size.
 
 ### Browser/API requests fail after deployment
 

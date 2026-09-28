@@ -496,7 +496,7 @@ export default function EbookUpload() {
                     {((q.file.size > COMPRESSION_THRESHOLD_MB * 1024 * 1024 && (isPdf(q.file) || isEpub(q.file)))
                       || (q.file.size >= COMIC_COMPRESSION_THRESHOLD_MB * 1024 * 1024 && (isCbr(q.file) || isCbz(q.file)))) && (
                       <span className="shrink-0 text-[10px] font-medium text-amber-600 dark:text-amber-400">
-                        {isCbr(q.file) ? 'Will optimize to CBZ' : 'Will compress'}
+                        {isCbr(q.file) ? 'Will optimize to CBZ' : isCbz(q.file) ? 'Will compress' : 'Will try to compress'}
                       </span>
                     )}
                     {seriesMode && seriesName.trim() && (

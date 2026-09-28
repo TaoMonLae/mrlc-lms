@@ -139,7 +139,7 @@ const EBOOK_DIR = process.env.EBOOK_DIR || path.join(process.cwd(), "data", "ebo
 fs.mkdirSync(EBOOK_DIR, { recursive: true });
 const EBOOK_CHUNK_DIR = path.join(EBOOK_DIR, ".chunks");
 fs.mkdirSync(EBOOK_CHUNK_DIR, { recursive: true });
-const MAX_STORED_EBOOK_BYTES = 50 * 1024 * 1024;
+const EBOOK_COMPRESSION_THRESHOLD_BYTES = 50 * 1024 * 1024;
 const MAX_STANDARD_EBOOK_UPLOAD_BYTES = 100 * 1024 * 1024;
 const MAX_EBOOK_UPLOAD_BYTES = 500 * 1024 * 1024;
 const COMIC_COMPRESSION_THRESHOLD_BYTES = 50 * 1024 * 1024;
@@ -15991,7 +15991,7 @@ async function startServer() {
     if (ext !== ".cbz" && file.size > MAX_STANDARD_EBOOK_UPLOAD_BYTES) {
       throw new Error(`${ext.slice(1).toUpperCase()} files must be 100 MB or smaller`);
     }
-    if (ext !== ".cbz" && file.size <= MAX_STORED_EBOOK_BYTES) return { size: file.size, compressed: false };
+    if (ext !== ".cbz" && file.size <= EBOOK_COMPRESSION_THRESHOLD_BYTES) return { size: file.size, compressed: false };
     const temporaryPath = `${file.path}.compressing${ext}`;
     try {
       if (ext === ".pdf") await compressPdf(file.path, temporaryPath);
@@ -15999,12 +15999,18 @@ async function startServer() {
       else await compressCbz(file.path, temporaryPath);
 
       const compressedSize = (await fs.promises.stat(temporaryPath)).size;
-      if (compressedSize >= file.size) {
-        throw new Error("Compression did not reduce the file size");
+      if (compressedSize === 0) {
+        throw new Error("Compression produced an empty file");
       }
-      const storedLimit = ext === ".cbz" ? MAX_STORED_COMIC_BYTES : MAX_STORED_EBOOK_BYTES;
-      if (compressedSize > storedLimit) {
-        throw new Error(`Compressed file is still ${(compressedSize / (1024 * 1024)).toFixed(1)} MB`);
+      if (ext === ".cbz" && (compressedSize >= file.size || compressedSize > MAX_STORED_COMIC_BYTES)) {
+        throw new Error(compressedSize >= file.size
+          ? "Compression did not reduce the file size"
+          : `Compressed file is still ${(compressedSize / (1024 * 1024)).toFixed(1)} MB`);
+      }
+      // PDF and EPUB uploads already meet the 100 MB limit. Keep the smaller
+      // result even when the 50 MB compression target is unreachable.
+      if (compressedSize >= file.size) {
+        return { size: file.size, compressed: false };
       }
       clearComicArchiveCache(file.path);
       await fs.promises.rename(temporaryPath, file.path);
@@ -16345,7 +16351,7 @@ async function startServer() {
           res.status(400).json({
             error: COMIC_FORMATS.has(format)
               ? (compressionError?.message || `This ${format} exceeds the comic upload limit.`)
-              : `This ${format} is larger than 50 MB and could not be compressed below the limit. ${compressionError?.message || ""}`.trim(),
+              : `Could not process this ${format} upload. ${compressionError?.message || ""}`.trim(),
           });
           return;
         }
