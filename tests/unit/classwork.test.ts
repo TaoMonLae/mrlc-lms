@@ -117,6 +117,7 @@ function harness(
     name: "Pre-GED",
     level: "GED",
     academicYear: "2026",
+    _count: { students: 4 },
   };
   const prisma: any = {
     class: { findUnique: async () => klass, findMany: async () => [klass] },
@@ -174,6 +175,36 @@ function harness(
   };
 }
 const base = "/api/classwork/classes/:classId";
+test("teacher classwork shows homework submission progress", async () => {
+  const request = harness("TEACHER", {
+    homework: {
+      findMany: async () => [
+        {
+          id: "h1",
+          title: "Reading response",
+          instructions: "Write a short answer",
+          dueDate: new Date("2026-10-02T00:00:00Z"),
+          createdAt: new Date("2026-09-29T00:00:00Z"),
+          status: "OPEN",
+          subject: { name: "English" },
+          submissions: [
+            { status: "SUBMITTED" },
+            { status: "MARKED" },
+            { status: "REDO" },
+          ],
+        },
+      ],
+    },
+  });
+  const result = await request("get", base);
+  assert.equal(result.code, 200);
+  assert.deepEqual(result.payload.items[0].homeworkProgress, {
+    submitted: 2,
+    marked: 1,
+    needsReview: 1,
+    total: 4,
+  });
+});
 const examFixture = (overrides: Record<string, any> = {}) => ({
   id: "e1",
   title: "Checkpoint",

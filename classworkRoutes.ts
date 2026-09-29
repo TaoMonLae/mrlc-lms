@@ -107,7 +107,10 @@ export function registerClassworkRoutes({
       throw new ClassworkError(403, "This is not your class.");
     const klass = await prisma.class.findUnique({
       where: { id: classId },
-      select: classSelect,
+      select: {
+        ...classSelect,
+        _count: { select: { students: true } },
+      },
     });
     if (!klass) throw new ClassworkError(404, "Class not found.");
     return { actor, classId, studentId, klass };
@@ -274,6 +277,9 @@ export function registerClassworkRoutes({
         const pending = h.submissions.filter(
           (s) => s.status === "SUBMITTED",
         ).length;
+        const marked = h.submissions.filter(
+          (s) => s.status === "MARKED",
+        ).length;
         return withPlacement({
           id: `HOMEWORK:${h.id}`,
           sourceType: "HOMEWORK",
@@ -300,6 +306,14 @@ export function registerClassworkRoutes({
             !canManage &&
             h.status === "OPEN" &&
             (!submission || submission === "REDO"),
+          ...(canManage && {
+            homeworkProgress: {
+              submitted: pending + marked,
+              marked,
+              needsReview: pending,
+              total: klass._count.students,
+            },
+          }),
         });
       });
       for (const exam of exams) {
@@ -394,7 +408,8 @@ export function registerClassworkRoutes({
           }),
         );
       });
-      res.json({ class: klass, canManage, topics, items });
+      const { _count, ...classInfo } = klass;
+      res.json({ class: classInfo, canManage, topics, items });
     }),
   );
 

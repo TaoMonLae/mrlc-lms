@@ -79,7 +79,12 @@ export default function HomeworkList() {
   const [filter, setFilter] = useState<
     "all" | "open" | "closed" | "past-due" | "review"
   >("all");
-  const [classFilter, setClassFilter] = useState("all");
+  const [contextClassId, setContextClassId] = useState(
+    navigationState?.classId || "",
+  );
+  const [classFilter, setClassFilter] = useState(
+    navigationState?.classId || "all",
+  );
   const [sort, setSort] = useState("due");
   const stagedUpload = useRef("");
   const mounted = useRef(true);
@@ -148,7 +153,12 @@ export default function HomeworkList() {
       navigationState.classId ||
       navigationState.prefill
     ) {
-      setShowForm(true);
+      if (navigationState.openComposer || navigationState.prefill)
+        setShowForm(true);
+      if (navigationState.classId) {
+        setContextClassId(navigationState.classId);
+        setClassFilter(navigationState.classId);
+      }
       setForm((current) => ({
         ...current,
         ...(navigationState.prefill
@@ -205,7 +215,7 @@ export default function HomeworkList() {
     setForm({
       title: "",
       instructions: "",
-      classId: "",
+      classId: contextClassId,
       subjectId: "",
       dueDate: localToday(),
       maxMarks: "",
@@ -243,13 +253,18 @@ export default function HomeworkList() {
       setForm({
         title: "",
         instructions: "",
-        classId: "",
+        classId: contextClassId,
         subjectId: "",
         dueDate: localToday(),
         maxMarks: "",
         attachmentUrl: "",
       });
-      load();
+      if (contextClassId && form.classId === contextClassId)
+        navigate(`/classwork?class=${encodeURIComponent(contextClassId)}`);
+      else {
+        setClassFilter(form.classId);
+        load();
+      }
     } catch (e: any) {
       if (!mounted.current && stagedUpload.current) void removeUnusedHomeworkMedia(stagedUpload.current).catch(() => {});
       toast.error(e.message || "Failed to create homework");
@@ -296,7 +311,10 @@ export default function HomeworkList() {
         ),
     [filter, query, rows, classFilter, sort],
   );
-  const reviewCount = rows.reduce(
+  const summaryRows = rows.filter(
+    (row) => classFilter === "all" || row.class.id === classFilter,
+  );
+  const reviewCount = summaryRows.reduce(
     (sum, row) =>
       sum + row.submissions.filter((s) => s.status === "SUBMITTED").length,
     0,
@@ -304,6 +322,14 @@ export default function HomeworkList() {
 
   return (
     <div className="hw-workspace">
+      {contextClassId && (
+        <Link
+          to={`/classwork?class=${encodeURIComponent(contextClassId)}`}
+          className="mb-4 inline-flex items-center text-sm text-aubergine-600 hover:underline dark:text-aubergine-300"
+        >
+          ← Back to classwork
+        </Link>
+      )}
       <HomeworkMasthead
         audience="Teacher desk"
         title="Homework"
@@ -330,7 +356,7 @@ export default function HomeworkList() {
         >
           <div>
             <strong>
-              {rows.filter((row) => row.status === "OPEN").length}
+              {summaryRows.filter((row) => row.status === "OPEN").length}
             </strong>
             Open assignments
           </div>
@@ -338,7 +364,6 @@ export default function HomeworkList() {
             variant="outline"
             onClick={() => {
               setFilter("review");
-              setClassFilter("all");
               setQuery("");
               setSort("review");
             }}

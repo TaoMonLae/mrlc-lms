@@ -15,6 +15,12 @@ export interface ClassworkItem {
   topicId: string | null;
   pinned: boolean;
   actionable: boolean;
+  homeworkProgress?: {
+    submitted: number;
+    marked: number;
+    needsReview: number;
+    total: number;
+  };
 }
 export interface ClassworkClass {
   id: string;

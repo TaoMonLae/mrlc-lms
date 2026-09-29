@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 import AnimatedContent from "@/components/AnimatedContent";
 import { apiGet, apiSend } from "../../lib/api";
-import { formatDateOnly } from "../../lib/dates";
+import { formatDateOnly, localToday } from "../../lib/dates";
 import {
   filterClasswork,
   resolveClassworkSelection,
@@ -189,6 +189,27 @@ export default function Classwork() {
       "Classwork updated",
     );
   const items = data?.items ?? [];
+  const homeworkItems = items.filter((item) => item.kind === "HOMEWORK");
+  const studentPriorities = homeworkItems
+    .filter((item) => item.actionable)
+    .sort((a, b) =>
+      Number(b.status === "REDO") - Number(a.status === "REDO") ||
+      (a.dueDate ?? "").localeCompare(b.dueDate ?? ""),
+    );
+  const teacherPriorities = homeworkItems
+    .filter((item) => (item.homeworkProgress?.needsReview ?? 0) > 0)
+    .sort((a, b) =>
+      (b.homeworkProgress?.needsReview ?? 0) -
+        (a.homeworkProgress?.needsReview ?? 0) ||
+      (a.dueDate ?? "").localeCompare(b.dueDate ?? ""),
+    );
+  const priorities = data?.canManage ? teacherPriorities : studentPriorities;
+  const attentionCount = data?.canManage
+    ? teacherPriorities.reduce(
+        (count, item) => count + (item.homeworkProgress?.needsReview ?? 0),
+        0,
+      )
+    : studentPriorities.length;
   const visible = sortClasswork(
     filterClasswork(items, query, kind, topic),
     grouping,
@@ -255,6 +276,15 @@ export default function Classwork() {
                 : "No deadline"}
             </span>
           </div>
+          {item.homeworkProgress && (
+            <p className="cw-item-progress">
+              {item.homeworkProgress.submitted}/{item.homeworkProgress.total} turned in
+              <span aria-hidden="true"> · </span>
+              {item.homeworkProgress.needsReview} to review
+              <span aria-hidden="true"> · </span>
+              {item.homeworkProgress.marked} marked
+            </p>
+          )}
           {item.description && (
             <details>
               <summary>View brief</summary>
@@ -405,6 +435,71 @@ export default function Classwork() {
       ) : (
         data && (
           <>
+            {homeworkItems.length > 0 && (
+              <section className="cw-focus" aria-labelledby="cw-focus-title">
+                <div className="cw-focus-intro">
+                  <div>
+                    <p className="cw-eyebrow">
+                      {data.canManage ? "Teacher review" : "Your next steps"}
+                    </p>
+                    <h2 id="cw-focus-title">
+                      {attentionCount
+                        ? data.canManage
+                          ? `${attentionCount} submission${attentionCount === 1 ? "" : "s"} to review`
+                          : `${attentionCount} homework assignment${attentionCount === 1 ? "" : "s"} to work on`
+                        : data.canManage
+                          ? "No submissions waiting for review"
+                          : "Nothing needs action right now"}
+                    </h2>
+                    <p>
+                      {attentionCount
+                        ? data.canManage
+                          ? "Open a submission queue to give feedback."
+                          : "Start with a requested change or the nearest deadline."
+                        : data.canManage
+                          ? "New hand-ins will appear here."
+                          : "Browse submitted work and feedback below."}
+                    </p>
+                  </div>
+                  <Link
+                    className="cw-focus-all"
+                    to={data.canManage ? "/teacher/homework" : "/student/homework"}
+                    state={data.canManage ? { classId: selected } : undefined}
+                  >
+                    See all homework <ArrowUpRight size={15} />
+                  </Link>
+                </div>
+                {priorities.length > 0 && (
+                  <div className="cw-focus-list">
+                    {priorities.slice(0, 3).map((item) => (
+                      <Link key={item.id} to={item.href} className="cw-focus-row">
+                        <span className="cw-focus-row-copy">
+                          <strong>{item.title}</strong>
+                          <span>
+                            {item.status === "REDO"
+                              ? "Changes requested"
+                              : data.canManage
+                                ? `${item.homeworkProgress?.needsReview ?? 0} to review`
+                                : item.dueDate && item.dueDate.slice(0, 10) < localToday()
+                                  ? "Overdue"
+                                  : "To do"}
+                            {item.dueDate && ` · Due ${formatDateOnly(item.dueDate)}`}
+                          </span>
+                        </span>
+                        <span className="cw-focus-row-action">
+                          {data.canManage
+                            ? "Review work"
+                            : item.status === "REDO"
+                              ? "Revise work"
+                              : "Start work"}
+                          <ArrowUpRight size={15} />
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
             <div className="cw-toolbar">
               <div className="cw-search">
                 <Search size={17} />
