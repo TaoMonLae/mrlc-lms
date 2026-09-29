@@ -9,7 +9,7 @@ import ePub, { type Book, type Rendition } from 'epubjs';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import {
-  ArrowLeft, ChevronLeft, ChevronRight, Download, ZoomIn, ZoomOut,
+  ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Download, Minus, Plus, ZoomIn, ZoomOut,
   Loader2, BookOpen, List, Lock, Maximize2, Minimize2, Search, X,
   Highlighter, Sparkles, Trash2, BookA, Volume2, ClipboardList, Sun, Moon,
 } from 'lucide-react';
@@ -121,7 +121,9 @@ export default function EbookReader() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fullscreenControlsVisible, setFullscreenControlsVisible] = useState(false);
   const readerRef = useRef<HTMLDivElement>(null);
+  const epubControlsTimer = useRef<number | undefined>(undefined);
 
   const token = useMemo(() => sessionStorage.getItem('auth_token'), []);
 
@@ -157,7 +159,14 @@ export default function EbookReader() {
 
   // Full page (browser Fullscreen API) support for distraction-free reading.
   useEffect(() => {
-    const onChange = () => setIsFullscreen(!!currentFullscreenElement());
+    const onChange = () => {
+      const active = currentFullscreenElement() === readerRef.current;
+      setIsFullscreen(active);
+      setFullscreenControlsVisible(false);
+      window.clearTimeout(epubControlsTimer.current);
+      readerRef.current?.querySelectorAll<HTMLDetailsElement>('[data-reader-menu]').forEach((menu) => { menu.open = false; });
+      if (active) readerRef.current?.focus({ preventScroll: true });
+    };
     document.addEventListener('fullscreenchange', onChange);
     document.addEventListener('webkitfullscreenchange', onChange);
     return () => {
@@ -165,6 +174,54 @@ export default function EbookReader() {
       document.removeEventListener('webkitfullscreenchange', onChange);
     };
   }, []);
+
+  const revealFullscreenControls = useCallback(() => setFullscreenControlsVisible(true), []);
+  const revealEpubControls = useCallback(() => {
+    setFullscreenControlsVisible(true);
+    window.clearTimeout(epubControlsTimer.current);
+    epubControlsTimer.current = window.setTimeout(() => {
+      if (readerRef.current?.querySelector('[data-reader-selection], [data-reader-menu][open]')) return;
+      setFullscreenControlsVisible(false);
+      readerRef.current?.focus({ preventScroll: true });
+    }, 5000);
+  }, []);
+  const closeReaderMenus = useCallback(() => {
+    readerRef.current?.querySelectorAll<HTMLDetailsElement>('[data-reader-menu]').forEach((menu) => { menu.open = false; });
+  }, []);
+  const toggleFullscreenControls = useCallback(() => {
+    closeReaderMenus();
+    setFullscreenControlsVisible((visible) => !visible);
+  }, [closeReaderMenus]);
+
+  const handleReaderClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target;
+    if (target instanceof Element && target.closest('[data-reader-controls], [data-reader-selection]')) return;
+    window.clearTimeout(epubControlsTimer.current);
+    closeReaderMenus();
+    if (!isFullscreen) return;
+    if (window.getSelection()?.toString().trim()) revealFullscreenControls();
+    else toggleFullscreenControls();
+  };
+
+  // A sandboxed EPUB iframe can receive focus without forwarding a click
+  // event (notably in WebKit). Focus still crosses the iframe boundary.
+  useEffect(() => {
+    if (!isFullscreen || meta?.format.toUpperCase() !== 'EPUB') return;
+    let pending: number | undefined;
+    const onBlur = () => {
+      pending = window.setTimeout(() => {
+        const focused = document.activeElement;
+        if (focused instanceof HTMLIFrameElement && readerRef.current?.contains(focused)) revealEpubControls();
+      }, 0);
+    };
+    window.addEventListener('blur', onBlur);
+    return () => {
+      window.removeEventListener('blur', onBlur);
+      window.clearTimeout(pending);
+    };
+  }, [isFullscreen, meta?.format, revealEpubControls]);
+
+  useEffect(() => () => window.clearTimeout(epubControlsTimer.current), []);
 
   const toggleFullscreen = async () => {
     try {
@@ -254,10 +311,21 @@ export default function EbookReader() {
   return (
     <div
       ref={readerRef}
-      className={`elibrary-reader-shell flex flex-col -m-2 ${isFullscreen ? 'h-dvh bg-white dark:bg-canvas p-3' : 'h-[calc(100dvh-7rem)]'}`}
+      tabIndex={-1}
+      data-fullscreen={isFullscreen}
+      data-controls-visible={fullscreenControlsVisible}
+      onKeyDownCapture={(event) => {
+        if (isFullscreen && event.key === 'Tab') revealFullscreenControls();
+      }}
+      onPointerDownCapture={(event) => {
+        if (event.target instanceof Element && event.target.closest('[data-reader-controls], [data-reader-selection]')) {
+          window.clearTimeout(epubControlsTimer.current);
+        }
+      }}
+      className={`elibrary-reader-shell flex flex-col -m-2 ${isFullscreen ? 'h-dvh bg-white dark:bg-canvas' : 'h-[calc(100dvh-7rem)]'}`}
     >
       {/* Toolbar */}
-      <div className="elibrary-reader-toolbar flex items-center gap-3 shrink-0">
+      <div className="elibrary-reader-toolbar flex items-center gap-3 shrink-0" data-reader-controls>
         {!isFullscreen && (
           <Button variant="ghost" size="icon" title="Back to library"
             render={<Link to="/elibrary" />} nativeButton={false}>
@@ -303,7 +371,7 @@ export default function EbookReader() {
       </div>
 
       {/* Viewer */}
-      <div className="elibrary-reader-canvas flex-1 min-h-0 border border-slate-200 dark:border-surface-raised bg-slate-100 dark:bg-canvas overflow-hidden">
+      <div className="elibrary-reader-canvas flex-1 min-h-0 border border-slate-200 dark:border-surface-raised bg-slate-100 dark:bg-canvas overflow-hidden" onClick={handleReaderClick}>
         {loading ? (
           <div className="h-full flex items-center justify-center text-slate-500">
             <Loader2 className="h-5 w-5 animate-spin mr-2" /> Opening book…
@@ -317,9 +385,9 @@ export default function EbookReader() {
             </Button>
           </div>
         ) : meta && meta.format.toUpperCase() === 'EPUB' && epubBlob ? (
-          <EpubView id={meta.id} token={token} blob={epubBlob} bookTitle={meta.title} canMakeFlashcards={canMakeFlashcards} />
+          <EpubView id={meta.id} token={token} blob={epubBlob} bookTitle={meta.title} canMakeFlashcards={canMakeFlashcards} isFullscreen={isFullscreen} onSelection={revealFullscreenControls} onContentClick={isFullscreen ? revealEpubControls : closeReaderMenus} />
         ) : meta && meta.format.toUpperCase() === 'PDF' ? (
-          <PdfView id={meta.id} token={token} bookTitle={meta.title} canMakeFlashcards={canMakeFlashcards} />
+          <PdfView id={meta.id} token={token} bookTitle={meta.title} canMakeFlashcards={canMakeFlashcards} onSelection={revealFullscreenControls} />
         ) : meta && ['CBR', 'CBZ'].includes(meta.format.toUpperCase()) ? (
           <ComicView id={meta.id} token={token} format={meta.format.toUpperCase()} />
         ) : null}
@@ -341,7 +409,7 @@ function SelectionBar({ text, onHighlight, onFlashcard, onDefine, onDismiss }: {
 }) {
   const [color, setColor] = useState<string>('yellow');
   return (
-    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-lg px-3 py-1.5 max-w-[92%]">
+    <div data-reader-selection className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-lg px-3 py-1.5 max-w-[92%]">
       <span className="hidden sm:inline text-xs text-slate-500 truncate max-w-[180px]">"{text}"</span>
       <div className="flex items-center gap-1" role="group" aria-label="Highlight color">
         {HIGHLIGHT_COLORS.map((c) => (
@@ -924,7 +992,7 @@ function ComicView({ id, token, format }: { id: string; token: string | null; fo
           />
         ))}
       </div>
-      <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 border-t border-slate-200 bg-white px-3 py-2 dark:border-surface-raised dark:bg-surface-indigo">
+      <div data-reader-controls className="elibrary-reader-controls flex shrink-0 flex-wrap items-center justify-center gap-2 border-t border-slate-200 bg-white px-3 py-2 dark:border-surface-raised dark:bg-surface-indigo">
         <Button variant="outline" size="icon" onClick={() => go(-1)} disabled={page <= 1} title="Previous page"><ChevronLeft className="h-4 w-4" /></Button>
         <span className="min-w-24 px-1 text-center text-xs font-medium tabular-nums text-slate-600 dark:text-slate-300">
           {pageNumbers.length === 2 ? `Pages ${page}–${page + 1}` : `Page ${page}`} / {pageCount}
@@ -963,8 +1031,8 @@ function ComicView({ id, token, format }: { id: string; token: string | null; fo
 }
 
 /* ─────────────────────────── PDF reader ─────────────────────────── */
-function PdfView({ id, token, bookTitle, canMakeFlashcards }: {
-  id: string; token: string | null; bookTitle: string; canMakeFlashcards: boolean;
+function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
+  id: string; token: string | null; bookTitle: string; canMakeFlashcards: boolean; onSelection: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pageWrapRef = useRef<HTMLDivElement>(null);
@@ -1081,6 +1149,7 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards }: {
   const onMouseUp = () => {
     const text = window.getSelection()?.toString().trim() || '';
     setSelection(text.length > 0 ? text : null);
+    if (text) onSelection();
   };
 
   const saveHighlight = async (color: string) => {
@@ -1151,7 +1220,7 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards }: {
             <p className="text-xs text-slate-500 mt-1 break-words">{err}</p>
           </div>
         ) : (
-          <div ref={pageWrapRef} onMouseUp={onMouseUp} className="flex items-start justify-center gap-4">
+          <div ref={pageWrapRef} onMouseUp={onMouseUp} onTouchEnd={() => window.setTimeout(onMouseUp, 100)} className="flex items-start justify-center gap-4">
             <Document
               file={file}
               onLoadSuccess={(pdf: any) => { setNumPages(pdf.numPages); pdfRef.current = pdf; setErr(null); }}
@@ -1187,7 +1256,7 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards }: {
         )}
       </div>
       {/* Controls */}
-      <div className="shrink-0 flex flex-wrap items-center justify-center gap-2 border-t border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo px-4 py-2">
+      <div data-reader-controls className="elibrary-reader-controls shrink-0 flex flex-wrap items-center justify-center gap-2 border-t border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo px-4 py-2">
         <Button variant="outline" size="icon" onClick={() => go(-1)} disabled={page <= 1}><ChevronLeft className="h-4 w-4" /></Button>
         <span className="text-xs font-medium text-slate-600 dark:text-slate-300 tabular-nums px-2">
           {pageView === 'two' && page < numPages ? `Pages ${page}–${page + 1}` : `Page ${page}`} / {numPages || '…'}
@@ -1205,20 +1274,33 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards }: {
         <span className="text-xs text-slate-500 tabular-nums w-10 text-center">{Math.round(scale * 100)}%</span>
         <Button variant="outline" size="icon" onClick={() => setScale((s) => Math.min(2.5, +(s + 0.2).toFixed(2)))} title="Zoom in"><ZoomIn className="h-4 w-4" /></Button>
         <div className="w-px h-5 bg-slate-200 dark:bg-surface-raised mx-1" />
-        <Select value={pageView} onValueChange={(value) => changePageView(value as ReaderPageView)}>
-          <SelectTrigger className="h-9 w-[132px]" title="Page view"><SelectValue /></SelectTrigger>
-          <SelectContent container={fullscreenPortalContainer()}>
-            <SelectItem value="single">Single Page</SelectItem>
-            <SelectItem value="two">Two Page</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={fitMode} onValueChange={(value) => { setFitMode(value as ReaderFitMode); setScale(1); }}>
-          <SelectTrigger className="h-9 w-[125px]" title="Fit mode"><SelectValue /></SelectTrigger>
-          <SelectContent container={fullscreenPortalContainer()}>
-            <SelectItem value="width">Fit to Width</SelectItem>
-            <SelectItem value="height">Fit to Height</SelectItem>
-          </SelectContent>
-        </Select>
+        <details data-reader-menu className="relative shrink-0">
+          <summary className="flex h-9 cursor-pointer list-none items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium text-foreground marker:hidden hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+            View <ChevronDown className="h-3.5 w-3.5" />
+          </summary>
+          <div className="absolute bottom-full right-0 z-40 mb-2 w-56 max-w-[calc(100vw-2rem)] space-y-3 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-lg">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Page layout</Label>
+              <Select value={pageView} onValueChange={(value) => changePageView(value as ReaderPageView)}>
+                <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
+                <SelectContent container={fullscreenPortalContainer()}>
+                  <SelectItem value="single">Single Page</SelectItem>
+                  <SelectItem value="two">Two Page</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Fit</Label>
+              <Select value={fitMode} onValueChange={(value) => { setFitMode(value as ReaderFitMode); setScale(1); }}>
+                <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
+                <SelectContent container={fullscreenPortalContainer()}>
+                  <SelectItem value="width">Fit to Width</SelectItem>
+                  <SelectItem value="height">Fit to Height</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </details>
         <div className="w-px h-5 bg-slate-200 dark:bg-surface-raised mx-1" />
         <Button variant="outline" size="icon" onClick={() => setShowSearch(true)} title="Search in book" disabled={!numPages}><Search className="h-4 w-4" /></Button>
         <Button variant="outline" size="icon" onClick={() => setShowHighlights(true)} title="My highlights">
@@ -1385,10 +1467,15 @@ function readEpubSelection(contents: any, knownCfi?: string): EpubSelectionSnaps
 }
 
 /* ─────────────────────────── EPUB reader ─────────────────────────── */
-function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
+function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen, onSelection, onContentClick }: {
   id: string; token: string | null; blob: Blob; bookTitle: string; canMakeFlashcards: boolean;
+  isFullscreen: boolean; onSelection: () => void; onContentClick?: () => void;
 }) {
   const viewerRef = useRef<HTMLDivElement>(null);
+  const onSelectionRef = useRef(onSelection);
+  const onContentClickRef = useRef(onContentClick);
+  onSelectionRef.current = onSelection;
+  onContentClickRef.current = onContentClick;
   const bookRef = useRef<Book | null>(null);
   const rendRef = useRef<Rendition | null>(null);
   const [toc, setToc] = useState<{ label: string; href: string }[]>([]);
@@ -1408,6 +1495,22 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
   const [addingFlashcard, setAddingFlashcard] = useState(false);
   const [defineWord, setDefineWord] = useState<string | null>(null);
   const appliedHighlightIds = useRef<Set<string>>(new Set());
+
+  // Sandboxed chapters can suppress selection events in WebKit. Read the
+  // same-origin selection while fullscreen so the action bar still appears.
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const timer = window.setInterval(() => {
+      for (const contents of (rendRef.current as any)?.getContents?.() ?? []) {
+        const nextSelection = readEpubSelection(contents);
+        if (!nextSelection) continue;
+        setSelection((current) => current?.cfiRange === nextSelection.cfiRange ? current : nextSelection);
+        onSelectionRef.current();
+        break;
+      }
+    }, 250);
+    return () => window.clearInterval(timer);
+  }, [isFullscreen]);
 
   // Resolve the currently-visible location to the matching TOC entry (by
   // filename) so the dropdown shows a readable chapter label instead of the
@@ -1483,7 +1586,10 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
             selectionTimer = window.setTimeout(() => {
               if (destroyed) return;
               const nextSelection = readEpubSelection(contents);
-              if (nextSelection) setSelection(nextSelection);
+              if (nextSelection) {
+                setSelection(nextSelection);
+                onSelectionRef.current();
+              }
             }, 80);
           };
           doc.addEventListener('selectionchange', captureSelection, { passive: true });
@@ -1517,7 +1623,16 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
         });
         rendition.on('selected', (cfiRange: string, contents: any) => {
           const nextSelection = readEpubSelection(contents, cfiRange);
-          if (nextSelection) setSelection(nextSelection);
+          if (nextSelection) {
+            setSelection(nextSelection);
+            onSelectionRef.current();
+          }
+        });
+        // EPUB chapter clicks stay inside an iframe. epub.js forwards its DOM
+        // events through the rendition, so use that channel to reveal chrome.
+        rendition.on('click', (_event: MouseEvent, contents: any) => {
+          if (contents?.window?.getSelection?.()?.toString().trim()) onSelectionRef.current();
+          else onContentClickRef.current?.();
         });
         await rendition.display(savedProgress?.location || undefined);
         // Build a lightweight location map so reflowable EPUBs report a real
@@ -1686,7 +1801,7 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
           />
         )}
       </div>
-      <div className="shrink-0 flex flex-wrap items-center justify-center gap-2 border-t border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo px-4 py-2">
+      <div data-reader-controls className="elibrary-reader-controls shrink-0 flex flex-wrap items-center justify-center gap-2 border-t border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo px-4 py-2">
         <Button variant="outline" size="icon" onClick={() => rendRef.current?.prev()} disabled={!ready} className="shrink-0"><ChevronLeft className="h-4 w-4" /></Button>
         {toc.length > 0 && (
           <Select value={activeTocHref} onValueChange={(href) => rendRef.current?.display(href)}>
@@ -1705,60 +1820,53 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
         )}
         <Button variant="outline" size="icon" onClick={() => rendRef.current?.next()} disabled={!ready} className="shrink-0"><ChevronRight className="h-4 w-4" /></Button>
         <div className="w-px h-5 bg-slate-200 dark:bg-surface-raised mx-1 shrink-0" />
-        <Button variant="outline" size="icon" onClick={() => setZoom((value) => Math.max(60, value - 10))} title="Zoom out" disabled={!ready}><ZoomOut className="h-4 w-4" /></Button>
-        <span className="text-xs text-slate-500 tabular-nums w-10 text-center">{zoom}%</span>
-        <Button variant="outline" size="icon" onClick={() => setZoom((value) => Math.min(200, value + 10))} title="Zoom in" disabled={!ready}><ZoomIn className="h-4 w-4" /></Button>
-        <Select value={pageView} onValueChange={(value) => setPageView(value as ReaderPageView)} disabled={!ready}>
-          <SelectTrigger className="h-9 w-[132px]" title="Page view"><SelectValue /></SelectTrigger>
-          <SelectContent container={fullscreenPortalContainer()}>
-            <SelectItem value="single">Single Page</SelectItem>
-            <SelectItem value="two">Two Page</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={fitMode} onValueChange={(value) => setFitMode(value as ReaderFitMode)} disabled={!ready}>
-          <SelectTrigger className="h-9 w-[125px]" title="Fit mode"><SelectValue /></SelectTrigger>
-          <SelectContent container={fullscreenPortalContainer()}>
-            <SelectItem value="width">Fit to Width</SelectItem>
-            <SelectItem value="height">Fit to Height</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="w-px h-5 bg-slate-200 dark:bg-surface-raised mx-1 shrink-0" />
         <Button variant="outline" size="icon" onClick={() => setShowSearch(true)} title="Search in book" disabled={!ready} className="shrink-0"><Search className="h-4 w-4" /></Button>
         <Button variant="outline" size="icon" onClick={() => setShowHighlights(true)} title="My highlights" className="shrink-0">
           <Highlighter className="h-4 w-4" />
         </Button>
-        <div className="inline-flex items-center rounded-md border border-slate-200 dark:border-surface-raised p-0.5 shrink-0" role="group" aria-label="Reading appearance">
-          <Button
-            variant={appearance === 'light' ? 'secondary' : 'ghost'}
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => setAppearance('light')}
-            title="Light appearance"
-            aria-label="Light appearance"
-          >
-            <Sun className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant={appearance === 'warm' ? 'secondary' : 'ghost'}
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => setAppearance('warm')}
-            title="Warm appearance"
-            aria-label="Warm appearance"
-          >
-            <BookOpen className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant={appearance === 'dark' ? 'secondary' : 'ghost'}
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => setAppearance('dark')}
-            title="Dark appearance"
-            aria-label="Dark appearance"
-          >
-            <Moon className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+        <details data-reader-menu className="relative shrink-0">
+          <summary className="flex h-9 cursor-pointer list-none items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium text-foreground marker:hidden hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+            <BookA className="h-4 w-4" /> Appearance <ChevronDown className="h-3.5 w-3.5" />
+          </summary>
+          <div className="absolute bottom-full right-0 z-40 mb-2 w-64 max-w-[calc(100vw-2rem)] space-y-3 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-lg">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Text size</Label>
+              <div className="flex items-center justify-between gap-2">
+                <Button variant="outline" size="icon" onClick={() => setZoom((value) => Math.max(60, value - 10))} aria-label="Decrease text size" disabled={!ready}><Minus className="h-4 w-4" /></Button>
+                <span className="text-sm tabular-nums" aria-label={`Text size ${zoom}%`}>{zoom}%</span>
+                <Button variant="outline" size="icon" onClick={() => setZoom((value) => Math.min(200, value + 10))} aria-label="Increase text size" disabled={!ready}><Plus className="h-4 w-4" /></Button>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Page layout</Label>
+              <Select value={pageView} onValueChange={(value) => setPageView(value as ReaderPageView)} disabled={!ready}>
+                <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
+                <SelectContent container={fullscreenPortalContainer()}>
+                  <SelectItem value="single">Single Page</SelectItem>
+                  <SelectItem value="two">Two Page</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Fit</Label>
+              <Select value={fitMode} onValueChange={(value) => setFitMode(value as ReaderFitMode)} disabled={!ready}>
+                <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
+                <SelectContent container={fullscreenPortalContainer()}>
+                  <SelectItem value="width">Fit to Width</SelectItem>
+                  <SelectItem value="height">Fit to Height</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Reading theme</Label>
+              <div className="flex items-center justify-between gap-1" role="group" aria-label="Reading theme">
+                <Button variant={appearance === 'light' ? 'secondary' : 'outline'} size="sm" onClick={() => setAppearance('light')} aria-label="Light appearance"><Sun className="h-3.5 w-3.5 mr-1" /> Light</Button>
+                <Button variant={appearance === 'warm' ? 'secondary' : 'outline'} size="sm" onClick={() => setAppearance('warm')} aria-label="Warm appearance"><BookOpen className="h-3.5 w-3.5 mr-1" /> Warm</Button>
+                <Button variant={appearance === 'dark' ? 'secondary' : 'outline'} size="sm" onClick={() => setAppearance('dark')} aria-label="Dark appearance"><Moon className="h-3.5 w-3.5 mr-1" /> Dark</Button>
+              </div>
+            </div>
+          </div>
+        </details>
       </div>
 
       {showSearch && (

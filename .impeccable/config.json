@@ -1,0 +1,55 @@
+{
+  "buildPath": "code",
+  "hook": {
+    "enabled": true,
+    "limits": {
+      "maxFindings": 5,
+      "maxChars": 8000
+    }
+  },
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "khit haungg",
+        "createdAt": "2026-09-29T12:10:02.192Z",
+        "reason": "Agent: existing bundled Myanmar display font for News headings; documented beside @font-face in src/index.css"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "padauk",
+        "createdAt": "2026-09-29T12:10:02.255Z",
+        "reason": "Agent: existing Unicode font for Burmese and Mon script with required glyph metrics; documented in src/index.css"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "lq-reveal-chest-bounce",
+        "createdAt": "2026-09-29T13:17:22.335Z",
+        "reason": "Agent: existing literal reward-chest entrance animation; the chest bounces as it appears"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(0.2, 0.85, 0.3, 1.2)",
+        "createdAt": "2026-09-29T13:17:22.401Z",
+        "reason": "Agent: existing literal reward-chest entrance animation uses a short landing overshoot"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "createdAt": "2026-09-29T13:17:22.462Z",
+        "reason": "Agent: existing dice-settle animation depicts a die landing after a roll"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/index.css"
+        ],
+        "createdAt": "2026-09-29T13:18:36.929Z",
+        "reason": "Agent: current findings are an existing bottom scroll indicator misclassified as a side tab and an existing own-rank leaderboard cue; both predate reader changes"
+      }
+    ]
+  }
+}

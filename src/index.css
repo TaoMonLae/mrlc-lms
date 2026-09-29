@@ -2868,6 +2868,44 @@ a.lq-milestone-row:focus-visible {
 .elibrary-reader-toolbar > button,
 .elibrary-reader-toolbar > a { flex-shrink: 0; }
 .elibrary-reader-canvas { border: 1px solid #171816 !important; border-radius: 0 !important; box-shadow: 8px 9px 0 rgba(23, 24, 22, 0.1); }
+.elibrary-reader-shell[data-fullscreen="true"] { position: relative; width: 100vw; height: 100dvh; margin: 0; }
+.elibrary-reader-shell[data-fullscreen="true"] .elibrary-reader-toolbar {
+  position: absolute;
+  z-index: 30;
+  top: 0;
+  right: 0;
+  left: 0;
+  border-right: 0;
+  border-left: 0;
+  border-top: 0;
+}
+.elibrary-reader-shell[data-fullscreen="true"] .elibrary-reader-canvas {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+.elibrary-reader-shell[data-fullscreen="true"] .elibrary-reader-controls {
+  position: absolute;
+  z-index: 30;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+.elibrary-reader-shell[data-fullscreen="true"] .elibrary-reader-toolbar,
+.elibrary-reader-shell[data-fullscreen="true"] .elibrary-reader-controls {
+  transition: opacity 160ms ease, visibility 160ms ease;
+}
+.elibrary-reader-shell[data-fullscreen="true"][data-controls-visible="false"] .elibrary-reader-toolbar,
+.elibrary-reader-shell[data-fullscreen="true"][data-controls-visible="false"] .elibrary-reader-controls {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.elibrary-reader-shell[data-fullscreen="true"]:has([data-reader-selection]) .elibrary-reader-controls {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.elibrary-reader-shell[data-fullscreen="true"] [data-reader-selection] { z-index: 40; }
 
 .dark .elibrary-catalog-page {
   --elib-paper: #141a1f;
@@ -2922,6 +2960,11 @@ a.lq-milestone-row:focus-visible {
 .dark .elibrary-reader-shell { background: #0f151a; }
 .dark .elibrary-reader-toolbar { border-color: #52616a; background: #18232f; }
 .dark .elibrary-reader-canvas { border-color: #52616a !important; box-shadow: 8px 9px 0 rgba(0, 0, 0, 0.28); }
+
+@media (prefers-reduced-motion: reduce) {
+  .elibrary-reader-shell[data-fullscreen="true"] .elibrary-reader-toolbar,
+  .elibrary-reader-shell[data-fullscreen="true"] .elibrary-reader-controls { transition: none; }
+}
 
 @media (max-width: 1180px) {
   .elibrary-book-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
