@@ -16,6 +16,7 @@ import {
   VisualTheme
 } from './types';
 import { apiSend } from '../../../lib/api';
+import { useAuth } from '../../../providers/AuthProvider';
 import { soundEngine } from './utils/audio';
 import { calculateGhostTarget, getNextGhostDirection } from './utils/ghostAI';
 import {
@@ -25,7 +26,14 @@ import {
   getPacmanStepPosition,
   isWithinPickupRadius
 } from './utils/gamePhysics';
-import { countDotsAndEnergizers, getMazeSpawns, isWalkableForPacman, MAZES, TILE_SIZE } from './utils/mazes';
+import {
+  countDotsAndEnergizers,
+  getMazeSpawns,
+  isWalkableForPacman,
+  MAZES,
+  removeUnreachableDots,
+  TILE_SIZE
+} from './utils/mazes';
 import { ParticleSystem } from './utils/particles';
 import { pacmanDirectionForSwipe } from './utils/touchControls';
 
@@ -52,6 +60,60 @@ const GHOST_HOUSE_DELAYS = {
   INKY: 3.5,
   CLYDE: 6
 } as const;
+
+// ── Stage checkpoints ──────────────────────────────────────────────────────
+// Each time a stage is cleared, the start of the next stage is saved on this
+// device, keyed by the signed-in user so students sharing a school computer
+// don't continue each other's runs. The checkpoint keeps the stage and the
+// lives the player had when it began; a continued run restarts at 0 points.
+export interface StageSave {
+  level: number;
+  mazeIndex: number;
+  score: number;
+  lives: number;
+  gameMode: GameMode;
+  savedAt: string;
+}
+
+const STAGE_SAVE_PREFIX = 'pacman_stage_save:';
+
+function stageSaveKey(userId: string | undefined | null) {
+  return `${STAGE_SAVE_PREFIX}${userId ?? 'guest'}`;
+}
+
+function readStageSave(userId: string | undefined | null): StageSave | null {
+  try {
+    const raw = localStorage.getItem(stageSaveKey(userId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<StageSave>;
+    if (
+      typeof parsed.level !== 'number' || parsed.level < 1 ||
+      typeof parsed.mazeIndex !== 'number' ||
+      typeof parsed.score !== 'number' ||
+      typeof parsed.lives !== 'number' || parsed.lives < 1
+    ) {
+      return null;
+    }
+    return {
+      level: Math.floor(parsed.level),
+      mazeIndex: ((Math.floor(parsed.mazeIndex) % MAZES.length) + MAZES.length) % MAZES.length,
+      score: Math.max(0, Math.floor(parsed.score)),
+      lives: Math.min(9, Math.floor(parsed.lives)),
+      gameMode: parsed.gameMode ?? 'CLASSIC',
+      savedAt: parsed.savedAt ?? new Date().toISOString()
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeStageSave(userId: string | undefined | null, save: StageSave) {
+  try {
+    localStorage.setItem(stageSaveKey(userId), JSON.stringify(save));
+  } catch {
+    // Storage full or blocked — the game keeps working without a checkpoint.
+  }
+}
 
 function resetRoundPositions(
   pacman: PacManState,
@@ -85,6 +147,8 @@ function resetRoundPositions(
 
 export default function PacmanGame() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const userId = user?.id;
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -122,6 +186,16 @@ export default function PacmanGame() {
   const [mazeIndex, setMazeIndex] = useState<number>(0);
   const [maze, setMaze] = useState<number[][]>(() => MAZES[0].map((row) => [...row]));
   const [dotsRemaining, setDotsRemaining] = useState<number>(0);
+  // Synchronous copy of the dot count. The game loop reads this directly so
+  // the level-clear check and fruit/power-up spawns don't depend on when
+  // React happens to run a state updater.
+  const dotsRemainingRef = useRef<number>(0);
+
+  // Saved stage checkpoint for the current user (null when none).
+  const [savedStage, setSavedStage] = useState<StageSave | null>(null);
+  useEffect(() => {
+    setSavedStage(readStageSave(userId));
+  }, [userId]);
 
   // Power-Up & Bonus Fruit State
   const [activePowerUp, setActivePowerUp] = useState<PowerUpType | null>(null);
@@ -329,10 +403,11 @@ export default function PacmanGame() {
   const initLevel = useCallback(
     (lvl: number, currentMazeIdx: number) => {
       const rawMaze = MAZES[currentMazeIdx % MAZES.length];
-      const mazeCopy = rawMaze.map((row) => [...row]);
+      const mazeCopy = removeUnreachableDots(rawMaze.map((row) => [...row]));
       const { dots, energizers } = countDotsAndEnergizers(mazeCopy);
 
       setMaze(mazeCopy);
+      dotsRemainingRef.current = dots + energizers;
       setDotsRemaining(dots + energizers);
 
       const spawns = getMazeSpawns(mazeCopy);
@@ -489,6 +564,50 @@ export default function PacmanGame() {
     initLevel(nextLvl, nextMazeIdx);
     setStatus('PLAYING');
     soundEngine.playGameStart();
+
+    const checkpoint: StageSave = {
+      level: nextLvl,
+      mazeIndex: nextMazeIdx,
+      score: scoreRef.current,
+      lives,
+      gameMode,
+      savedAt: new Date().toISOString()
+    };
+    writeStageSave(userId, checkpoint);
+    setSavedStage(checkpoint);
+  };
+
+  // Continue from the saved stage checkpoint
+  const handleContinueGame = () => {
+    const save = readStageSave(userId);
+    if (!save) {
+      setSavedStage(null);
+      return;
+    }
+    // A continued run starts from 0 points so retrying a checkpoint can't
+    // stack scores beyond what one uninterrupted run could reach on the
+    // leaderboard. Only the stage and lives carry over.
+    setScore(0);
+    scoreRef.current = 0;
+    setLevel(save.level);
+    levelRef.current = save.level;
+    setLives(save.lives);
+    setIsNewHighScore(false);
+    setGameMode(save.gameMode);
+    setMazeIndex(save.mazeIndex);
+    initLevel(save.level, save.mazeIndex);
+    setStatus('PLAYING');
+    soundEngine.playGameStart();
+
+    setStats((prev) => {
+      const updated = { ...prev, gamesPlayed: prev.gamesPlayed + 1 };
+      try {
+        localStorage.setItem('pacman_stats', JSON.stringify(updated));
+      } catch {
+        // ignore storage errors
+      }
+      return updated;
+    });
   };
 
   // Spawn Bonus Fruit dynamically
@@ -637,35 +756,25 @@ export default function PacmanGame() {
         const px = rx * TILE_SIZE + TILE_SIZE / 2;
         const py = ry * TILE_SIZE + TILE_SIZE / 2;
 
+        dotsRemainingRef.current -= 1;
+        const rem = dotsRemainingRef.current;
+        setDotsRemaining(rem);
+        if (rem <= 0 && !levelClearTriggered) {
+          levelClearTriggered = true;
+          setStatus('LEVEL_CLEAR');
+          soundEngine.playLevelClear();
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }
+
         if (tileValue === 2) {
           ps.spawnDotParticles(px, py);
-          setDotsRemaining((prev) => {
-            const rem = prev - 1;
-            if (rem === 100 || rem === 50) spawnFruit();
-            if (rem === 120 || rem === 30) spawnPowerUpItem();
-            if (rem <= 0 && !levelClearTriggered) {
-              levelClearTriggered = true;
-              setStatus('LEVEL_CLEAR');
-              soundEngine.playLevelClear();
-              confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-            }
-            return rem;
-          });
+          if (rem === 100 || rem === 50) spawnFruit();
+          if (rem === 120 || rem === 30) spawnPowerUpItem();
           setScore((s) => s + 10);
           soundEngine.playWaka();
           setStats((prev) => ({ ...prev, dotsEaten: prev.dotsEaten + 1 }));
         } else {
           ps.spawnPowerUpSparkles(px, py, '#a855f7');
-          setDotsRemaining((prev) => {
-            const rem = prev - 1;
-            if (rem <= 0 && !levelClearTriggered) {
-              levelClearTriggered = true;
-              setStatus('LEVEL_CLEAR');
-              soundEngine.playLevelClear();
-              confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-            }
-            return rem;
-          });
           setScore((s) => s + 50);
           ghostComboRef.current = 1; // Reset ghost combo multiplier
           soundEngine.playEnergizer();
@@ -1053,7 +1162,10 @@ export default function PacmanGame() {
                 ghost.y * TILE_SIZE + TILE_SIZE / 2,
                 '#a855f7'
               );
-            } else if (!pacmanDiedThisFrame) {
+            } else if (!pacmanDiedThisFrame && !levelClearTriggered) {
+              // (Skipped when the last dot was eaten this same frame —
+              // otherwise DYING overwrote LEVEL_CLEAR, the round restarted
+              // with zero dots left, and the stage could never finish.)
               // PAC-MAN DIES
               pacmanDiedThisFrame = true;
               setStatus('DYING');
@@ -1246,6 +1358,8 @@ export default function PacmanGame() {
             onPauseGame={() => setStatus('PAUSED')}
             onRestartGame={handleRestartGame}
             onNextLevel={handleNextLevel}
+            savedStage={savedStage}
+            onContinueGame={handleContinueGame}
             showTouchControls={showTouchControls}
           />
         </div>

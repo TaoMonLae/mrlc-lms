@@ -6,6 +6,7 @@ import {
   ChevronUp,
   Pause,
   Play,
+  Save,
   RotateCcw,
   ShieldAlert,
   Sparkles,
@@ -27,7 +28,27 @@ interface ControlsOverlayProps {
   onRestartGame: () => void;
   onNextLevel: () => void;
   showTouchControls: boolean;
+  savedStage?: { level: number; score: number } | null;
+  onContinueGame?: () => void;
 }
+
+const ContinueButton: React.FC<{
+  savedStage: { level: number; score: number };
+  onContinueGame: () => void;
+}> = ({ savedStage, onContinueGame }) => (
+  <button
+    onClick={onContinueGame}
+    className="mt-3 px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-cyan-400/40 text-cyan-200 font-bold text-sm transition cursor-pointer flex flex-col items-center"
+  >
+    <span className="flex items-center gap-2">
+      <Save className="w-4 h-4" />
+      CONTINUE FROM STAGE {savedStage.level}
+    </span>
+    <span className="text-[11px] font-mono text-slate-400">
+      Score starts at 0
+    </span>
+  </button>
+);
 
 export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
   status,
@@ -41,7 +62,9 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
   onPauseGame,
   onRestartGame,
   onNextLevel,
-  showTouchControls
+  showTouchControls,
+  savedStage,
+  onContinueGame
 }) => {
   return (
     <div className="w-full flex flex-col items-center">
@@ -67,6 +90,9 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
             <Play className="w-5 h-5 fill-slate-950" />
             START GAME
           </button>
+          {savedStage && onContinueGame && (
+            <ContinueButton savedStage={savedStage} onContinueGame={onContinueGame} />
+          )}
         </div>
       )}
 
@@ -101,8 +127,12 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
           <h2 className="text-3xl md:text-4xl font-black text-yellow-300 tracking-widest mb-2 drop-shadow-[0_0_15px_rgba(253,224,71,0.6)]">
             LEVEL CLEAR!
           </h2>
-          <p className="text-slate-300 font-mono text-lg mb-6">
+          <p className="text-slate-300 font-mono text-lg mb-2">
             Stage <span className="text-pink-400 font-bold">#{level}</span> Completed!
+          </p>
+          <p className="text-xs text-cyan-200/80 mb-6 flex items-center gap-1">
+            <Save className="w-3.5 h-3.5" />
+            Stage {level + 1} will be saved — you can continue from it later.
           </p>
 
           <button
@@ -140,6 +170,9 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
             <RotateCcw className="w-5 h-5" />
             PLAY AGAIN
           </button>
+          {savedStage && onContinueGame && (
+            <ContinueButton savedStage={savedStage} onContinueGame={onContinueGame} />
+          )}
         </div>
       )}
 

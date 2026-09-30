@@ -15,7 +15,8 @@ import {
   isWalkableForPacman,
   MAZE_CLASSIC,
   MAZE_CROSSFIRE,
-  MAZE_LABYRINTH
+  MAZE_LABYRINTH,
+  removeUnreachableDots
 } from '../../src/pages/games/pacman/utils/mazes';
 
 test('Pac-Man collects an item when he reaches its tile', () => {
@@ -124,4 +125,65 @@ test('Pac-Man cannot skip through a wall during a high-speed frame', () => {
 
   assert.equal(movement.blocked, true);
   assert.deepEqual(movement.position, { x: 1, y: 1 });
+});
+
+// Flood-fills from a start tile using the given walkability rule, with the
+// side-tunnel wrap the game uses.
+function floodFill(maze: number[][], startX: number, startY: number, walkable: (tile: number) => boolean) {
+  const cols = maze[0].length;
+  const seen = new Set<string>([`${startX},${startY}`]);
+  const queue: Array<[number, number]> = [[startX, startY]];
+  while (queue.length > 0) {
+    const [x, y] = queue.shift()!;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      let nx = x + dx;
+      const ny = y + dy;
+      if (nx < 0) nx = cols - 1;
+      if (nx >= cols) nx = 0;
+      const tile = maze[ny]?.[nx];
+      const key = `${nx},${ny}`;
+      if (tile === undefined || !walkable(tile) || seen.has(key)) continue;
+      seen.add(key);
+      queue.push([nx, ny]);
+    }
+  }
+  return seen;
+}
+
+test('every maze has the same width on every row', () => {
+  for (const maze of [MAZE_CLASSIC, MAZE_CROSSFIRE, MAZE_LABYRINTH]) {
+    for (const row of maze) assert.equal(row.length, maze[0].length);
+  }
+});
+
+test('every dot and energizer can be reached, so each stage can be cleared', () => {
+  for (const [index, maze] of [MAZE_CLASSIC, MAZE_CROSSFIRE, MAZE_LABYRINTH].entries()) {
+    const spawn = getMazeSpawns(maze).pacmanSpawn;
+    const reachable = floodFill(maze, Math.floor(spawn.x), spawn.y, isWalkableForPacman);
+    maze.forEach((row, y) =>
+      row.forEach((tile, x) => {
+        if (tile === 2 || tile === 3) {
+          assert.ok(reachable.has(`${x},${y}`), `maze ${index + 1}: dot at (${x},${y}) is sealed off`);
+        }
+      })
+    );
+  }
+});
+
+test('ghosts leaving the house land in the same open area as Pac-Man', () => {
+  for (const [index, maze] of [MAZE_CLASSIC, MAZE_CROSSFIRE, MAZE_LABYRINTH].entries()) {
+    const spawn = getMazeSpawns(maze).pacmanSpawn;
+    const reachable = floodFill(maze, Math.floor(spawn.x), spawn.y, isWalkableForPacman);
+    const exit = getGhostExitPosition(maze);
+    assert.ok(reachable.has(`${exit.x},${exit.y}`), `maze ${index + 1}: ghost exit is sealed off`);
+  }
+});
+
+test('removeUnreachableDots clears sealed-off dots only', () => {
+  const maze = MAZE_CLASSIC.map((row) => [...row]);
+  maze[3][3] = 2; // inside a wall block, surrounded by walls
+  const before = maze.flat().filter((t) => t === 2 || t === 3).length;
+  removeUnreachableDots(maze);
+  assert.equal(maze[3][3], 0);
+  assert.equal(maze.flat().filter((t) => t === 2 || t === 3).length, before - 1);
 });
