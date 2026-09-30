@@ -20,7 +20,7 @@
 .gh-hero-wheel { position:absolute; width:184px; height:184px; left:7%; top:17%; border:2px dashed #d5f4e799; border-radius:50%; transform:rotate(-14deg); }
 .gh-hero-wheel span { position:absolute; display:grid; place-items:center; background:#f6f5e9; border-radius:50%; width:46px; height:46px; color:#1c6061; font-weight:850; font-size:21px; box-shadow:0 5px 0 #a9c7b9; }
 .gh-hero-wheel span:nth-child(1) { top:-22px; left:68px; }.gh-hero-wheel span:nth-child(2) { top:67px; right:-22px; }.gh-hero-wheel span:nth-child(3) { bottom:-22px; left:68px; }.gh-hero-wheel span:nth-child(4) { top:67px; left:-22px; }
-.gh-pip { position:absolute; width:min(63%,300px); height:90%; right:0; bottom:-8%; z-index:1; animation:gh-pip-enter .7s cubic-bezier(.2,.85,.25,1.12) both; }
+.gh-pip { position:absolute; width:min(63%,300px); height:90%; right:0; bottom:-8%; z-index:1; animation:gh-pip-enter .7s cubic-bezier(.22,1,.36,1) both; }
 .gh-pip img { width:100%; height:100%; object-fit:contain; position:absolute; }
 .gh-pip img:last-child { animation:gh-pip-wave 1.5s ease both; }
 .gh-pip-note { position:absolute; z-index:2; top:12%; right:11%; background:#fff9e8; color:#23515a; border-radius:15px 15px 4px 15px; padding:11px 15px; font-size:12px; font-weight:750; box-shadow:0 6px 13px #06273340; animation:gh-note-enter .35s .55s ease both; }
