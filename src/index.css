@@ -2907,6 +2907,25 @@ a.lq-milestone-row:focus-visible {
 }
 .elibrary-reader-shell[data-fullscreen="true"] [data-reader-selection] { z-index: 40; }
 
+/* Reader navigation follows the page-preview rail used by document viewers.
+   Use the existing MRLC surface tokens for both school themes. */
+.elibrary-reader-preview { display: flex; flex-direction: column; flex-shrink: 0; width: 176px; min-height: 0; border-right: 1px solid var(--border); background: var(--background); color: var(--foreground); }
+.elibrary-reader-preview__header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.elibrary-reader-preview__list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px; }
+.elibrary-reader-preview__item { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; padding: 8px; margin-bottom: 12px; border: 2px solid transparent; border-radius: 6px; color: var(--muted-foreground); cursor: pointer; }
+.elibrary-reader-preview__item:hover { background: var(--accent); color: var(--accent-foreground); }
+.elibrary-reader-preview__item[aria-current] { border-color: var(--ring); background: var(--accent); color: var(--foreground); }
+.elibrary-reader-preview__item:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.elibrary-pdf-page { flex-shrink: 0; background: white; box-shadow: 0 2px 8px rgb(0 0 0 / 12%); }
+.elibrary-reader-preview__excerpt { width: 112px; height: 140px; overflow: hidden; padding: 12px 10px; background: white; color: #1e293b; text-align: left; box-shadow: 0 1px 4px rgb(0 0 0 / 10%); }
+.elibrary-reader-preview__excerpt strong { display: block; margin-bottom: 8px; font-size: 9px; line-height: 1.3; }
+.elibrary-reader-preview__excerpt p { font-size: 8px; line-height: 1.6; }
+.elibrary-reader-shell[data-fullscreen="true"] .elibrary-reader-preview { padding-top: 64px; padding-bottom: 64px; }
+@media (max-width: 767px) {
+  .elibrary-reader-preview { position: absolute; inset: 0 auto 0 0; z-index: 20; width: 176px; box-shadow: 8px 0 24px rgb(0 0 0 / 20%); }
+  .elibrary-reader-shell:not([data-fullscreen="true"]) .elibrary-reader-controls { padding-bottom: 64px; }
+}
+
 .dark .elibrary-catalog-page {
   --elib-paper: #141a1f;
   --elib-canvas: #101720;

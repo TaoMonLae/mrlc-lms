@@ -11,7 +11,7 @@ import 'react-pdf/dist/esm/Page/TextLayer.css';
 import {
   ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Download, Minus, Plus, ZoomIn, ZoomOut,
   Loader2, BookOpen, List, Lock, Maximize2, Minimize2, Search, X,
-  Highlighter, Sparkles, Trash2, BookA, Volume2, ClipboardList, Sun, Moon,
+  Highlighter, Sparkles, Trash2, BookA, Volume2, ClipboardList, Sun, Moon, PanelLeft,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -53,6 +53,90 @@ interface SearchResult {
 
 type ReaderPageView = 'single' | 'two';
 type ReaderFitMode = 'width' | 'height';
+type ReaderFlow = 'scroll' | 'pages';
+
+function readerOverlayOpen() {
+  // Base UI keeps closed chapter menus mounted. Only visible overlays should
+  // suspend reader shortcuts; a hidden listbox must not block all EPUB keys.
+  return Array.from(document.querySelectorAll('[role="dialog"], [role="listbox"], [data-reader-menu][open]'))
+    .some((element) => !element.closest('[data-closed]') && element.checkVisibility({ checkVisibilityCSS: true }));
+}
+
+function readerKeyAllowed(event: KeyboardEvent) {
+  if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return false;
+  // Do not use instanceof here: EPUB targets belong to another window.
+  const target = event.target as Element | null;
+  if (target?.closest?.('input, textarea, select, button, a, summary, [contenteditable="true"], [role="textbox"], [role="dialog"], [data-reader-controls], [data-reader-preview]')) return false;
+  return !readerOverlayOpen();
+}
+
+function useReaderKeys(ref: React.RefObject<HTMLDivElement>, handler: (event: KeyboardEvent) => void) {
+  const handlerRef = useRef(handler);
+  handlerRef.current = handler;
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const shell = ref.current?.closest('.elibrary-reader-shell');
+      const focused = document.activeElement;
+      if (focused && focused !== document.body && !shell?.contains(focused)) return;
+      if (readerKeyAllowed(event)) handlerRef.current(event);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [ref]);
+}
+
+function defaultPreviewOpen() {
+  return window.matchMedia('(min-width: 768px)').matches;
+}
+
+function ReaderPreviewPane({ title, count, onClose, children }: {
+  title: string; count: string; onClose: () => void; children: React.ReactNode;
+}) {
+  return (
+    <aside data-reader-preview className="elibrary-reader-preview" aria-label={`${title} preview pane`}>
+      <div className="elibrary-reader-preview__header">
+        <div><h2 className="text-sm font-semibold">{title}</h2><p className="text-[11px] text-muted-foreground">{count}</p></div>
+        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Hide preview pane"><X className="h-4 w-4" /></Button>
+      </div>
+      {children}
+      <p className="hidden md:block border-t border-border px-3 py-2 text-[10px] text-muted-foreground">Scroll to read · Arrow keys to move</p>
+    </aside>
+  );
+}
+
+function useNearReaderViewport(ref: React.RefObject<HTMLDivElement>, root: HTMLElement | null) {
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    if (!root || !ref.current) return;
+    const observer = new IntersectionObserver(([entry]) => setNear(entry.isIntersecting), { root, rootMargin: '100% 0px' });
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [ref, root]);
+  return near;
+}
+
+function LazyPdfPage({ pageNumber, width, height, aspectRatio, root, thumbnail = false, onError }: {
+  pageNumber: number; width?: number; height?: number; aspectRatio: number;
+  root: HTMLElement | null; thumbnail?: boolean; onError?: (error: unknown) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const near = useNearReaderViewport(ref, root);
+  const [ratio, setRatio] = useState(aspectRatio);
+  useEffect(() => setRatio(aspectRatio), [aspectRatio]);
+  const pageWidth = width ?? (height ?? 792) * ratio;
+  const pageHeight = height ?? pageWidth / ratio;
+  return (
+    <div ref={ref} data-pdf-page={thumbnail ? undefined : pageNumber} className="elibrary-pdf-page" style={{ width: pageWidth, minHeight: pageHeight }}>
+      {near && (
+        <Page pageNumber={pageNumber} width={width} height={height}
+          renderAnnotationLayer={false} renderTextLayer={!thumbnail} devicePixelRatio={thumbnail ? 1 : undefined}
+          onLoadSuccess={(pdfPage) => { const viewport = pdfPage.getViewport({ scale: 1 }); setRatio(viewport.width / viewport.height); }}
+          loading={<div style={{ height: pageHeight }} className="flex items-center justify-center text-slate-400"><Loader2 className="h-4 w-4 animate-spin" /></div>}
+          onRenderError={onError} />
+      )}
+    </div>
+  );
+}
 
 async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}, timeoutMs = 30000) {
   const controller = new AbortController();
@@ -1036,6 +1120,9 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pageWrapRef = useRef<HTMLDivElement>(null);
+  const scrollFrameRef = useRef<number | undefined>(undefined);
+  const pageRef = useRef(1);
+  const selectionPageRef = useRef(1);
   const pdfRef = useRef<any>(null);
   const [numPages, setNumPages] = useState(0);
   const [page, setPage] = useState(1);
@@ -1043,7 +1130,11 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
   const [pageView, setPageView] = useState<ReaderPageView>('single');
   const [fitMode, setFitMode] = useState<ReaderFitMode>('width');
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
+  const [aspectRatio, setAspectRatio] = useState(612 / 792);
+  const [previewOpen, setPreviewOpen] = useState(defaultPreviewOpen);
+  const [previewRoot, setPreviewRoot] = useState<HTMLDivElement | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  pageRef.current = page;
 
   const [pendingPage, setPendingPage] = useState<number | null>(null);
   const [progressLoaded, setProgressLoaded] = useState(false);
@@ -1062,6 +1153,17 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
     }),
     [id, token],
   );
+
+  const jumpToPage = useCallback((requested: number) => {
+    const nextPage = Math.min(Math.max(1, requested), numPages || 1);
+    setPage(nextPage);
+    window.requestAnimationFrame(() => {
+      const container = containerRef.current;
+      const target = container?.querySelector<HTMLElement>(`[data-pdf-page="${nextPage}"]`);
+      if (!container || !target) return;
+      container.scrollTop += target.getBoundingClientRect().top - container.getBoundingClientRect().top - 16;
+    });
+  }, [numPages]);
 
   useEffect(() => {
     setNumPages(0);
@@ -1086,10 +1188,10 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
 
   useEffect(() => {
     if (pendingPage && numPages > 0) {
-      setPage(Math.min(pendingPage, numPages));
+      jumpToPage(pendingPage);
       setPendingPage(null);
     }
-  }, [pendingPage, numPages]);
+  }, [pendingPage, numPages, jumpToPage]);
 
   // Persist reading position, but only once the saved position has already
   // been applied (otherwise the very first render at page 1 would clobber it).
@@ -1113,7 +1215,7 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
     ro.observe(el);
     measure();
     return () => ro.disconnect();
-  }, []);
+  }, [numPages]);
 
   // Safety net: never hang on a silent spinner forever.
   useEffect(() => {
@@ -1127,17 +1229,64 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
   }, [numPages, err]);
 
   const pageStep = pageView === 'two' ? 2 : 1;
-  const go = (direction: number) =>
-    setPage((p) => Math.min(Math.max(1, p + direction * pageStep), numPages || 1));
+  const go = (direction: number) => jumpToPage(pageRef.current + direction * pageStep);
+
+  useReaderKeys(containerRef, (event) => {
+    if (!numPages || selection) return;
+    const container = containerRef.current;
+    if (!container) return;
+    let scroll = 0;
+    if (event.key === 'ArrowLeft') go(-1);
+    else if (event.key === 'ArrowRight') go(1);
+    else if (event.key === 'Home') jumpToPage(1);
+    else if (event.key === 'End') jumpToPage(numPages);
+    else if (event.key === 'ArrowUp') scroll = -80;
+    else if (event.key === 'ArrowDown') scroll = 80;
+    else if (event.key === 'PageUp') scroll = -container.clientHeight * 0.9;
+    else if (event.key === 'PageDown' || event.key === ' ') scroll = container.clientHeight * 0.9 * (event.shiftKey ? -1 : 1);
+    else return;
+    event.preventDefault();
+    if (scroll) container.scrollBy({ top: scroll });
+    window.dispatchEvent(new Event('ebook-reader-activity'));
+  });
+
+  const trackVisiblePage = () => {
+    window.cancelAnimationFrame(scrollFrameRef.current ?? 0);
+    scrollFrameRef.current = window.requestAnimationFrame(() => {
+      const container = containerRef.current;
+      if (!container) return;
+      const marker = container.getBoundingClientRect().top + Math.min(120, container.clientHeight * 0.25);
+      const pages = container.querySelectorAll<HTMLElement>('[data-pdf-page]');
+      for (const element of pages) {
+        const bounds = element.getBoundingClientRect();
+        if (bounds.bottom > marker) { setPage(Number(element.dataset.pdfPage)); break; }
+      }
+    });
+  };
+
+  useEffect(() => () => window.cancelAnimationFrame(scrollFrameRef.current ?? 0), []);
+  // Keep the current page in view when zoom, fitting, or the preview pane
+  // changes the dimensions of the continuous page stack.
+  useEffect(() => {
+    if (numPages && progressLoaded && !pendingPage) jumpToPage(pageRef.current);
+  }, [viewport.width, viewport.height, scale, fitMode, pageView, numPages, progressLoaded, pendingPage, jumpToPage]);
+
+  useEffect(() => {
+    const active = previewRoot?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!active || !previewRoot) return;
+    const pane = previewRoot.getBoundingClientRect();
+    const item = active.getBoundingClientRect();
+    if (item.top < pane.top || item.bottom > pane.bottom) previewRoot.scrollTop += item.top - pane.top - 12;
+  }, [page, previewRoot]);
 
   const changePageView = (value: ReaderPageView) => {
     setPageView(value);
-    if (value === 'two') setPage((current) => current % 2 === 0 ? current - 1 : current);
+    if (value === 'two') jumpToPage(page % 2 === 0 ? page - 1 : page);
   };
 
   const visiblePages = pageView === 'two' && page < numPages ? [page, page + 1] : [page];
-  const availableWidth = Math.max(240, viewport.width - 32 - (pageView === 'two' ? 16 : 0));
-  const fittedPageWidth = (availableWidth / visiblePages.length) * scale;
+  const availableWidth = Math.max(120, viewport.width - 32 - (pageView === 'two' ? 16 : 0));
+  const fittedPageWidth = (availableWidth / pageStep) * scale;
   const fittedPageHeight = Math.max(240, viewport.height - 32) * scale;
 
   const onError = (e: unknown) => {
@@ -1147,7 +1296,10 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
   };
 
   const onMouseUp = () => {
-    const text = window.getSelection()?.toString().trim() || '';
+    const domSelection = window.getSelection();
+    const text = domSelection?.toString().trim() || '';
+    const selectedPage = domSelection?.anchorNode?.parentElement?.closest<HTMLElement>('[data-pdf-page]');
+    selectionPageRef.current = Number(selectedPage?.dataset.pdfPage) || page;
     setSelection(text.length > 0 ? text : null);
     if (text) onSelection();
   };
@@ -1158,7 +1310,7 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
       const res = await fetch(`/api/ebooks/${id}/highlights`, {
         method: 'POST',
         headers: authHeaders(token, true),
-        body: JSON.stringify({ text: selection, page, color }),
+        body: JSON.stringify({ text: selection, page: selectionPageRef.current, color }),
       });
       if (!res.ok) throw new Error('Could not save highlight.');
       const h = await res.json();
@@ -1209,10 +1361,7 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
 
   return (
     <div className="h-full flex flex-col relative">
-      <div
-        ref={containerRef}
-        className="flex-1 min-h-0 overflow-auto custom-scrollbar flex justify-center p-4 relative"
-      >
+      <div className="flex flex-1 min-h-0 relative">
         {err ? (
           <div className="flex flex-col items-center justify-center text-center px-6 max-w-md">
             <BookOpen className="h-10 w-10 text-slate-300 mb-3" />
@@ -1220,30 +1369,47 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
             <p className="text-xs text-slate-500 mt-1 break-words">{err}</p>
           </div>
         ) : (
-          <div ref={pageWrapRef} onMouseUp={onMouseUp} onTouchEnd={() => window.setTimeout(onMouseUp, 100)} className="flex items-start justify-center gap-4">
-            <Document
+            <Document className="flex flex-1 min-h-0 min-w-0 relative"
               file={file}
-              onLoadSuccess={(pdf: any) => { setNumPages(pdf.numPages); pdfRef.current = pdf; setErr(null); }}
+              onLoadSuccess={(pdf: any) => {
+                setNumPages(pdf.numPages); pdfRef.current = pdf; setErr(null);
+                pdf.getPage(1).then((first: any) => { const bounds = first.getViewport({ scale: 1 }); setAspectRatio(bounds.width / bounds.height); }).catch(() => {});
+              }}
               onLoadError={onError}
               onSourceError={onError}
               loading={<div className="flex items-center justify-center h-40 text-slate-500"><Loader2 className="h-5 w-5 animate-spin" /></div>}
             >
-              <div className="flex items-start justify-center gap-4">
-                {visiblePages.map((pageNumber) => (
-                  <Page
-                    key={pageNumber}
-                    pageNumber={pageNumber}
-                    width={fitMode === 'width' && viewport.width > 0 ? fittedPageWidth : undefined}
-                    height={fitMode === 'height' && viewport.height > 0 ? fittedPageHeight : undefined}
-                    renderAnnotationLayer={false}
-                    renderTextLayer
-                    className="shadow-lg"
-                    onRenderError={onError}
-                  />
-                ))}
+              {previewOpen && (
+                <ReaderPreviewPane title="Pages" count={`${numPages} pages`} onClose={() => setPreviewOpen(false)}>
+                  <div ref={setPreviewRoot} className="elibrary-reader-preview__list custom-scrollbar">
+                    {Array.from({ length: numPages }, (_, index) => index + 1).map((pageNumber) => (
+                      <button key={pageNumber} type="button" className="elibrary-reader-preview__item"
+                        aria-label={`Go to page ${pageNumber}`} aria-current={page === pageNumber ? 'page' : undefined}
+                        onClick={() => { jumpToPage(pageNumber); if (!defaultPreviewOpen()) setPreviewOpen(false); }}>
+                        <LazyPdfPage pageNumber={pageNumber} width={112} aspectRatio={aspectRatio} root={previewRoot} thumbnail />
+                        <span className="text-xs tabular-nums">{pageNumber}</span>
+                      </button>
+                    ))}
+                  </div>
+                </ReaderPreviewPane>
+              )}
+              <div ref={containerRef} data-reader-scroll="pdf" tabIndex={0} aria-label="PDF reading area"
+                onScroll={trackVisiblePage} className="flex-1 min-w-0 min-h-0 overflow-auto custom-scrollbar p-4 outline-none">
+                <div ref={pageWrapRef} onMouseUp={onMouseUp} onTouchEnd={() => window.setTimeout(onMouseUp, 100)}
+                  className="flex min-w-full w-max flex-col items-center gap-4">
+                  {Array.from({ length: Math.ceil(numPages / pageStep) }, (_, row) => row * pageStep + 1).map((firstPage) => (
+                    <div key={firstPage} className="flex items-start justify-center gap-4">
+                      {Array.from({ length: Math.min(pageStep, numPages - firstPage + 1) }, (_, offset) => firstPage + offset).map((pageNumber) => (
+                        <LazyPdfPage key={pageNumber} pageNumber={pageNumber}
+                          width={fitMode === 'width' ? fittedPageWidth : undefined}
+                          height={fitMode === 'height' ? fittedPageHeight : undefined}
+                          aspectRatio={aspectRatio} root={containerRef.current} onError={onError} />
+                      ))}
+                    </div>
+                  ))}
+                </div>
               </div>
             </Document>
-          </div>
         )}
         {selection && (
           <SelectionBar
@@ -1257,7 +1423,8 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
       </div>
       {/* Controls */}
       <div data-reader-controls className="elibrary-reader-controls shrink-0 flex flex-wrap items-center justify-center gap-2 border-t border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo px-4 py-2">
-        <Button variant="outline" size="icon" onClick={() => go(-1)} disabled={page <= 1}><ChevronLeft className="h-4 w-4" /></Button>
+        <Button variant={previewOpen ? 'secondary' : 'outline'} size="icon" onClick={() => setPreviewOpen((open) => !open)} aria-label="Toggle preview pane" aria-expanded={previewOpen} title="Page previews"><PanelLeft className="h-4 w-4" /></Button>
+        <Button variant="outline" size="icon" onClick={() => go(-1)} disabled={page <= 1} aria-label="Previous page"><ChevronLeft className="h-4 w-4" /></Button>
         <span className="text-xs font-medium text-slate-600 dark:text-slate-300 tabular-nums px-2">
           {pageView === 'two' && page < numPages ? `Pages ${page}–${page + 1}` : `Page ${page}`} / {numPages || '…'}
         </span>
@@ -1265,6 +1432,7 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
           variant="outline"
           size="icon"
           onClick={() => go(1)}
+          aria-label="Next page"
           disabled={page + visiblePages.length - 1 >= numPages}
         >
           <ChevronRight className="h-4 w-4" />
@@ -1311,14 +1479,14 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
       {showSearch && (
         <SearchDialog
           onSearch={searchPdf}
-          onSelect={(r) => { setPage(parseInt(r.key, 10)); setShowSearch(false); }}
+          onSelect={(r) => { jumpToPage(parseInt(r.key, 10)); setShowSearch(false); }}
           onClose={() => setShowSearch(false)}
         />
       )}
       {showHighlights && (
         <HighlightsDialog
           highlights={highlights}
-          onJump={(h) => { if (h.page) setPage(h.page); setShowHighlights(false); }}
+          onJump={(h) => { if (h.page) jumpToPage(h.page); setShowHighlights(false); }}
           onDelete={deleteHighlight}
           onClose={() => setShowHighlights(false)}
         />
@@ -1467,6 +1635,57 @@ function readEpubSelection(contents: any, knownCfi?: string): EpubSelectionSnaps
 }
 
 /* ─────────────────────────── EPUB reader ─────────────────────────── */
+interface EpubChapter {
+  label: string;
+  href: string;
+  depth: number;
+}
+
+function epubChapters(items: any[], depth = 0): EpubChapter[] {
+  return items.flatMap((item) => [
+    { label: String(item.label || '').trim(), href: item.href, depth },
+    ...epubChapters(item.subitems || [], depth + 1),
+  ]).filter((item) => item.href);
+}
+
+function EpubChapterPreview({ book, chapter, index, root, active, onSelect }: {
+  book: Book | null; chapter: EpubChapter; index: number; root: HTMLElement | null; active: boolean; onSelect: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const near = useNearReaderViewport(ref, root);
+  const [excerpt, setExcerpt] = useState('');
+  useEffect(() => {
+    if (!near || !book || excerpt) return;
+    let cancelled = false;
+    const section = book.spine.get(chapter.href);
+    if (!section) return;
+    // Load an independent chapter document so preview extraction cannot
+    // unload or mutate the section currently displayed by the rendition.
+    book.load(section.url).then((loaded) => {
+      if (cancelled) return;
+      const doc = loaded as Document;
+      const text = Array.from(doc.querySelectorAll('p, li')).map((element) => element.textContent?.trim() || '').join(' ').replace(/\s+/g, ' ').trim();
+      setExcerpt(text.slice(0, 280));
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [near, book, chapter.href, excerpt]);
+  return (
+    <div ref={ref}>
+      <button type="button" className="elibrary-reader-preview__item elibrary-reader-preview__chapter"
+        aria-current={active ? 'location' : undefined} aria-label={`Go to chapter ${index + 1}: ${chapter.label || 'Untitled section'}`} onClick={onSelect}>
+        <div className="elibrary-reader-preview__excerpt" aria-hidden="true">
+          <strong>{chapter.label || `Section ${index + 1}`}</strong>
+          <p>{excerpt || 'Chapter preview'}</p>
+        </div>
+        <span className="flex w-full gap-2 text-left" style={{ paddingLeft: Math.min(chapter.depth, 2) * 8 }}>
+          <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">{String(index + 1).padStart(2, '0')}</span>
+          <span className="text-xs leading-snug">{chapter.label || `Section ${index + 1}`}</span>
+        </span>
+      </button>
+    </div>
+  );
+}
+
 function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen, onSelection, onContentClick }: {
   id: string; token: string | null; blob: Blob; bookTitle: string; canMakeFlashcards: boolean;
   isFullscreen: boolean; onSelection: () => void; onContentClick?: () => void;
@@ -1478,7 +1697,7 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
   onContentClickRef.current = onContentClick;
   const bookRef = useRef<Book | null>(null);
   const rendRef = useRef<Rendition | null>(null);
-  const [toc, setToc] = useState<{ label: string; href: string }[]>([]);
+  const [toc, setToc] = useState<EpubChapter[]>([]);
   const [currentHref, setCurrentHref] = useState<string>('');
   const [ready, setReady] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -1486,6 +1705,14 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
   const [zoom, setZoom] = useState(100);
   const [pageView, setPageView] = useState<ReaderPageView>('single');
   const [fitMode, setFitMode] = useState<ReaderFitMode>('width');
+  const [flow, setFlow] = useState<ReaderFlow>('scroll');
+  const [previewOpen, setPreviewOpen] = useState(defaultPreviewOpen);
+  const [previewRoot, setPreviewRoot] = useState<HTMLDivElement | null>(null);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
+  const keyHandlerRef = useRef<(event: KeyboardEvent) => void>(() => {});
+  const wheelHandlerRef = useRef<(event: WheelEvent) => void>(() => {});
+  const wheelGestureRef = useRef({ delta: 0, lastEvent: 0, lastTurn: 0 });
   const appearanceRef = useRef(appearance);
 
   const [highlights, setHighlights] = useState<HighlightRow[]>([]);
@@ -1495,6 +1722,56 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
   const [addingFlashcard, setAddingFlashcard] = useState(false);
   const [defineWord, setDefineWord] = useState<string | null>(null);
   const appliedHighlightIds = useRef<Set<string>>(new Set());
+
+  keyHandlerRef.current = (event) => {
+    if (!ready || selection || !readerKeyAllowed(event)) return;
+    const rendition = rendRef.current;
+    const container = (rendition as any)?.manager?.container as HTMLElement | undefined;
+    if (!rendition || !container) return;
+    let distance = 0;
+    if (event.key === 'ArrowLeft') void rendition.prev();
+    else if (event.key === 'ArrowRight') void rendition.next();
+    else if (event.key === 'Home') void rendition.display();
+    else if (event.key === 'End') {
+      const book = bookRef.current;
+      const last = ((book?.spine as any)?.spineItems || []).at(-1);
+      if (book && last) void rendition.display(book.locations.length() ? book.locations.cfiFromPercentage(1) : last.href);
+    } else if (event.key === 'ArrowUp') {
+      if (flow === 'pages') void rendition.prev(); else distance = -80;
+    } else if (event.key === 'ArrowDown') {
+      if (flow === 'pages') void rendition.next(); else distance = 80;
+    } else if (event.key === 'PageUp' || (event.key === ' ' && event.shiftKey)) void rendition.prev();
+    else if (event.key === 'PageDown' || event.key === ' ') void rendition.next();
+    else return;
+    event.preventDefault();
+    if (distance) container.scrollBy({ top: distance });
+    window.dispatchEvent(new Event('ebook-reader-activity'));
+  };
+  useReaderKeys(viewerRef, (event) => keyHandlerRef.current(event));
+
+  wheelHandlerRef.current = (event) => {
+    if (!ready || flow !== 'pages' || event.ctrlKey || event.metaKey || !event.deltaY || selection) return;
+    const target = event.target as Element | null;
+    if (target?.closest?.('[data-reader-controls], [data-reader-preview]') || readerOverlayOpen()) return;
+    event.preventDefault();
+    const now = performance.now();
+    const gesture = wheelGestureRef.current;
+    if (now - gesture.lastEvent > 250) gesture.delta = 0;
+    gesture.lastEvent = now;
+    gesture.delta += event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 600 : 1);
+    if (Math.abs(gesture.delta) < 80 || now - gesture.lastTurn < 300) return;
+    if (gesture.delta > 0) void rendRef.current?.next(); else void rendRef.current?.prev();
+    gesture.delta = 0;
+    gesture.lastTurn = now;
+  };
+
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+    const onWheel = (event: WheelEvent) => wheelHandlerRef.current(event);
+    viewer.addEventListener('wheel', onWheel, { passive: false });
+    return () => viewer.removeEventListener('wheel', onWheel);
+  }, []);
 
   // Sandboxed chapters can suppress selection events in WebKit. Read the
   // same-origin selection while fullscreen so the action bar still appears.
@@ -1561,7 +1838,8 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
         const rendition = book.renderTo(viewerRef.current, {
           width: '100%',
           height: '100%',
-          flow: 'paginated',
+          manager: 'continuous',
+          flow: 'scrolled-continuous',
           spread: 'none',
         });
         rendRef.current = rendition;
@@ -1576,6 +1854,10 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
           const activity = () => window.dispatchEvent(new Event('ebook-reader-activity'));
           const activityEvents = ['pointerdown', 'keydown', 'wheel', 'touchstart'] as const;
           activityEvents.forEach((event) => doc.addEventListener(event, activity, { passive: true }));
+          const onKey = (event: KeyboardEvent) => keyHandlerRef.current(event);
+          const onWheel = (event: WheelEvent) => wheelHandlerRef.current(event);
+          doc.addEventListener('keydown', onKey);
+          doc.addEventListener('wheel', onWheel, { passive: false });
 
           // EPUB.js derives its `selected` event from a delayed selectionchange.
           // WebKit can omit or delay that event inside the chapter iframe, so
@@ -1599,6 +1881,8 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
           const cleanup = () => {
             window.clearTimeout(selectionTimer);
             activityEvents.forEach((event) => doc.removeEventListener(event, activity));
+            doc.removeEventListener('keydown', onKey);
+            doc.removeEventListener('wheel', onWheel);
             doc.removeEventListener('selectionchange', captureSelection);
             doc.removeEventListener('mouseup', captureSelection);
             doc.removeEventListener('touchend', captureSelection);
@@ -1608,6 +1892,8 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
         rendition.on('relocated', (loc: any) => {
           const href = loc?.start?.href || '';
           setCurrentHref(href);
+          setAtStart(Boolean(loc?.atStart));
+          setAtEnd(Boolean(loc?.atEnd));
           if (loc?.start?.cfi) {
             let percent: number | null = null;
             try {
@@ -1652,7 +1938,12 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
         book.loaded.navigation
           .then((nav: any) => {
             if (destroyed) return;
-            const items = (nav.toc || []).map((t: any) => ({ label: (t.label || '').trim(), href: t.href }));
+            const items = epubChapters(nav.toc || []);
+            if (!items.length) {
+              ((book.spine as any).spineItems || []).forEach((item: any, index: number) => {
+                if (item.linear) items.push({ href: item.href, label: `Section ${index + 1}`, depth: 0 });
+              });
+            }
             setToc(items);
           })
           .catch((e: unknown) => console.warn('[E-Library EPUB navigation]', e));
@@ -1661,15 +1952,8 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
       }
     })();
 
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') rendRef.current?.prev();
-      if (e.key === 'ArrowRight') rendRef.current?.next();
-    };
-    window.addEventListener('keyup', onKey);
-
     return () => {
       destroyed = true;
-      window.removeEventListener('keyup', onKey);
       contentCleanups.forEach((cleanup) => cleanup());
       contentCleanups.clear();
       try { rendRef.current?.destroy(); bookRef.current?.destroy(); } catch { /* noop */ }
@@ -1692,8 +1976,23 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
 
   useEffect(() => {
     if (!rendRef.current) return;
-    try { rendRef.current.spread(pageView === 'two' ? 'always' : 'none', 0); } catch { /* rendition is still opening */ }
-  }, [pageView, ready]);
+    try { rendRef.current.spread(flow === 'pages' && pageView === 'two' ? 'always' : 'none', 0); } catch { /* rendition is still opening */ }
+  }, [pageView, flow, ready]);
+
+  useEffect(() => {
+    const rendition = rendRef.current;
+    if (!ready || !rendition) return;
+    const nextFlow = flow === 'scroll' ? 'scrolled-continuous' : 'paginated';
+    if (rendition.settings.flow !== nextFlow) rendition.flow(nextFlow);
+  }, [flow, ready]);
+
+  useEffect(() => {
+    const active = previewRoot?.querySelector<HTMLElement>('[aria-current="location"]');
+    if (!active || !previewRoot) return;
+    const pane = previewRoot.getBoundingClientRect();
+    const item = active.getBoundingClientRect();
+    if (item.top < pane.top || item.bottom > pane.bottom) previewRoot.scrollTop += item.top - pane.top - 12;
+  }, [activeTocHref, previewRoot]);
 
   // Keep EPUB.js informed when fit mode, fullscreen, or the surrounding
   // layout changes. Fit-to-height uses a comfortable page-width cap; fit-to-
@@ -1773,7 +2072,20 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
 
   return (
     <div className="h-full flex flex-col relative">
-      <div className={`flex-1 min-h-0 relative overflow-auto custom-scrollbar flex justify-center ${EPUB_APPEARANCE_SURFACE[appearance]}`}>
+      <div className="flex flex-1 min-h-0 relative">
+        {previewOpen && (
+          <ReaderPreviewPane title="Contents" count={`${toc.length} sections`} onClose={() => setPreviewOpen(false)}>
+            <div ref={setPreviewRoot} className="elibrary-reader-preview__list custom-scrollbar">
+              {!toc.length && <p className="p-3 text-xs text-muted-foreground">{ready ? 'No chapter previews available.' : 'Loading chapters…'}</p>}
+              {toc.map((chapter, index) => (
+                <EpubChapterPreview key={`${chapter.href}-${index}`} book={bookRef.current} chapter={chapter} index={index}
+                  root={previewRoot} active={activeTocHref === chapter.href}
+                  onSelect={() => { void rendRef.current?.display(chapter.href); if (!defaultPreviewOpen()) setPreviewOpen(false); }} />
+              ))}
+            </div>
+          </ReaderPreviewPane>
+        )}
+      <div className={`flex-1 min-w-0 min-h-0 relative overflow-hidden flex justify-center ${EPUB_APPEARANCE_SURFACE[appearance]}`}>
         {err ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-6">
             <BookOpen className="h-10 w-10 text-slate-300 mb-3" />
@@ -1783,7 +2095,10 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
         ) : (
           <div
             ref={viewerRef}
-            className="h-full shrink-0"
+            tabIndex={0}
+            aria-label="EPUB reading area"
+            data-reader-flow={flow}
+            className="h-full shrink-0 outline-none"
             style={{
               width: fitMode === 'width'
                 ? '100%'
@@ -1801,8 +2116,10 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
           />
         )}
       </div>
+      </div>
       <div data-reader-controls className="elibrary-reader-controls shrink-0 flex flex-wrap items-center justify-center gap-2 border-t border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo px-4 py-2">
-        <Button variant="outline" size="icon" onClick={() => rendRef.current?.prev()} disabled={!ready} className="shrink-0"><ChevronLeft className="h-4 w-4" /></Button>
+        <Button variant={previewOpen ? 'secondary' : 'outline'} size="icon" onClick={() => setPreviewOpen((open) => !open)} aria-label="Toggle preview pane" aria-expanded={previewOpen} title="Chapter previews"><PanelLeft className="h-4 w-4" /></Button>
+        <Button variant="outline" size="icon" onClick={() => rendRef.current?.prev()} disabled={!ready || atStart} aria-label="Previous page" className="shrink-0"><ChevronLeft className="h-4 w-4" /></Button>
         {toc.length > 0 && (
           <Select value={activeTocHref} onValueChange={(href) => rendRef.current?.display(href)}>
             <SelectTrigger className="w-[140px] sm:w-[220px] md:w-[260px] h-9 shrink-0 overflow-hidden">
@@ -1818,7 +2135,7 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
             </SelectContent>
           </Select>
         )}
-        <Button variant="outline" size="icon" onClick={() => rendRef.current?.next()} disabled={!ready} className="shrink-0"><ChevronRight className="h-4 w-4" /></Button>
+        <Button variant="outline" size="icon" onClick={() => rendRef.current?.next()} disabled={!ready || atEnd} aria-label="Next page" className="shrink-0"><ChevronRight className="h-4 w-4" /></Button>
         <div className="w-px h-5 bg-slate-200 dark:bg-surface-raised mx-1 shrink-0" />
         <Button variant="outline" size="icon" onClick={() => setShowSearch(true)} title="Search in book" disabled={!ready} className="shrink-0"><Search className="h-4 w-4" /></Button>
         <Button variant="outline" size="icon" onClick={() => setShowHighlights(true)} title="My highlights" className="shrink-0">
@@ -1830,6 +2147,16 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
           </summary>
           <div className="absolute bottom-full right-0 z-40 mb-2 w-64 max-w-[calc(100vw-2rem)] space-y-3 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-lg">
             <div className="space-y-1.5">
+              <Label className="text-xs">Reading mode</Label>
+              <Select value={flow} onValueChange={(value) => setFlow(value as ReaderFlow)} disabled={!ready}>
+                <SelectTrigger className="h-9 w-full" aria-label="Reading mode"><SelectValue /></SelectTrigger>
+                <SelectContent container={fullscreenPortalContainer()}>
+                  <SelectItem value="scroll">Continuous scroll</SelectItem>
+                  <SelectItem value="pages">Paginated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
               <Label className="text-xs">Text size</Label>
               <div className="flex items-center justify-between gap-2">
                 <Button variant="outline" size="icon" onClick={() => setZoom((value) => Math.max(60, value - 10))} aria-label="Decrease text size" disabled={!ready}><Minus className="h-4 w-4" /></Button>
@@ -1839,13 +2166,14 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Page layout</Label>
-              <Select value={pageView} onValueChange={(value) => setPageView(value as ReaderPageView)} disabled={!ready}>
+              <Select value={pageView} onValueChange={(value) => setPageView(value as ReaderPageView)} disabled={!ready || flow === 'scroll'}>
                 <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
                 <SelectContent container={fullscreenPortalContainer()}>
                   <SelectItem value="single">Single Page</SelectItem>
                   <SelectItem value="two">Two Page</SelectItem>
                 </SelectContent>
               </Select>
+              {flow === 'scroll' && <p className="text-[11px] text-muted-foreground">Switch to Paginated for two-page reading.</p>}
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Fit</Label>

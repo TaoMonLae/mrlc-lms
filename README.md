@@ -216,7 +216,9 @@ The service binds to `127.0.0.1` by default. Do not expose port `8810` publicly.
 - PDF/EPUB files up to 100 MB may be uploaded. Files over 50 MB are compressed when possible; the smaller result is stored, or the original is kept if compression does not help. CBR and CBZ support uploads up to 500 MB; comic archives at or above 50 MB are automatically optimized to a 100 MB stored-file ceiling. CBR files that require optimization are converted to CBZ.
 - Books are grouped by genre, and books assigned to a series appear in expandable series cards ordered by volume. Titles are unique across the E-Library regardless of letter case or extra spacing.
 - PDF compression uses Ghostscript. EPUB compression rebuilds the archive and optimizes embedded images.
-- PDF and EPUB readers support zoom in/out, Single Page, Two Page, Fit to Width, and Fit to Height modes.
+- PDF readers scroll continuously through single pages or two-page spreads. EPUB readers support continuous chapter scrolling and optional paginated single-page or two-page reading. Both retain zoom/text size and Fit to Width/Height controls.
+- A collapsible left preview pane provides numbered PDF thumbnails and EPUB chapter previews, including nested contents. It opens as an overlay on smaller screens.
+- Scroll, arrow keys, Page Up/Down, Home/End, and Space navigate the readers in normal and fullscreen views. Keyboard shortcuts respect text inputs, selection, and visible menus/dialogs.
 - Resume position, full-book search, table of contents, highlights, full-page reading, selected-word dictionary lookup, and highlight-to-flashcard creation.
 - Reading analytics show books opened, books completed at 90%+, percentage read, active reading time, open count, and last-read activity by student.
 - Optional Project Gutenberg import through Gutendex.
