@@ -22,7 +22,7 @@ export function LetterWheel({ letters, onSubmit, disabled }: { letters: string; 
   }
   return <div className="wc-wheel-section">
     <div className="wc-word-strip" aria-live="polite" aria-label="Your word">{word || <span>Connect the letters</span>}</div>
-    <div ref={surface} className="wc-wheel" tabIndex={0} role="group" aria-label="Letter wheel. Type letters, Enter to submit, Backspace to undo, Escape to clear."
+    <div ref={surface} className={`wc-wheel ${order.length >= 9 ? 'is-crowded' : ''}`} tabIndex={0} role="group" aria-label="Letter wheel. Type letters, Enter to submit, Backspace to undo, Escape to clear."
       onKeyDown={event => {
         if (disabled || event.ctrlKey || event.metaKey || event.altKey) return;
         if (/^[a-z]$/i.test(event.key)) {

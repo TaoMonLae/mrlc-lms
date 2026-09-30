@@ -1,10 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LEVELS } from '../../src/pages/games/word-connect/content';
+import { LEVELS, WORLDS } from '../../src/pages/games/word-connect/content';
 import { buildCrossword, canSpell, emptyLevel, emptyProgress, isComplete, normaliseProgress, revealHint, starsFor, submitWord, unlockedLevel } from '../../src/pages/games/word-connect/engine';
 
 test('every curated puzzle is spellable and forms a connected crossword with no stray adjacent words', () => {
+  assert.equal(LEVELS.length, 100);
+  assert.deepEqual(WORLDS.map(world => [world.id, world.levels.length]), [['b1', 25], ['b2', 25], ['c1', 25], ['c2', 25]]);
+  assert.equal(new Set(LEVELS.map(level => level.letters)).size, 100);
   for (const level of LEVELS) {
+    assert.ok(level.letters.length >= 6, `${level.id} has a substantial anchor word`);
     assert.equal(new Set([...level.words, ...level.bonus].map(item => item.word)).size, level.words.length + level.bonus.length);
     for (const item of [...level.words, ...level.bonus]) {
       assert.ok(canSpell(item.word, level.letters), `${level.id}: ${item.word}`);
@@ -40,13 +44,14 @@ test('word submission respects physical letters, bonus discoveries, and duplicat
   assert.equal(canSpell('REAR', 'READ'), false);
   assert.equal(canSpell('REAR', 'REAR'), true);
   const level = LEVELS[0], start = emptyLevel();
-  const correct = submitWord(level, start, ' read ');
+  const anchor = level.words[0].word, bonusWord = level.bonus[0].word;
+  const correct = submitWord(level, start, ` ${anchor.toLowerCase()} `);
   assert.equal(correct.kind, 'correct');
   assert.deepEqual(start.found, []);
-  assert.equal(submitWord(level, correct.progress, 'READ').kind, 'duplicate');
-  const bonus = submitWord(level, correct.progress, 'RED');
+  assert.equal(submitWord(level, correct.progress, anchor).kind, 'duplicate');
+  const bonus = submitWord(level, correct.progress, bonusWord);
   assert.equal(bonus.kind, 'bonus');
-  assert.equal(submitWord(level, bonus.progress, 'RED').kind, 'duplicate');
+  assert.equal(submitWord(level, bonus.progress, bonusWord).kind, 'duplicate');
   assert.equal(submitWord(level, bonus.progress, 'REAR').kind, 'invalid');
   assert.equal(submitWord(level, bonus.progress, 'AD').kind, 'invalid');
   assert.equal(isComplete(level, bonus.progress), false);
@@ -57,12 +62,12 @@ test('staged hints eventually solve a word, and completion unlocks only the next
   let progress = emptyLevel();
   assert.equal(starsFor(progress), 3);
   for (let i = 1; i <= 4; i++) {
-    progress = revealHint(level, progress, 'READ');
-    assert.equal(progress.hints.READ, i);
-    assert.equal(progress.found.includes('READ'), i === 4);
+    progress = revealHint(level, progress, level.words[0].word);
+    assert.equal(progress.hints[level.words[0].word], i);
+    assert.equal(progress.found.includes(level.words[0].word), i === 4);
   }
   assert.equal(starsFor(progress), 1);
-  assert.deepEqual(revealHint(level, progress, 'READ'), progress);
+  assert.deepEqual(revealHint(level, progress, level.words[0].word), progress);
   assert.deepEqual(revealHint(level, progress, 'FAKE'), progress);
   for (const item of level.words) progress = submitWord(level, progress, item.word).progress;
   const adventure = { ...emptyProgress(), levels: { [level.id]: progress } };
@@ -70,12 +75,13 @@ test('staged hints eventually solve a word, and completion unlocks only the next
   assert.equal(unlockedLevel(1, adventure), true);
   assert.equal(unlockedLevel(2, adventure), false);
   assert.equal(unlockedLevel(0, emptyProgress()), true);
-  assert.equal(starsFor({ ...emptyLevel(), hints: { READ: 2 } }), 2);
+  assert.equal(starsFor({ ...emptyLevel(), hints: { [level.words[0].word]: 2 } }), 2);
 });
 
 test('loaded progress filters unknown levels, invalid words and broken hint values', () => {
-  const saved = normaliseProgress({ version: 1, tutorialSeen: true, sound: 'true', levels: { read: { found: ['READ', 'READ', 3, 'CHEAT'], bonus: ['RED', 'DARE'], hints: { DEAR: 2, DARE: 7, EAR: 1.5 } }, unknown: { found: ['ALL'] } } });
-  assert.deepEqual(saved.levels.read, { found: ['READ'], bonus: ['RED'], hints: { DEAR: 2 } });
+  const level = LEVELS[0];
+  const saved = normaliseProgress({ version: 1, tutorialSeen: true, sound: 'true', levels: { [level.id]: { found: [level.words[0].word, level.words[0].word, 3, 'CHEAT'], bonus: [level.bonus[0].word, level.words[1].word], hints: { [level.words[1].word]: 2, [level.words[2].word]: 7, [level.words[3].word]: 1.5 } }, unknown: { found: ['ALL'] } } });
+  assert.deepEqual(saved.levels[level.id], { found: [level.words[0].word], bonus: [level.bonus[0].word], hints: { [level.words[1].word]: 2 } });
   assert.equal(saved.sound, false);
   assert.equal(saved.tutorialSeen, true);
   assert.equal(saved.levels.unknown, undefined);

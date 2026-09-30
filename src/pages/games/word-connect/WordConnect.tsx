@@ -9,6 +9,8 @@ import { LetterWheel } from './LetterWheel';
 import './word-connect.css';
 
 function Stars({ count }: { count: number }) { return <span className="wc-stars" aria-label={`${count} stars`}>{[1, 2, 3].map(i => <Star key={i} size={18} fill={i <= count ? 'currentColor' : 'none'} className={i <= count ? '' : 'is-empty'} />)}</span>; }
+const PIP_STYLES = ['pip.png', 'pip-thinking.png', 'pip-study.png', 'pip-determined.png', 'pip-surprised.png', 'pip-aha.png', 'pip-cheer.png'];
+const pipFor = (index: number) => `/games/word-connect/${PIP_STYLES[index % PIP_STYLES.length]}`;
 function SaveNotice({ error }: { error: boolean }) { return error ? <p className="wc-save-error" role="alert">Your browser couldn’t save progress. Keep this tab open; check that browser storage is available.</p> : null; }
 function Help({ open, onClose }: { open: boolean; onClose: () => void }) {
   return <Dialog open={open} onOpenChange={value => { if (!value) onClose(); }}><DialogContent className="wc-dialog">
@@ -26,30 +28,36 @@ export default function WordConnect() {
   const [collection, setCollection] = useState(false);
   const completed = LEVELS.filter(level => isComplete(level, progress.levels[level.id]));
   const next = LEVELS.find(level => !isComplete(level, progress.levels[level.id]));
+  const [selectedWorld, setSelectedWorld] = useState(() => worldFor(next?.id || LEVELS[LEVELS.length - 1].id).id);
+  const world = WORLDS.find(item => item.id === selectedWorld) || WORLDS[0];
+  const worldIndex = WORLDS.indexOf(world);
   const words = LEVELS.flatMap(level => [...level.words.filter(w => progress.levels[level.id]?.found.includes(w.word)), ...level.bonus.filter(w => progress.levels[level.id]?.bonus.includes(w.word))]);
   const collected = [...new Map(words.map(word => [word.word, word])).values()];
   const stars = completed.reduce((sum, level) => sum + starsFor(progress.levels[level.id]), 0);
   return <section className="wc-game wc-map-page">
     <header className="wc-page-heading"><div><span className="wc-eyebrow"><Compass size={15} /> YOUR WORD JOURNEY</span><h1>Word Connect <span>Adventure</span></h1><p>Follow your curiosity. One word at a time.</p></div><button className="wc-outline-button" onClick={() => setCollection(true)}><BookOpen size={18} /> Word collection <span>{collected.length}</span></button></header>
     <SaveNotice error={saveError} />
+    <div className="wc-stage-tabs" role="group" aria-label="Choose a vocabulary stage">{WORLDS.map((item, stageIndex) => {
+      const cleared = item.levels.filter(level => isComplete(level, progress.levels[level.id])).length;
+      return <button key={item.id} className={`wc-stage-tab ${selectedWorld === item.id ? 'is-selected' : ''}`} aria-pressed={selectedWorld === item.id} onClick={() => setSelectedWorld(item.id)}><span>{item.id.toUpperCase()}</span><strong>{item.title.split(' · ')[1]}</strong><small>{cleared} / {item.levels.length} complete</small>{stageIndex === 0 && <span className="sr-only">Start here</span>}</button>;
+    })}</div>
     <div className="wc-map-layout">
       <div className="wc-trail">
-        {WORLDS.map((world, worldIndex) => <section key={world.id} className="wc-world" style={{ '--world-color': world.color } as React.CSSProperties}>
-          <header className="wc-world-heading"><span>0{worldIndex + 1}</span><div><h2>{world.title}</h2><p>{world.description}</p></div></header>
-          <div className="wc-path">
-            <svg viewBox="0 0 360 340" preserveAspectRatio="none" aria-hidden="true"><path d="M115 30 C115 80 173 85 173 140 S90 205 90 250 S150 305 150 340" /></svg>
-            {world.levels.map((level, localIndex) => {
+        <section className="wc-world" style={{ '--world-color': world.color } as React.CSSProperties}>
+          <header className="wc-world-heading"><span>0{worldIndex + 1}</span><div><h2>{world.title}</h2><p>{world.description} · 25 levels</p></div></header>
+          <div className="wc-level-grid">
+            {world.levels.map((level) => {
               const index = LEVELS.indexOf(level), done = isComplete(level, progress.levels[level.id]), unlocked = unlockedLevel(index, progress), current = next?.id === level.id;
-              const node = <><span className={`wc-node ${done ? 'is-done' : ''} ${current ? 'is-current' : ''}`}>{done ? <Check size={29} /> : unlocked ? <BookOpen size={26} /> : <Lock size={22} />}</span><span className="wc-node-caption"><strong>{index + 1}. {level.title}</strong>{done ? <Stars count={starsFor(progress.levels[level.id])} /> : <small>{current ? 'START HERE' : unlocked ? 'Ready to explore' : 'Complete the previous level'}</small>}</span></>;
-              return unlocked ? <Link key={level.id} to={`/games/word-connect/play/${level.id}`} className={`wc-level-node wc-node-${localIndex} ${current ? 'is-current' : ''}`} aria-label={`${done ? 'Review' : 'Play'} level ${index + 1}: ${level.title}`}>{node}</Link> : <div key={level.id} className={`wc-level-node wc-node-${localIndex} is-locked`} aria-label={`Level ${index + 1} locked: ${level.title}`}>{node}</div>;
+              const node = <><span className="wc-level-number">{done ? <Check size={20} /> : unlocked ? index + 1 : <Lock size={17} />}</span><strong>{level.title}</strong>{done ? <Stars count={starsFor(progress.levels[level.id])} /> : <small>{current ? 'UP NEXT' : unlocked ? 'Replay' : 'Locked'}</small>}</>;
+              return unlocked ? <Link key={level.id} to={`/games/word-connect/play/${level.id}`} className={`wc-level-tile ${current ? 'is-current' : ''} ${done ? 'is-done' : ''}`} aria-label={`${done ? 'Review' : 'Play'} level ${index + 1}: ${level.title}`}>{node}</Link> : <div key={level.id} className="wc-level-tile is-locked" aria-label={`Level ${index + 1} locked: ${level.title}`}>{node}</div>;
             })}
           </div>
-        </section>)}
-        <div className="wc-finish"><Compass size={26} /><strong>{next ? 'A world of words is waiting.' : 'Adventure complete. Look at all you’ve learned!'}</strong></div>
+        </section>
+        <div className="wc-finish"><Compass size={26} /><strong>{next ? 'Four stages. One hundred discoveries.' : 'Adventure complete. Look at all you’ve learned!'}</strong><span>Stage labels follow CEFR progression themes; individual puzzle words are not certified CEFR assignments.</span></div>
       </div>
       <aside className="wc-journey-summary">
-        <div className="wc-pip-note"><div className="wc-pip-speech"><span className="wc-eyebrow">MEET PIP</span><h2>Your curious little guide.</h2><p>{next ? 'Every word opens a new path. Let’s see what we can find!' : 'We made it! Your collection is full of discoveries.'}</p></div><img src="/games/word-connect/pip.png" alt="Pip, a cheerful teal pangolin explorer waving" /></div>
-        <div className="wc-progress-summary"><h2>Adventure journal</h2><div className="wc-stat"><span>Destinations explored</span><strong>{WORLDS.filter(world => world.levels.every(level => isComplete(level, progress.levels[level.id]))).length} <small>/ 4</small></strong></div><div className="wc-stat"><span>Levels completed</span><strong>{completed.length} <small>/ {LEVELS.length}</small></strong></div><progress value={completed.length} max={LEVELS.length} aria-label="Levels completed" /><div className="wc-stat"><span><Star size={16} /> Stars earned</span><strong>{stars} <small>/ 36</small></strong></div>
+        <div className="wc-pip-note"><div className="wc-pip-speech"><span className="wc-eyebrow">MEET PIP</span><h2>Your curious little guide.</h2><p>{next ? `Pip is ready for ${next.title.toLowerCase()}. Find every connection!` : 'We made it! Your collection is full of discoveries.'}</p></div><img src={pipFor(next ? LEVELS.indexOf(next) : LEVELS.length - 1)} alt="Pip, a teal pangolin explorer ready for the next puzzle" /></div>
+        <div className="wc-progress-summary"><h2>Adventure journal</h2><div className="wc-stat"><span>Stages explored</span><strong>{WORLDS.filter(world => world.levels.every(level => isComplete(level, progress.levels[level.id]))).length} <small>/ {WORLDS.length}</small></strong></div><div className="wc-stat"><span>Levels completed</span><strong>{completed.length} <small>/ {LEVELS.length}</small></strong></div><progress value={completed.length} max={LEVELS.length} aria-label="Levels completed" /><div className="wc-stat"><span><Star size={16} /> Stars earned</span><strong>{stars} <small>/ {LEVELS.length * 3}</small></strong></div>
           {next && <Link className="wc-button" to={`/games/word-connect/play/${next.id}`}>{completed.length ? 'Continue adventure' : 'Start adventure'} <ArrowRight size={18} /></Link>}
           <p className="wc-local-note">Your progress saves on this browser.</p>
         </div>
@@ -74,6 +82,10 @@ function Puzzle({ level, index, progress, sound, tutorialSeen, saveError, setLev
   const [celebrate, setCelebrate] = useState(isComplete(level, progress));
   const board = buildCrossword(level.words.map(w => w.word));
   const complete = isComplete(level, progress), world = worldFor(level.id);
+  const pipMood = complete ? 'cheer' : feedback.kind === 'correct' ? 'aha' : feedback.kind === 'bonus' ? 'cheer' : feedback.kind === 'invalid' ? 'thinking' : feedback.kind === 'duplicate' ? 'surprised' : null;
+  const pipImage = pipMood ? `/games/word-connect/pip-${pipMood}.png` : pipFor(index);
+  const pipAlt = `Pip the pangolin ${pipMood === 'cheer' ? 'celebrating' : pipMood === 'thinking' ? 'thinking' : pipMood === 'aha' ? 'having an idea' : pipMood === 'surprised' ? 'looking surprised' : 'exploring'}`;
+  const pipMessage = complete ? 'You found every word!' : feedback.kind === 'correct' ? 'That connection was brilliant!' : feedback.kind === 'bonus' ? 'A bonus word! Keep exploring.' : feedback.kind === 'invalid' ? 'Look for a different crossing.' : feedback.kind === 'duplicate' ? 'You know this one. Try another path!' : `Pip is exploring ${level.title.toLowerCase()} with you.`;
   const target = level.words.find(w => w.word === selectedWord)!;
   const stage = progress.hints[target.word] || 0;
   const targetFound = progress.found.includes(target.word);
@@ -103,6 +115,7 @@ function Puzzle({ level, index, progress, sound, tutorialSeen, saveError, setLev
     <header className="wc-play-heading"><Link className="wc-icon-button" to="/games/word-connect" aria-label="Back to adventure map"><ArrowLeft size={22} /></Link><div><span className="wc-eyebrow">{world.title} · LEVEL {index + 1}</span><h1>{level.title}</h1></div><button className="wc-icon-button" aria-label="How to play" onClick={() => setHelp(true)}><HelpCircle size={21} /></button></header>
     <SaveNotice error={saveError} />
     <div className="wc-play-progress"><progress value={progress.found.length} max={level.words.length} aria-label="Words found" /><span>{progress.found.length} / {level.words.length} words</span></div>
+    <div className="wc-pip-mobile wc-pip-reaction"><img src={pipImage} alt={pipAlt} /><div><span className="wc-eyebrow">PIP SAYS</span><p>{pipMessage}</p></div></div>
     <div className="wc-puzzle-layout">
       <div className="wc-play-board">
         <div className="wc-crossword-wrap"><div className="wc-crossword" style={{ gridTemplateColumns: `repeat(${board.width}, 1fr)`, width: `calc(${board.width} * var(--wc-cell-size, 42px))` }} aria-label="Crossword puzzle">
@@ -117,7 +130,7 @@ function Puzzle({ level, index, progress, sound, tutorialSeen, saveError, setLev
         <div className={`wc-feedback wc-feedback-${feedback.kind}`} role="status" aria-live="polite">{feedback.text}</div>
         {complete ? <div className="wc-review-prompt"><Stars count={starsFor(progress)} /><strong>Puzzle complete</strong><button className="wc-outline-button" onClick={() => setCelebrate(true)}>View your discoveries</button></div> : <LetterWheel letters={level.letters} onSubmit={checkWord} disabled={help || celebrate} />}
       </div>
-      <aside className="wc-clue-panel"><div className="wc-clue-header"><h2>Words to discover</h2><button className="wc-icon-button" aria-label={sound ? 'Turn pronunciation off' : 'Turn pronunciation on'} aria-pressed={sound} onClick={() => {
+      <aside className="wc-clue-panel"><div className="wc-pip-reaction"><img src={pipImage} alt={pipAlt} /><div><span className="wc-eyebrow">PIP SAYS</span><p>{pipMessage}</p></div></div><div className="wc-clue-header"><h2>Words to discover</h2><button className="wc-icon-button" aria-label={sound ? 'Turn pronunciation off' : 'Turn pronunciation on'} aria-pressed={sound} onClick={() => {
           if (!sound && !('speechSynthesis' in window)) { setFeedback({ kind: 'neutral', text: 'Pronunciation isn’t supported in this browser.' }); return; } setSound(!sound); if (sound && 'speechSynthesis' in window) window.speechSynthesis.cancel();
         }}>{sound ? <Volume2 size={20} /> : <VolumeX size={20} />}</button></div>
         <div className="wc-clue-list">{level.words.map((item, i) => {
@@ -131,6 +144,6 @@ function Puzzle({ level, index, progress, sound, tutorialSeen, saveError, setLev
       </aside>
     </div>
     <Help open={help} onClose={() => { markTutorial(); setHelp(false); }} />
-    <Dialog open={celebrate} onOpenChange={setCelebrate}><DialogContent className="wc-dialog wc-celebration"><img src="/games/word-connect/pip.png" alt="Pip celebrates your discoveries" /><Stars count={starsFor(progress)} /><DialogTitle className="wc-dialog-title">{next ? 'Look how far you’ve come!' : 'Adventure complete!'}</DialogTitle><DialogDescription>You discovered {level.words.length} words{progress.bonus.length > 0 ? ` and ${progress.bonus.length} bonus words` : ''}. Take their meanings on your next adventure.</DialogDescription><div className="wc-completion-words">{level.words.map(item => <div key={item.word}><strong>{item.word}</strong><span>{item.meaning}</span></div>)}</div><Link className="wc-button" to={next ? `/games/word-connect/play/${next.id}` : '/games/word-connect'}>{next ? 'Next adventure' : 'Back to the map'}<ArrowRight size={18} /></Link><Link className="wc-text-link" to="/games/word-connect">Adventure map</Link></DialogContent></Dialog>
+    <Dialog open={celebrate} onOpenChange={setCelebrate}><DialogContent className="wc-dialog wc-celebration"><img src="/games/word-connect/pip-cheer.png" alt="Pip celebrates your discoveries" /><Stars count={starsFor(progress)} /><DialogTitle className="wc-dialog-title">{next ? 'Look how far you’ve come!' : 'Adventure complete!'}</DialogTitle><DialogDescription>You discovered {level.words.length} words{progress.bonus.length > 0 ? ` and ${progress.bonus.length} bonus words` : ''}. Take their meanings on your next adventure.</DialogDescription><div className="wc-completion-words">{level.words.map(item => <div key={item.word}><strong>{item.word}</strong><span>{item.meaning}</span></div>)}</div><Link className="wc-button" to={next ? `/games/word-connect/play/${next.id}` : '/games/word-connect'}>{next ? 'Next adventure' : 'Back to the map'}<ArrowRight size={18} /></Link><Link className="wc-text-link" to="/games/word-connect">Adventure map</Link></DialogContent></Dialog>
   </section>;
 }

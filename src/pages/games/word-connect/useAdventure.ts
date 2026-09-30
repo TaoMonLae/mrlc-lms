@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { emptyProgress, normaliseProgress, type AdventureProgress } from './engine';
 import { useAuth } from '../../../providers/AuthProvider';
 
-export const progressKey = (userId: string) => `mrlc:word-connect:v1:${userId}`;
+export const progressKey = (userId: string) => `mrlc:word-connect:v2:${userId}`;
 function load(key: string) {
   try { return normaliseProgress(JSON.parse(localStorage.getItem(key) || 'null')); }
   catch { return emptyProgress(); }
