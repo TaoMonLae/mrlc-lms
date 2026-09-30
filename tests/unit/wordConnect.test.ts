@@ -5,10 +5,10 @@ import { buildCrossword, canSpell, emptyLevel, emptyProgress, isComplete, normal
 
 test('every curated puzzle is spellable and forms a connected crossword with no stray adjacent words', () => {
   assert.equal(LEVELS.length, 100);
-  assert.deepEqual(WORLDS.map(world => [world.id, world.levels.length]), [['b1', 25], ['b2', 25], ['c1', 25], ['c2', 25]]);
+  assert.deepEqual(WORLDS.map(world => [world.id, world.levels.length]), [['a1', 20], ['a2', 20], ['b1', 20], ['b2', 20], ['c1', 20]]);
   assert.equal(new Set(LEVELS.map(level => level.letters)).size, 100);
   for (const level of LEVELS) {
-    assert.ok(level.letters.length >= 6, `${level.id} has a substantial anchor word`);
+    assert.ok(level.letters.length >= (level.id.startsWith('a') ? 5 : 6), `${level.id} has an appropriate anchor word`);
     assert.equal(new Set([...level.words, ...level.bonus].map(item => item.word)).size, level.words.length + level.bonus.length);
     for (const item of [...level.words, ...level.bonus]) {
       assert.ok(canSpell(item.word, level.letters), `${level.id}: ${item.word}`);
@@ -80,7 +80,7 @@ test('staged hints eventually solve a word, and completion unlocks only the next
 
 test('loaded progress filters unknown levels, invalid words and broken hint values', () => {
   const level = LEVELS[0];
-  const saved = normaliseProgress({ version: 1, tutorialSeen: true, sound: 'true', levels: { [level.id]: { found: [level.words[0].word, level.words[0].word, 3, 'CHEAT'], bonus: [level.bonus[0].word, level.words[1].word], hints: { [level.words[1].word]: 2, [level.words[2].word]: 7, [level.words[3].word]: 1.5 } }, unknown: { found: ['ALL'] } } });
+  const saved = normaliseProgress({ version: 1, tutorialSeen: true, sound: 'true', levels: { [level.id]: { found: [level.words[0].word, level.words[0].word, 3, 'CHEAT'], bonus: [level.bonus[0].word, level.words[1].word], hints: { [level.words[1].word]: 2, FAKE: 7 } }, unknown: { found: ['ALL'] } } });
   assert.deepEqual(saved.levels[level.id], { found: [level.words[0].word], bonus: [level.bonus[0].word], hints: { [level.words[1].word]: 2 } });
   assert.equal(saved.sound, false);
   assert.equal(saved.tutorialSeen, true);

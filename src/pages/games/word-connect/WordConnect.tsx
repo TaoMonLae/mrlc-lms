@@ -44,7 +44,7 @@ export default function WordConnect() {
     <div className="wc-map-layout">
       <div className="wc-trail">
         <section className="wc-world" style={{ '--world-color': world.color } as React.CSSProperties}>
-          <header className="wc-world-heading"><span>0{worldIndex + 1}</span><div><h2>{world.title}</h2><p>{world.description} · 25 levels</p></div></header>
+          <header className="wc-world-heading"><span>0{worldIndex + 1}</span><div><h2>{world.title}</h2><p>{world.description} · {world.levels.length} levels</p></div></header>
           <div className="wc-level-grid">
             {world.levels.map((level) => {
               const index = LEVELS.indexOf(level), done = isComplete(level, progress.levels[level.id]), unlocked = unlockedLevel(index, progress), current = next?.id === level.id;
@@ -53,10 +53,10 @@ export default function WordConnect() {
             })}
           </div>
         </section>
-        <div className="wc-finish"><Compass size={26} /><strong>{next ? 'Four stages. One hundred discoveries.' : 'Adventure complete. Look at all you’ve learned!'}</strong><span>Stage labels follow CEFR progression themes; individual puzzle words are not certified CEFR assignments.</span></div>
+        <div className="wc-finish"><Compass size={26} /><strong>{next ? 'Five stages. One hundred discoveries.' : 'Adventure complete. Look at all you’ve learned!'}</strong><span>Stage labels follow CEFR progression themes; individual puzzle words are not certified CEFR assignments.</span></div>
       </div>
       <aside className="wc-journey-summary">
-        <div className="wc-pip-note"><div className="wc-pip-speech"><span className="wc-eyebrow">MEET PIP</span><h2>Your curious little guide.</h2><p>{next ? `Pip is ready for ${next.title.toLowerCase()}. Find every connection!` : 'We made it! Your collection is full of discoveries.'}</p></div><img src={pipFor(next ? LEVELS.indexOf(next) : LEVELS.length - 1)} alt="Pip, a teal pangolin explorer ready for the next puzzle" /></div>
+        <div className="wc-pip-note"><div className="wc-pip-speech"><span className="wc-eyebrow">MEET PIP</span><h2>Your curious little guide.</h2><p>{next ? `Pip is ready for ${next.title.toLowerCase()}. Find every connection!` : 'We made it! Your collection is full of discoveries.'}</p></div><div className="wc-pip-welcome" aria-label="Pip, a teal pangolin explorer ready for the next puzzle" role="img"><img className="wc-pip-base" src={pipFor(next ? LEVELS.indexOf(next) : LEVELS.length - 1)} alt="" /><img className="wc-pip-wave" src="/games/word-connect/pip-cheer.png" alt="" /></div></div>
         <div className="wc-progress-summary"><h2>Adventure journal</h2><div className="wc-stat"><span>Stages explored</span><strong>{WORLDS.filter(world => world.levels.every(level => isComplete(level, progress.levels[level.id]))).length} <small>/ {WORLDS.length}</small></strong></div><div className="wc-stat"><span>Levels completed</span><strong>{completed.length} <small>/ {LEVELS.length}</small></strong></div><progress value={completed.length} max={LEVELS.length} aria-label="Levels completed" /><div className="wc-stat"><span><Star size={16} /> Stars earned</span><strong>{stars} <small>/ {LEVELS.length * 3}</small></strong></div>
           {next && <Link className="wc-button" to={`/games/word-connect/play/${next.id}`}>{completed.length ? 'Continue adventure' : 'Start adventure'} <ArrowRight size={18} /></Link>}
           <p className="wc-local-note">Your progress saves on this browser.</p>

@@ -1,5 +1,1090 @@
 [
   {
+    "id": "a1",
+    "title": "A1 · Welcome Meadow",
+    "description": "Find familiar words from everyday life.",
+    "color": "#56a690",
+    "levels": [
+      {
+        "id": "a1-01",
+        "title": "Hello, words",
+        "letters": "STUDENT",
+        "words": [
+          {
+            "word": "STUDENT",
+            "meaning": "a learner who is enrolled in an educational institution",
+            "example": "The student asked a thoughtful question during the lesson."
+          },
+          {
+            "word": "USED",
+            "meaning": "already owned or put to use",
+            "example": "She used the blue pencil."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "TEST",
+            "meaning": "a set of questions that checks what someone knows",
+            "example": "We have a spelling test today."
+          },
+          {
+            "word": "NEST",
+            "meaning": "a home that a bird builds",
+            "example": "The bird made a nest in the tree."
+          }
+        ]
+      },
+      {
+        "id": "a1-02",
+        "title": "In the classroom",
+        "letters": "TEACHER",
+        "words": [
+          {
+            "word": "TEACHER",
+            "meaning": "a person whose occupation is teaching",
+            "example": "The teacher explained the new idea with a clear example."
+          },
+          {
+            "word": "TRACE",
+            "meaning": "to follow a line with your finger or pencil",
+            "example": "Trace the shape on the paper."
+          },
+          {
+            "word": "REACH",
+            "meaning": "to get to a place or touch something",
+            "example": "I can reach the top shelf."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "CREATE",
+            "meaning": "to make something new",
+            "example": "We create a picture together."
+          },
+          {
+            "word": "HEART",
+            "meaning": "the part of your body that beats in your chest",
+            "example": "My heart beats faster when I run."
+          }
+        ]
+      },
+      {
+        "id": "a1-03",
+        "title": "People I know",
+        "letters": "CLASSROOM",
+        "words": [
+          {
+            "word": "CLASSROOM",
+            "meaning": "a room in a school where lessons take place",
+            "example": "The classroom became quiet when the lesson began."
+          },
+          {
+            "word": "CALM",
+            "meaning": "quiet and peaceful",
+            "example": "Take a breath and stay calm."
+          },
+          {
+            "word": "CROSS",
+            "meaning": "to go from one side to the other",
+            "example": "Cross the road carefully."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "COLOR",
+            "meaning": "the appearance of something, such as red or blue",
+            "example": "Blue is my favorite color."
+          },
+          {
+            "word": "LOSS",
+            "meaning": "the act of losing something",
+            "example": "The loss of her bag made her sad."
+          }
+        ]
+      },
+      {
+        "id": "a1-04",
+        "title": "At home",
+        "letters": "LESSON",
+        "words": [
+          {
+            "word": "LESSON",
+            "meaning": "a unit of instruction",
+            "example": "Today's lesson introduces the water cycle."
+          },
+          {
+            "word": "NOSE",
+            "meaning": "the part of your face used to smell",
+            "example": "My nose can smell the flowers."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "LOSE",
+            "meaning": "to no longer have something",
+            "example": "Try not to lose your keys."
+          },
+          {
+            "word": "LOSS",
+            "meaning": "the act of losing something",
+            "example": "The loss of her bag made her sad."
+          }
+        ]
+      },
+      {
+        "id": "a1-05",
+        "title": "A new day",
+        "letters": "HOMEWORK",
+        "words": [
+          {
+            "word": "HOMEWORK",
+            "meaning": "preparatory school work done outside school (especially at home)",
+            "example": "I finished my homework before dinner."
+          },
+          {
+            "word": "HOME",
+            "meaning": "the place where you live",
+            "example": "I go home after school."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "WORK",
+            "meaning": "a task or job you do",
+            "example": "I finish my work before lunch."
+          },
+          {
+            "word": "MORE",
+            "meaning": "a larger amount",
+            "example": "May I have more water?"
+          }
+        ]
+      },
+      {
+        "id": "a1-06",
+        "title": "My things",
+        "letters": "LIBRARY",
+        "words": [
+          {
+            "word": "LIBRARY",
+            "meaning": "a room where books are kept",
+            "example": "We borrowed two science books from the library."
+          },
+          {
+            "word": "RAIL",
+            "meaning": "a bar you can hold for support",
+            "example": "Hold the rail on the stairs."
+          }
+        ],
+        "bonus": []
+      },
+      {
+        "id": "a1-07",
+        "title": "Around town",
+        "letters": "PENCIL",
+        "words": [
+          {
+            "word": "PENCIL",
+            "meaning": "a thin cylindrical pointed writing implement",
+            "example": "Use a pencil so you can correct your work easily."
+          },
+          {
+            "word": "LINE",
+            "meaning": "a long, narrow mark",
+            "example": "Draw a straight line."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "CLIP",
+            "meaning": "a small object that holds things together",
+            "example": "Use a clip to hold the papers."
+          },
+          {
+            "word": "PILE",
+            "meaning": "a group of things placed on top of each other",
+            "example": "There is a pile of books on the desk."
+          }
+        ]
+      },
+      {
+        "id": "a1-08",
+        "title": "On the way",
+        "letters": "NOTEBOOK",
+        "words": [
+          {
+            "word": "NOTEBOOK",
+            "meaning": "a book with blank pages for recording notes or memoranda",
+            "example": "She recorded each new word in her notebook."
+          },
+          {
+            "word": "TONE",
+            "meaning": "the way a voice sounds",
+            "example": "Her kind tone made me smile."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "NOTE",
+            "meaning": "a short written message",
+            "example": "I left a note for my friend."
+          },
+          {
+            "word": "BOOK",
+            "meaning": "pages joined together for reading",
+            "example": "I read a book every night."
+          }
+        ]
+      },
+      {
+        "id": "a1-09",
+        "title": "Food and friends",
+        "letters": "QUESTION",
+        "words": [
+          {
+            "word": "QUESTION",
+            "meaning": "a sentence or request that asks for information",
+            "example": "Mina raised her hand to ask a question."
+          },
+          {
+            "word": "STONE",
+            "meaning": "a small piece of rock",
+            "example": "She found a smooth stone."
+          },
+          {
+            "word": "TONE",
+            "meaning": "the way a voice sounds",
+            "example": "Her kind tone made me smile."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "NOTE",
+            "meaning": "a short written message",
+            "example": "I left a note for my friend."
+          },
+          {
+            "word": "UNIT",
+            "meaning": "one group of lessons on a topic",
+            "example": "We start a new unit today."
+          }
+        ]
+      },
+      {
+        "id": "a1-10",
+        "title": "Time to learn",
+        "letters": "ANSWER",
+        "words": [
+          {
+            "word": "ANSWER",
+            "meaning": "a reply to a question or a solution to a problem",
+            "example": "Check your answer before submitting the worksheet."
+          },
+          {
+            "word": "NEAR",
+            "meaning": "not far away",
+            "example": "The library is near our school."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "WEAR",
+            "meaning": "to have clothes on your body",
+            "example": "I wear a coat when it is cold."
+          },
+          {
+            "word": "NEWS",
+            "meaning": "new information about events",
+            "example": "We heard the news this morning."
+          }
+        ]
+      },
+      {
+        "id": "a1-11",
+        "title": "The little details",
+        "letters": "FAMILY",
+        "words": [
+          {
+            "word": "FAMILY",
+            "meaning": "a social unit living together",
+            "example": "Her family eats dinner together every Friday."
+          },
+          {
+            "word": "FAIL",
+            "meaning": "to not succeed at something",
+            "example": "It is okay to fail and try again."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "FILM",
+            "meaning": "a story shown with moving pictures",
+            "example": "We watched a short film."
+          },
+          {
+            "word": "MAIL",
+            "meaning": "letters and packages sent to people",
+            "example": "The mail arrived this morning."
+          }
+        ]
+      },
+      {
+        "id": "a1-12",
+        "title": "Our world",
+        "letters": "PARENT",
+        "words": [
+          {
+            "word": "PARENT",
+            "meaning": "a mother, father, or person who cares for a child",
+            "example": "A parent signed the school permission form."
+          },
+          {
+            "word": "NEAR",
+            "meaning": "not far away",
+            "example": "The library is near our school."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "RATE",
+            "meaning": "how fast or often something happens",
+            "example": "Her heart rate rose after running."
+          },
+          {
+            "word": "NEAT",
+            "meaning": "tidy and in order",
+            "example": "Keep your desk neat."
+          }
+        ]
+      },
+      {
+        "id": "a1-13",
+        "title": "A good question",
+        "letters": "KITCHEN",
+        "words": [
+          {
+            "word": "KITCHEN",
+            "meaning": "a room equipped for preparing meals",
+            "example": "We prepared breakfast together in the kitchen."
+          },
+          {
+            "word": "THINK",
+            "meaning": "to use your mind to make an idea",
+            "example": "Think before you answer."
+          },
+          {
+            "word": "THICK",
+            "meaning": "having a large distance between two sides",
+            "example": "The book is thick."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "THIN",
+            "meaning": "not thick",
+            "example": "This paper is very thin."
+          }
+        ]
+      },
+      {
+        "id": "a1-14",
+        "title": "What I can do",
+        "letters": "BEDROOM",
+        "words": [
+          {
+            "word": "BEDROOM",
+            "meaning": "a room used primarily for sleeping",
+            "example": "He opened the bedroom window to let in fresh air."
+          },
+          {
+            "word": "MODE",
+            "meaning": "a way that something works",
+            "example": "Put the tablet in reading mode."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "MORE",
+            "meaning": "a larger amount",
+            "example": "May I have more water?"
+          },
+          {
+            "word": "BOOM",
+            "meaning": "a loud, deep sound",
+            "example": "We heard a boom outside."
+          }
+        ]
+      },
+      {
+        "id": "a1-15",
+        "title": "A place to go",
+        "letters": "WINDOW",
+        "words": [
+          {
+            "word": "WINDOW",
+            "meaning": "an opening in a wall or roof fitted with glass to admit light or air",
+            "example": "Sunlight came through the classroom window."
+          },
+          {
+            "word": "DOWN",
+            "meaning": "toward a lower place",
+            "example": "Walk down the stairs."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "WIND",
+            "meaning": "moving air outdoors",
+            "example": "The wind moved the leaves."
+          }
+        ]
+      },
+      {
+        "id": "a1-16",
+        "title": "What happens next",
+        "letters": "GARDEN",
+        "words": [
+          {
+            "word": "GARDEN",
+            "meaning": "a piece of land where flowers, fruit, or vegetables are grown",
+            "example": "The students planted herbs in the school garden."
+          },
+          {
+            "word": "NEAR",
+            "meaning": "not far away",
+            "example": "The library is near our school."
+          },
+          {
+            "word": "RANGE",
+            "meaning": "a group of different things",
+            "example": "The shop has a range of books."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "GRADE",
+            "meaning": "a level or mark at school",
+            "example": "She is in fifth grade."
+          },
+          {
+            "word": "DRAG",
+            "meaning": "to pull something along the ground",
+            "example": "Do not drag the chair."
+          }
+        ]
+      },
+      {
+        "id": "a1-17",
+        "title": "People and places",
+        "letters": "BREAKFAST",
+        "words": [
+          {
+            "word": "BREAKFAST",
+            "meaning": "the first meal of the day (usually in the morning)",
+            "example": "A healthy breakfast can help learners concentrate."
+          },
+          {
+            "word": "REST",
+            "meaning": "to stop working for a short time",
+            "example": "Sit down and rest."
+          },
+          {
+            "word": "BREAK",
+            "meaning": "a short pause",
+            "example": "We take a break after class."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "FAST",
+            "meaning": "moving quickly",
+            "example": "The rabbit runs fast."
+          },
+          {
+            "word": "BASE",
+            "meaning": "the bottom part of something",
+            "example": "The base of the lamp is heavy."
+          }
+        ]
+      },
+      {
+        "id": "a1-18",
+        "title": "Let’s make a plan",
+        "letters": "DINNER",
+        "words": [
+          {
+            "word": "DINNER",
+            "meaning": "the main meal of the day served in the evening or at midday",
+            "example": "We talked about our day during dinner."
+          },
+          {
+            "word": "RIDE",
+            "meaning": "to travel on a bike, bus, or animal",
+            "example": "I ride my bike to school."
+          },
+          {
+            "word": "INNER",
+            "meaning": "on the inside",
+            "example": "The inner pocket holds my keys."
+          }
+        ],
+        "bonus": []
+      },
+      {
+        "id": "a1-19",
+        "title": "Words in action",
+        "letters": "WELCOME",
+        "words": [
+          {
+            "word": "WELCOME",
+            "meaning": "received with pleasure or friendly approval",
+            "example": "The new student received a warm welcome."
+          },
+          {
+            "word": "COME",
+            "meaning": "to move toward someone or someplace",
+            "example": "Please come inside."
+          }
+        ],
+        "bonus": []
+      },
+      {
+        "id": "a1-20",
+        "title": "The first milestone",
+        "letters": "APPLE",
+        "words": [
+          {
+            "word": "APPLE",
+            "meaning": "fruit with red or yellow or green skin and sweet to tart crisp whitish flesh",
+            "example": "She packed an apple for her morning snack."
+          },
+          {
+            "word": "LEAP",
+            "meaning": "to jump a long way",
+            "example": "The frog can leap over a stone."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "PALE",
+            "meaning": "light in color",
+            "example": "The wall is pale blue."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "a2",
+    "title": "A2 · Explorer Lane",
+    "description": "Connect words for people, places and plans.",
+    "color": "#d59b4a",
+    "levels": [
+      {
+        "id": "a2-01",
+        "title": "More to explore",
+        "letters": "BREAD",
+        "words": [
+          {
+            "word": "BREAD",
+            "meaning": "food made from dough of flour or meal and usually raised with yeast or baking powder and then baked",
+            "example": "He made a sandwich with fresh bread."
+          },
+          {
+            "word": "BEAR",
+            "meaning": "a large wild animal with thick fur",
+            "example": "We saw a bear in the storybook."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "BARE",
+            "meaning": "without a covering",
+            "example": "Do not walk with bare feet on the hot sand."
+          },
+          {
+            "word": "READ",
+            "meaning": "to look at words and understand them",
+            "example": "I read a story before bed."
+          }
+        ]
+      },
+      {
+        "id": "a2-02",
+        "title": "A day out",
+        "letters": "WATER",
+        "words": [
+          {
+            "word": "WATER",
+            "meaning": "a clear liquid that people, animals, and plants need to live",
+            "example": "Remember to drink enough water after exercise."
+          },
+          {
+            "word": "RATE",
+            "meaning": "how fast or often something happens",
+            "example": "Her heart rate rose after running."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "WEAR",
+            "meaning": "to have clothes on your body",
+            "example": "I wear a coat when it is cold."
+          },
+          {
+            "word": "TEAR",
+            "meaning": "to pull something apart",
+            "example": "Be careful not to tear the page."
+          }
+        ]
+      },
+      {
+        "id": "a2-03",
+        "title": "Things we share",
+        "letters": "VEGETABLE",
+        "words": [
+          {
+            "word": "VEGETABLE",
+            "meaning": "edible seeds or roots or stems or leaves or bulbs or tubers or nonsweet fruits of any of numerous herbaceous plant",
+            "example": "Carrots are the vegetable in today's soup."
+          },
+          {
+            "word": "LEAVE",
+            "meaning": "to go away from a place",
+            "example": "We leave school at three."
+          },
+          {
+            "word": "BEAT",
+            "meaning": "to hit or make a repeated sound",
+            "example": "I can hear the drum beat."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "TABLE",
+            "meaning": "a piece of furniture with a flat top",
+            "example": "Put the book on the table."
+          },
+          {
+            "word": "LATE",
+            "meaning": "after the expected time",
+            "example": "The bus was late today."
+          }
+        ]
+      },
+      {
+        "id": "a2-04",
+        "title": "A better way",
+        "letters": "DELICIOUS",
+        "words": [
+          {
+            "word": "DELICIOUS",
+            "meaning": "having a very pleasant taste or smell",
+            "example": "The vegetable soup smelled delicious."
+          },
+          {
+            "word": "CLOSE",
+            "meaning": "to shut something",
+            "example": "Please close the door."
+          },
+          {
+            "word": "CLOUD",
+            "meaning": "a white or gray shape in the sky",
+            "example": "A cloud covered the sun."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "SOLID",
+            "meaning": "hard and firm, not liquid or gas",
+            "example": "Ice is solid water."
+          },
+          {
+            "word": "USED",
+            "meaning": "already owned or put to use",
+            "example": "She used the blue pencil."
+          }
+        ]
+      },
+      {
+        "id": "a2-05",
+        "title": "The next step",
+        "letters": "RECIPE",
+        "words": [
+          {
+            "word": "RECIPE",
+            "meaning": "directions for making something",
+            "example": "The recipe explains how to prepare the dish step by step."
+          },
+          {
+            "word": "RICE",
+            "meaning": "small grains cooked and eaten as food",
+            "example": "We had rice for lunch."
+          },
+          {
+            "word": "PIECE",
+            "meaning": "one part of something",
+            "example": "May I have a piece of cake?"
+          }
+        ],
+        "bonus": [
+          {
+            "word": "PRICE",
+            "meaning": "the money needed to buy something",
+            "example": "The price of the book is five dollars."
+          }
+        ]
+      },
+      {
+        "id": "a2-06",
+        "title": "Looking around",
+        "letters": "SPEAK",
+        "words": [
+          {
+            "word": "SPEAK",
+            "meaning": "to use your voice to say words",
+            "example": "Please speak clearly during your presentation."
+          },
+          {
+            "word": "PEAK",
+            "meaning": "the top of a mountain",
+            "example": "We reached the peak at noon."
+          }
+        ],
+        "bonus": []
+      },
+      {
+        "id": "a2-07",
+        "title": "An interesting idea",
+        "letters": "LISTEN",
+        "words": [
+          {
+            "word": "LISTEN",
+            "meaning": "hear with intention",
+            "example": "Listen carefully for the main idea."
+          },
+          {
+            "word": "LINE",
+            "meaning": "a long, narrow mark",
+            "example": "Draw a straight line."
+          },
+          {
+            "word": "SILENT",
+            "meaning": "making no sound",
+            "example": "The room was silent."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "NEST",
+            "meaning": "a home that a bird builds",
+            "example": "The bird made a nest in the tree."
+          }
+        ]
+      },
+      {
+        "id": "a2-08",
+        "title": "A helpful hand",
+        "letters": "WRITE",
+        "words": [
+          {
+            "word": "WRITE",
+            "meaning": "to form words or symbols on a surface",
+            "example": "Write your name at the top of the page."
+          },
+          {
+            "word": "WIRE",
+            "meaning": "a thin metal line that carries electricity",
+            "example": "The wire connects the lamp."
+          }
+        ],
+        "bonus": []
+      },
+      {
+        "id": "a2-09",
+        "title": "Plans and places",
+        "letters": "CLOSE",
+        "words": [
+          {
+            "word": "CLOSE",
+            "meaning": "to shut an opening or bring something to an end",
+            "example": "Close the door quietly when you leave."
+          },
+          {
+            "word": "LOSE",
+            "meaning": "to no longer have something",
+            "example": "Try not to lose your keys."
+          }
+        ],
+        "bonus": []
+      },
+      {
+        "id": "a2-10",
+        "title": "A story to tell",
+        "letters": "FINISH",
+        "words": [
+          {
+            "word": "FINISH",
+            "meaning": "to complete something or reach its end",
+            "example": "Try to finish the activity before the bell."
+          },
+          {
+            "word": "FISH",
+            "meaning": "an animal that lives in water",
+            "example": "The fish swims in the pond."
+          }
+        ],
+        "bonus": []
+      },
+      {
+        "id": "a2-11",
+        "title": "Something new",
+        "letters": "CHOOSE",
+        "words": [
+          {
+            "word": "CHOOSE",
+            "meaning": "select as an alternative over another",
+            "example": "Choose the strongest evidence for your answer."
+          },
+          {
+            "word": "ECHO",
+            "meaning": "a sound that comes back after you make it",
+            "example": "Our shout made an echo."
+          }
+        ],
+        "bonus": []
+      },
+      {
+        "id": "a2-12",
+        "title": "The right moment",
+        "letters": "ANGRY",
+        "words": [
+          {
+            "word": "ANGRY",
+            "meaning": "feeling or showing anger",
+            "example": "She felt angry when the rule was applied unfairly."
+          },
+          {
+            "word": "GRAY",
+            "meaning": "a color between black and white",
+            "example": "The gray clouds brought rain."
+          }
+        ],
+        "bonus": []
+      },
+      {
+        "id": "a2-13",
+        "title": "A small surprise",
+        "letters": "AFRAID",
+        "words": [
+          {
+            "word": "AFRAID",
+            "meaning": "feeling fear or worry",
+            "example": "He was afraid to speak until his partner encouraged him."
+          },
+          {
+            "word": "FAIR",
+            "meaning": "right and equal for everyone",
+            "example": "We want a fair game."
+          }
+        ],
+        "bonus": []
+      },
+      {
+        "id": "a2-14",
+        "title": "Together again",
+        "letters": "EXCITED",
+        "words": [
+          {
+            "word": "EXCITED",
+            "meaning": "very enthusiastic and eager",
+            "example": "The students felt excited about the class trip."
+          },
+          {
+            "word": "DIET",
+            "meaning": "the food a person usually eats",
+            "example": "Fruit is part of a healthy diet."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "TIDE",
+            "meaning": "the rise and fall of the sea",
+            "example": "The tide is high today."
+          },
+          {
+            "word": "TIED",
+            "meaning": "fastened with a knot",
+            "example": "She tied her shoes."
+          }
+        ]
+      },
+      {
+        "id": "a2-15",
+        "title": "A change of plans",
+        "letters": "TIRED",
+        "words": [
+          {
+            "word": "TIRED",
+            "meaning": "in need of rest or sleep",
+            "example": "After the long journey, everyone felt tired."
+          },
+          {
+            "word": "RIDE",
+            "meaning": "to travel on a bike, bus, or animal",
+            "example": "I ride my bike to school."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "DIET",
+            "meaning": "the food a person usually eats",
+            "example": "Fruit is part of a healthy diet."
+          },
+          {
+            "word": "TIDE",
+            "meaning": "the rise and fall of the sea",
+            "example": "The tide is high today."
+          }
+        ]
+      },
+      {
+        "id": "a2-16",
+        "title": "Making choices",
+        "letters": "PROUD",
+        "words": [
+          {
+            "word": "PROUD",
+            "meaning": "feeling self-respect or pleasure in something by which you measure your self-worth",
+            "example": "The students were proud of their community project."
+          },
+          {
+            "word": "DROP",
+            "meaning": "to let something fall",
+            "example": "Do not drop the glass."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "POUR",
+            "meaning": "to make a liquid flow from a container",
+            "example": "Pour the water into a cup."
+          }
+        ]
+      },
+      {
+        "id": "a2-17",
+        "title": "Out in the world",
+        "letters": "BRAVE",
+        "words": [
+          {
+            "word": "BRAVE",
+            "meaning": "ready to face danger or difficulty with courage",
+            "example": "The brave student admitted the mistake and corrected it."
+          },
+          {
+            "word": "BEAR",
+            "meaning": "a large wild animal with thick fur",
+            "example": "We saw a bear in the storybook."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "BARE",
+            "meaning": "without a covering",
+            "example": "Do not walk with bare feet on the hot sand."
+          }
+        ]
+      },
+      {
+        "id": "a2-18",
+        "title": "A closer look",
+        "letters": "HOSPITAL",
+        "words": [
+          {
+            "word": "HOSPITAL",
+            "meaning": "a health facility where patients receive treatment",
+            "example": "The ambulance carried the patient to the hospital."
+          },
+          {
+            "word": "SLIP",
+            "meaning": "to slide by accident",
+            "example": "Be careful not to slip on the wet floor."
+          },
+          {
+            "word": "SPLIT",
+            "meaning": "to divide into parts",
+            "example": "Split the apple in half."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "POST",
+            "meaning": "a message you share online",
+            "example": "I wrote a short post for the class."
+          },
+          {
+            "word": "STOP",
+            "meaning": "to end an action or movement",
+            "example": "Stop at the red light."
+          }
+        ]
+      },
+      {
+        "id": "a2-19",
+        "title": "Find the connection",
+        "letters": "MARKET",
+        "words": [
+          {
+            "word": "MARKET",
+            "meaning": "a place where people buy and sell goods",
+            "example": "Farmers sell fresh produce at the weekend market."
+          },
+          {
+            "word": "MATE",
+            "meaning": "a friend or partner",
+            "example": "My classmate is my reading mate."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "MAKE",
+            "meaning": "to create something",
+            "example": "We make a paper boat."
+          },
+          {
+            "word": "MARK",
+            "meaning": "a small sign or line",
+            "example": "Put a mark next to the answer."
+          }
+        ]
+      },
+      {
+        "id": "a2-20",
+        "title": "The explorer milestone",
+        "letters": "STATION",
+        "words": [
+          {
+            "word": "STATION",
+            "meaning": "a place where trains or buses regularly stop",
+            "example": "The train arrived at the station on time."
+          },
+          {
+            "word": "STAIN",
+            "meaning": "a dirty mark that is hard to remove",
+            "example": "The juice left a stain on my shirt."
+          },
+          {
+            "word": "TOAST",
+            "meaning": "bread made brown by heat",
+            "example": "I ate toast for breakfast."
+          }
+        ],
+        "bonus": []
+      }
+    ]
+  },
+  {
     "id": "b1",
     "title": "B1 · Inquiry Grove",
     "description": "Reason through everyday and academic ideas.",
@@ -21,26 +1106,26 @@
             "example": "The cook added cream to the soup."
           },
           {
-            "word": "CRAMP",
-            "meaning": "a sudden, painful tightening of a muscle",
-            "example": "She felt a cramp in her leg after the race."
-          },
-          {
-            "word": "RECAP",
-            "meaning": "a short summary of the main points",
-            "example": "The teacher gave a recap of yesterday’s lesson."
-          }
-        ],
-        "bonus": [
-          {
             "word": "CAMP",
             "meaning": "a temporary place where people stay outdoors",
             "example": "The class set up camp beside the river."
           },
           {
+            "word": "CRAMP",
+            "meaning": "a sudden, painful tightening of a muscle",
+            "example": "She felt a cramp in her leg after the race."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "RECAP",
+            "meaning": "a short summary of the main points",
+            "example": "The teacher gave a recap of yesterday’s lesson."
+          },
+          {
             "word": "MORE",
-            "meaning": "comparative of much",
-            "example": "They eat more than they should."
+            "meaning": "a larger amount",
+            "example": "May I have more water?"
           }
         ]
       },
@@ -95,8 +1180,8 @@
           },
           {
             "word": "LEAVE",
-            "meaning": "the period of time during which you are absent from work or duty",
-            "example": "A ten day's leave to visit his mother."
+            "meaning": "to go away from a place",
+            "example": "We leave school at three."
           },
           {
             "word": "VALUE",
@@ -105,8 +1190,8 @@
           },
           {
             "word": "LATE",
-            "meaning": "later than usual or than expected",
-            "example": "The children came late to school."
+            "meaning": "after the expected time",
+            "example": "The bus was late today."
           }
         ],
         "bonus": []
@@ -133,8 +1218,8 @@
           },
           {
             "word": "LINE",
-            "meaning": "be in line with",
-            "example": "Trees line the riverbank."
+            "meaning": "a long, narrow mark",
+            "example": "Draw a straight line."
           }
         ],
         "bonus": [
@@ -179,8 +1264,8 @@
         "bonus": [
           {
             "word": "TIER",
-            "meaning": "one of two or more layers one atop another",
-            "example": "Tier upon tier of huge casks."
+            "meaning": "one level in a group of levels",
+            "example": "The cake has three tiers."
           },
           {
             "word": "TRIP",
@@ -250,8 +1335,8 @@
           },
           {
             "word": "RICE",
-            "meaning": "grains used as food either unpolished or more often polished",
-            "example": "The family served vegetables with rice."
+            "meaning": "small grains cooked and eaten as food",
+            "example": "We had rice for lunch."
           }
         ],
         "bonus": [
@@ -262,8 +1347,8 @@
           },
           {
             "word": "RIDE",
-            "meaning": "sit and travel on the back of animal, usually while controlling its motions",
-            "example": "Did you ever ride a camel."
+            "meaning": "to travel on a bike, bus, or animal",
+            "example": "I ride my bike to school."
           }
         ]
       },
@@ -288,16 +1373,16 @@
             "example": "They cheered the rise of the hot-air balloon."
           },
           {
-            "word": "SAME",
-            "meaning": "same in identity",
-            "example": "This road is the same one we were on yesterday."
+            "word": "SUMMER",
+            "meaning": "the warmest season of the year",
+            "example": "In the northern hemisphere it extends from the summer solstice to the autumnal equinox."
           }
         ],
         "bonus": [
           {
-            "word": "SUMMER",
-            "meaning": "the warmest season of the year",
-            "example": "In the northern hemisphere it extends from the summer solstice to the autumnal equinox."
+            "word": "SAME",
+            "meaning": "same in identity",
+            "example": "This road is the same one we were on yesterday."
           },
           {
             "word": "SIMMER",
@@ -309,45 +1394,6 @@
       {
         "id": "b1-09",
         "title": "The next question",
-        "letters": "EVIDENCE",
-        "words": [
-          {
-            "word": "EVIDENCE",
-            "meaning": "your basis for belief or disbelief",
-            "example": "The writer supports the claim with evidence from the text."
-          },
-          {
-            "word": "DEVICE",
-            "meaning": "an instrumentality invented for a particular purpose",
-            "example": "The device is small enough to wear on your wrist."
-          },
-          {
-            "word": "EVEN",
-            "meaning": "used as an intensive especially to indicate something unexpected",
-            "example": "Declined even to consider the idea."
-          },
-          {
-            "word": "NEED",
-            "meaning": "a condition requiring relief",
-            "example": "God has no need of men to accomplish His work."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "DIVE",
-            "meaning": "plunge into water",
-            "example": "I was afraid to dive from the board into the pool."
-          },
-          {
-            "word": "NICE",
-            "meaning": "pleasant or pleasing or agreeable in nature or appearance",
-            "example": "What a nice fellow you are and we all thought you so nasty- George Meredith."
-          }
-        ]
-      },
-      {
-        "id": "b1-10",
-        "title": "The hidden pattern",
         "letters": "RESEARCH",
         "words": [
           {
@@ -362,8 +1408,8 @@
           },
           {
             "word": "REACH",
-            "meaning": "reach a point in time, or a certain state or level",
-            "example": "This car can reach a speed of 140 miles per hour."
+            "meaning": "to get to a place or touch something",
+            "example": "I can reach the top shelf."
           },
           {
             "word": "SHARE",
@@ -385,8 +1431,8 @@
         ]
       },
       {
-        "id": "b1-11",
-        "title": "Under review",
+        "id": "b1-10",
+        "title": "The hidden pattern",
         "letters": "SOURCE",
         "words": [
           {
@@ -424,8 +1470,8 @@
         ]
       },
       {
-        "id": "b1-12",
-        "title": "Think it through",
+        "id": "b1-11",
+        "title": "Under review",
         "letters": "SAMPLE",
         "words": [
           {
@@ -463,8 +1509,8 @@
         ]
       },
       {
-        "id": "b1-13",
-        "title": "Making connections",
+        "id": "b1-12",
+        "title": "Think it through",
         "letters": "CONCLUSION",
         "words": [
           {
@@ -502,8 +1548,8 @@
         ]
       },
       {
-        "id": "b1-14",
-        "title": "A second opinion",
+        "id": "b1-13",
+        "title": "Making connections",
         "letters": "ARGUMENT",
         "words": [
           {
@@ -517,32 +1563,32 @@
             "example": "You never understand what I mean."
           },
           {
+            "word": "URGENT",
+            "meaning": "compelling immediate action",
+            "example": "The broken water pipe required urgent attention."
+          },
+          {
+            "word": "RANGE",
+            "meaning": "a group of different things",
+            "example": "The shop has a range of books."
+          }
+        ],
+        "bonus": [
+          {
             "word": "NAME",
             "meaning": "a language unit by which a person or thing is known",
             "example": "His name really is George Washington."
           },
           {
-            "word": "URGENT",
-            "meaning": "compelling immediate action",
-            "example": "The broken water pipe required urgent attention."
-          }
-        ],
-        "bonus": [
-          {
             "word": "TRUE",
-            "meaning": "make level, square, balanced, or concentric",
-            "example": "True up the cylinder of an engine."
-          },
-          {
-            "word": "MATE",
-            "meaning": "one of a pair",
-            "example": "He lost the mate to his shoe."
+            "meaning": "as acknowledged",
+            "example": "True, she is the smartest in her class."
           }
         ]
       },
       {
-        "id": "b1-15",
-        "title": "The bigger picture",
+        "id": "b1-14",
+        "title": "A second opinion",
         "letters": "SENTENCE",
         "words": [
           {
@@ -562,15 +1608,15 @@
           },
           {
             "word": "NEST",
-            "meaning": "a kind of gun emplacement",
-            "example": "A nest of snipers."
+            "meaning": "a home that a bird builds",
+            "example": "The bird made a nest in the tree."
           }
         ],
         "bonus": []
       },
       {
-        "id": "b1-16",
-        "title": "A fresh perspective",
+        "id": "b1-15",
+        "title": "The bigger picture",
         "letters": "QUOTATION",
         "words": [
           {
@@ -580,8 +1626,8 @@
           },
           {
             "word": "UNIT",
-            "meaning": "an individual or group or structure or other entity regarded as a structural or functional constituent of a whole",
-            "example": "The word is a basic linguistic unit."
+            "meaning": "one group of lessons on a topic",
+            "example": "We start a new unit today."
           },
           {
             "word": "QUAINT",
@@ -603,70 +1649,8 @@
         ]
       },
       {
-        "id": "b1-17",
-        "title": "Follow the evidence",
-        "letters": "REFERENCE",
-        "words": [
-          {
-            "word": "REFERENCE",
-            "meaning": "a source used to find or support information",
-            "example": "The report includes a reference for every borrowed idea."
-          },
-          {
-            "word": "FREE",
-            "meaning": "people who are free",
-            "example": "The home of the free and the brave."
-          },
-          {
-            "word": "REFER",
-            "meaning": "send or direct for treatment, information, or a decision",
-            "example": "Refer a patient to a specialist."
-          },
-          {
-            "word": "REEF",
-            "meaning": "lower and bring partially inboard",
-            "example": "Reef the sailboat's mast."
-          }
-        ],
-        "bonus": []
-      },
-      {
-        "id": "b1-18",
-        "title": "The central idea",
-        "letters": "REVISE",
-        "words": [
-          {
-            "word": "REVISE",
-            "meaning": "make revisions in",
-            "example": "Writers revise their drafts to make the meaning clearer."
-          },
-          {
-            "word": "RISE",
-            "meaning": "a movement upward",
-            "example": "They cheered the rise of the hot-air balloon."
-          },
-          {
-            "word": "SERVE",
-            "meaning": "serve a purpose, role, or function",
-            "example": "This table would serve very well."
-          },
-          {
-            "word": "EVER",
-            "meaning": "(intensifier for adjectives) very",
-            "example": "She was ever so friendly."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "SEER",
-            "meaning": "an observer who perceives visually",
-            "example": "An incurable seer of movies."
-          }
-        ]
-      },
-      {
-        "id": "b1-19",
-        "title": "A useful distinction",
+        "id": "b1-16",
+        "title": "A fresh perspective",
         "letters": "VOCABULARY",
         "words": [
           {
@@ -704,47 +1688,8 @@
         ]
       },
       {
-        "id": "b1-20",
-        "title": "Reasons and results",
-        "letters": "MATTER",
-        "words": [
-          {
-            "word": "MATTER",
-            "meaning": "physical substance from which things are made",
-            "example": "All matter has mass and occupies space."
-          },
-          {
-            "word": "MATE",
-            "meaning": "one of a pair",
-            "example": "He lost the mate to his shoe."
-          },
-          {
-            "word": "TERM",
-            "meaning": "a limited period of time",
-            "example": "He left school before the end of term."
-          },
-          {
-            "word": "TREAT",
-            "meaning": "interact in a certain way",
-            "example": "Treat him with caution, please."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "RATE",
-            "meaning": "estimate the value of",
-            "example": "How would you rate his chances to become President."
-          },
-          {
-            "word": "TAME",
-            "meaning": "very restrained or quiet",
-            "example": "A tame Christmas party."
-          }
-        ]
-      },
-      {
-        "id": "b1-21",
-        "title": "A line of thought",
+        "id": "b1-17",
+        "title": "Follow the evidence",
         "letters": "ORGANISM",
         "words": [
           {
@@ -782,8 +1727,8 @@
         ]
       },
       {
-        "id": "b1-22",
-        "title": "Read between lines",
+        "id": "b1-18",
+        "title": "The central idea",
         "letters": "CLIMATE",
         "words": [
           {
@@ -802,27 +1747,27 @@
             "example": "We time the process to manufacture our cars very precisely."
           },
           {
-            "word": "MATE",
-            "meaning": "one of a pair",
-            "example": "He lost the mate to his shoe."
+            "word": "CLEAT",
+            "meaning": "provide with cleats",
+            "example": "Cleat running shoes for better traction."
           }
         ],
         "bonus": [
           {
-            "word": "CALM",
-            "meaning": "peaceful and not excited, worried, or upset",
-            "example": "She stayed calm and followed the safety instructions."
+            "word": "MATE",
+            "meaning": "a friend or partner",
+            "example": "My classmate is my reading mate."
           },
           {
-            "word": "LATE",
-            "meaning": "later than usual or than expected",
-            "example": "The children came late to school."
+            "word": "CALM",
+            "meaning": "quiet and peaceful",
+            "example": "Take a breath and stay calm."
           }
         ]
       },
       {
-        "id": "b1-23",
-        "title": "The turning point",
+        "id": "b1-19",
+        "title": "A useful distinction",
         "letters": "EXPERIMENT",
         "words": [
           {
@@ -860,8 +1805,8 @@
         ]
       },
       {
-        "id": "b1-24",
-        "title": "The final piece",
+        "id": "b1-20",
+        "title": "Reasons and results",
         "letters": "VARIABLE",
         "words": [
           {
@@ -895,45 +1840,6 @@
             "word": "VERBAL",
             "meaning": "of or relating to or formed from a verb",
             "example": "Verbal adjectives like `running' in `hot and cold running water."
-          }
-        ]
-      },
-      {
-        "id": "b1-25",
-        "title": "The inquiry milestone",
-        "letters": "MEASURE",
-        "words": [
-          {
-            "word": "MEASURE",
-            "meaning": "to find the size, amount, or degree of something",
-            "example": "Use a ruler to measure the length of the leaf."
-          },
-          {
-            "word": "SAME",
-            "meaning": "same in identity",
-            "example": "This road is the same one we were on yesterday."
-          },
-          {
-            "word": "SURE",
-            "meaning": "physically secure or dependable",
-            "example": "Was on sure ground."
-          },
-          {
-            "word": "ERASE",
-            "meaning": "remove by or as if by rubbing or erasing",
-            "example": "Please erase the formula on the blackboard--it is wrong."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "EASE",
-            "meaning": "freedom from difficulty or hardship or effort",
-            "example": "They put it into containers for ease of transportation."
-          },
-          {
-            "word": "REAM",
-            "meaning": "a quantity of paper",
-            "example": "One ream equals 20 quires."
           }
         ]
       }
@@ -974,8 +1880,8 @@
         "bonus": [
           {
             "word": "CROSS",
-            "meaning": "any affliction that causes great suffering",
-            "example": "That is his cross to bear."
+            "meaning": "to go from one side to the other",
+            "example": "Cross the road carefully."
           },
           {
             "word": "CROP",
@@ -996,8 +1902,8 @@
           },
           {
             "word": "TONE",
-            "meaning": "change to a color image",
-            "example": "Tone a photographic image."
+            "meaning": "the way a voice sounds",
+            "example": "Her kind tone made me smile."
           },
           {
             "word": "ANTIQUE",
@@ -1013,13 +1919,13 @@
         "bonus": [
           {
             "word": "NOTE",
-            "meaning": "observe with care or pay close attention to",
-            "example": "Take note of this chemical reaction."
+            "meaning": "a short written message",
+            "example": "I left a note for my friend."
           },
           {
             "word": "NEAT",
-            "meaning": "tidy and arranged with care",
-            "example": "His neat notes were easy to read."
+            "meaning": "tidy and in order",
+            "example": "Keep your desk neat."
           }
         ]
       },
@@ -1045,8 +1951,8 @@
           },
           {
             "word": "FAIR",
-            "meaning": "a competitive exhibition of farm products",
-            "example": "She won a blue ribbon for her baking at the county fair."
+            "meaning": "right and equal for everyone",
+            "example": "We want a fair game."
           }
         ],
         "bonus": [
@@ -1091,8 +1997,8 @@
         "bonus": [
           {
             "word": "CALM",
-            "meaning": "peaceful and not excited, worried, or upset",
-            "example": "She stayed calm and followed the safety instructions."
+            "meaning": "quiet and peaceful",
+            "example": "Take a breath and stay calm."
           },
           {
             "word": "IDEA",
@@ -1169,8 +2075,8 @@
         "bonus": [
           {
             "word": "LATE",
-            "meaning": "later than usual or than expected",
-            "example": "The children came late to school."
+            "meaning": "after the expected time",
+            "example": "The bus was late today."
           },
           {
             "word": "CLEAT",
@@ -1208,8 +2114,8 @@
         "bonus": [
           {
             "word": "MATE",
-            "meaning": "one of a pair",
-            "example": "He lost the mate to his shoe."
+            "meaning": "a friend or partner",
+            "example": "My classmate is my reading mate."
           },
           {
             "word": "SAME",
@@ -1235,8 +2141,8 @@
           },
           {
             "word": "NEAR",
-            "meaning": "near in time or place or relationship",
-            "example": "Getting near to the true explanation."
+            "meaning": "not far away",
+            "example": "The library is near our school."
           },
           {
             "word": "PATENT",
@@ -1247,13 +2153,13 @@
         "bonus": [
           {
             "word": "RATE",
-            "meaning": "estimate the value of",
-            "example": "How would you rate his chances to become President."
+            "meaning": "how fast or often something happens",
+            "example": "Her heart rate rose after running."
           },
           {
             "word": "NEAT",
-            "meaning": "tidy and arranged with care",
-            "example": "His neat notes were easy to read."
+            "meaning": "tidy and in order",
+            "example": "Keep your desk neat."
           }
         ]
       },
@@ -1274,8 +2180,8 @@
           },
           {
             "word": "UNIT",
-            "meaning": "an individual or group or structure or other entity regarded as a structural or functional constituent of a whole",
-            "example": "The word is a basic linguistic unit."
+            "meaning": "one group of lessons on a topic",
+            "example": "We start a new unit today."
           },
           {
             "word": "MOUNT",
@@ -1313,8 +2219,8 @@
           },
           {
             "word": "TONE",
-            "meaning": "change to a color image",
-            "example": "Tone a photographic image."
+            "meaning": "the way a voice sounds",
+            "example": "Her kind tone made me smile."
           },
           {
             "word": "GREEN",
@@ -1325,8 +2231,8 @@
         "bonus": [
           {
             "word": "NOTE",
-            "meaning": "observe with care or pay close attention to",
-            "example": "Take note of this chemical reaction."
+            "meaning": "a short written message",
+            "example": "I left a note for my friend."
           },
           {
             "word": "TERM",
@@ -1396,8 +2302,8 @@
           },
           {
             "word": "UNIT",
-            "meaning": "an individual or group or structure or other entity regarded as a structural or functional constituent of a whole",
-            "example": "The word is a basic linguistic unit."
+            "meaning": "one group of lessons on a topic",
+            "example": "We start a new unit today."
           }
         ],
         "bonus": [
@@ -1525,8 +2431,8 @@
           },
           {
             "word": "BEAT",
-            "meaning": "a regular route for a sentry or policeman",
-            "example": "In the old days a policeman walked a beat and knew all his people by name."
+            "meaning": "to hit or make a repeated sound",
+            "example": "I can hear the drum beat."
           }
         ]
       },
@@ -1559,13 +2465,13 @@
         "bonus": [
           {
             "word": "TONE",
-            "meaning": "change to a color image",
-            "example": "Tone a photographic image."
+            "meaning": "the way a voice sounds",
+            "example": "Her kind tone made me smile."
           },
           {
             "word": "NOTE",
-            "meaning": "observe with care or pay close attention to",
-            "example": "Take note of this chemical reaction."
+            "meaning": "a short written message",
+            "example": "I left a note for my friend."
           }
         ]
       },
@@ -1581,8 +2487,8 @@
           },
           {
             "word": "LINE",
-            "meaning": "be in line with",
-            "example": "Trees line the riverbank."
+            "meaning": "a long, narrow mark",
+            "example": "Draw a straight line."
           },
           {
             "word": "IGNITE",
@@ -1625,8 +2531,8 @@
           },
           {
             "word": "NOSE",
-            "meaning": "the organ of smell and entrance to the respiratory tract",
-            "example": "He has a cold in the nose."
+            "meaning": "the part of your face used to smell",
+            "example": "My nose can smell the flowers."
           },
           {
             "word": "SURGE",
@@ -1659,13 +2565,13 @@
           },
           {
             "word": "STONE",
-            "meaning": "a small, hard piece of rock",
-            "example": "She picked up a smooth stone by the river."
+            "meaning": "a small piece of rock",
+            "example": "She found a smooth stone."
           },
           {
             "word": "TONE",
-            "meaning": "change to a color image",
-            "example": "Tone a photographic image."
+            "meaning": "the way a voice sounds",
+            "example": "Her kind tone made me smile."
           },
           {
             "word": "ONSET",
@@ -1676,8 +2582,8 @@
         "bonus": [
           {
             "word": "NOTE",
-            "meaning": "observe with care or pay close attention to",
-            "example": "Take note of this chemical reaction."
+            "meaning": "a short written message",
+            "example": "I left a note for my friend."
           },
           {
             "word": "SHOT",
@@ -1703,8 +2609,8 @@
           },
           {
             "word": "NEAT",
-            "meaning": "tidy and arranged with care",
-            "example": "His neat notes were easy to read."
+            "meaning": "tidy and in order",
+            "example": "Keep your desk neat."
           },
           {
             "word": "PATENT",
@@ -1724,10 +2630,18 @@
             "example": "The patient developed severe pain and distension."
           }
         ]
-      },
+      }
+    ]
+  },
+  {
+    "id": "c1",
+    "title": "C1 · Nuance Summit",
+    "description": "Choose precise words for complex ideas.",
+    "color": "#9474b7",
+    "levels": [
       {
-        "id": "b2-21",
-        "title": "The unexpected link",
+        "id": "c1-01",
+        "title": "The subtle signal",
         "letters": "RELIABLE",
         "words": [
           {
@@ -1754,19 +2668,19 @@
         "bonus": [
           {
             "word": "BEAR",
-            "meaning": "move while holding up or supporting",
-            "example": "Bear a heavy load."
+            "meaning": "a large wild animal with thick fur",
+            "example": "We saw a bear in the storybook."
           },
           {
             "word": "RAIL",
-            "meaning": "short for railway",
-            "example": "He was concerned with rail safety."
+            "meaning": "a bar you can hold for support",
+            "example": "Hold the rail on the stairs."
           }
         ]
       },
       {
-        "id": "b2-22",
-        "title": "Beyond first impressions",
+        "id": "c1-02",
+        "title": "A precise choice",
         "letters": "RESILIENT",
         "words": [
           {
@@ -1781,8 +2695,8 @@
           },
           {
             "word": "REST",
-            "meaning": "a state of inaction",
-            "example": "A body will continue in a state of rest until acted upon."
+            "meaning": "to stop working for a short time",
+            "example": "Sit down and rest."
           },
           {
             "word": "ENTIRE",
@@ -1804,8 +2718,8 @@
         ]
       },
       {
-        "id": "b2-23",
-        "title": "Making a case",
+        "id": "c1-03",
+        "title": "A deeper current",
         "letters": "ARTICULATE",
         "words": [
           {
@@ -1820,13 +2734,13 @@
           },
           {
             "word": "RICE",
-            "meaning": "grains used as food either unpolished or more often polished",
-            "example": "The family served vegetables with rice."
+            "meaning": "small grains cooked and eaten as food",
+            "example": "We had rice for lunch."
           },
           {
             "word": "TRACE",
-            "meaning": "a just detectable amount",
-            "example": "He speaks French with a trace of an accent."
+            "meaning": "to follow a line with your finger or pencil",
+            "example": "Trace the shape on the paper."
           }
         ],
         "bonus": [
@@ -1837,14 +2751,14 @@
           },
           {
             "word": "TRUE",
-            "meaning": "make level, square, balanced, or concentric",
-            "example": "True up the cylinder of an engine."
+            "meaning": "as acknowledged",
+            "example": "True, she is the smartest in her class."
           }
         ]
       },
       {
-        "id": "b2-24",
-        "title": "The next horizon",
+        "id": "c1-04",
+        "title": "The argument unfolds",
         "letters": "CLARIFY",
         "words": [
           {
@@ -1854,8 +2768,8 @@
           },
           {
             "word": "FAIR",
-            "meaning": "a competitive exhibition of farm products",
-            "example": "She won a blue ribbon for her baking at the county fair."
+            "meaning": "right and equal for everyone",
+            "example": "We want a fair game."
           },
           {
             "word": "FAIRLY",
@@ -1871,19 +2785,19 @@
         "bonus": [
           {
             "word": "RAIL",
-            "meaning": "short for railway",
-            "example": "He was concerned with rail safety."
+            "meaning": "a bar you can hold for support",
+            "example": "Hold the rail on the stairs."
           },
           {
             "word": "FAIL",
-            "meaning": "be unsuccessful",
-            "example": "Where do today's public schools fail."
+            "meaning": "to not succeed at something",
+            "example": "It is okay to fail and try again."
           }
         ]
       },
       {
-        "id": "b2-25",
-        "title": "The analysis milestone",
+        "id": "c1-05",
+        "title": "A shift in meaning",
         "letters": "DESCRIBE",
         "words": [
           {
@@ -1893,8 +2807,8 @@
           },
           {
             "word": "RICE",
-            "meaning": "grains used as food either unpolished or more often polished",
-            "example": "The family served vegetables with rice."
+            "meaning": "small grains cooked and eaten as food",
+            "example": "We had rice for lunch."
           },
           {
             "word": "RESIDE",
@@ -1910,8 +2824,8 @@
         "bonus": [
           {
             "word": "RIDE",
-            "meaning": "sit and travel on the back of animal, usually while controlling its motions",
-            "example": "Did you ever ride a camel."
+            "meaning": "to travel on a bike, bus, or animal",
+            "example": "I ride my bike to school."
           },
           {
             "word": "RISE",
@@ -1919,18 +2833,166 @@
             "example": "They cheered the rise of the hot-air balloon."
           }
         ]
-      }
-    ]
-  },
-  {
-    "id": "c1",
-    "title": "C1 · Nuance Summit",
-    "description": "Choose precise words for complex ideas.",
-    "color": "#9474b7",
-    "levels": [
+      },
       {
-        "id": "c1-01",
-        "title": "The subtle signal",
+        "id": "c1-06",
+        "title": "Between the lines",
+        "letters": "PERSUADE",
+        "words": [
+          {
+            "word": "PERSUADE",
+            "meaning": "cause somebody to adopt a certain position, belief, or course of action",
+            "example": "The campaign aims to persuade students to save water."
+          },
+          {
+            "word": "SPREAD",
+            "meaning": "prepared or arranged for a meal",
+            "example": "A table spread with food."
+          },
+          {
+            "word": "PAUSE",
+            "meaning": "cease an action temporarily",
+            "example": "We pause for station identification."
+          },
+          {
+            "word": "USED",
+            "meaning": "already owned or put to use",
+            "example": "She used the blue pencil."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "DEEP",
+            "meaning": "to an advanced time",
+            "example": "Deep into the night."
+          },
+          {
+            "word": "SPARE",
+            "meaning": "save or relieve from an experience or action",
+            "example": "I'll spare you from having to apologize formally."
+          }
+        ]
+      },
+      {
+        "id": "c1-07",
+        "title": "The crucial nuance",
+        "letters": "RESPOND",
+        "words": [
+          {
+            "word": "RESPOND",
+            "meaning": "to reply or react to something",
+            "example": "Please respond to the question with a complete sentence."
+          },
+          {
+            "word": "OPEN",
+            "meaning": "to move something so that it is no longer closed",
+            "example": "Please open your book to page ten."
+          },
+          {
+            "word": "PERSON",
+            "meaning": "a human being",
+            "example": "There was too much for one person to do."
+          },
+          {
+            "word": "SPEND",
+            "meaning": "spend completely",
+            "example": "I spend my pocket money in two days."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "DROP",
+            "meaning": "to let something fall",
+            "example": "Do not drop the glass."
+          },
+          {
+            "word": "NOSE",
+            "meaning": "the part of your face used to smell",
+            "example": "My nose can smell the flowers."
+          }
+        ]
+      },
+      {
+        "id": "c1-08",
+        "title": "An informed judgment",
+        "letters": "TRANSLATE",
+        "words": [
+          {
+            "word": "TRANSLATE",
+            "meaning": "restate (words) from one language into another language",
+            "example": "Can you translate this short message into English?"
+          },
+          {
+            "word": "START",
+            "meaning": "the beginning of anything",
+            "example": "It was off to a good start."
+          },
+          {
+            "word": "REST",
+            "meaning": "to stop working for a short time",
+            "example": "Sit down and rest."
+          },
+          {
+            "word": "TASTE",
+            "meaning": "perceive by the sense of taste",
+            "example": "Can you taste the garlic."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "STATE",
+            "meaning": "the territory occupied by one of the constituent administrative districts of a nation",
+            "example": "His state is in the deep south."
+          },
+          {
+            "word": "REAL",
+            "meaning": "being or occurring in fact or actuality",
+            "example": "Life is real! Life is earnest!- Longfellow."
+          }
+        ]
+      },
+      {
+        "id": "c1-09",
+        "title": "The quiet contradiction",
+        "letters": "ACCELERATE",
+        "words": [
+          {
+            "word": "ACCELERATE",
+            "meaning": "cause to move faster",
+            "example": "New tools can accelerate the research process."
+          },
+          {
+            "word": "CLEAR",
+            "meaning": "the state of being free of suspicion",
+            "example": "Investigation showed that he was in the clear."
+          },
+          {
+            "word": "TRACE",
+            "meaning": "to follow a line with your finger or pencil",
+            "example": "Trace the shape on the paper."
+          },
+          {
+            "word": "CREATE",
+            "meaning": "to make something new",
+            "example": "We create a picture together."
+          }
+        ],
+        "bonus": [
+          {
+            "word": "REAL",
+            "meaning": "being or occurring in fact or actuality",
+            "example": "Life is real! Life is earnest!- Longfellow."
+          },
+          {
+            "word": "ALERT",
+            "meaning": "engaged in or accustomed to close observation",
+            "example": "Constantly alert and vigilant, like a sentinel on duty."
+          }
+        ]
+      },
+      {
+        "id": "c1-10",
+        "title": "A stronger expression",
         "letters": "INNOVATE",
         "words": [
           {
@@ -1940,8 +3002,8 @@
           },
           {
             "word": "TONE",
-            "meaning": "change to a color image",
-            "example": "Tone a photographic image."
+            "meaning": "the way a voice sounds",
+            "example": "Her kind tone made me smile."
           },
           {
             "word": "NATIVE",
@@ -1957,19 +3019,19 @@
         "bonus": [
           {
             "word": "NOTE",
-            "meaning": "observe with care or pay close attention to",
-            "example": "Take note of this chemical reaction."
+            "meaning": "a short written message",
+            "example": "I left a note for my friend."
           },
           {
             "word": "NEAT",
-            "meaning": "tidy and arranged with care",
-            "example": "His neat notes were easy to read."
+            "meaning": "tidy and in order",
+            "example": "Keep your desk neat."
           }
         ]
       },
       {
-        "id": "c1-02",
-        "title": "A precise choice",
+        "id": "c1-11",
+        "title": "The wider context",
         "letters": "REDUCE",
         "words": [
           {
@@ -2007,8 +3069,8 @@
         ]
       },
       {
-        "id": "c1-03",
-        "title": "A deeper current",
+        "id": "c1-12",
+        "title": "Questions of degree",
         "letters": "TRANSFORM",
         "words": [
           {
@@ -2035,8 +3097,8 @@
         "bonus": [
           {
             "word": "FAST",
-            "meaning": "moving or happening quickly",
-            "example": "The fast runner reached the finish line first."
+            "meaning": "moving quickly",
+            "example": "The rabbit runs fast."
           },
           {
             "word": "SOFT",
@@ -2046,8 +3108,8 @@
         ]
       },
       {
-        "id": "c1-04",
-        "title": "The argument unfolds",
+        "id": "c1-13",
+        "title": "A delicate balance",
         "letters": "TRANSITION",
         "words": [
           {
@@ -2085,8 +3147,8 @@
         ]
       },
       {
-        "id": "c1-05",
-        "title": "A shift in meaning",
+        "id": "c1-14",
+        "title": "An original thought",
         "letters": "OBSTACLE",
         "words": [
           {
@@ -2096,8 +3158,8 @@
           },
           {
             "word": "CLOSE",
-            "meaning": "to shut an opening or bring something to an end",
-            "example": "Close the door quietly when you leave."
+            "meaning": "to shut something",
+            "example": "Please close the door."
           },
           {
             "word": "SCALE",
@@ -2106,15 +3168,15 @@
           },
           {
             "word": "BASE",
-            "meaning": "situate as a center of operations",
-            "example": "We will base this project in the new lab."
+            "meaning": "the bottom part of something",
+            "example": "The base of the lamp is heavy."
           }
         ],
         "bonus": [
           {
             "word": "BEAT",
-            "meaning": "a regular route for a sentry or policeman",
-            "example": "In the old days a policeman walked a beat and knew all his people by name."
+            "meaning": "to hit or make a repeated sound",
+            "example": "I can hear the drum beat."
           },
           {
             "word": "COAST",
@@ -2124,19 +3186,14 @@
         ]
       },
       {
-        "id": "c1-06",
-        "title": "Between the lines",
+        "id": "c1-15",
+        "title": "The telling detail",
         "letters": "PRESSURE",
         "words": [
           {
             "word": "PRESSURE",
             "meaning": "a difficult demand or feeling of urgency",
             "example": "The container cracked when the internal pressure became too high."
-          },
-          {
-            "word": "PERUSE",
-            "meaning": "examine or consider with attention and in detail",
-            "example": "Please peruse this report at your leisure."
           },
           {
             "word": "PRESS",
@@ -2147,24 +3204,29 @@
             "word": "PURSE",
             "meaning": "a sum of money spoken of as the contents of a money purse",
             "example": "He made the contribution out of his own purse."
-          }
-        ],
-        "bonus": [
+          },
           {
             "word": "SPUR",
             "meaning": "incite or stimulate",
             "example": "The Academy was formed to spur research."
-          },
+          }
+        ],
+        "bonus": [
           {
             "word": "SURE",
             "meaning": "physically secure or dependable",
             "example": "Was on sure ground."
+          },
+          {
+            "word": "PURE",
+            "meaning": "free of extraneous elements of any kind",
+            "example": "The violin's pure and lovely song."
           }
         ]
       },
       {
-        "id": "c1-07",
-        "title": "The crucial nuance",
+        "id": "c1-16",
+        "title": "A different angle",
         "letters": "SOLUTION",
         "words": [
           {
@@ -2174,8 +3236,8 @@
           },
           {
             "word": "UNIT",
-            "meaning": "an individual or group or structure or other entity regarded as a structural or functional constituent of a whole",
-            "example": "The word is a basic linguistic unit."
+            "meaning": "one group of lessons on a topic",
+            "example": "We start a new unit today."
           },
           {
             "word": "INSULT",
@@ -2202,8 +3264,8 @@
         ]
       },
       {
-        "id": "c1-08",
-        "title": "An informed judgment",
+        "id": "c1-17",
+        "title": "An exacting claim",
         "letters": "STRATEGY",
         "words": [
           {
@@ -2218,8 +3280,8 @@
           },
           {
             "word": "REST",
-            "meaning": "a state of inaction",
-            "example": "A body will continue in a state of rest until acted upon."
+            "meaning": "to stop working for a short time",
+            "example": "Sit down and rest."
           },
           {
             "word": "TASTE",
@@ -2241,8 +3303,8 @@
         ]
       },
       {
-        "id": "c1-09",
-        "title": "The quiet contradiction",
+        "id": "c1-18",
+        "title": "A point of principle",
         "letters": "ACCURATE",
         "words": [
           {
@@ -2252,13 +3314,13 @@
           },
           {
             "word": "TRACE",
-            "meaning": "a just detectable amount",
-            "example": "He speaks French with a trace of an accent."
+            "meaning": "to follow a line with your finger or pencil",
+            "example": "Trace the shape on the paper."
           },
           {
             "word": "TRUE",
-            "meaning": "make level, square, balanced, or concentric",
-            "example": "True up the cylinder of an engine."
+            "meaning": "as acknowledged",
+            "example": "True, she is the smartest in her class."
           },
           {
             "word": "REACT",
@@ -2269,8 +3331,8 @@
         "bonus": [
           {
             "word": "RATE",
-            "meaning": "estimate the value of",
-            "example": "How would you rate his chances to become President."
+            "meaning": "how fast or often something happens",
+            "example": "Her heart rate rose after running."
           },
           {
             "word": "ACUTE",
@@ -2280,8 +3342,8 @@
         ]
       },
       {
-        "id": "c1-10",
-        "title": "A stronger expression",
+        "id": "c1-19",
+        "title": "The underlying idea",
         "letters": "CONSISTENT",
         "words": [
           {
@@ -2291,13 +3353,13 @@
           },
           {
             "word": "STONE",
-            "meaning": "a small, hard piece of rock",
-            "example": "She picked up a smooth stone by the river."
+            "meaning": "a small piece of rock",
+            "example": "She found a smooth stone."
           },
           {
             "word": "TONE",
-            "meaning": "change to a color image",
-            "example": "Tone a photographic image."
+            "meaning": "the way a voice sounds",
+            "example": "Her kind tone made me smile."
           },
           {
             "word": "SECTION",
@@ -2308,30 +3370,25 @@
         "bonus": [
           {
             "word": "NOTE",
-            "meaning": "observe with care or pay close attention to",
-            "example": "Take note of this chemical reaction."
+            "meaning": "a short written message",
+            "example": "I left a note for my friend."
           },
           {
-            "word": "STOIC",
-            "meaning": "a member of the ancient Greek school of philosophy founded by Zeno",
-            "example": "A Stoic achieves happiness by submission to destiny."
+            "word": "CONTENT",
+            "meaning": "(usually plural) everything that is included in a collection and that is held or included in something",
+            "example": "The two groups were similar in content."
           }
         ]
       },
       {
-        "id": "c1-11",
-        "title": "The wider context",
+        "id": "c1-20",
+        "title": "A persuasive turn",
         "letters": "ESSENTIAL",
         "words": [
           {
             "word": "ESSENTIAL",
             "meaning": "absolutely necessary",
             "example": "Clean water is essential for human health."
-          },
-          {
-            "word": "SALIENT",
-            "meaning": "most noticeable, important, or relevant",
-            "example": "Salient traits."
           },
           {
             "word": "SENSE",
@@ -2342,1520 +3399,23 @@
             "word": "LISTEN",
             "meaning": "hear with intention",
             "example": "Listen carefully for the main idea."
-          }
-        ],
-        "bonus": [
+          },
           {
             "word": "TENSE",
             "meaning": "increase the tension on",
             "example": "Tense the rope manually before tensing the spring."
-          },
+          }
+        ],
+        "bonus": [
           {
             "word": "LINE",
-            "meaning": "be in line with",
-            "example": "Trees line the riverbank."
-          }
-        ]
-      },
-      {
-        "id": "c1-12",
-        "title": "Questions of degree",
-        "letters": "DEMOCRACY",
-        "words": [
-          {
-            "word": "DEMOCRACY",
-            "meaning": "the political orientation of those who favor government by the people or by their elected representatives",
-            "example": "In a democracy, citizens choose representatives through elections."
-          },
-          {
-            "word": "CREAM",
-            "meaning": "the thick, rich part of milk, often used in cooking",
-            "example": "The cook added cream to the soup."
-          },
-          {
-            "word": "MODE",
-            "meaning": "a particular functioning condition or arrangement",
-            "example": "Switched from keyboard to voice mode."
-          },
-          {
-            "word": "ACCORD",
-            "meaning": "concurrence of opinion",
-            "example": "We are in accord with your proposal."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "MORE",
-            "meaning": "comparative of much",
-            "example": "They eat more than they should."
-          },
-          {
-            "word": "YEAR",
-            "meaning": "a period of time containing 365 (or 366) days",
-            "example": "In the year 1920."
-          }
-        ]
-      },
-      {
-        "id": "c1-13",
-        "title": "A delicate balance",
-        "letters": "EQUALITY",
-        "words": [
-          {
-            "word": "EQUALITY",
-            "meaning": "the quality of being the same in quantity or measure or value or status",
-            "example": "The policy promotes equality by giving every learner the same opportunity."
-          },
-          {
-            "word": "QUALITY",
-            "meaning": "an essential and distinguishing attribute of something or someone",
-            "example": "The quality of mercy is not strained--Shakespeare."
-          },
-          {
-            "word": "QUIETLY",
-            "meaning": "with little or no sound",
-            "example": "The class was listening quietly and intently."
-          },
-          {
-            "word": "QUIET",
-            "meaning": "characterized by an absence or near absence of agitation or activity",
-            "example": "The factions remained quiet for almost 10 years."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "EQUAL",
-            "meaning": "having the same quantity, value, or measure as another",
-            "example": "All men are equal before the law."
-          },
-          {
-            "word": "LATE",
-            "meaning": "later than usual or than expected",
-            "example": "The children came late to school."
-          }
-        ]
-      },
-      {
-        "id": "c1-14",
-        "title": "An original thought",
-        "letters": "TECHNOLOGY",
-        "words": [
-          {
-            "word": "TECHNOLOGY",
-            "meaning": "scientific knowledge and tools used to solve practical problems",
-            "example": "Assistive technology can make learning more accessible."
-          },
-          {
-            "word": "TONE",
-            "meaning": "change to a color image",
-            "example": "Tone a photographic image."
-          },
-          {
-            "word": "THEOLOGY",
-            "meaning": "the learned profession acquired by specialized courses in religion (usually taught at a college or seminary)",
-            "example": "He studied theology at Oxford."
-          },
-          {
-            "word": "ECOLOGY",
-            "meaning": "the environment as it relates to living organisms",
-            "example": "It changed the ecology of the island."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "NOTE",
-            "meaning": "observe with care or pay close attention to",
-            "example": "Take note of this chemical reaction."
-          },
-          {
-            "word": "COLONY",
-            "meaning": "a body of people who settle far from home but maintain ties with their homeland",
-            "example": "The American colony in Paris."
-          }
-        ]
-      },
-      {
-        "id": "c1-15",
-        "title": "The telling detail",
-        "letters": "VOLATILE",
-        "words": [
-          {
-            "word": "VOLATILE",
-            "meaning": "likely to change suddenly or become dangerous",
-            "example": "A volatile situation with troops and rioters eager for a confrontation."
-          },
-          {
-            "word": "ALIVE",
-            "meaning": "capable of erupting",
-            "example": "The volcano is very much alive."
-          },
-          {
-            "word": "LIVE",
-            "meaning": "not recorded",
-            "example": "The opera was broadcast live."
-          },
-          {
-            "word": "VITAL",
-            "meaning": "performing an essential function in the living body",
-            "example": "The loss of vital heat in shock."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "LATE",
-            "meaning": "later than usual or than expected",
-            "example": "The children came late to school."
-          },
-          {
-            "word": "LOVE",
-            "meaning": "have a great affection or liking for",
-            "example": "I love French food."
-          }
-        ]
-      },
-      {
-        "id": "c1-16",
-        "title": "A different angle",
-        "letters": "AUGMENTED",
-        "words": [
-          {
-            "word": "AUGMENTED",
-            "meaning": "added to or made greater in amount or number or strength",
-            "example": "A greatly augmented collection of books."
-          },
-          {
-            "word": "MEAN",
-            "meaning": "mean or intend to express or convey",
-            "example": "You never understand what I mean."
-          },
-          {
-            "word": "TANDEM",
-            "meaning": "one behind the other",
-            "example": "Ride tandem on a bicycle built for two."
-          },
-          {
-            "word": "NUTMEG",
-            "meaning": "East Indian tree widely cultivated in the tropics for its aromatic seed",
-            "example": "Source of two spices: nutmeg and mace."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "NAME",
-            "meaning": "a language unit by which a person or thing is known",
-            "example": "His name really is George Washington."
-          },
-          {
-            "word": "MATE",
-            "meaning": "one of a pair",
-            "example": "He lost the mate to his shoe."
-          }
-        ]
-      },
-      {
-        "id": "c1-17",
-        "title": "An exacting claim",
-        "letters": "PEDESTRIAN",
-        "words": [
-          {
-            "word": "PEDESTRIAN",
-            "meaning": "lacking wit or imagination",
-            "example": "A pedestrian movie plot."
-          },
-          {
-            "word": "RAISE",
-            "meaning": "the amount a salary is increased",
-            "example": "He got a 3% raise."
-          },
-          {
-            "word": "ENTER",
-            "meaning": "to go into a place or begin taking part",
-            "example": "Please enter the library quietly."
-          },
-          {
-            "word": "TIRED",
-            "meaning": "in need of rest or sleep",
-            "example": "After the long journey, everyone felt tired."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "TRAIN",
-            "meaning": "a series of consequences wrought by an event",
-            "example": "It led to a train of disasters."
-          },
-          {
-            "word": "REST",
-            "meaning": "a state of inaction",
-            "example": "A body will continue in a state of rest until acted upon."
-          }
-        ]
-      },
-      {
-        "id": "c1-18",
-        "title": "A point of principle",
-        "letters": "ECCENTRIC",
-        "words": [
-          {
-            "word": "ECCENTRIC",
-            "meaning": "a person with an unusual or odd personality",
-            "example": "Famed for his eccentric spelling."
-          },
-          {
-            "word": "ENTER",
-            "meaning": "to go into a place or begin taking part",
-            "example": "Please enter the library quietly."
-          },
-          {
-            "word": "RICE",
-            "meaning": "grains used as food either unpolished or more often polished",
-            "example": "The family served vegetables with rice."
-          },
-          {
-            "word": "ENTIRE",
-            "meaning": "constituting the full quantity or extent",
-            "example": "An entire town devastated by an earthquake."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "CENTER",
-            "meaning": "an area that is approximately central within some larger region",
-            "example": "It is in the center of town."
-          },
-          {
-            "word": "TIER",
-            "meaning": "one of two or more layers one atop another",
-            "example": "Tier upon tier of huge casks."
-          }
-        ]
-      },
-      {
-        "id": "c1-19",
-        "title": "The underlying idea",
-        "letters": "PRAGMATIC",
-        "words": [
-          {
-            "word": "PRAGMATIC",
-            "meaning": "focused on practical results rather than theory",
-            "example": "A matter-of-fact (or pragmatic) approach to the problem."
-          },
-          {
-            "word": "CAMP",
-            "meaning": "a temporary place where people stay outdoors",
-            "example": "The class set up camp beside the river."
-          },
-          {
-            "word": "CRAMP",
-            "meaning": "a sudden, painful tightening of a muscle",
-            "example": "She felt a cramp in her leg after the race."
-          },
-          {
-            "word": "IMPACT",
-            "meaning": "a forceful consequence",
-            "example": "The book had an important impact on my thinking."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "PART",
-            "meaning": "something determined in relation to something that includes it",
-            "example": "He wanted to feel a part of something bigger than himself."
-          },
-          {
-            "word": "TRIM",
-            "meaning": "decorate, as with ornaments",
-            "example": "Trim the christmas tree."
-          }
-        ]
-      },
-      {
-        "id": "c1-20",
-        "title": "A persuasive turn",
-        "letters": "DUPLICATE",
-        "words": [
-          {
-            "word": "DUPLICATE",
-            "meaning": "identically copied from an original",
-            "example": "Could you please duplicate this letter for me?"
-          },
-          {
-            "word": "PLACE",
-            "meaning": "to arrange for",
-            "example": "Place a phone call."
-          },
-          {
-            "word": "DETAIL",
-            "meaning": "extended treatment of particulars",
-            "example": "The essay contained too much detail."
-          },
-          {
-            "word": "DATE",
-            "meaning": "assign a date to",
-            "example": "Scientists often cannot date precisely archeological or prehistorical findings."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "PLACID",
-            "meaning": "calm, peaceful, and not easily disturbed",
-            "example": "A ribbon of sand between the angry sea and the placid bay."
-          },
-          {
-            "word": "LEAD",
-            "meaning": "take somebody somewhere",
-            "example": "We lead him to our chief."
-          }
-        ]
-      },
-      {
-        "id": "c1-21",
-        "title": "An uncommon connection",
-        "letters": "PERTINENT",
-        "words": [
-          {
-            "word": "PERTINENT",
-            "meaning": "having precise or logical relevance to the matter at hand",
-            "example": "A list of articles pertinent to the discussion."
-          },
-          {
-            "word": "ENTER",
-            "meaning": "to go into a place or begin taking part",
-            "example": "Please enter the library quietly."
-          },
-          {
-            "word": "PRINT",
-            "meaning": "the text appearing in a book, newspaper, or other printed publication",
-            "example": "I want to see it in print."
-          },
-          {
-            "word": "ENTIRE",
-            "meaning": "constituting the full quantity or extent",
-            "example": "An entire town devastated by an earthquake."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "TIER",
-            "meaning": "one of two or more layers one atop another",
-            "example": "Tier upon tier of huge casks."
-          },
-          {
-            "word": "TRIP",
-            "meaning": "a journey for some purpose (usually including the return)",
-            "example": "He took a trip to the shopping center."
-          }
-        ]
-      },
-      {
-        "id": "c1-22",
-        "title": "A thoughtful challenge",
-        "letters": "VENERABLE",
-        "words": [
-          {
-            "word": "VENERABLE",
-            "meaning": "impressive by reason of age",
-            "example": "A venerable sage with white hair and beard."
-          },
-          {
-            "word": "LEAVE",
-            "meaning": "the period of time during which you are absent from work or duty",
-            "example": "A ten day's leave to visit his mother."
-          },
-          {
-            "word": "REAL",
-            "meaning": "being or occurring in fact or actuality",
-            "example": "Life is real! Life is earnest!- Longfellow."
-          },
-          {
-            "word": "BRAVE",
-            "meaning": "ready to face danger or difficulty with courage",
-            "example": "The brave student admitted the mistake and corrected it."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "NEAR",
-            "meaning": "near in time or place or relationship",
-            "example": "Getting near to the true explanation."
-          },
-          {
-            "word": "VERBAL",
-            "meaning": "of or relating to or formed from a verb",
-            "example": "Verbal adjectives like `running' in `hot and cold running water."
-          }
-        ]
-      },
-      {
-        "id": "c1-23",
-        "title": "The language of insight",
-        "letters": "DISSIPATED",
-        "words": [
-          {
-            "word": "DISSIPATED",
-            "meaning": "preoccupied with the pursuit of pleasure and especially games of chance",
-            "example": "Deplorably dissipated and degraded."
-          },
-          {
-            "word": "DATE",
-            "meaning": "assign a date to",
-            "example": "Scientists often cannot date precisely archeological or prehistorical findings."
-          },
-          {
-            "word": "ASIDE",
-            "meaning": "on or to one side",
-            "example": "Put her sewing aside when he entered."
-          },
-          {
-            "word": "PASTE",
-            "meaning": "cover the surface of",
-            "example": "Paste the wall with burlap."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "PASS",
-            "meaning": "(military) a written leave of absence",
-            "example": "He had a pass for three days."
-          },
-          {
-            "word": "IDEA",
-            "meaning": "the content of cognition",
-            "example": "It was not a good idea."
-          }
-        ]
-      },
-      {
-        "id": "c1-24",
-        "title": "A measured reply",
-        "letters": "MAVERICK",
-        "words": [
-          {
-            "word": "MAVERICK",
-            "meaning": "someone who exhibits great independence in thought and action",
-            "example": "Maverick politicians."
-          },
-          {
-            "word": "CREAM",
-            "meaning": "the thick, rich part of milk, often used in cooking",
-            "example": "The cook added cream to the soup."
-          },
-          {
-            "word": "RICE",
-            "meaning": "grains used as food either unpolished or more often polished",
-            "example": "The family served vegetables with rice."
-          },
-          {
-            "word": "CARVE",
-            "meaning": "form by carving",
-            "example": "Carve a flower from the ice."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "MAKE",
-            "meaning": "give certain properties to something",
-            "example": "This invention will make you a millionaire."
-          },
-          {
-            "word": "MARK",
-            "meaning": "the impression created by doing something unusual or extraordinary that people notice and remember",
-            "example": "He left an indelible mark on the American theater."
-          }
-        ]
-      },
-      {
-        "id": "c1-25",
-        "title": "The fluency milestone",
-        "letters": "SPORADIC",
-        "words": [
-          {
-            "word": "SPORADIC",
-            "meaning": "recurring in scattered and irregular or unpredictable instances",
-            "example": "A city subjected to sporadic bombing raids."
-          },
-          {
-            "word": "DROP",
-            "meaning": "a small indefinite quantity (especially of a liquid)",
-            "example": "There is not a drop of pity in that man."
-          },
-          {
-            "word": "CRISP",
-            "meaning": "(of something seen or heard) clearly defined",
-            "example": "The crisp snap of dry leaves underfoot."
-          },
-          {
-            "word": "SCRAP",
-            "meaning": "make into scrap or refuse",
-            "example": "Scrap the old airplane and sell the parts."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "CARD",
-            "meaning": "a rectangular piece of stiff paper used to send messages (may have printed greetings or pictures)",
-            "example": "They sent us a card from Miami."
-          },
-          {
-            "word": "CROP",
-            "meaning": "a collection of people or things appearing together",
-            "example": "The annual crop of students brings a new crop of ideas."
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "c2",
-    "title": "C2 · Mastery Observatory",
-    "description": "Explore subtle meaning and rare expression.",
-    "color": "#bf7e45",
-    "levels": [
-      {
-        "id": "c2-01",
-        "title": "The rare distinction",
-        "letters": "PRISTINE",
-        "words": [
-          {
-            "word": "PRISTINE",
-            "meaning": "completely free from dirt or contamination",
-            "example": "Handed her his pristine white handkerchief."
-          },
-          {
-            "word": "REST",
-            "meaning": "a state of inaction",
-            "example": "A body will continue in a state of rest until acted upon."
-          },
-          {
-            "word": "PRINT",
-            "meaning": "the text appearing in a book, newspaper, or other printed publication",
-            "example": "I want to see it in print."
-          },
-          {
-            "word": "STRIP",
-            "meaning": "a relatively long narrow piece of something",
-            "example": "He felt a flat strip of muscle."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "RISE",
-            "meaning": "a movement upward",
-            "example": "They cheered the rise of the hot-air balloon."
-          },
-          {
-            "word": "TIER",
-            "meaning": "one of two or more layers one atop another",
-            "example": "Tier upon tier of huge casks."
-          }
-        ]
-      },
-      {
-        "id": "c2-02",
-        "title": "A turn of phrase",
-        "letters": "REPROACH",
-        "words": [
-          {
-            "word": "REPROACH",
-            "meaning": "express criticism towards",
-            "example": "He brought reproach upon his family."
-          },
-          {
-            "word": "REACH",
-            "meaning": "reach a point in time, or a certain state or level",
-            "example": "This car can reach a speed of 140 miles per hour."
-          },
-          {
-            "word": "RECAP",
-            "meaning": "a short summary of the main points",
-            "example": "The teacher gave a recap of yesterday’s lesson."
-          },
-          {
-            "word": "CROP",
-            "meaning": "a collection of people or things appearing together",
-            "example": "The annual crop of students brings a new crop of ideas."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "CARE",
-            "meaning": "feel concern or interest",
-            "example": "I really care about my work."
-          },
-          {
-            "word": "CHOP",
-            "meaning": "the irregular motion of waves (usually caused by wind blowing in a direction opposite to the tide)",
-            "example": "The boat headed into the chop."
-          }
-        ]
-      },
-      {
-        "id": "c2-03",
-        "title": "Shades of meaning",
-        "letters": "CONSUMMATE",
-        "words": [
-          {
-            "word": "CONSUMMATE",
-            "meaning": "showing complete skill or mastery",
-            "example": "Her consummate skill impressed the entire orchestra."
-          },
-          {
-            "word": "STONE",
-            "meaning": "a small, hard piece of rock",
-            "example": "She picked up a smooth stone by the river."
-          },
-          {
-            "word": "COUNT",
-            "meaning": "determine the number or amount of",
-            "example": "Can you count the books on your shelf."
-          },
-          {
-            "word": "MEAN",
-            "meaning": "mean or intend to express or convey",
-            "example": "You never understand what I mean."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "NAME",
-            "meaning": "a language unit by which a person or thing is known",
-            "example": "His name really is George Washington."
-          },
-          {
-            "word": "TONE",
-            "meaning": "change to a color image",
-            "example": "Tone a photographic image."
-          }
-        ]
-      },
-      {
-        "id": "c2-04",
-        "title": "The elegant solution",
-        "letters": "HYPERBOLIC",
-        "words": [
-          {
-            "word": "HYPERBOLIC",
-            "meaning": "enlarged beyond truth or reasonableness",
-            "example": "Hyperbolic functions."
-          },
-          {
-            "word": "RICE",
-            "meaning": "grains used as food either unpolished or more often polished",
-            "example": "The family served vegetables with rice."
-          },
-          {
-            "word": "PRICE",
-            "meaning": "the amount of money needed to purchase something",
-            "example": "The price of gasoline."
-          },
-          {
-            "word": "HEROIC",
-            "meaning": "having or displaying qualities appropriate for heroes",
-            "example": "The heroic attack on the beaches of Normandy."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "ROLE",
-            "meaning": "normal or customary activity of a person in a particular social setting",
-            "example": "What is your role on the team."
-          },
-          {
-            "word": "POLE",
-            "meaning": "support on poles",
-            "example": "Pole climbing plants like beans."
-          }
-        ]
-      },
-      {
-        "id": "c2-05",
-        "title": "A hidden implication",
-        "letters": "TRACTABLE",
-        "words": [
-          {
-            "word": "TRACTABLE",
-            "meaning": "easily managed (controlled or taught or molded)",
-            "example": "The natives...being...of an intelligent tractable disposition- Samuel Butler."
-          },
-          {
-            "word": "CLEAR",
-            "meaning": "the state of being free of suspicion",
-            "example": "Investigation showed that he was in the clear."
-          },
-          {
-            "word": "TRACE",
-            "meaning": "a just detectable amount",
-            "example": "He speaks French with a trace of an accent."
-          },
-          {
-            "word": "REAL",
-            "meaning": "being or occurring in fact or actuality",
-            "example": "Life is real! Life is earnest!- Longfellow."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "ALERT",
-            "meaning": "engaged in or accustomed to close observation",
-            "example": "Constantly alert and vigilant, like a sentinel on duty."
-          },
-          {
-            "word": "BEAT",
-            "meaning": "a regular route for a sentry or policeman",
-            "example": "In the old days a policeman walked a beat and knew all his people by name."
-          }
-        ]
-      },
-      {
-        "id": "c2-06",
-        "title": "A difficult inference",
-        "letters": "ABRIDGED",
-        "words": [
-          {
-            "word": "ABRIDGED",
-            "meaning": "(used of texts) shortened by condensing or rewriting",
-            "example": "An abridged version."
-          },
-          {
-            "word": "BRIDGE",
-            "meaning": "a structure carrying a path or road over an obstacle",
-            "example": "The bridge connects the village to the main road."
-          },
-          {
-            "word": "RIDE",
-            "meaning": "sit and travel on the back of animal, usually while controlling its motions",
-            "example": "Did you ever ride a camel."
-          },
-          {
-            "word": "BREAD",
-            "meaning": "food made from dough of flour or meal and usually raised with yeast or baking powder and then baked",
-            "example": "He made a sandwich with fresh bread."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "IDEA",
-            "meaning": "the content of cognition",
-            "example": "It was not a good idea."
-          },
-          {
-            "word": "DEAD",
-            "meaning": "people who are no longer living",
-            "example": "They buried the dead."
-          }
-        ]
-      },
-      {
-        "id": "c2-07",
-        "title": "The exact word",
-        "letters": "AMBIVALENT",
-        "words": [
-          {
-            "word": "AMBIVALENT",
-            "meaning": "uncertain or unable to decide about what course to follow",
-            "example": "Was ambivalent about having children."
-          },
-          {
-            "word": "AMIABLE",
-            "meaning": "disposed to please",
-            "example": "An amiable villain with a cocky sidelong grin- Hal Hinson."
-          },
-          {
-            "word": "MEAN",
-            "meaning": "mean or intend to express or convey",
-            "example": "You never understand what I mean."
-          },
-          {
-            "word": "ALIVE",
-            "meaning": "capable of erupting",
-            "example": "The volcano is very much alive."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "NAME",
-            "meaning": "a language unit by which a person or thing is known",
-            "example": "His name really is George Washington."
-          },
-          {
-            "word": "TIME",
-            "meaning": "set the speed, duration, or execution of",
-            "example": "We time the process to manufacture our cars very precisely."
-          }
-        ]
-      },
-      {
-        "id": "c2-08",
-        "title": "A layered argument",
-        "letters": "ESOTERIC",
-        "words": [
-          {
-            "word": "ESOTERIC",
-            "meaning": "confined to and understandable by only an enlightened inner circle",
-            "example": "A compilation of esoteric philosophical theories."
-          },
-          {
-            "word": "RICE",
-            "meaning": "grains used as food either unpolished or more often polished",
-            "example": "The family served vegetables with rice."
-          },
-          {
-            "word": "SCORE",
-            "meaning": "make small marks into the surface of",
-            "example": "Score the clay before firing it."
-          },
-          {
-            "word": "STORE",
-            "meaning": "keep or lay aside for future use",
-            "example": "Store grain for the winter."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "REST",
-            "meaning": "a state of inaction",
-            "example": "A body will continue in a state of rest until acted upon."
-          },
-          {
-            "word": "STEER",
-            "meaning": "direct (oneself) somewhere",
-            "example": "Steer clear of him."
-          }
-        ]
-      },
-      {
-        "id": "c2-09",
-        "title": "Subtle intentions",
-        "letters": "HEGEMONY",
-        "words": [
-          {
-            "word": "HEGEMONY",
-            "meaning": "the dominance or leadership of one social group or nation over others",
-            "example": "To say they have priority is not to say they have complete hegemony."
-          },
-          {
-            "word": "HOME",
-            "meaning": "at or to or in the direction of one's home or family",
-            "example": "After the game the children brought friends home for supper."
-          },
-          {
-            "word": "ENEMY",
-            "meaning": "an opposing military force",
-            "example": "The enemy attacked at dawn."
-          },
-          {
-            "word": "MONEY",
-            "meaning": "the most common medium of exchange",
-            "example": "We tried to collect the money he owed us."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "OMEN",
-            "meaning": "a sign of something about to happen",
-            "example": "He looked for an omen before going into battle."
-          }
-        ]
-      },
-      {
-        "id": "c2-10",
-        "title": "The unusual case",
-        "letters": "CONTIGUOUS",
-        "words": [
-          {
-            "word": "CONTIGUOUS",
-            "meaning": "very close or connected in space or time",
-            "example": "Utah and the contiguous state of Idaho."
-          },
-          {
-            "word": "COUNT",
-            "meaning": "determine the number or amount of",
-            "example": "Can you count the books on your shelf."
-          },
-          {
-            "word": "STING",
-            "meaning": "a sudden sharp pain, often caused by an insect",
-            "example": "The bee’s sting made his arm sore."
-          },
-          {
-            "word": "STOIC",
-            "meaning": "a member of the ancient Greek school of philosophy founded by Zeno",
-            "example": "A Stoic achieves happiness by submission to destiny."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "UNIT",
-            "meaning": "an individual or group or structure or other entity regarded as a structural or functional constituent of a whole",
-            "example": "The word is a basic linguistic unit."
-          },
-          {
-            "word": "SIGN",
-            "meaning": "communicate in sign language",
-            "example": "I don't know how to sign, so I could not communicate with my deaf cousin."
-          }
-        ]
-      },
-      {
-        "id": "c2-11",
-        "title": "Beyond the obvious",
-        "letters": "ASTUTE",
-        "words": [
-          {
-            "word": "ASTUTE",
-            "meaning": "marked by practical hardheaded intelligence",
-            "example": "An astute tenant always reads the small print in a lease."
-          },
-          {
-            "word": "TASTE",
-            "meaning": "perceive by the sense of taste",
-            "example": "Can you taste the garlic."
-          },
-          {
-            "word": "STATE",
-            "meaning": "the territory occupied by one of the constituent administrative districts of a nation",
-            "example": "His state is in the deep south."
-          },
-          {
-            "word": "SEAT",
-            "meaning": "provide with seats",
-            "example": "Seat a concert hall."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "TEST",
-            "meaning": "undergo a test",
-            "example": "She doesn't test well."
-          },
-          {
-            "word": "EAST",
-            "meaning": "to, toward, or in the east",
-            "example": "We travelled east for several miles."
-          }
-        ]
-      },
-      {
-        "id": "c2-12",
-        "title": "A question of tone",
-        "letters": "ANTAGONISM",
-        "words": [
-          {
-            "word": "ANTAGONISM",
-            "meaning": "the relation between opposing principles or forces or factors",
-            "example": "The inherent antagonism of capitalism and socialism."
-          },
-          {
-            "word": "STING",
-            "meaning": "a sudden sharp pain, often caused by an insect",
-            "example": "The bee’s sting made his arm sore."
-          },
-          {
-            "word": "SIGN",
-            "meaning": "communicate in sign language",
-            "example": "I don't know how to sign, so I could not communicate with my deaf cousin."
-          },
-          {
-            "word": "AGONIST",
-            "meaning": "a muscle that contracts while another relaxes",
-            "example": "When bending the elbow the biceps are the agonist."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "NATION",
-            "meaning": "the people who live in a nation or country",
-            "example": "A statement that sums up the nation's mood."
-          },
-          {
-            "word": "STAIN",
-            "meaning": "color with a liquid dye or tint",
-            "example": "People knew how to stain glass a beautiful blue in the middle ages."
-          }
-        ]
-      },
-      {
-        "id": "c2-13",
-        "title": "The decisive detail",
-        "letters": "ABSOLVE",
-        "words": [
-          {
-            "word": "ABSOLVE",
-            "meaning": "to free someone from blame, guilt, or responsibility",
-            "example": "I absolve you from this responsibility."
-          },
-          {
-            "word": "BASE",
-            "meaning": "situate as a center of operations",
-            "example": "We will base this project in the new lab."
-          },
-          {
-            "word": "ABOVE",
-            "meaning": "appearing earlier in the same text",
-            "example": "Flaws in the above interpretation."
-          },
-          {
-            "word": "SALVE",
-            "meaning": "anything that remedies or heals or soothes",
-            "example": "He needed a salve for his conscience."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "SEAL",
-            "meaning": "the pelt or fur (especially the underfur) of a seal",
-            "example": "A coat of seal."
-          },
-          {
-            "word": "SAVE",
-            "meaning": "(sports) the act of preventing the opposition from scoring",
-            "example": "The relief pitcher got credit for a save."
-          }
-        ]
-      },
-      {
-        "id": "c2-14",
-        "title": "A careful interpretation",
-        "letters": "DICHOTOMY",
-        "words": [
-          {
-            "word": "DICHOTOMY",
-            "meaning": "a division into two sharply contrasting parts",
-            "example": "The dichotomy between eastern and western culture."
-          },
-          {
-            "word": "CITY",
-            "meaning": "a large and densely populated urban area",
-            "example": "Ancient Troy was a great city."
-          },
-          {
-            "word": "MYTHIC",
-            "meaning": "relating to or having the nature of myth",
-            "example": "A novel of almost mythic consequence."
-          },
-          {
-            "word": "ITCHY",
-            "meaning": "causing an irritating cutaneous sensation",
-            "example": "He had an itchy toe from the mosquito bite."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "HOOT",
-            "meaning": "to utter a loud clamorous shout",
-            "example": "The toughs and blades of the city hoot and bang their drums, drink arak, play dice, and dance."
-          },
-          {
-            "word": "TIDY",
-            "meaning": "put (things or places) in order",
-            "example": "Tidy up your room."
-          }
-        ]
-      },
-      {
-        "id": "c2-15",
-        "title": "The delicate claim",
-        "letters": "DOGMATIC",
-        "words": [
-          {
-            "word": "DOGMATIC",
-            "meaning": "characterized by assertion of unproved or unprovable principles",
-            "example": "Dogmatic writings."
-          },
-          {
-            "word": "ADMIT",
-            "meaning": "allow to enter",
-            "example": "We cannot admit non-members into our club building."
-          },
-          {
-            "word": "DOGMA",
-            "meaning": "a doctrine or code of beliefs accepted as authoritative",
-            "example": "He believed all the Marxist dogma."
-          },
-          {
-            "word": "COAT",
-            "meaning": "put a coat on",
-            "example": "Coat the cake with chocolate."
-          }
-        ],
-        "bonus": []
-      },
-      {
-        "id": "c2-16",
-        "title": "An unlikely parallel",
-        "letters": "SALIENT",
-        "words": [
-          {
-            "word": "SALIENT",
-            "meaning": "most noticeable, important, or relevant",
-            "example": "Salient traits."
-          },
-          {
-            "word": "LISTEN",
-            "meaning": "hear with intention",
-            "example": "Listen carefully for the main idea."
-          },
-          {
-            "word": "LINE",
-            "meaning": "be in line with",
-            "example": "Trees line the riverbank."
+            "meaning": "a long, narrow mark",
+            "example": "Draw a straight line."
           },
           {
             "word": "LEAST",
             "meaning": "used to form the superlative",
             "example": "The garter snake is the least dangerous snake."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "NEAT",
-            "meaning": "tidy and arranged with care",
-            "example": "His neat notes were easy to read."
-          },
-          {
-            "word": "SITE",
-            "meaning": "the piece of land on which something is located (or is to be located)",
-            "example": "A good site for the school."
-          }
-        ]
-      },
-      {
-        "id": "c2-17",
-        "title": "The art of precision",
-        "letters": "GRATUITOUS",
-        "words": [
-          {
-            "word": "GRATUITOUS",
-            "meaning": "unnecessary and unwarranted",
-            "example": "A gratuitous insult."
-          },
-          {
-            "word": "START",
-            "meaning": "the beginning of anything",
-            "example": "It was off to a good start."
-          },
-          {
-            "word": "RATIO",
-            "meaning": "the relative magnitudes of two quantities (usually expressed as a quotient)",
-            "example": "The ratio of blue cards to red cards is two to one."
-          },
-          {
-            "word": "TRUST",
-            "meaning": "something (as property) held by one party (the trustee) for the benefit of another (the beneficiary)",
-            "example": "He is the beneficiary of a generous trust set up by his father."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "GRATIS",
-            "meaning": "without payment",
-            "example": "I'll give you this gratis."
-          },
-          {
-            "word": "STAR",
-            "meaning": "mark with an asterisk",
-            "example": "Linguists star unacceptable sentences."
-          }
-        ]
-      },
-      {
-        "id": "c2-18",
-        "title": "The telling contrast",
-        "letters": "AUTOCRATIC",
-        "words": [
-          {
-            "word": "AUTOCRATIC",
-            "meaning": "offensively self-assured or given to exercising usually unwarranted power",
-            "example": "Autocratic government."
-          },
-          {
-            "word": "RATIO",
-            "meaning": "the relative magnitudes of two quantities (usually expressed as a quotient)",
-            "example": "The ratio of blue cards to red cards is two to one."
-          },
-          {
-            "word": "COURT",
-            "meaning": "a specially marked horizontal area within which a game is played",
-            "example": "Players had to reserve a court in advance."
-          },
-          {
-            "word": "ACTOR",
-            "meaning": "a person who acts and gets things done",
-            "example": "He's a principal actor in this affair."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "OCCUR",
-            "meaning": "to be found to exist",
-            "example": "Precious stones occur in a large area in Brazil."
-          },
-          {
-            "word": "COAT",
-            "meaning": "put a coat on",
-            "example": "Coat the cake with chocolate."
-          }
-        ]
-      },
-      {
-        "id": "c2-19",
-        "title": "A refined judgment",
-        "letters": "TENUOUS",
-        "words": [
-          {
-            "word": "TENUOUS",
-            "meaning": "very weak, slight, or uncertain",
-            "example": "A tenuous argument."
-          },
-          {
-            "word": "STONE",
-            "meaning": "a small, hard piece of rock",
-            "example": "She picked up a smooth stone by the river."
-          },
-          {
-            "word": "TONE",
-            "meaning": "change to a color image",
-            "example": "Tone a photographic image."
-          },
-          {
-            "word": "ONSET",
-            "meaning": "the beginning or early stages",
-            "example": "The onset of pneumonia."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "NOTE",
-            "meaning": "observe with care or pay close attention to",
-            "example": "Take note of this chemical reaction."
-          },
-          {
-            "word": "NOSE",
-            "meaning": "the organ of smell and entrance to the respiratory tract",
-            "example": "He has a cold in the nose."
-          }
-        ]
-      },
-      {
-        "id": "c2-20",
-        "title": "The deeper reading",
-        "letters": "BUTTRESS",
-        "words": [
-          {
-            "word": "BUTTRESS",
-            "meaning": "a support usually of stone or brick",
-            "example": "Buttress your thesis."
-          },
-          {
-            "word": "REST",
-            "meaning": "a state of inaction",
-            "example": "A body will continue in a state of rest until acted upon."
-          },
-          {
-            "word": "TRUST",
-            "meaning": "something (as property) held by one party (the trustee) for the benefit of another (the beneficiary)",
-            "example": "He is the beneficiary of a generous trust set up by his father."
-          },
-          {
-            "word": "BURST",
-            "meaning": "a sudden flurry of activity (often for no obvious reason)",
-            "example": "A burst of applause."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "TRUE",
-            "meaning": "make level, square, balanced, or concentric",
-            "example": "True up the cylinder of an engine."
-          },
-          {
-            "word": "TEST",
-            "meaning": "undergo a test",
-            "example": "She doesn't test well."
-          }
-        ]
-      },
-      {
-        "id": "c2-21",
-        "title": "A nuanced reply",
-        "letters": "PERUSE",
-        "words": [
-          {
-            "word": "PERUSE",
-            "meaning": "examine or consider with attention and in detail",
-            "example": "Please peruse this report at your leisure."
-          },
-          {
-            "word": "PURSE",
-            "meaning": "a sum of money spoken of as the contents of a money purse",
-            "example": "He made the contribution out of his own purse."
-          },
-          {
-            "word": "SPUR",
-            "meaning": "incite or stimulate",
-            "example": "The Academy was formed to spur research."
-          },
-          {
-            "word": "PUREE",
-            "meaning": "rub through a strainer or process in an electric blender",
-            "example": "Puree the vegetables for the baby."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "SURE",
-            "meaning": "physically secure or dependable",
-            "example": "Was on sure ground."
-          },
-          {
-            "word": "PURE",
-            "meaning": "free of extraneous elements of any kind",
-            "example": "The violin's pure and lovely song."
-          }
-        ]
-      },
-      {
-        "id": "c2-22",
-        "title": "The final inference",
-        "letters": "EPHEMERAL",
-        "words": [
-          {
-            "word": "EPHEMERAL",
-            "meaning": "lasting a very short time",
-            "example": "The ephemeral joys of childhood."
-          },
-          {
-            "word": "REAL",
-            "meaning": "being or occurring in fact or actuality",
-            "example": "Life is real! Life is earnest!- Longfellow."
-          },
-          {
-            "word": "AMPLE",
-            "meaning": "more than enough in size or scope or capacity",
-            "example": "Had ample food for the party."
-          },
-          {
-            "word": "MAPLE",
-            "meaning": "wood of any of various maple trees",
-            "example": "Especially the hard close-grained wood of the sugar maple."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "PEELER",
-            "meaning": "a device for peeling vegetables or fruits",
-            "example": "She invented a potato peeler."
-          },
-          {
-            "word": "HELP",
-            "meaning": "give help or assistance",
-            "example": "Can you help me carry this table."
-          }
-        ]
-      },
-      {
-        "id": "c2-23",
-        "title": "Language in full colour",
-        "letters": "INNOCUOUS",
-        "words": [
-          {
-            "word": "INNOCUOUS",
-            "meaning": "not injurious to physical or mental health",
-            "example": "Confined himself to innocuous generalities."
-          },
-          {
-            "word": "UNION",
-            "meaning": "of trade unions",
-            "example": "A union-shop clause in the contract."
-          },
-          {
-            "word": "UNISON",
-            "meaning": "occurring together or simultaneously",
-            "example": "The two spoke in unison."
-          },
-          {
-            "word": "NOUS",
-            "meaning": "common sense",
-            "example": "She has great social nous."
-          }
-        ],
-        "bonus": []
-      },
-      {
-        "id": "c2-24",
-        "title": "The masterstroke",
-        "letters": "REFRACTORY",
-        "words": [
-          {
-            "word": "REFRACTORY",
-            "meaning": "not responding to treatment",
-            "example": "The refractory period of a muscle fiber."
-          },
-          {
-            "word": "CARRY",
-            "meaning": "to hold and move something from one place to another",
-            "example": "This bag can carry all of my school books."
-          },
-          {
-            "word": "TRACE",
-            "meaning": "a just detectable amount",
-            "example": "He speaks French with a trace of an accent."
-          },
-          {
-            "word": "FEAR",
-            "meaning": "a feeling of profound respect for someone or something",
-            "example": "The fear of God."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "REACT",
-            "meaning": "undergo a chemical reaction",
-            "example": "React with another substance under certain conditions."
-          },
-          {
-            "word": "ACTOR",
-            "meaning": "a person who acts and gets things done",
-            "example": "He's a principal actor in this affair."
-          }
-        ]
-      },
-      {
-        "id": "c2-25",
-        "title": "The mastery milestone",
-        "letters": "JUXTAPOSED",
-        "words": [
-          {
-            "word": "JUXTAPOSED",
-            "meaning": "placed side by side often for comparison",
-            "example": "Juxtaposed pictures."
-          },
-          {
-            "word": "DATE",
-            "meaning": "assign a date to",
-            "example": "Scientists often cannot date precisely archeological or prehistorical findings."
-          },
-          {
-            "word": "PAUSE",
-            "meaning": "cease an action temporarily",
-            "example": "We pause for station identification."
-          },
-          {
-            "word": "UPSET",
-            "meaning": "disturb the balance or stability of",
-            "example": "The hostile talks upset the peaceful relations between the two countries."
-          }
-        ],
-        "bonus": [
-          {
-            "word": "POST",
-            "meaning": "publicize with, or as if with, a poster",
-            "example": "I'll post the news on the bulletin board."
-          },
-          {
-            "word": "STOP",
-            "meaning": "the event of something ending",
-            "example": "It came to a stop at the bottom of the hill."
           }
         ]
       }

@@ -87,27 +87,6 @@ const LEARNER_LEARNING_TOOL_ITEMS: NavGroupItem[] = [
   ...LEARNING_TOOL_ITEMS,
 ];
 
-const GAME_ITEMS: NavGroupItem[] = [
-  { title: "Snake Game", url: "/games/snake", icon: Turtle },
-  { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
-  { title: "Checkers", url: "/games/checkers", icon: Dice5 },
-  { title: "Chess", url: "/games/chess", icon: Crown },
-  { title: "Pac-Man", url: "/games/pacman", icon: Ghost },
-  { title: "Word Connect", url: "/games/word-connect", icon: BookA },
-  { title: "Periodic Table", url: "/games/periodic-table", icon: Atom },
-];
-
-const LEARNER_GAME_ITEMS: NavGroupItem[] = [
-  { title: "Word Trail", url: "/games/word-trail", icon: Map },
-  ...GAME_ITEMS,
-];
-
-const GAME_CONTROL_ITEM: NavGroupItem = {
-  title: "Game Time Controls",
-  url: "/games/controls",
-  icon: ShieldCheck,
-};
-
 /** Grouped sidebar structure for the ADMIN role. */
 export const ADMIN_NAV: AdminNavEntry[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -160,7 +139,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       { title: "Book Catalog", url: "/books", icon: BookMarked },
     ],
   },
-  { label: "Games", icon: Gamepad2, items: [GAME_CONTROL_ITEM, ...GAME_ITEMS] },
+  { title: "Games", url: "/games", icon: Gamepad2 },
   { label: "Community", icon: MessageSquare, items: COMMUNITY_ITEMS },
   {
     label: "Finance & HR",
@@ -246,7 +225,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
       { title: "Video Lessons", url: "/teacher/videos", icon: Video },
     ],
   },
-  { label: "Games", icon: Gamepad2, items: [GAME_CONTROL_ITEM, ...LEARNER_GAME_ITEMS] },
+  { title: "Games", url: "/games", icon: Gamepad2 },
   { label: "Community", icon: MessageSquare, items: COMMUNITY_ITEMS },
   {
     label: "My Account",
@@ -292,7 +271,7 @@ export const STUDENT_NAV: AdminNavEntry[] = [
       { title: "Video Lessons", url: "/student/videos", icon: Video },
     ],
   },
-  { label: "Games", icon: Gamepad2, items: LEARNER_GAME_ITEMS },
+  { title: "Games", url: "/games", icon: Gamepad2 },
   { label: "Community", icon: MessageSquare, items: COMMUNITY_ITEMS },
   {
     label: "My Account",
@@ -366,6 +345,11 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     url: "/games/controls",
     icon: ShieldCheck,
     roles: ["ADMIN", "TEACHER"],
+  },
+  {
+    title: "Games",
+    url: "/games",
+    icon: Gamepad2,
   },
   {
     title: "Sudoku",

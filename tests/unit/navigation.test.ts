@@ -49,20 +49,14 @@ test('learning tools are grouped together and Daily Quest is learner-only', () =
   assert.deepEqual(flatDailyQuest?.roles, ['TEACHER', 'STUDENT']);
 });
 
-test('games and community links live in their own focused groups', () => {
+test('one Games link opens the game shelf; community retains its group', () => {
   for (const [role, entries] of Object.entries(ROLE_NAVS)) {
-    const games = entries.find((entry) => isNavGroup(entry) && entry.label === 'Games');
+    const games = entries.find((entry) => !isNavGroup(entry) && entry.title === 'Games');
     const community = entries.find((entry) => isNavGroup(entry) && entry.label === 'Community');
 
-    assert.ok(games && isNavGroup(games), `${role} is missing Games`);
+    assert.ok(games && !isNavGroup(games), `${role} is missing Games`);
+    assert.equal(games.url, '/games');
     assert.ok(community && isNavGroup(community), `${role} is missing Community`);
-    const expectedGames = role === 'ADMIN'
-      ? ['Game Time Controls', 'Snake Game', 'Sudoku', 'Checkers', 'Chess', 'Pac-Man', 'Word Connect', 'Periodic Table']
-      : role === 'TEACHER'
-        ? ['Game Time Controls', 'Word Trail', 'Snake Game', 'Sudoku', 'Checkers', 'Chess', 'Pac-Man', 'Word Connect', 'Periodic Table']
-        : ['Word Trail', 'Snake Game', 'Sudoku', 'Checkers', 'Chess', 'Pac-Man', 'Word Connect', 'Periodic Table'];
-    assert.deepEqual(games.items.map((item) => item.title), expectedGames);
-    assert.equal(new Set(games.items.map((item) => item.icon)).size, games.items.length);
     assert.deepEqual(
       community.items.map((item) => item.title),
       ['Announcements', 'Chat', 'Social Space', 'News'],

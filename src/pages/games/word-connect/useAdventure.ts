@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { emptyProgress, normaliseProgress, type AdventureProgress } from './engine';
 import { useAuth } from '../../../providers/AuthProvider';
 
-export const progressKey = (userId: string) => `mrlc:word-connect:v2:${userId}`;
+// Puzzle ids and word lists changed when the A1–C1 path replaced B1–C2.
+export const progressKey = (userId: string) => `mrlc:word-connect:v3:${userId}`;
 function load(key: string) {
   try { return normaliseProgress(JSON.parse(localStorage.getItem(key) || 'null')); }
   catch { return emptyProgress(); }

@@ -229,6 +229,7 @@ const DailyQuestPage = lazy(() => import("./pages/games/daily-quest/DailyQuest")
 const WordTrailPage = lazy(() => import("./pages/games/word-trail/WordTrail"));
 const WordConnectPage = lazy(() => import("./pages/games/word-connect/WordConnect"));
 const WordConnectPlayPage = lazy(() => import("./pages/games/word-connect/WordConnect").then(module => ({ default: module.WordConnectPlay })));
+const GameHubPage = lazy(() => import("./pages/games/GameHub"));
 const GameControlsPage = lazy(() => import("./pages/games/GameControls"));
 
 const Dictionary = lazy(() => import("./pages/dictionary/Dictionary"));
@@ -426,6 +427,7 @@ export default function App() {
                 {/* About / credits — available to every authenticated role */}
                 <Route path="/about" element={<AboutPage />} />
 
+                <Route path="/games" element={<GameHubPage />} />
                 <Route path="/games/sudoku" element={<GameAccessGate gameKey="SUDOKU"><SudokuSelectPage /></GameAccessGate>} />
                 <Route path="/games/sudoku/play" element={<GameAccessGate gameKey="SUDOKU" consumeTime><SudokuPlayPage /></GameAccessGate>} />
 
