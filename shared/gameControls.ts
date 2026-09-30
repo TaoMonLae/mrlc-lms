@@ -5,6 +5,7 @@ export const GAME_KEYS = [
   "CHESS",
   "PACMAN",
   "WORD_TRAIL",
+  "WORD_CONNECT",
   "PERIODIC_TABLE",
 ] as const;
 
@@ -19,6 +20,7 @@ export const GAME_LABELS: Record<GameKey, string> = {
   CHESS: "Chess",
   PACMAN: "Pac-Man",
   WORD_TRAIL: "Word Trail",
+  WORD_CONNECT: "Word Connect Adventure",
   PERIODIC_TABLE: "Periodic Table",
 };
 

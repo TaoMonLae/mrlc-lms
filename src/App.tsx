@@ -227,6 +227,8 @@ const LanguageQuestStory = lazy(() => import("./pages/games/language-quest/Langu
 const LanguageQuestShell = lazy(() => import("./components/games/LanguageQuestShell").then((module) => ({ default: module.LanguageQuestShell })));
 const DailyQuestPage = lazy(() => import("./pages/games/daily-quest/DailyQuest"));
 const WordTrailPage = lazy(() => import("./pages/games/word-trail/WordTrail"));
+const WordConnectPage = lazy(() => import("./pages/games/word-connect/WordConnect"));
+const WordConnectPlayPage = lazy(() => import("./pages/games/word-connect/WordConnect").then(module => ({ default: module.WordConnectPlay })));
 const GameControlsPage = lazy(() => import("./pages/games/GameControls"));
 
 const Dictionary = lazy(() => import("./pages/dictionary/Dictionary"));
@@ -441,6 +443,8 @@ export default function App() {
 
                 <Route path="/games/pacman" element={<GameAccessGate gameKey="PACMAN"><PacmanSelectPage /></GameAccessGate>} />
                 <Route path="/games/pacman/play" element={<GameAccessGate gameKey="PACMAN" consumeTime><PacmanPlayPage /></GameAccessGate>} />
+                <Route path="/games/word-connect" element={<GameAccessGate gameKey="WORD_CONNECT"><WordConnectPage /></GameAccessGate>} />
+                <Route path="/games/word-connect/play/:levelId" element={<GameAccessGate gameKey="WORD_CONNECT" consumeTime><WordConnectPlayPage /></GameAccessGate>} />
 
                 <Route path="/games/periodic-table" element={<GameAccessGate gameKey="PERIODIC_TABLE"><PeriodicTableHubPage /></GameAccessGate>} />
                 <Route path="/games/periodic-table/quiz" element={<GameAccessGate gameKey="PERIODIC_TABLE" consumeTime><PeriodicTableQuizPage /></GameAccessGate>} />

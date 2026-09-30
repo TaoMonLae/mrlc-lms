@@ -93,6 +93,7 @@ const GAME_ITEMS: NavGroupItem[] = [
   { title: "Checkers", url: "/games/checkers", icon: Dice5 },
   { title: "Chess", url: "/games/chess", icon: Crown },
   { title: "Pac-Man", url: "/games/pacman", icon: Ghost },
+  { title: "Word Connect", url: "/games/word-connect", icon: BookA },
   { title: "Periodic Table", url: "/games/periodic-table", icon: Atom },
 ];
 
@@ -396,6 +397,11 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Pac-Man",
     url: "/games/pacman",
     icon: Ghost,
+  },
+  {
+    title: "Word Connect",
+    url: "/games/word-connect",
+    icon: BookA,
   },
   {
     title: "Periodic Table",
