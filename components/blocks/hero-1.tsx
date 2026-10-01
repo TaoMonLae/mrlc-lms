@@ -9,117 +9,93 @@ type Hero1Props = {
   authenticated?: boolean;
   heroSrc?: string | null;
   schoolName?: string;
+  logoSrc?: string | null;
 };
 
-const DEFAULT_HERO = "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=86&w=1800";
-
 const reveal = (delay: number, reduceMotion: boolean | null) => ({
-  initial: reduceMotion ? false : { opacity: 0, y: 18 },
+  initial: reduceMotion ? false : { opacity: 0, y: 16 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: reduceMotion ? 0 : 0.42, delay: reduceMotion ? 0 : delay },
+  transition: { duration: reduceMotion ? 0 : 0.55, delay: reduceMotion ? 0 : delay, ease: "easeOut" as const },
 });
 
-export function Hero1({ authenticated = false, heroSrc = null, schoolName = "Mon Refugee Learning Centre" }: Hero1Props) {
+export function Hero1({ authenticated = false, heroSrc = null, schoolName = "Mon Refugee Learning Centre", logoSrc = null }: Hero1Props) {
   const reduceMotion = useReducedMotion();
   const [heroFailed, setHeroFailed] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
+  const [defaultLogoFailed, setDefaultLogoFailed] = useState(false);
 
   useEffect(() => setHeroFailed(false), [heroSrc]);
+  useEffect(() => {
+    setLogoFailed(false);
+    setDefaultLogoFailed(false);
+  }, [logoSrc]);
 
-  const imageSrc = heroSrc && !heroFailed ? heroSrc : DEFAULT_HERO;
+  const showPhoto = Boolean(heroSrc && !heroFailed);
+  const markSrc = logoSrc && !logoFailed ? logoSrc : "/icon-192.png";
 
   return (
-    <section className="overflow-hidden bg-academic-coral text-academic-navy-deep">
-      <div className="mx-auto grid min-h-[680px] max-w-[1440px] grid-cols-1 items-stretch lg:grid-cols-[0.92fr_1.08fr]">
-        <div className="flex flex-col justify-center border-r border-academic-navy-deep/15 px-5 py-14 sm:px-8 lg:px-12 lg:py-16 xl:px-16">
-          <motion.div
-            {...reveal(0.08, reduceMotion)}
-            className="mb-8 flex items-center gap-4 text-[11px] font-bold uppercase tracking-[0.16em]"
-          >
-            <span className="h-px w-10 bg-academic-navy-deep" aria-hidden="true" />
-            GED school · Malaysia
-          </motion.div>
-
-          <motion.h1
-            {...reveal(0.16, reduceMotion)}
-            className="max-w-[11ch] text-balance text-[clamp(3.25rem,5.4vw,5.25rem)] font-black leading-[0.91] tracking-[-0.055em]"
-          >
-            A clearer path through every school day.
-          </motion.h1>
-
-          <motion.p
-            {...reveal(0.24, reduceMotion)}
-            className="mt-8 max-w-xl text-pretty text-base leading-7 text-academic-navy-deep/78 sm:text-lg"
-          >
-            Classes, attendance, exams, learning resources and Language Quest—connected in one secure place for MRLC learners, families and educators.
+    <section className="overflow-hidden bg-academic-navy-deep text-white" aria-labelledby="landing-title">
+      <div className="mx-auto grid min-h-[640px] max-w-[1440px] lg:grid-cols-[1.08fr_0.92fr]">
+        <div className="flex flex-col justify-center px-5 py-16 sm:px-8 lg:px-12 lg:py-20 xl:px-16">
+          <motion.p {...reveal(0.06, reduceMotion)} className="mb-9 flex items-center gap-4 text-[11px] font-bold uppercase tracking-[0.2em] text-academic-gold">
+            <span className="h-px w-10 bg-academic-gold" aria-hidden="true" />
+            Mon Refugee Learning Centre · Malaysia
           </motion.p>
 
-          <motion.div {...reveal(0.32, reduceMotion)} className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <Link
-              to={authenticated ? "/dashboard" : "/login"}
-              className="inline-flex min-h-12 items-center justify-center gap-2 bg-academic-navy-deep px-6 text-sm font-bold tracking-[0.015em] text-white transition-[background-color,transform] duration-150 hover:bg-academic-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-academic-coral active:scale-[0.98]"
-            >
-              {authenticated ? "Open Dashboard" : "Login to MRLC"}
-              <ArrowRight className="size-4" aria-hidden="true" />
+          <motion.h1 {...reveal(0.14, reduceMotion)} id="landing-title" className="max-w-[12ch] text-balance text-[clamp(3.5rem,6.6vw,6.5rem)] font-black leading-[0.9] tracking-[-0.065em]">
+            A place to learn. <span className="text-academic-gold">A path forward.</span>
+          </motion.h1>
+
+          <motion.p {...reveal(0.24, reduceMotion)} className="mt-8 max-w-xl text-pretty text-base leading-8 text-white/72 sm:text-lg">
+            MRLC is a GED school for refugee learners in Malaysia. Our learning community brings students, educators and families together around the next step.
+          </motion.p>
+
+          <motion.div {...reveal(0.32, reduceMotion)} className="mt-9 flex flex-wrap gap-3">
+            <Link to="/about" className="inline-flex min-h-12 items-center justify-center gap-2 bg-academic-gold px-6 text-sm font-bold text-academic-navy-deep transition-[background-color,transform] duration-150 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-academic-navy-deep active:scale-[0.98]">
+              Discover MRLC <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
-            <Link
-              to="/language-quest"
-              className="inline-flex min-h-12 items-center justify-center gap-2 border border-academic-navy-deep/45 px-6 text-sm font-bold tracking-[0.015em] transition-[background-color,transform] duration-150 hover:bg-white/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-academic-navy-deep focus-visible:ring-offset-2 focus-visible:ring-offset-academic-coral active:scale-[0.98]"
-            >
-              Explore Language Quest
+            <Link to={authenticated ? "/dashboard" : "/login"} className="inline-flex min-h-12 items-center justify-center gap-2 border border-white/40 px-6 text-sm font-bold text-white transition-[background-color,transform] duration-150 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-academic-gold active:scale-[0.98]">
+              {authenticated ? "Open dashboard" : "Sign in to the portal"}
             </Link>
           </motion.div>
 
-          <motion.div {...reveal(0.4, reduceMotion)} className="mt-11 grid gap-3 border-t border-academic-navy-deep/20 pt-6 sm:grid-cols-[auto_1fr] sm:items-start sm:gap-7">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-academic-navy-deep/60">One school system</p>
-            <p className="max-w-[34ch] text-sm font-bold leading-5">Students · Families · Educators<br /><span className="font-medium text-academic-navy-deep/70">A shared route through each school day.</span></p>
-          </motion.div>
+          <motion.p {...reveal(0.4, reduceMotion)} className="mt-12 border-t border-white/20 pt-5 text-xs font-semibold uppercase tracking-[0.16em] text-white/55">
+            Education · Dignity · Opportunity
+          </motion.p>
         </div>
 
-        <motion.div
-          initial={reduceMotion ? false : { opacity: 0, scale: 0.97 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.2 }}
-          className="relative min-h-[440px] overflow-hidden lg:min-h-full"
-        >
-          <img
-            src={imageSrc}
-            alt={`${schoolName} learning community`}
-            width="1800"
-            height="1200"
-            fetchPriority="high"
-            className="absolute inset-0 h-full w-full object-cover"
-            onError={() => {
-              if (heroSrc && imageSrc === heroSrc) setHeroFailed(true);
-            }}
-          />
-          <div className="absolute inset-0 bg-academic-navy-deep/15" />
-
-          <div className="absolute bottom-0 left-0 right-20 bg-white p-5 text-academic-navy-deep sm:right-auto sm:w-[410px] sm:p-6">
-            <div className="flex items-center justify-between gap-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-academic-teal">Today at MRLC</p>
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-academic-navy-deep/45">School day 01</p>
-            </div>
-            <div className="mt-4">
-              {[
-                ["08:30", "English · Reading & vocabulary"],
-                ["10:15", "Mathematics · GED practice"],
-                ["13:00", "Language Quest · Independent study"],
-              ].map(([time, lesson]) => (
-                <div key={time} className="grid grid-cols-[3.3rem_1fr] gap-3 border-t border-academic-navy-deep/15 py-3 text-sm last:pb-0">
-                  <span className="font-black tabular-nums">{time}</span>
-                  <span className="text-academic-navy-deep/65">{lesson}</span>
+        <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: reduceMotion ? 0 : 0.7, delay: reduceMotion ? 0 : 0.16 }} className="relative min-h-[430px] overflow-hidden bg-[#f4e9cc] text-academic-navy-deep lg:min-h-full">
+          {showPhoto ? (
+            <>
+              <img src={heroSrc!} alt={`${schoolName} learning community`} width="1400" height="1100" fetchPriority="high" className="absolute inset-0 h-full w-full object-cover" onError={() => setHeroFailed(true)} />
+              <div className="absolute inset-0 bg-gradient-to-t from-academic-navy-deep/65 via-transparent to-transparent" aria-hidden="true" />
+              <p className="absolute bottom-0 left-0 right-0 px-7 pb-8 pt-16 text-sm font-semibold text-white sm:px-10">The people and purpose behind MRLC.</p>
+            </>
+          ) : (
+            <div className="relative flex h-full min-h-[430px] flex-col justify-between overflow-hidden p-7 sm:p-10 lg:min-h-[640px]">
+              <div className="absolute -right-24 top-16 size-[390px] rounded-full border border-academic-navy-deep/10 sm:size-[520px]" aria-hidden="true" />
+              <div className="absolute -right-12 top-28 size-[310px] rounded-full border border-academic-navy-deep/10 sm:size-[430px]" aria-hidden="true" />
+              <div className="relative flex items-start justify-between gap-5 border-b border-academic-navy-deep/25 pb-5 text-[11px] font-bold uppercase tracking-[0.18em]">
+                <span>MRLC / GED</span><span>Malaysia</span>
+              </div>
+              <div className="relative flex flex-1 items-center justify-center py-8">
+                <div className="grid size-52 place-items-center rounded-full bg-white/80 shadow-[0_24px_60px_rgba(12,37,56,0.12)] sm:size-64">
+                  {defaultLogoFailed ? (
+                    <span className="text-5xl font-black tracking-[-0.08em]" aria-label={schoolName}>MRLC</span>
+                  ) : (
+                    <img src={markSrc} alt={`${schoolName} emblem`} width="192" height="192" className="size-36 object-contain sm:size-44" onError={() => {
+                      if (logoSrc && markSrc === logoSrc) setLogoFailed(true);
+                      else setDefaultLogoFailed(true);
+                    }} />
+                  )}
                 </div>
-              ))}
+              </div>
+              <div className="relative border-t border-academic-navy-deep/25 pt-5">
+                <p className="text-[11px] font-bold uppercase tracking-[0.17em] text-academic-teal">Our school, our community</p>
+                <p className="mt-3 max-w-[16ch] text-3xl font-black leading-[0.98] tracking-[-0.045em] sm:text-4xl">Learning belongs to every future.</p>
+              </div>
             </div>
-          </div>
-
-          <a
-            href="#learning-path"
-            aria-label="See the MRLC learning path"
-            className="absolute bottom-0 right-0 grid size-20 place-items-center bg-academic-navy-deep text-white transition-[background-color,transform] duration-150 hover:bg-academic-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-inset active:scale-[0.97] sm:size-28"
-          >
-            <ArrowRight className="size-6 rotate-45 sm:size-7" aria-hidden="true" />
-          </a>
+          )}
         </motion.div>
       </div>
     </section>

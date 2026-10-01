@@ -5,11 +5,12 @@ import Hero1 from "@/components/blocks/hero-1";
 import { useTheme } from "../components/theme-provider";
 import { useUser } from "../lib/permissions";
 import { useSettings } from "../providers/SettingsProvider";
+import "./landing.css";
 
 const navigation = [
   { label: "Learning", href: "#learning-path" },
+  { label: "Learning Quest", href: "#learning-quest" },
   { label: "School tools", href: "#school-tools" },
-  { label: "For everyone", href: "#roles" },
   { label: "About MRLC", href: "/about" },
 ];
 
@@ -26,7 +27,7 @@ const rolePanels = [
   {
     number: "01",
     title: "Students",
-    text: "Today’s timetable, learning resources, assessments and Language Quest—together in one route.",
+    text: "Classes, learning resources and assessments together in one clear place.",
     detail: "LEARN · PRACTISE · PROGRESS",
     className: "bg-academic-gold text-academic-navy-deep",
   },
@@ -149,14 +150,14 @@ export default function LandingPage() {
             aria-expanded={menuOpen}
             aria-controls="mobile-navigation"
             aria-label={menuOpen ? "Close navigation" : "Open navigation"}
-            className="grid size-11 shrink-0 place-items-center sm:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-academic-gold"
+            className="grid size-11 shrink-0 place-items-center lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-academic-gold"
           >
             {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
         </div>
 
         {menuOpen && (
-          <nav id="mobile-navigation" className="border-t border-white/10 bg-academic-navy-deep px-4 py-5 sm:hidden" aria-label="Mobile navigation">
+          <nav id="mobile-navigation" className="border-t border-white/10 bg-academic-navy-deep px-4 py-5 lg:hidden" aria-label="Mobile navigation">
             <div className="flex flex-col">
               {navigation.map((item) => (
                 item.href.startsWith("/") ? (
@@ -183,16 +184,12 @@ export default function LandingPage() {
       </header>
 
       <main id="main-content">
-        <Hero1 authenticated={Boolean(user)} heroSrc={brandingSettings.loginHeroUrl} schoolName={schoolName} />
+        <Hero1 authenticated={Boolean(user)} heroSrc={brandingSettings.loginHeroUrl} logoSrc={brandingSettings.logoUrl} schoolName={schoolName} />
 
-        <section className="border-b border-academic-navy-deep/20 bg-white text-academic-navy-deep dark:bg-surface-indigo dark:text-white" aria-label="MRLC learning system">
-          <div className="mx-auto grid max-w-[1440px] divide-y divide-current/15 md:grid-cols-[0.55fr_1.45fr] md:divide-x md:divide-y-0">
-            <p className="px-6 py-6 text-[11px] font-bold uppercase tracking-[0.18em] text-academic-teal lg:px-10">One connected school day</p>
-            <div className="grid divide-y divide-current/15 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-              {["01 · Learn", "02 · Run", "03 · Support"].map((item) => (
-                <p key={item} className="px-6 py-6 text-sm font-bold tracking-[-0.01em] lg:px-8">{item}</p>
-              ))}
-            </div>
+        <section className="border-b border-academic-navy-deep/15 bg-[#f4e9cc] px-5 py-8 text-academic-navy-deep sm:px-8" aria-label="MRLC mission">
+          <div className="mx-auto flex max-w-[1240px] flex-col gap-3 md:flex-row md:items-center md:gap-10">
+            <p className="shrink-0 text-[11px] font-bold uppercase tracking-[0.18em] text-academic-teal">Why we are here</p>
+            <p className="max-w-4xl text-balance text-xl font-bold leading-snug tracking-[-0.025em] sm:text-2xl">Learning should open a future. MRLC makes room for students to build one.</p>
           </div>
         </section>
 
@@ -204,7 +201,7 @@ export default function LandingPage() {
                 <h2 className="mt-4 max-w-[11ch] text-balance text-4xl font-black leading-[0.96] tracking-[-0.045em] sm:text-6xl">Learners know what comes next.</h2>
               </div>
               <p className="max-w-2xl text-pretty text-base leading-7 text-muted-foreground sm:text-lg">
-                MRLC brings the school journey into focus—from today’s class to GED readiness and independent language practice.
+                The MRLC portal supports the work around learning: classes, resources, attendance and feedback in one dependable place.
               </p>
             </div>
 
@@ -213,7 +210,7 @@ export default function LandingPage() {
                 {[
                   ["01", "Start with today", "Open the timetable, join class and find the right resource without hunting."],
                   ["02", "See progress clearly", "Attendance, assignments and feedback build one understandable learner story."],
-                  ["03", "Keep moving forward", "GED practice and Language Quest reveal the next achievable step."],
+                  ["03", "Keep moving forward", "GED practice and learning resources make the next step easier to find."],
                 ].map(([number, title, text]) => (
                   <li key={number} className="grid gap-3 py-7 sm:grid-cols-[4rem_1fr] sm:py-8">
                     <span className="font-black tabular-nums text-academic-gold">{number}</span>
@@ -225,25 +222,39 @@ export default function LandingPage() {
                 ))}
               </ol>
 
-              <div className="bg-white p-6 text-academic-navy-deep dark:bg-accent dark:text-white sm:p-10">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-academic-teal dark:text-accent-foreground">Today’s route</p>
-                <div className="mt-7 border-y border-current/20">
-                  {[
-                    ["08:30", "English vocabulary", "Complete"],
-                    ["10:15", "GED mathematics", "Now"],
-                    ["13:00", "Language Quest", "Next"],
-                  ].map(([time, title, status]) => (
-                    <div key={time} className="grid grid-cols-[3.5rem_1fr_auto] items-center gap-4 border-b border-current/15 py-4 last:border-0">
-                      <span className="text-sm font-black tabular-nums">{time}</span>
-                      <span className="text-sm font-semibold">{title}</span>
-                      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-current/55">{status}</span>
+              <div className="flex flex-col justify-between bg-[#f4e9cc] p-6 text-academic-navy-deep sm:p-10">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-academic-teal">Inside the portal</p>
+                  <h3 className="mt-6 max-w-[14ch] text-balance text-3xl font-black leading-tight tracking-[-0.04em] sm:text-4xl">A connected view of school life.</h3>
+                </div>
+                <div className="mt-12 border-t border-academic-navy-deep/25">
+                  {["Teaching and classwork", "Attendance and progress", "Resources and support"].map((item, index) => (
+                    <div key={item} className="flex items-center gap-5 border-b border-academic-navy-deep/25 py-4">
+                      <span className="text-xs font-black tabular-nums text-academic-teal">0{index + 1}</span>
+                      <span className="font-semibold">{item}</span>
                     </div>
                   ))}
                 </div>
-                <Link to="/language-quest" className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-academic-teal dark:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  Open Language Quest <ArrowRight className="size-4" aria-hidden="true" />
-                </Link>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="learning-quest" className="scroll-mt-20 overflow-hidden bg-[#d8eee8] px-5 py-16 text-academic-navy-deep sm:px-8 lg:py-20" aria-labelledby="learning-quest-title">
+          <div className="mx-auto grid max-w-[1240px] items-center gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+            <div className="relative mx-auto flex min-h-[330px] w-full max-w-[440px] items-center justify-center overflow-hidden rounded-[2.5rem] bg-academic-teal sm:min-h-[420px]">
+              <span className="landing-quest-orbit absolute size-[270px] rounded-full border border-white/35 sm:size-[355px]" aria-hidden="true" />
+              <span className="landing-quest-orbit absolute size-[205px] rounded-full border border-white/30 sm:size-[270px]" aria-hidden="true" />
+              <img src="/games/word-connect/pip-study.png" alt="Pip reading a book" width="1188" height="1259" loading="lazy" className="landing-pip relative z-10 w-[80%] max-w-[350px] drop-shadow-[0_24px_20px_rgba(12,37,56,0.25)]" />
+              <span className="absolute bottom-5 left-6 text-[11px] font-black uppercase tracking-[0.18em] text-white/85">Meet Pip</span>
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.17em] text-academic-teal">Learning Quest · Independent practice</p>
+              <h2 id="learning-quest-title" className="mt-5 max-w-[13ch] text-balance text-4xl font-black leading-[0.96] tracking-[-0.05em] sm:text-6xl">A little play. A lot of language.</h2>
+              <p className="mt-7 max-w-xl text-pretty text-base leading-8 text-academic-navy-deep/75 sm:text-lg">Pip welcomes learners into word games and vocabulary practice that make progress feel active. Choose a challenge, build a word and keep going at your own pace.</p>
+              <Link to="/language-quest" className="mt-8 inline-flex min-h-12 items-center gap-2 bg-academic-navy-deep px-6 text-sm font-bold text-white transition-[background-color,transform] duration-150 hover:bg-academic-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-academic-navy-deep focus-visible:ring-offset-2 focus-visible:ring-offset-[#d8eee8] active:scale-[0.98]">
+                Explore Learning Quest <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
             </div>
           </div>
         </section>
@@ -277,7 +288,7 @@ export default function LandingPage() {
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-academic-teal">School tools</p>
                 <h2 className="mt-4 text-balance text-4xl font-black leading-[0.96] tracking-[-0.045em] sm:text-6xl">Admin fades. Teaching stays in focus.</h2>
-                <p className="mt-6 max-w-md text-pretty leading-7 text-muted-foreground">One operating system for the work MRLC already does—without the visual noise of a generic dashboard catalogue.</p>
+                <p className="mt-6 max-w-md text-pretty leading-7 text-muted-foreground">The portal keeps records, classes and reports together so staff can spend more time supporting learners.</p>
               </div>
 
               <div className="border-t border-border">
@@ -297,7 +308,7 @@ export default function LandingPage() {
           <div className="mx-auto grid max-w-[1240px] gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-academic-gold">Private by design</p>
-              <h2 className="mt-5 max-w-[13ch] text-balance text-4xl font-black leading-[0.96] tracking-[-0.045em] sm:text-6xl">Built around MRLC, not a generic school template.</h2>
+              <h2 className="mt-5 max-w-[13ch] text-balance text-4xl font-black leading-[0.96] tracking-[-0.045em] sm:text-6xl">Built for the people who make MRLC work.</h2>
               <p className="mt-6 max-w-2xl text-pretty leading-7 text-white/65">Role-based access and school-owned workflows support the people doing the work while protecting learner information.</p>
             </div>
             <Link to="/about" className="inline-flex min-h-12 items-center justify-center gap-2 bg-academic-gold px-7 text-sm font-bold text-academic-navy-deep transition-[background-color,transform] duration-150 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-academic-navy-deep active:scale-[0.98]">

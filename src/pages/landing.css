@@ -1,0 +1,12 @@
+@keyframes landing-pip-float {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-12px) rotate(1deg); }
+}
+
+.landing-pip {
+  animation: landing-pip-float 5s cubic-bezier(.25, .1, .25, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-pip { animation: none; }
+}
