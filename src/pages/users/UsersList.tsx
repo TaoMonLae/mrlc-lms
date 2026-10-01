@@ -47,9 +47,12 @@ interface ApiUser {
   lastLoginAt?: string | null;
   studentProfile?: { id: string } | null;
   teacherProfile?: { id: string } | null;
+  guardianLinks?: { studentId: string }[];
 }
 
-function mapUser(u: ApiUser): User {
+type ListedUser = User & { guardianLinkCount: number };
+
+function mapUser(u: ApiUser): ListedUser {
   return {
     id: u.id,
     name: `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.email,
@@ -59,6 +62,7 @@ function mapUser(u: ApiUser): User {
     status: u.isActive ? 'ACTIVE' : 'DISABLED',
     studentId: u.studentProfile?.id,
     teacherId: u.teacherProfile?.id,
+    guardianLinkCount: u.guardianLinks?.length ?? 0,
     createdAt: u.createdAt ?? new Date().toISOString(),
     updatedAt: u.createdAt ?? new Date().toISOString(),
     lastLoginAt: u.lastLoginAt ?? undefined,
@@ -69,7 +73,7 @@ export default function UsersList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<ListedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [resetUser, setResetUser] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState('');
@@ -252,6 +256,7 @@ export default function UsersList() {
               <SelectItem value="ADMIN">Admin</SelectItem>
               <SelectItem value="TEACHER">Teacher</SelectItem>
               <SelectItem value="STUDENT">Student</SelectItem>
+              <SelectItem value="GUARDIAN">Parent / Guardian</SelectItem>
               <SelectItem value="LIBRARIAN">Librarian</SelectItem>
               <SelectItem value="ACCOUNTANT">Accountant</SelectItem>
               <SelectItem value="CASE_WORKER">Case Worker</SelectItem>
@@ -313,6 +318,8 @@ export default function UsersList() {
                       <Link to={`/students/${user.studentId}`} className="text-aubergine-600 hover:underline flex items-center gap-1">
                         Student Profile
                       </Link>
+                    ) : user.role === 'GUARDIAN' ? (
+                      <Link to={`/users/${user.id}/edit`} className="text-academic-teal hover:underline">{user.guardianLinkCount} linked learner{user.guardianLinkCount === 1 ? '' : 's'}</Link>
                     ) : (
                       <span className="text-slate-400 italic">None</span>
                     )}
@@ -444,6 +451,8 @@ export default function UsersList() {
                     <Link to={`/teachers/${user.teacherId}`} className="text-blue-600 hover:underline">Teacher Profile</Link>
                   ) : user.studentId ? (
                     <Link to={`/students/${user.studentId}`} className="text-aubergine-600 hover:underline">Student Profile</Link>
+                  ) : user.role === 'GUARDIAN' ? (
+                    <Link to={`/users/${user.id}/edit`} className="text-academic-teal hover:underline">{user.guardianLinkCount} linked learner{user.guardianLinkCount === 1 ? '' : 's'}</Link>
                   ) : (
                     <span className="text-slate-400 italic">None</span>
                   )}

@@ -25,6 +25,11 @@ const ROLE_CONFIG: Record<UserRole, { icon: any; color: string; description: str
     color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-900',
     description: 'Learning access'
   },
+  GUARDIAN: {
+    icon: Users,
+    color: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-200 border-teal-200 dark:border-teal-900',
+    description: 'Linked learner family access'
+  },
   STAFF: {
     icon: Users,
     color: 'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400 border-slate-200 dark:border-slate-900',

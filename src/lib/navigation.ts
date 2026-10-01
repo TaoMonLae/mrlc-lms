@@ -112,6 +112,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
     icon: Users,
     items: [
       { title: "Students", url: "/students", icon: Users },
+      { title: "Family inbox", url: "/family/inbox", icon: MessageSquare },
       { title: "Admissions", url: "/admissions", icon: UserPlus },
       { title: "Teachers", url: "/teachers", icon: UserSquare2 },
       { title: "Staff", url: "/staff", icon: UserSquare2 },
@@ -298,6 +299,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     url: "/dashboard",
     icon: LayoutDashboard,
     roles: ["ADMIN"],
+  },
+  {
+    title: "Family inbox",
+    url: "/family/inbox",
+    icon: MessageSquare,
+    roles: ["ADMIN", "STAFF"],
   },
   {
     title: "Timetable",

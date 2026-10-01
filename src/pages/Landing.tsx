@@ -136,10 +136,10 @@ export default function LandingPage() {
               {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
             </button>
             <Link
-              to={user ? "/dashboard" : "/login"}
+              to={user?.role === "GUARDIAN" ? "/family" : user ? "/dashboard" : "/login"}
               className="inline-flex min-h-12 items-center gap-3 bg-academic-teal px-6 text-sm font-bold text-white transition-[background-color,transform] duration-150 hover:bg-white hover:text-academic-navy-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-academic-gold active:scale-[0.98]"
             >
-              {user ? "Dashboard" : "Login"}
+              {user?.role === "GUARDIAN" ? "Family Portal" : user ? "Dashboard" : "Login"}
               <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
           </div>
@@ -174,8 +174,8 @@ export default function LandingPage() {
                 <button type="button" onClick={() => setTheme(isDark ? "light" : "dark")} aria-label={isDark ? "Use light theme" : "Use dark theme"} className="grid size-11 place-items-center border border-white/20">
                   {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
                 </button>
-                <Link to={user ? "/dashboard" : "/login"} className="inline-flex min-h-11 items-center justify-center gap-2 bg-academic-teal px-5 text-sm font-bold text-white">
-                  {user ? "Open Dashboard" : "Login to MRLC"}<ArrowRight className="size-4" />
+                <Link to={user?.role === "GUARDIAN" ? "/family" : user ? "/dashboard" : "/login"} className="inline-flex min-h-11 items-center justify-center gap-2 bg-academic-teal px-5 text-sm font-bold text-white">
+                  {user?.role === "GUARDIAN" ? "Open Family Portal" : user ? "Open Dashboard" : "Login to MRLC"}<ArrowRight className="size-4" />
                 </Link>
               </div>
             </div>
@@ -275,6 +275,7 @@ export default function LandingPage() {
                   <span className="text-sm font-black tabular-nums opacity-70">{role.number}</span>
                   <h3 className="mt-10 text-4xl font-black tracking-[-0.04em]">{role.title}</h3>
                   <p className="mt-5 max-w-sm text-base leading-7 opacity-80">{role.text}</p>
+                  {role.title === "Families" && <Link to={user?.role === "GUARDIAN" ? "/family" : "/login"} className="mt-6 inline-flex min-h-11 items-center gap-2 self-start text-sm font-bold underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Open Family Portal <ArrowRight className="size-4" /></Link>}
                   <p className="mt-auto border-t border-current/25 pt-5 text-[10px] font-bold uppercase tracking-[0.16em]">{role.detail}</p>
                 </article>
               ))}

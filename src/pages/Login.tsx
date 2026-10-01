@@ -96,6 +96,7 @@ export default function LoginPage() {
     try {
       const stored = JSON.parse(sessionStorage.getItem('auth_user') || '{}');
       if (!returnPath && stored.isExternalLearner) destination = '/games/language-quest';
+      else if (stored.role === 'GUARDIAN') destination = returnPath === '/family' || returnPath?.startsWith('/family?') ? returnPath : '/family';
       else if (!returnPath && stored.role === 'LIBRARIAN') destination = '/books';
     } catch {
       // Keep the safe default destination.

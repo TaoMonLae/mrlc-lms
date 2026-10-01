@@ -1,5 +1,5 @@
 export const USER_ROLES = [
-  'ADMIN', 'TEACHER', 'STUDENT', 'STAFF', 'ACCOUNTANT', 'CASE_WORKER', 'LIBRARIAN',
+  'ADMIN', 'TEACHER', 'STUDENT', 'GUARDIAN', 'STAFF', 'ACCOUNTANT', 'CASE_WORKER', 'LIBRARIAN',
 ] as const;
 
 export type UserRole = typeof USER_ROLES[number];
@@ -35,6 +35,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   ADMIN: 'Administrator',
   TEACHER: 'Teacher',
   STUDENT: 'Student',
+  GUARDIAN: 'Parent / Guardian',
   STAFF: 'Staff',
   ACCOUNTANT: 'Accountant',
   CASE_WORKER: 'Case Worker',
@@ -45,6 +46,7 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   ADMIN: 'Full system administration, configuration, auditing, and unrestricted module access.',
   TEACHER: 'Assigned classes, teaching content, assessment, attendance, reports, and student learning workflows.',
   STUDENT: 'Personal learning, attendance, assessments, results, fees, documents, and assigned resources.',
+  GUARDIAN: 'Family portal access to school-approved information for linked learners only.',
   STAFF: 'Front-desk and general operations access without unrestricted administrative control.',
   ACCOUNTANT: 'Fees, payments, expenses, budgets, donations, vendors, payroll-related finance, and reporting.',
   CASE_WORKER: 'Restricted student support, cases, interventions, conduct records, and relevant student information.',
@@ -67,6 +69,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
     'view_timetable', 'view_videos', 'view_own_fees', 'view_own_attendance', 'view_own_exams',
     'view_own_results', 'view_own_grades', 'view_own_documents', 'view_own_duties',
   ],
+  GUARDIAN: [],
   STAFF: [
     'view_students', 'view_admissions', 'manage_admissions', 'view_teachers', 'view_classes',
     'view_subjects', 'view_library', 'view_announcements', 'view_timetable', 'export_data',

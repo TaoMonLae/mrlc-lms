@@ -10,6 +10,7 @@ enum Role {
   ADMIN
   TEACHER
   STUDENT
+  GUARDIAN
   STAFF
   ACCOUNTANT
   CASE_WORKER
@@ -258,6 +259,8 @@ model User {
   mfaEnrolledAt         DateTime?
 
   studentProfile         Student?
+  guardianLinks          GuardianStudentLink[]
+  familyMessages         FamilyMessage[]
   teacherProfile         Teacher?
   employeeProfile        Employee?
   recordedAttendances    Attendance[]            @relation("RecordedBy")
@@ -411,6 +414,8 @@ model Student {
   examAssignments     ExamAssignment[]
   examAccommodations  ExamAccommodation[]
   homeworkSubmissions HomeworkSubmission[]
+  guardianLinks       GuardianStudentLink[]
+  familyMessages      FamilyMessage[]
   badges              StudentBadge[]
   dutyAssignments     DutyAssignment[]
   dutyExpenses        Expense[]              @relation("StudentDutyExpenses")
@@ -428,6 +433,37 @@ model Student {
   @@index([studentCode])
   @@index([classId])
   @@index([studentCouncilRole])
+}
+
+// Staff verify these links. A guardian can see only learners linked here.
+model GuardianStudentLink {
+  id             String   @id @default(uuid())
+  guardianUserId String
+  guardian       User     @relation(fields: [guardianUserId], references: [id], onDelete: Cascade)
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+
+  @@unique([guardianUserId, studentId])
+  @@index([studentId])
+}
+
+model FamilyMessage {
+  id             String   @id @default(uuid())
+  guardianUserId String
+  guardian       User     @relation(fields: [guardianUserId], references: [id], onDelete: Cascade)
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topic          String
+  body           String
+  reply          String?
+  status         String   @default("OPEN") // OPEN | ANSWERED
+  repliedByName  String?
+  repliedAt      DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([guardianUserId, studentId, createdAt])
+  @@index([status, createdAt])
 }
 
 model Teacher {

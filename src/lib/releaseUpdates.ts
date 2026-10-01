@@ -33,6 +33,7 @@ const RELEASE_FREE_ROUTES = [
   '/verify',
   '/dictionary',
   '/language-quest',
+  '/family',
 ];
 
 export function canAutoShowReleaseUpdates(pathname: string) {

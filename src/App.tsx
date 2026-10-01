@@ -12,6 +12,8 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const ChangePassword = lazy(() => import("./pages/ChangePassword"));
 const DashboardPage = lazy(() => import("./pages/Dashboard"));
+const FamilyPortal = lazy(() => import("./pages/family/FamilyPortal"));
+const FamilyInbox = lazy(() => import("./pages/family/FamilyInbox"));
 const MyProfile = lazy(() => import("./pages/MyProfile"));
 const MyPayroll = lazy(() => import("./pages/hr/MyPayroll"));
 import { PlaceholderPage } from "./pages/Placeholder";
@@ -332,6 +334,9 @@ export default function App() {
             
             <Route element={<ProtectedRoute />}>
               <Route path="/change-password" element={<ChangePassword />} />
+              <Route element={<ProtectedRoute strictRoles={['GUARDIAN']} />}>
+                <Route path="/family" element={<FamilyPortal />} />
+              </Route>
               <Route path="/documents/:id/print" element={<DocumentPrint />} />
               <Route path="/documents/:id/id-card" element={<StudentIdCardPrint />} />
               <Route path="/payroll/payslips/:id/print" element={<PayslipPrint />} />
@@ -360,6 +365,9 @@ export default function App() {
               </Route>
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route element={<ProtectedRoute strictRoles={['ADMIN', 'STAFF']} />}>
+                  <Route path="/family/inbox" element={<FamilyInbox />} />
+                </Route>
                 <Route path="/profile" element={<MyProfile />} />
                 <Route path="/my-payroll" element={<MyPayroll />} />
                 <Route element={<ProtectedRoute allowedRoles={['TEACHER', 'STUDENT', 'ADMIN']} />}>

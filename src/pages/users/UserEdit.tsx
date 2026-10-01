@@ -21,6 +21,7 @@ const ROLE_DESCRIPTIONS: Record<string, string> = {
   ADMIN: 'Full system access including user management, settings, and all features',
   TEACHER: 'Can work with assigned classes and students, record attendance, manage assessments, and create educational content',
   STUDENT: 'Can view their own grades, attendance, fees, and access educational materials',
+  GUARDIAN: 'Can view Family Portal information for learners linked by school staff',
   STAFF: 'Basic access to view information and assist with administrative tasks',
   ACCOUNTANT: 'Can manage fees, payments, and financial records',
   CASE_WORKER: 'Can manage student cases, counseling records, and support services',
@@ -32,10 +33,11 @@ const userSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters')
     .regex(/^[a-zA-Z0-9._-]+$/, 'Only letters, numbers, dots, underscores, and hyphens allowed'),
   email: z.string().email('Invalid email address').optional().or(z.literal('')),
-  role: z.enum(['ADMIN', 'TEACHER', 'STUDENT', 'STAFF', 'ACCOUNTANT', 'CASE_WORKER', 'LIBRARIAN']),
+  role: z.enum(['ADMIN', 'TEACHER', 'STUDENT', 'GUARDIAN', 'STAFF', 'ACCOUNTANT', 'CASE_WORKER', 'LIBRARIAN']),
   status: z.enum(['ACTIVE', 'DISABLED']),
   teacherId: z.string().optional(),
   studentId: z.string().optional(),
+  guardianStudentIds: z.array(z.string()).optional(),
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
@@ -68,6 +70,7 @@ export default function UserEdit() {
       status: 'ACTIVE',
       teacherId: '',
       studentId: '',
+      guardianStudentIds: [],
     }
   });
 
@@ -89,7 +92,7 @@ export default function UserEdit() {
       .then(r => (r.ok ? r.json() : []))
       .then((list: any[]) => setStudents(list.map((s) => ({
         id: s.id,
-        label: `${`${s.user?.firstName ?? ''} ${s.user?.lastName ?? ''}`.trim() || 'Unnamed'}${s.studentCode ? ` (${s.studentCode})` : ''}`,
+        label: `${s.preferredName || `${s.user?.firstName ?? ''} ${s.user?.lastName ?? ''}`.trim() || 'Unnamed'}${s.studentCode ? ` (${s.studentCode})` : ''}`,
       }))))
       .catch(() => {});
 
@@ -105,6 +108,7 @@ export default function UserEdit() {
           status: u.isActive ? 'ACTIVE' : 'DISABLED',
           teacherId: u.teacherProfile?.id ?? '',
           studentId: u.studentProfile?.id ?? '',
+          guardianStudentIds: u.guardianLinks?.map((link: { studentId: string }) => link.studentId) ?? [],
         });
       })
       .catch(err => { if (!controller.signal.aborted) setLoadError(err.message); })
@@ -124,7 +128,7 @@ export default function UserEdit() {
       const res = await fetch(`/api/users/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ firstName, lastName, email: data.email, username: data.username, role: data.role, status: data.status, teacherId, studentId }),
+        body: JSON.stringify({ firstName, lastName, email: data.email, username: data.username, role: data.role, status: data.status, teacherId, studentId, guardianStudentIds: data.role === 'GUARDIAN' ? (data.guardianStudentIds || []) : [] }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -194,6 +198,7 @@ export default function UserEdit() {
                     <SelectItem value="ADMIN">Administrator</SelectItem>
                     <SelectItem value="TEACHER">Teacher</SelectItem>
                     <SelectItem value="STUDENT">Student</SelectItem>
+                    <SelectItem value="GUARDIAN">Parent / Guardian</SelectItem>
                     <SelectItem value="STAFF">Staff</SelectItem>
                     <SelectItem value="ACCOUNTANT">Accountant</SelectItem>
                     <SelectItem value="CASE_WORKER">Case Worker</SelectItem>
@@ -227,7 +232,7 @@ export default function UserEdit() {
           <div className="pt-4 border-t border-slate-200 dark:border-surface-raised space-y-4">
              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Profile Linking (Optional)</h3>
              <p className="text-sm text-slate-500 dark:text-slate-300 -mt-2">
-               Connect this account to a {watch('role') === 'STUDENT' ? 'student' : watch('role') === 'TEACHER' ? 'teacher' : 'student or teacher'} record so it appears in their profile.
+               {watch('role') === 'GUARDIAN' ? 'Select each learner this adult is verified to support. Only school staff can change these links.' : `Connect this account to a ${watch('role') === 'STUDENT' ? 'student' : watch('role') === 'TEACHER' ? 'teacher' : 'student or teacher'} record.`}
              </p>
              {watch('role') === 'TEACHER' ? (
                <div className="space-y-2 max-w-sm">
@@ -251,8 +256,24 @@ export default function UserEdit() {
                    </SelectContent>
                  </Select>
                </div>
+             ) : watch('role') === 'GUARDIAN' ? (
+               <fieldset className="space-y-3">
+                 <legend className="text-sm font-semibold">Linked learners</legend>
+                 <div className="max-h-56 space-y-2 overflow-y-auto border border-border p-3">
+                   {students.map((student) => (
+                     <label key={student.id} className="flex min-h-9 items-center gap-3 text-sm">
+                       <input type="checkbox" className="size-4 accent-academic-teal" checked={(watch('guardianStudentIds') || []).includes(student.id)} onChange={(event) => {
+                         const current = watch('guardianStudentIds') || [];
+                         setValue('guardianStudentIds', event.target.checked ? [...current, student.id] : current.filter((id) => id !== student.id), { shouldDirty: true });
+                       }} />
+                       {student.label}
+                     </label>
+                   ))}
+                   {!students.length && <p className="text-sm text-muted-foreground">No learners available.</p>}
+                 </div>
+               </fieldset>
              ) : (
-               <p className="text-sm text-slate-400 italic">Profile linking is only available for Teacher and Student roles.</p>
+               <p className="text-sm text-slate-400 italic">Profile linking is available for teacher, student, and guardian accounts.</p>
              )}
           </div>
         </div>

@@ -47,6 +47,7 @@ test('release updates never cover school login or other public entry routes', ()
   assert.equal(canAutoShowReleaseUpdates('/login'), false);
   assert.equal(canAutoShowReleaseUpdates('/language-quest'), false);
   assert.equal(canAutoShowReleaseUpdates('/language-quest/about'), false);
+  assert.equal(canAutoShowReleaseUpdates('/family'), false);
   assert.equal(canAutoShowReleaseUpdates('/verify/document-token'), false);
   assert.equal(canAutoShowReleaseUpdates('/dashboard'), true);
   assert.equal(canAutoShowReleaseUpdates('/games/language-quest'), true);

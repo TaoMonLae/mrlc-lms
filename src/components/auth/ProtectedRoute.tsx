@@ -73,6 +73,10 @@ export function ProtectedRoute({ requiredPermission, allowedRoles, strictRoles }
     return <Navigate to="/games/language-quest" replace />;
   }
 
+  if (user.role === 'GUARDIAN' && location.pathname !== '/change-password' && !location.pathname.startsWith('/family')) {
+    return <Navigate to="/family" replace />;
+  }
+
   if (requiredPermission && !hasPermission(user, requiredPermission)) {
     return <Navigate to="/unauthorized" replace />;
   }

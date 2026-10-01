@@ -40,6 +40,8 @@ import sharp from "sharp";
 import { registerExamPhase2Routes } from "./examPhase2";
 import { registerClassworkRoutes } from "./classworkRoutes";
 import { registerVideoLearningRoutes, canReadVideo } from "./videoLearningRoutes";
+import { registerFamilyRoutes } from "./familyRoutes";
+import { isGuardianApiRequestAllowed } from "./shared/familyAccess";
 import { composeQuestionSet, registerExamBankRoutes } from "./examBank";
 import { registerNewsRoutes } from "./news";
 import { registerPayrollPdfRoutes } from "./payrollPdf";
@@ -942,10 +944,24 @@ async function authMiddleware(
       if (Date.now() - session.lastSeenAt.getTime() > 5 * 60 * 1000) {
         prisma.authSession.update({ where: { id: session.id }, data: { lastSeenAt: new Date() } }).catch(() => {});
       }
+    } else {
+      // Older tokens did not carry a session ID. Recheck their current role so
+      // an account converted to Guardian cannot retain its former privileges.
+      const current = await prisma.user.findUnique({ where: { id: payload.userId }, select: { role: true, isActive: true } });
+      if (!current?.isActive || current.role !== payload.role) {
+        res.status(401).json({ error: "Unauthorized: Account access changed" });
+        return;
+      }
     }
     if (payload.externalLearner) {
       if (!isExternalLearnerApiRequestAllowed(req.method, req.originalUrl)) {
         res.status(403).json({ error: "This learner account can only access Learning Quest" });
+        return;
+      }
+    }
+    if (payload.role === "GUARDIAN") {
+      if (!isGuardianApiRequestAllowed(req.method, req.originalUrl)) {
+        res.status(403).json({ error: "Guardian accounts can only access the Family Portal" });
         return;
       }
     }
@@ -1030,7 +1046,7 @@ const optionalId = z.string().trim().optional().nullable().transform((v) => (v ?
 // before it ever reached the database.
 const optEnumOrEmpty = <T extends [string, ...string[]]>(values: T) =>
   z.union([z.enum(values), z.literal(""), z.null()]).optional().transform((v) => (v ? v : undefined));
-const userRole = z.enum(["ADMIN", "TEACHER", "STUDENT", "STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"]);
+const userRole = z.enum(["ADMIN", "TEACHER", "STUDENT", "GUARDIAN", "STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"]);
 const admissionStatus = z.enum([
   "SUBMITTED",
   "DOCUMENTS_PENDING",
@@ -1121,6 +1137,7 @@ const schemas = {
     role: userRole,
     status: z.enum(["ACTIVE", "DISABLED"]).optional(),
     teacherId: nullableStr, studentId: nullableStr,
+    guardianStudentIds: z.array(z.string().uuid()).max(20).optional(),
   }),
   userUpdate: z.object({
     firstName: optStr, lastName: optStr,
@@ -1129,6 +1146,7 @@ const schemas = {
     role: userRole.optional(),
     status: z.enum(["ACTIVE", "DISABLED"]).optional(),
     teacherId: nullableStr, studentId: nullableStr,
+    guardianStudentIds: z.array(z.string().uuid()).max(20).optional(),
   }),
   attendance: z.object({
     classId: reqStr,
@@ -2572,31 +2590,34 @@ async function startServer() {
       };
       const token = signToken(payload, Boolean(rememberMe));
 
-      res.cookie("video_media_token", token, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: "strict",
-        maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000,
-        path: "/uploads/videos",
-      });
-      res.cookie("social_media_token", token, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: "strict",
-        maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000,
-        path: "/uploads/social",
-      });
-      // Scoped media token for library file downloads (PDFs/docs/images).
-      // The /uploads/library route verifies it and checks the resource's
-      // visibility, so TEACHERS_ONLY uploads can't be read by students (and
-      // nothing under /uploads/library is world-readable by URL guessing).
-      res.cookie("library_media_token", token, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: "strict",
-        maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000,
-        path: "/uploads/library",
-      });
+      if (user.role !== "GUARDIAN") {
+        res.cookie("video_media_token", token, {
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: "strict",
+          maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000,
+          path: "/uploads/videos",
+        });
+        res.cookie("social_media_token", token, {
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: "strict",
+          maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000,
+          path: "/uploads/social",
+        });
+        // Scoped media token for library file downloads (PDFs/docs/images).
+        res.cookie("library_media_token", token, {
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: "strict",
+          maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000,
+          path: "/uploads/library",
+        });
+      } else {
+        for (const [name, mediaPath] of [["video_media_token", "/uploads/videos"], ["social_media_token", "/uploads/social"], ["library_media_token", "/uploads/library"]]) {
+          res.clearCookie(name, { httpOnly: true, secure: isProduction, sameSite: "strict", path: mediaPath });
+        }
+      }
 
       // Record the login time (fire-and-forget so a slow write can't block sign-in).
       prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } })
@@ -3763,6 +3784,7 @@ async function startServer() {
           id: true, firstName: true, lastName: true, email: true, username: true, role: true, isActive: true, createdAt: true, lastLoginAt: true,
           studentProfile: { select: { id: true } },
           teacherProfile: { select: { id: true } },
+          guardianLinks: { select: { studentId: true } },
         },
         orderBy: { createdAt: "desc" },
       } as any);
@@ -3775,16 +3797,21 @@ async function startServer() {
 
   app.post("/api/users", authMiddleware, requirePermission("manage_users"), validate(schemas.userCreate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    const { firstName, lastName, email, username, password, role, status, teacherId, studentId } = req.body;
+    const { firstName, lastName, email, username, password, role, status, teacherId, studentId, guardianStudentIds = [] } = req.body;
     if (!firstName || !email || !password || !role) {
       res.status(400).json({ error: "firstName, email, password, and role are required" });
       return;
     }
-    if ((teacherId && role !== "TEACHER") || (studentId && role !== "STUDENT") || (teacherId && studentId)) {
-      res.status(400).json({ error: "A profile can only be linked to an account with the matching Teacher or Student role" });
+    if ((teacherId && role !== "TEACHER") || (studentId && role !== "STUDENT") || (teacherId && studentId) || (guardianStudentIds.length && role !== "GUARDIAN")) {
+      res.status(400).json({ error: "A learner link requires a Guardian account; teacher and student profiles require matching roles" });
       return;
     }
     try {
+      const linkedIds = [...new Set(guardianStudentIds as string[])];
+      if (linkedIds.length && await prisma.student.count({ where: { id: { in: linkedIds } } }) !== linkedIds.length) {
+        res.status(400).json({ error: "One or more linked learners were not found" });
+        return;
+      }
       const passwordHash = await bcrypt.hash(password, 10);
       const user = await prisma.$transaction(async (tx) => {
         // See the cast note near the login route re: stale Prisma types.
@@ -3804,6 +3831,9 @@ async function startServer() {
           if (!profile) throw Object.assign(new Error("Student profile not found"), { http: 404 });
           if (profile.userId) throw Object.assign(new Error("That student profile is already linked to another account"), { http: 400 });
           await tx.student.update({ where: { id: studentId }, data: { userId: created.id } });
+        }
+        if (role === "GUARDIAN" && linkedIds.length) {
+          await tx.guardianStudentLink.createMany({ data: linkedIds.map((linkedStudentId) => ({ guardianUserId: created.id, studentId: linkedStudentId })) });
         }
         return created;
       });
@@ -3828,6 +3858,8 @@ async function startServer() {
   });
 
   // ── Teachers API ────────────────────────────────────────────────────────────
+  registerFamilyRoutes(app, prisma, authMiddleware);
+
   app.get("/api/teachers", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     // permissions.ts grants 'view_teachers' to ADMIN, TEACHER, STAFF, and
@@ -14839,6 +14871,7 @@ async function startServer() {
           id: true, firstName: true, lastName: true, email: true, username: true, role: true, isActive: true,
           studentProfile: { select: { id: true } },
           teacherProfile: { select: { id: true } },
+          guardianLinks: { select: { studentId: true } },
         },
       } as any);
       if (!user) { res.status(404).json({ error: "User not found" }); return; }
@@ -14851,19 +14884,25 @@ async function startServer() {
 
   app.put("/api/users/:id", authMiddleware, requirePermission("manage_users"), validate(schemas.userUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    const { firstName, lastName, email, username, role, status, teacherId, studentId } = req.body;
+    const { firstName, lastName, email, username, role, status, teacherId, studentId, guardianStudentIds } = req.body;
     const userId = req.params.id;
-    if ((teacherId && role && role !== "TEACHER") || (studentId && role && role !== "STUDENT") || (teacherId && studentId)) {
-      res.status(400).json({ error: "A profile can only be linked to an account with the matching Teacher or Student role" });
-      return;
-    }
     try {
+      const linkedIds = guardianStudentIds === undefined ? undefined : [...new Set(guardianStudentIds as string[])];
+      if (linkedIds?.length && await prisma.student.count({ where: { id: { in: linkedIds } } }) !== linkedIds.length) {
+        res.status(400).json({ error: "One or more linked learners were not found" });
+        return;
+      }
       const existing = await prisma.user.findUnique({
         where: { id: userId },
         select: { firstName: true, lastName: true, email: true, role: true },
       });
       if (!existing) {
         res.status(404).json({ error: "User not found" });
+        return;
+      }
+      const requestedRole = role ?? existing.role;
+      if ((teacherId && requestedRole !== "TEACHER") || (studentId && requestedRole !== "STUDENT") || (teacherId && studentId) || (linkedIds?.length && requestedRole !== "GUARDIAN")) {
+        res.status(400).json({ error: "A learner link requires a Guardian account; teacher and student profiles require matching roles" });
         return;
       }
 
@@ -14916,6 +14955,15 @@ async function startServer() {
             }
             await tx.student.update({ where: { id: studentId }, data: { userId } });
           }
+        }
+        if (effectiveRole !== "GUARDIAN") {
+          await tx.guardianStudentLink.deleteMany({ where: { guardianUserId: userId } });
+        } else if (linkedIds !== undefined) {
+          await tx.guardianStudentLink.deleteMany({ where: { guardianUserId: userId } });
+          if (linkedIds.length) await tx.guardianStudentLink.createMany({ data: linkedIds.map((linkedStudentId) => ({ guardianUserId: userId, studentId: linkedStudentId })) });
+        }
+        if (existing.role !== effectiveRole || status === "DISABLED") {
+          await tx.authSession.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date() } });
         }
         return updated;
       });
