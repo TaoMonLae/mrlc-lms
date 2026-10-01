@@ -8,7 +8,7 @@ async function fixture(page: Page, role = 'STUDENT') {
   let notes: any[] = []; let playlists: any[] = [];
   await page.addInitScript(user => {
     sessionStorage.setItem('auth_token', 'fixture'); sessionStorage.setItem('auth_user', JSON.stringify(user));
-    localStorage.setItem(`mrlc:release-seen:${user.id}`, '2026-09-06-language-quest-course-path');
+    localStorage.setItem(`mrlc:release-seen:${user.id}`, '2026-09-18-learning-and-student-life');
     const state: any = { seconds: 0, duration: 600, playing: 2, seeks: [] };
     (window as any).__youtube = state;
     (window as any).YT = { Player: class {
@@ -50,10 +50,17 @@ test('YouTube resumes, saves actual duration on pause, chapters seek and notes p
   expect(writes.find(w => w.path.endsWith('/progress'))?.body).toMatchObject({ currentPosition: 200, duration: 600, isCompleted: false });
   await page.evaluate(() => { const p = (window as any).__youtube; p.seconds = 205; p.playing = 2; p.events.onStateChange({ data: 2 }); });
   await expect.poll(() => writes.filter(w => w.path.endsWith('/progress')).at(-1)?.body.currentPosition).toBe(205);
-  await page.getByRole('button', { name: 'Use Current Time', exact: true }).click();
-  await expect(page.getByLabel('Timestamp (seconds)')).toHaveValue('205');
-  await page.getByLabel('Your private note').fill('Remember to check the weather.');
-  await page.getByRole('button', { name: 'Save Note', exact: true }).click();
+  const playerFrame = page.locator('iframe[title="Cave safety"]');
+  await playerFrame.evaluate(element => { (element as any).__testPlayerIdentity = true; });
+  await page.getByRole('tab', { name: 'About' }).click();
+  await expect(page.getByText('About this lesson')).toBeVisible();
+  await page.getByRole('tab', { name: 'Notes & Questions' }).click();
+  expect(await playerFrame.evaluate(element => (element as any).__testPlayerIdentity)).toBe(true);
+  await page.getByRole('button', { name: 'Take note at current time' }).click();
+  await expect(page.getByLabel('At time')).toHaveValue('3:25');
+  await expect(page.getByLabel('Your note')).toBeFocused();
+  await page.getByLabel('Your note').fill('Remember to check the weather.');
+  await page.getByRole('button', { name: 'Save note', exact: true }).click();
   await expect(page.getByText('Remember to check the weather.', { exact: true })).toBeVisible();
   expect(writes.find(w => w.path.endsWith('/notes'))?.body).toMatchObject({ seconds: 205, isQuestion: false });
   await page.getByRole('button', { name: /1:30.*Safety rules/ }).click();
@@ -66,6 +73,13 @@ test('YouTube resumes, saves actual duration on pause, chapters seek and notes p
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+    const placement = await page.evaluate(() => {
+      const player = document.querySelector('[aria-label="Lesson video player"]')!.getBoundingClientRect();
+      const notes = document.querySelector('[aria-label="Lesson workspace"]')!.getBoundingClientRect();
+      return { playerRight: player.right, playerBottom: player.bottom, notesLeft: notes.left, notesTop: notes.top };
+    });
+    if (width === 1440) expect(placement.notesLeft).toBeGreaterThan(placement.playerRight);
+    else expect(placement.notesTop).toBeGreaterThan(placement.playerBottom);
     await page.screenshot({ path: info.outputPath(`learning-student-${width}.png`), fullPage: true });
   }
 });
@@ -88,8 +102,8 @@ test('teacher configures activities, preserves unsaved chapters during note refr
   await page.getByLabel('Linked quiz', { exact: true }).scrollIntoViewIfNeeded();
   expect(await page.getByLabel('Linked quiz', { exact: true }).evaluate(e => e.getBoundingClientRect().height)).toBeGreaterThanOrEqual(40);
   await page.screenshot({ path: info.outputPath('activity-editor-dark.png'), fullPage: true });
-  await page.getByLabel('Your private note').fill('Review this before class.');
-  await page.getByRole('button', { name: 'Save Note', exact: true }).click();
+  await page.getByLabel('Your note').fill('Review this before class.');
+  await page.getByRole('button', { name: 'Save note', exact: true }).click();
   await expect(page.getByText('Review this before class.', { exact: true })).toBeVisible();
   await expect(page.getByLabel('Chapter 2 title', { exact: true })).toHaveValue('Updated safety rules');
   await page.getByRole('button', { name: 'Save Activities', exact: true }).click();

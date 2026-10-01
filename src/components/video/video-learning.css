@@ -7,3 +7,18 @@
   background-position: right .75rem center;
 }
 .dark .video-learning-select { color-scheme: dark; }
+
+.video-lesson-layout { container-type: inline-size; }
+.video-lesson-grid { display: grid; gap: 1.5rem; align-items: start; }
+.video-lesson-rail { scroll-margin-top: 6rem; }
+
+@container (min-width: 1060px) {
+  .video-lesson-grid { grid-template-columns: minmax(0, 1fr) 360px; }
+  .video-lesson-rail {
+    position: sticky;
+    top: 6rem;
+    max-height: calc(100dvh - 7rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}

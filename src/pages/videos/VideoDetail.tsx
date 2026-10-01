@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router';
-import { ArrowLeft, Edit2, Clock, BookOpen, Calendar, ExternalLink, RotateCcw, Users, CheckCircle2, AlertTriangle, PlayCircle } from 'lucide-react';
+import { ArrowLeft, Edit2, ExternalLink, RotateCcw, Users, CheckCircle2, AlertTriangle, PlayCircle, StickyNote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { usePermissions, useUser } from '../../lib/permissions';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { getVideoEmbedUrl, getVideoPlaybackSrc, isDirectVideoUrl, formatDurationVerbose, normalizeVideoSourceUrl, isValidVideoSourceUrl } from '../../lib/video';
+import { getVideoEmbedUrl, getVideoPlaybackSrc, isDirectVideoUrl, normalizeVideoSourceUrl, isValidVideoSourceUrl } from '../../lib/video';
 import { apiGet } from '../../lib/api';
 import { useVideoProgress } from '../../hooks/useVideoProgress';
 import { VideoPlayerControls } from '../../components/VideoPlayerControls';
@@ -15,7 +14,9 @@ import type { VideoLesson, VideoAnalytics } from '../../lib/video/types';
 import { getYouTubeVideoId } from '../../../shared/videoSource';
 import { YouTubeLessonPlayer, type LessonPlayerHandle } from '../../components/video/YouTubeLessonPlayer';
 import { VideoLearningWorkspace } from '../../components/video/VideoLearningWorkspace';
+import { VideoLessonSidebar } from '../../components/video/VideoLessonSidebar';
 import { VideoPlaylists } from '../../components/video/VideoPlaylists';
+import '../../components/video/video-learning.css';
 
 export default function VideoDetail() {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +29,8 @@ export default function VideoDetail() {
   const [analytics, setAnalytics] = useState<VideoAnalytics | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const youtubeRef = useRef<LessonPlayerHandle>(null);
+  const playerFrameRef = useRef<HTMLDivElement>(null);
+  const [noteCapture, setNoteCapture] = useState({ sequence: 0, seconds: 0 });
   const restoredVideoRef = useRef<string | null>(null);
 
   // Enable progress tracking for students and teachers (not admins)
@@ -49,7 +52,7 @@ export default function VideoDetail() {
   useEffect(() => {
     if (!id) return;
     const controller = new AbortController();
-    setLoading(true); setVideo(null); setAnalytics(null);
+    setLoading(true); setVideo(null); setAnalytics(null); setNoteCapture({ sequence: 0, seconds: 0 });
     const fetchVideo = async () => {
       try {
         const v = await apiGet<VideoLesson>(`/api/videos/${id}`, { signal: controller.signal });
@@ -241,13 +244,22 @@ export default function VideoDetail() {
   const safeOriginalUrl = isValidVideoSourceUrl(originalUrl) ? originalUrl : null;
   const backPath = isAdmin ? '/videos' : isTeacher ? '/teacher/videos' : '/student/videos';
   const isDirectVideo = !embedUrl && isDirectVideoUrl(video.videoUrl);
+  const supportsTimestamps = isYouTube || isDirectVideo;
   const rawPlaybackSrc = getVideoPlaybackSrc(video.videoUrl);
   const playbackSrc = video.videoUrl.startsWith('/uploads/videos/') && playbackRevision
     ? `${rawPlaybackSrc}${rawPlaybackSrc.includes('?') ? '&' : '?'}ready=${playbackRevision}`
     : rawPlaybackSrc;
+  const currentPlaybackTime = () => isYouTube ? youtubeRef.current?.currentTime() ?? 0 : videoRef.current?.currentTime ?? 0;
+  const seekToLesson = (seconds: number) => {
+    if (isYouTube) youtubeRef.current?.seek(seconds);
+    else if (videoRef.current) videoRef.current.currentTime = seconds;
+    else { toast.info('Timestamp navigation is available for YouTube and uploaded videos.'); return; }
+    if (window.matchMedia('(max-width: 767px)').matches) playerFrameRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  const takeNote = () => setNoteCapture((previous) => ({ sequence: previous.sequence + 1, seconds: Math.max(0, Math.floor(currentPlaybackTime())) }));
 
   return (
-    <div className="mx-auto max-w-[1200px] min-w-0 space-y-6 pb-10">
+    <div className="video-lesson-layout mx-auto max-w-[1200px] min-w-0 space-y-6 pb-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button
           variant="ghost"
@@ -276,10 +288,10 @@ export default function VideoDetail() {
         <h1 className="break-words text-balance text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">{video.title}</h1>
         <p className="text-sm text-muted-foreground">By {video.uploadedByName}</p>
       </header>
-      <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="video-lesson-grid min-w-0">
       <div className="min-w-0 space-y-5">
       {/* Video Player */}
-      <div className="relative aspect-video min-h-[200px] w-full overflow-hidden rounded-xl border border-border bg-black group" aria-label="Lesson video player">
+      <div ref={playerFrameRef} className="video-lesson-player-frame relative aspect-video min-h-[200px] w-full scroll-mt-24 overflow-hidden rounded-xl border border-border bg-black group" aria-label="Lesson video player">
         {isYouTube && shouldTrackProgress && progressLoading ? <p className="flex h-full items-center justify-center text-sm text-white">Loading saved position…</p> : isYouTube ? <YouTubeLessonPlayer
           key={`${video.id}-${playbackRevision}`} ref={youtubeRef} source={video.videoUrl} title={video.title}
           track={shouldTrackProgress} startPosition={startPosition} onProgress={saveProgress} onFlush={saveProgressImmediate}
@@ -381,79 +393,20 @@ export default function VideoDetail() {
         <p className="text-xs text-muted-foreground">Trouble playing? Retry the player or open the original video.</p>
         <Button variant="outline" size="sm" onClick={() => setPlaybackRevision(value => value + 1)}><RotateCcw className="size-4" />Retry Player</Button>
       </div>}
-      <section className="space-y-2" aria-label="About this lesson"><h2 className="font-semibold text-foreground">About This Lesson</h2><p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{video.description || 'No description has been added for this lesson.'}</p></section>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+        <p className="text-xs leading-5 text-muted-foreground">{supportsTimestamps ? 'Save a thought from the exact moment you are watching.' : 'Keep a private note or ask a question about this lesson.'}</p>
+        <Button type="button" onClick={takeNote} className="min-h-11 bg-academic-gold font-bold text-academic-navy-deep hover:bg-academic-gold/85">
+          <StickyNote className="size-4" /> {supportsTimestamps ? 'Take note at current time' : 'Write a note'}
+        </Button>
       </div>
-      {/* Metadata */}
-      <aside className="min-w-0 space-y-4 rounded-xl border border-border bg-card p-5 text-card-foreground" aria-label="Lesson details">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="space-y-1">
-            <h2 className="font-semibold text-foreground">Lesson Details</h2>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-              <span>By {video.uploadedByName}</span>
-              <span>·</span>
-              <span className="flex items-center gap-1">
-                <Calendar className="h-3.5 w-3.5" />
-                {format(new Date(video.createdAt), 'dd MMM yyyy')}
-              </span>
-              {video.duration && (
-                <>
-                  <span>·</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" />
-                    {formatDurationVerbose(video.duration)}
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {video.isRequired && (
-              <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 border-0 flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" />
-                Required{video.dueDate ? ` · due ${format(new Date(video.dueDate), 'dd MMM')}` : ''}
-              </Badge>
-            )}
-            {video.subjectName && (
-              <Badge variant="secondary">{video.subjectName}</Badge>
-            )}
-            {video.className && (
-              <Badge variant="outline" className="flex items-center gap-1">
-                <BookOpen className="h-3 w-3" />
-                {video.className}
-              </Badge>
-            )}
-            {video.visibility === 'TEACHERS_ONLY' && (
-              <Badge variant="outline" className="border-purple-200 text-purple-700 dark:border-purple-800 dark:text-purple-300">
-                Teachers Only
-              </Badge>
-            )}
-            {video.status === 'DRAFT' && (
-              <Badge variant="outline" className="border-amber-200 text-amber-700 dark:border-amber-800 dark:text-amber-400">
-                Draft
-              </Badge>
-            )}
-          </div>
-        </div>
-
-        <div className="border-t border-slate-100 dark:border-surface-raised pt-4">
-          {safeOriginalUrl && <a
-            href={safeOriginalUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex min-h-10 items-center gap-2 text-sm font-medium text-academic-teal hover:underline w-fit"
-          >
-            <ExternalLink className="h-4 w-4" />
-            Open Original Video
-          </a>}
-          {embedUrl && <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{isYouTube ? 'YouTube playback position is saved automatically for students and teachers.' : 'This provider uses its own controls; automatic tracking is unavailable.'} If playback is blocked, try the original link. Watching outside this app is not tracked.</p>}
-        </div>
-      </aside>
+      </div>
+      <VideoLessonSidebar key={video.id} video={video} canManage={canManage} userId={user?.id}
+        seek={seekToLesson} currentTime={currentPlaybackTime} captureRequest={noteCapture}
+        originalUrl={safeOriginalUrl} embedUrl={embedUrl} isYouTube={isYouTube} supportsTimestamps={supportsTimestamps} />
       </div>
 
       {/* Watch analytics (teachers/admins) */}
-      <VideoLearningWorkspace key={video.id} video={video} canManage={canManage} userId={user?.id} watched={isCompleted}
-        seek={seconds => { if (isYouTube) youtubeRef.current?.seek(seconds); else if (videoRef.current) videoRef.current.currentTime = seconds; else toast.info('Timestamp navigation is available for YouTube and uploaded videos.'); }}
-        currentTime={() => isYouTube ? youtubeRef.current?.currentTime() ?? 0 : videoRef.current?.currentTime ?? 0} />
+      <VideoLearningWorkspace key={video.id} video={video} canManage={canManage} watched={isCompleted} seek={seekToLesson} />
       <VideoPlaylists currentVideoId={video.id} />
       {canManage && analytics && (
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
