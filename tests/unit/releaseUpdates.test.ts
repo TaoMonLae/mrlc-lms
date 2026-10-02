@@ -20,10 +20,11 @@ test('release acknowledgement is stored separately for each user', () => {
   assert.equal(releaseStorageKey('student-1'), 'mrlc:release-seen:student-1');
 });
 
-test('the learning and student-life release is unseen after previous releases', () => {
+test('the exam release is unseen after previous releases', () => {
   const storage = memoryStorage();
-  assert.equal(CURRENT_RELEASE.id, '2026-09-18-learning-and-student-life');
+  assert.equal(CURRENT_RELEASE.id, '2026-10-02-exam-studio-and-student-experience');
   for (const previousRelease of [
+    '2026-09-18-learning-and-student-life',
     '2026-09-05-timetable-teacher-integrity',
     '2026-09-06-language-quest-course-path',
   ]) {

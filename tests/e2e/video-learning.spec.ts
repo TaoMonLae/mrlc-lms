@@ -1,3 +1,4 @@
+import { CURRENT_RELEASE } from '../../src/data/releases';
 import { expect, test, type Page } from '@playwright/test';
 test.use({ serviceWorkers: 'block' });
 const video = { id: 'learning-video', title: 'Cave safety', videoUrl: 'https://youtu.be/-mzqQ_vNiKg', duration: 540, classId: 'class-a', status: 'PUBLISHED', visibility: 'ALL', uploadedById: 'teacher-learning', uploadedByName: 'Teacher', createdAt: '2026-09-17T06:00:00Z' };
@@ -6,9 +7,9 @@ async function fixture(page: Page, role = 'STUDENT') {
   const writes: { path: string; body: any }[] = [];
   let learning = { examId: 'quiz-a', homeworkId: 'homework-a', requireQuiz: true, chapters: [{ title: 'Introduction', seconds: 0 }, { title: 'Safety rules', seconds: 90 }], quiz: { id: 'quiz-a', title: 'Safety check', status: 'submitted', href: role === 'STUDENT' ? '/exams/quiz-a/take' : '/exams/quiz-a' }, homework: { id: 'homework-a', title: 'Safety reflection', status: 'not_submitted', href: role === 'STUDENT' ? '/student/homework?assignment=homework-a' : '/teacher/homework/homework-a' }, learningComplete: false };
   let notes: any[] = []; let playlists: any[] = [];
-  await page.addInitScript(user => {
+  await page.addInitScript(({ user, releaseId }) => {
     sessionStorage.setItem('auth_token', 'fixture'); sessionStorage.setItem('auth_user', JSON.stringify(user));
-    localStorage.setItem(`mrlc:release-seen:${user.id}`, '2026-09-18-learning-and-student-life');
+    localStorage.setItem(`mrlc:release-seen:${user.id}`, releaseId);
     const state: any = { seconds: 0, duration: 600, playing: 2, seeks: [] };
     (window as any).__youtube = state;
     (window as any).YT = { Player: class {
@@ -16,7 +17,7 @@ async function fixture(page: Page, role = 'STUDENT') {
       getCurrentTime() { return state.seconds; } getDuration() { return state.duration; } getPlayerState() { return state.playing; }
       seekTo(seconds: number) { state.seconds = seconds; state.seeks.push(seconds); } destroy() {} playVideo() { state.playing = 1; }
     } };
-  }, user);
+  }, { user, releaseId: CURRENT_RELEASE.id });
   await page.route('https://www.youtube.com/embed/**', route => route.fulfill({ contentType: 'text/html', body: 'Local player fixture' }));
   await page.route('**/api/**', route => {
     const path = new URL(route.request().url()).pathname; const method = route.request().method();

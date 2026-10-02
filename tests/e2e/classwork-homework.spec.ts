@@ -1,3 +1,4 @@
+import { CURRENT_RELEASE } from '../../src/data/releases';
 import { expect, test, type Page } from '@playwright/test';
 
 test.use({ serviceWorkers: 'block' });
@@ -7,11 +8,11 @@ const classroom = { id: 'class-a', name: 'GED Year 1', level: 'GED', academicYea
 async function fixture(page: Page, role: 'TEACHER' | 'STUDENT') {
   const user = { id: `${role}-classwork-test`, role, firstName: role, lastName: 'Tester', isActive: true };
   const created: any[] = [];
-  await page.addInitScript(user => {
+  await page.addInitScript(({ user, releaseId }) => {
     sessionStorage.setItem('auth_token', 'classwork-test');
     sessionStorage.setItem('auth_user', JSON.stringify(user));
-    localStorage.setItem(`mrlc:release-seen:${user.id}`, '2026-09-18-learning-and-student-life');
-  }, user);
+    localStorage.setItem(`mrlc:release-seen:${user.id}`, releaseId);
+  }, { user, releaseId: CURRENT_RELEASE.id });
   await page.route('**/api/**', route => {
     const path = new URL(route.request().url()).pathname;
     if (path.endsWith('/stream')) return route.fulfill({ contentType: 'text/event-stream', body: ': fixture\n\n' });
