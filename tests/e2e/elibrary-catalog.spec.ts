@@ -1,0 +1,25 @@
+import {test,expect} from '@playwright/test';
+import {CURRENT_RELEASE} from '../../src/data/releases';
+test('catalog search, collections, series, details and reading links',async({page},info)=>{
+ const user={id:'library-demo',role:'TEACHER',firstName:'Demo',lastName:'Teacher',isActive:true,cursorEffect:'NONE'};
+ const books=[{id:'a',title:'The Time Machine',author:'H. G. Wells',category:'Fiction',format:'EPUB',downloadAllowed:true},{id:'b',title:'A Journey Through Science',author:'MRLC',category:'Science',format:'PDF',downloadAllowed:false},{id:'c',title:'World Atlas — Volume 1',author:'MRLC',category:'Geography',seriesName:'World Atlas',seriesNumber:1,format:'PDF',downloadAllowed:false},{id:'d',title:'World Atlas — Volume 2',author:'MRLC',category:'Geography',seriesName:'World Atlas',seriesNumber:2,format:'PDF',downloadAllowed:false}];
+ await page.addInitScript(({user,id})=>{sessionStorage.setItem('auth_token','demo');sessionStorage.setItem('auth_user',JSON.stringify(user));localStorage.setItem(`mrlc:release-seen:${user.id}`,id);localStorage.setItem('mrlc-lms-theme','light')},{user,id:CURRENT_RELEASE.id});
+ await page.route('**/api/**',r=>{const p=new URL(r.request().url()).pathname;return r.fulfill({json:p==='/api/auth/me'?{user}:p==='/api/ebooks'?books:p==='/api/ebooks/my/progress'?[{ebook:books[0],location:'1',percent:35,updatedAt:'2026-10-02'}]:p.includes('settings')||p.includes('branding')?{name:'Mon Refugee Learning Centre',logoUrl:'/icon-192.png'}:[]})});
+ await page.goto('/elibrary');await expect(page.getByRole('heading',{name:'E-library',exact:true})).toBeVisible();
+ const cards=page.locator('.elibrary-book-card');await expect(cards).toHaveCount(4);
+ await page.screenshot({path:info.outputPath('library-catalog.png'),animations:'disabled'});
+ await page.getByRole('textbox',{name:'Search all books'}).fill('Wells');await expect(cards).toHaveCount(1);
+ await page.getByRole('button',{name:'Clear library search'}).click();
+ await page.getByRole('navigation',{name:'Book collections'}).getByRole('button',{name:/Geography/}).click();
+ await page.getByRole('button',{name:/Series · 2 volumes/}).click();await expect(cards).toHaveCount(2);
+ await page.getByRole('button',{name:'View information for World Atlas — Volume 1'}).click();
+ const dialog=page.getByRole('dialog');await expect(dialog.getByRole('heading',{name:'World Atlas — Volume 1'})).toBeVisible();await expect(dialog.getByRole('button',{name:'Download',exact:true})).toHaveCount(0);
+ await expect(dialog.getByRole('button',{name:'Edit',exact:true})).toHaveAttribute('href','/elibrary/c/edit');
+ await page.screenshot({path:info.outputPath('library-details.png'),animations:'disabled'});
+ await page.keyboard.press('Escape');await expect(dialog).not.toBeVisible();
+ await page.getByRole('navigation',{name:'Book collections'}).getByRole('button',{name:/All books/}).click();await expect(cards).toHaveCount(4);
+ await page.evaluate(()=>document.documentElement.classList.add('dark'));
+ await page.screenshot({path:info.outputPath('library-dark.png'),animations:'disabled'});
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ await page.getByRole('button',{name:/Resume The Time Machine/}).click();await expect(page).toHaveURL(/\/elibrary\/a\/read/);
+});
