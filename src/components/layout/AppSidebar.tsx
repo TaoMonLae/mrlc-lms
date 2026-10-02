@@ -16,16 +16,17 @@ import {
   useSidebar
 } from "@/components/ui/sidebar";
 import { NAVIGATION_ITEMS, ROLE_NAV, isNavGroup } from "@/src/lib/navigation";
-import { LogOut, User, ChevronDown } from "lucide-react";
+import { LogOut, User, ChevronDown, PanelLeftClose, ChevronsUpDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuGroup } from "@/components/ui/dropdown-menu";
-import { usePermissions, useUser } from "@/src/lib/permissions";
+import { useUser } from "@/src/lib/permissions";
 import { useSettings } from "@/src/providers/SettingsProvider";
 import { useAuth } from "@/src/providers/AuthProvider";
 import { useChat } from "@/src/providers/ChatProvider";
 import { useSocial } from "@/src/providers/SocialProvider";
+import "./AppSidebar.css";
 import { ProfilePhotoUploader } from "@/src/components/profile/ProfilePhotoUploader";
 
 export function AppSidebar() {
@@ -33,11 +34,10 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { user } = useUser();
   const { logout } = useAuth();
-  const { isAdmin, isTeacher, isStudent, hasPermission } = usePermissions();
   const { schoolProfile, brandingSettings } = useSettings();
   const { unreadCount } = useChat();
   const { unreadCount: socialUnreadCount } = useSocial();
-  const { isMobile, setOpenMobile, state: sidebarState } = useSidebar();
+  const { isMobile, setOpenMobile, state: sidebarState, toggleSidebar } = useSidebar();
   const closeOnMobile = () => { if (isMobile) setOpenMobile(false); };
   const isNavItemVisible = (item: { url: string }) =>
     item.url !== '/student/duty-expenses' || user?.boardingType === 'BOARDING';
@@ -117,8 +117,8 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-academic-navy bg-academic-navy-deep text-white/75 [&>[data-slot=sidebar-inner]]:bg-academic-navy-deep [&>[data-slot=sidebar-inner]]:text-white/75" aria-label="Main application navigation">
-      <SidebarHeader className="flex h-[72px] items-center border-b border-white/15 px-5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+    <Sidebar collapsible="icon" className="school-sidebar border-r border-academic-navy bg-academic-navy-deep text-white/75 [&>[data-slot=sidebar-inner]]:bg-academic-navy-deep [&>[data-slot=sidebar-inner]]:text-white/75" aria-label="Main application navigation">
+      <SidebarHeader className="school-sidebar-header flex h-[72px] items-center border-b border-white/15 px-5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
         <div className="flex items-center gap-3 font-semibold group-data-[collapsible=icon]:gap-0">
           {brandingSettings.logoUrl ? (
             <img src={brandingSettings.logoUrl} alt={schoolProfile.shortName} className="size-10 shrink-0 bg-white object-contain p-0.5" />
@@ -133,12 +133,12 @@ export function AppSidebar() {
           </div>
         </div>
       </SidebarHeader>
-      <SidebarContent className="px-3 py-5 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-2">
+      <SidebarContent className="school-sidebar-content px-3 py-5 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-2">
         <SidebarGroup className="group-data-[collapsible=icon]:p-0">
-          <SidebarGroupLabel className="mb-3 px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/45 group-data-[collapsible=icon]:opacity-0">School operations</SidebarGroupLabel>
+          <div className="school-nav-heading group-data-[collapsible=icon]:hidden"><SidebarGroupLabel>Workspace</SidebarGroupLabel><button type="button" onClick={toggleSidebar} aria-label={isMobile ? "Close navigation" : "Collapse navigation"} title={isMobile ? "Close navigation" : "Collapse navigation"}><PanelLeftClose size={15} /></button></div>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
-              {groupedNav && (sidebarState === 'expanded' || isMobile) ? (
+              {groupedNav ? (
                 // ── Grouped navigation (admin / teacher / student) ────────
                 groupedNav.map((entry) => {
                   if (!isNavGroup(entry)) {
@@ -147,8 +147,9 @@ export function AppSidebar() {
                         <SidebarMenuButton
                           render={<Link to={entry.url} onClick={closeOnMobile} />}
                           isActive={isPathActive(entry.url)}
+                          aria-current={isPathActive(entry.url) ? "page" : undefined}
                           tooltip={entry.title}
-                          className="h-10 rounded-sm border border-transparent px-2.5 text-white/72 transition-colors duration-150 hover:border-white/15 hover:bg-white/8 hover:text-white data-[active=true]:border-white data-[active=true]:bg-white data-[active=true]:text-academic-navy-deep"
+                          className="school-nav-row"
                         >
                           <entry.icon className="size-4 opacity-75" />
                           <span className="text-[13px] font-medium">{entry.title}</span>
@@ -163,25 +164,52 @@ export function AppSidebar() {
                   }
                   const containsActive = entry.items.some((i) => isPathActive(i.url));
                   const open = openGroups[entry.label] ?? containsActive;
+                  const visibleItems = entry.items.filter(isNavItemVisible);
+                  const groupUnread = visibleItems.reduce((total, item) => total + navBadgeCount(item.url), 0);
+                  const groupId = `school-nav-${entry.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+                  if (!visibleItems.length) return null;
+                  if (sidebarState === 'collapsed' && !isMobile) {
+                    return <SidebarMenuItem key={entry.label}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger nativeButton render={<SidebarMenuButton className="school-nav-row" isActive={containsActive} aria-label={entry.label} tooltip={entry.label} />}>
+                          <entry.icon className="size-4" />
+                          <span>{entry.label}</span>
+                          {groupUnread > 0 && <span className="school-nav-unread-dot" aria-label={`${groupUnread} unread`} />}
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent side="right" align="start" sideOffset={12} className="school-nav-flyout">
+                          <DropdownMenuGroup><DropdownMenuLabel>{entry.label}</DropdownMenuLabel>
+                            {visibleItems.map(item => <DropdownMenuItem key={item.url + item.title} render={<Link to={item.url} aria-current={isPathActive(item.url) ? 'page' : undefined} />}>
+                              <item.icon className="size-4" /><span>{item.title}</span>
+                              {navBadgeCount(item.url) > 0 && <span className="ml-auto text-xs">{navBadgeCount(item.url)}</span>}
+                            </DropdownMenuItem>)}
+                          </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </SidebarMenuItem>;
+                  }
                   return (
                     <SidebarMenuItem key={entry.label}>
                       <SidebarMenuButton
                         onClick={() => toggleGroup(entry.label, containsActive)}
-                        className="h-10 rounded-sm border border-transparent px-2.5 text-white/72 transition-colors duration-150 hover:border-white/15 hover:bg-white/8 hover:text-white"
+                        data-section-active={containsActive}
+                        className="school-nav-row school-nav-group"
+                        aria-controls={open ? groupId : undefined}
                         aria-expanded={open}
                       >
                         <entry.icon className="size-4 opacity-75" />
                         <span className="text-[13px] font-medium">{entry.label}</span>
+                        {groupUnread > 0 && <span className="school-nav-count">{groupUnread > 99 ? '99+' : groupUnread}</span>}
                         <ChevronDown className={`ml-auto h-4 w-4 opacity-60 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
                       </SidebarMenuButton>
                       {open && (
-                        <SidebarMenuSub className="mx-0 ml-5 border-white/15 pl-2.5 pr-0">
+                        <SidebarMenuSub id={groupId} className="school-nav-children mx-0 ml-5 border-white/15 pl-2.5 pr-0">
                           {entry.items.filter(isNavItemVisible).map((item) => (
                             <SidebarMenuSubItem key={item.url + item.title}>
                               <SidebarMenuSubButton
                                 render={<Link to={item.url} onClick={closeOnMobile} />}
                                 isActive={isPathActive(item.url)}
-                                className="h-9 rounded-sm border border-transparent text-white/65 hover:border-white/10 hover:bg-white/8 hover:text-white data-[active=true]:border-white/20 data-[active=true]:bg-white/12 data-[active=true]:text-academic-gold [&_svg]:text-white/45"
+                                aria-current={isPathActive(item.url) ? "page" : undefined}
+                                className="school-nav-child"
                               >
                                 <item.icon className="h-3.5 w-3.5" />
                                 <span className="text-[13px] font-medium">{item.title}</span>
@@ -208,8 +236,9 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       render={<Link to={item.url} onClick={closeOnMobile} />}
                       isActive={isPathActive(item.url)}
+                                aria-current={isPathActive(item.url) ? "page" : undefined}
                       tooltip={item.title}
-                      className="h-10 rounded-sm border border-transparent px-2.5 text-white/72 transition-colors duration-150 hover:border-white/15 hover:bg-white/8 hover:text-white data-[active=true]:border-white data-[active=true]:bg-white data-[active=true]:text-academic-navy-deep"
+                      className="school-nav-row"
                     >
                       <item.icon className="size-4 opacity-75" />
                       <span className="text-[13px] font-medium">{item.title}</span>
@@ -226,7 +255,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="border-t border-white/15 p-3 group-data-[collapsible=icon]:p-2">
+      <SidebarFooter className="school-sidebar-footer border-t border-white/15 p-3 group-data-[collapsible=icon]:p-2">
         <DropdownMenu>
           <DropdownMenuTrigger render={<SidebarMenuButton size="lg" className="h-12 w-full justify-start gap-3 rounded-sm border border-transparent px-2 transition-colors duration-150 hover:border-white/15 hover:bg-white/8 group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0" aria-label="Open user menu" />} nativeButton={true}>
               <Avatar className="h-9 w-9 shrink-0 rounded-full border border-white/20 bg-white/15 group-data-[collapsible=icon]:h-7 group-data-[collapsible=icon]:w-7">
@@ -239,6 +268,7 @@ export function AppSidebar() {
                 <span className="text-sm font-semibold text-white truncate">{user?.name || 'User'}</span>
                 <span className="text-xs text-white/55 truncate">{user?.role || 'Guest'}</span>
               </div>
+              <ChevronsUpDown className="ml-auto size-4 text-white/50 group-data-[collapsible=icon]:hidden" />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-56 max-w-[calc(100vw-2rem)]"

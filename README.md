@@ -31,6 +31,7 @@ MRLC LMS supports the everyday work of a school serving refugee learners in Mala
 | **Student exams** | A shared question-paper layout for preview and live attempts, numbered navigation, answered/unanswered and flagged states, reading passages, a precise timer, and an answer-review step before submission. |
 | **Exam management** | Compact **Manage exam** and **Responses** menus group authoring, scheduling, printing, monitoring, grading and gradebook actions. Studio and Preview remain directly accessible. |
 | **Exam reliability** | Fixes to scoring, result release, timing and recovery, alongside focused regression checks. |
+| **Navigation** | Compact MRLC sidebar with grouped flyout menus in collapsed mode, clear active-page indicators, keyboard controls and a matching mobile drawer. |
 | **About page** | Readable typography, section navigation, responsive light/dark layouts, preserved school branding and a developer profile with the verified GitHub photo. |
 | **Production builds** | The server entry is approximately **1.75 MiB**, down from roughly 5.2 MiB. Large curriculum data is split into a private chunk; debug maps live outside `dist`; oversized production PNG copies are optimized without changing original artwork. |
 | **What's New** | An in-app October release guide introduces the updated teacher and student exam workflows. |
