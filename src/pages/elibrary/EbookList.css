@@ -78,3 +78,22 @@
 .library-details .elibrary-book-dialog__facts dd { color:var(--foreground); }
 .library-more { display:flex; justify-content:center; padding:8px 0 24px; }
 @media(max-width:600px) { .library-details .elibrary-cover-placeholder { padding:12px; } .library-details .elibrary-cover-placeholder>span { font-size:6px; letter-spacing:.04em; } .library-details .elibrary-cover-placeholder p { font-size:12px; line-height:1.2; letter-spacing:0; } .library-details .elibrary-cover-placeholder small { font-size:7px; margin-top:5px; } .library-details .elibrary-cover-placeholder>svg { display:none; } }
+
+/* A single collection control keeps large catalogues from turning into a wall of tags. */
+.library-collection-bar { display:flex; align-items:center; flex-wrap:wrap; gap:12px; padding:16px 0; }
+.library-collection-trigger { display:flex; align-items:center; gap:9px; max-width:100%; padding:9px 12px; border:1px solid var(--elib-rule); border-radius:6px; background:var(--elib-paper); color:var(--elib-ink); font-size:13px; cursor:pointer; }
+.library-collection-trigger span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.library-collection-trigger svg { flex-shrink:0; }
+.library-collection-summary { font-size:12px; color:var(--elib-muted); }
+.library-collection-reset { display:flex; align-items:center; gap:5px; margin-left:auto; padding:8px 0; color:var(--elib-action); font-size:12px; cursor:pointer; }
+.library-collection-menu { width:320px; max-width:calc(100vw - 32px); padding:8px; }
+.library-collection-search { display:flex; align-items:center; gap:8px; padding:8px 9px 12px; border-bottom:1px solid var(--border); color:var(--muted-foreground); }
+.library-collection-search input { width:100%; min-width:0; background:transparent; color:var(--foreground); font-size:13px; outline:none; }
+.library-collection-search:focus-within { outline:2px solid var(--ring); outline-offset:-2px; border-radius:4px; }
+.library-collection-options { max-height:min(320px,50dvh); overflow-y:auto; padding-top:6px; }
+.library-collection-options button { display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; padding:10px; border-radius:4px; text-align:left; font-size:13px; cursor:pointer; }
+.library-collection-options button:hover,.library-collection-options button:focus-visible { background:var(--accent); outline:2px solid var(--ring); outline-offset:-2px; }
+.library-collection-options button[aria-pressed="true"] { background:var(--accent); color:var(--accent-foreground); font-weight:600; }
+.library-collection-options small { color:var(--muted-foreground); font-size:11px; font-variant-numeric:tabular-nums; }
+.library-collection-options p { padding:12px 10px; font-size:13px; color:var(--muted-foreground); }
+@media(max-width:600px) { .library-collection-summary { font-size:11px; } .library-collection-reset { margin-left:0; } }

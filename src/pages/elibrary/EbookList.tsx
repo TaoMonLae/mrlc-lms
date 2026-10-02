@@ -12,6 +12,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -106,6 +107,8 @@ export default function EbookList() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const [collectionMenuOpen, setCollectionMenuOpen] = useState(false);
+  const [collectionQuery, setCollectionQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortValue>('title');
   const [selectedGenreKey, setSelectedGenreKey] = useState<string | null>(null);
   const [selectedBook, setSelectedBook] = useState<Ebook | null>(null);
@@ -383,9 +386,22 @@ export default function EbookList() {
       </div>
 
       {!loading && !loadError && ebooks.length > 0 && (
-        <nav className="library-collections" aria-label="Book collections">
-          <button type="button" aria-pressed={!selectedGroup} onClick={() => { setSelectedGenreKey(null); setExpandedSeries(new Set()); }}>All books <span>{ebooks.length}</span></button>
-          {genreGroups.map(group => <button key={group.key} type="button" aria-pressed={group.key === selectedGenreKey} onClick={() => selectGenre(group.key)}>{group.genre}<span>{group.books.length}</span></button>)}
+        <nav className="library-collection-bar" aria-label="Book collections">
+          <Popover open={collectionMenuOpen} onOpenChange={(open) => { setCollectionMenuOpen(open); if (!open) setCollectionQuery(''); }}>
+            <PopoverTrigger className="library-collection-trigger" aria-label="Choose collection">
+              <LibraryBig size={16} aria-hidden="true" /><span>{selectedGroup?.genre || 'All collections'}</span><ChevronDown size={14} aria-hidden="true" />
+            </PopoverTrigger>
+            <PopoverContent align="start" className="library-collection-menu" aria-label="Choose a book collection">
+              <label className="library-collection-search"><Search size={16} aria-hidden="true" /><input autoFocus aria-label="Find a collection" placeholder="Find a collection…" value={collectionQuery} onChange={event => setCollectionQuery(event.target.value)} /></label>
+              <div className="library-collection-options">
+                <button type="button" aria-pressed={!selectedGroup} onClick={() => { setSelectedGenreKey(null); setExpandedSeries(new Set()); setCollectionMenuOpen(false); setCollectionQuery(''); }}><span>All books</span><small>{ebooks.length}</small></button>
+                {genreGroups.filter(group => group.genre.toLocaleLowerCase().includes(collectionQuery.trim().toLocaleLowerCase())).map(group => <button key={group.key} type="button" aria-pressed={group.key === selectedGenreKey} onClick={() => { selectGenre(group.key); setCollectionMenuOpen(false); setCollectionQuery(''); }}><span>{group.genre}</span><small>{group.books.length}</small></button>)}
+                {collectionQuery.trim() && !genreGroups.some(group => group.genre.toLocaleLowerCase().includes(collectionQuery.trim().toLocaleLowerCase())) && <p role="status">No matching collections.</p>}
+              </div>
+            </PopoverContent>
+          </Popover>
+          <span className="library-collection-summary">{selectedGroup ? `${selectedGroup.books.length} books in this collection` : `${ebooks.length} books across ${genreGroups.length} collections`}</span>
+          {selectedGroup && <button type="button" className="library-collection-reset" onClick={() => { setSelectedGenreKey(null); setExpandedSeries(new Set()); }}><X size={13} aria-hidden="true" />Clear collection</button>}
         </nav>
       )}
 
