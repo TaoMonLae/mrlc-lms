@@ -21,7 +21,7 @@ import {
   reorderChallengeIsCorrect,
   sentenceAnswerMatches,
 } from "../../shared/languageQuest";
-import { canAttemptNewChallenge, ensureOfficialCourse, nextIncompleteLessonId, normalizeCourseDraft, shuffle } from "../../languageQuest";
+import { canAttemptNewChallenge, ensureOfficialCourse, ensureOfficialCourses, nextIncompleteLessonId, normalizeCourseDraft, shuffle } from "../../languageQuest";
 import {
   LANGUAGE_QUEST_AVATARS,
   isLanguageQuestAvatarId,
@@ -1445,4 +1445,23 @@ test("normalizeChallenge redacts example sentences that give away the answer", (
   assert.ok(!/(?:Pronunciation|Example)\s*:/iu.test(question!.prompt));
   assert.equal(question!.prompt, "Which noun means \"a bag used for travel\"?");
   assert.equal(question!.correctOptionId, "opt-correct");
+});
+
+
+test("lazy official catalogue preserves every course and retirement code", async () => {
+  const seen: string[] = [];
+  let retired: string[] = [];
+  await ensureOfficialCourses({ languageQuestCourse: {
+    findUnique: async ({ where }: any) => { seen.push(where.code); return { id: where.code, published: false }; },
+    findMany: async ({ where }: any) => { retired = where.code.in; return []; },
+  } });
+  const expected = [importedSpanishCourse, mandarinFoundationsCourse, completeMandarinCourse,
+    chineseConversationStarterCourse, ...englishWordCourses, ...advancedEnglishCourses,
+    ...linguifyCefrCourses, ...malayCefrCourses, malaySpeakingCourse, malayGuideModernCourse,
+    teachYourselfMalayCourse, ...k12MathCourses].map(course => course.code);
+  assert.deepEqual(seen.slice(1), expected);
+  assert.equal(new Set(seen).size, seen.length);
+  for (const course of [importedSpanishCourse, malaySpeakingCourse, malayGuideModernCourse, teachYourselfMalayCourse]) {
+    assert.ok(retired.includes(course.code));
+  }
 });

@@ -102,29 +102,22 @@ import {
   languageQuestPeriodBounds,
   nextLanguageQuestMasteryReview,
 } from "./shared/languageQuestEngagement";
-import { importedSpanishCourse, type OfficialLanguageQuestCourse } from "./languageQuestImportedCourses";
-import { mandarinFoundationsCourse } from "./languageQuestMandarinCourse";
-import { completeMandarinCourse } from "./languageQuestCompleteMandarinCourse";
-import { chineseConversationStarterCourse } from "./languageQuestChineseConversationCourse";
 import { englishWordCourses } from "./languageQuestEnglishWordCourses";
 import { advancedEnglishCourses } from "./languageQuestAdvancedEnglishCourses";
 import { linguifyCefrCourses } from "./languageQuestLinguifyCourses";
-import { malayCefrCourses } from "./languageQuestMalayCourses";
-import { malaySpeakingCourse } from "./languageQuestMalayCourse";
-import { malayGuideModernCourse } from "./languageQuestMalayGuideCourse";
-import { teachYourselfMalayCourse } from "./languageQuestTeachYourselfMalayCourse";
-import { k12MathCourses } from "./languageQuestK12MathCourses";
 import { languageQuestVoiceServiceFromEnv } from "./languageQuestVoice";
 import {
   LANGUAGE_QUEST_VOICE_MAX_TEXT_LENGTH,
   normalizeLanguageQuestSpeechText,
 } from "./shared/languageQuestVoice";
 
+import type { OfficialLanguageQuestCourse } from "./languageQuestImportedCourses";
+
 const RETIRED_OFFICIAL_COURSE_CODES = new Set([
-  importedSpanishCourse.code,
-  malaySpeakingCourse.code,
-  malayGuideModernCourse.code,
-  teachYourselfMalayCourse.code,
+  "MRLC-SOURCE-SPANISH-V1",
+  "MRLC-MALAY-SPEAKING-A1-C1-V1",
+  "MRLC-MALAY-GOVINFO-GUIDE-V1",
+  "MRLC-TEACH-YOURSELF-MALAY-V1",
   "MRLC-MANDARIN-COMPLETE-V1",
   "MRLC-ENGLISH-WORDS-EVERYDAY-V1",
   "MRLC-ENGLISH-WORDS-ACADEMIC-V1",
@@ -529,21 +522,10 @@ const starterCourse: OfficialLanguageQuestCourse = {
 };
 
 export async function ensureOfficialCourses(prisma: any): Promise<void> {
-  const courses = [
-    starterCourse,
-    importedSpanishCourse,
-    mandarinFoundationsCourse,
-    completeMandarinCourse,
-    chineseConversationStarterCourse,
-    ...englishWordCourses,
-    ...advancedEnglishCourses,
-    ...linguifyCefrCourses,
-    ...malayCefrCourses,
-    malaySpeakingCourse,
-    malayGuideModernCourse,
-    teachYourselfMalayCourse,
-    ...k12MathCourses,
-  ];
+  // Only parse the large curricula when Learning Quest actually needs them.
+  const { beforeEnglishCourses, afterEnglishCourses } = await import("./languageQuestCourseCatalog");
+  const courses = [starterCourse, ...beforeEnglishCourses, ...englishWordCourses,
+    ...advancedEnglishCourses, ...linguifyCefrCourses, ...afterEnglishCourses];
   for (const course of courses) {
     await ensureOfficialCourse(prisma, course);
   }

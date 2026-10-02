@@ -15,3 +15,5 @@ coverage
 android
 *.md
 !README.md
+
+.build-debug

@@ -23174,6 +23174,17 @@ async function startServer() {
       maxAge: "1y",
       immutable: true,
     }));
+    // Server bundles live beside the browser build for PM2 compatibility.
+    // They (and private lazy chunks) must never be served as public assets.
+    app.use((req, res, next) => {
+      let pathname: string;
+      try { pathname = decodeURIComponent(req.path); }
+      catch { res.sendStatus(400); return; }
+      if (/\.cjs(?:\.map)?$/i.test(pathname) || pathname.split("/").some(part => part === ".server")) {
+        res.sendStatus(404); return;
+      }
+      next();
+    });
     app.use(express.static(distPath, {
       maxAge: "1d",
       setHeaders: (res, filePath) => {

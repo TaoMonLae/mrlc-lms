@@ -320,6 +320,13 @@ The production build creates:
 
 - `dist/index.html` and `dist/assets/` for the browser application.
 - `dist/server.cjs` for the server runtime.
+- `dist/.server/` for private curriculum chunks loaded when Learning Quest needs them.
+- `.build-debug/` for source maps and bundle analysis, outside the deployed files.
+
+Deploy the entire `dist` directory, including its hidden `.server` directory; the
+PM2 entry point stays `dist/server.cjs`. Production builds resize PNG icon copies
+under `dist/icons/LanguageQuests_Graphics` to at most 1024px while preserving their
+URLs and transparency. Original artwork in `public` is not modified.
 
 ## Requirements
 

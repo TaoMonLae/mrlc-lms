@@ -1,4 +1,11 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+/* Scan shipped UI and shared display tokens, not docs, tests or build tooling. */
+@source "./";
+@source "../shared";
+@source "../components";
+@source "../hooks";
+@source "../lib";
+@source "../index.html";
 
 @theme {
   --color-border: var(--border);

@@ -20,3 +20,6 @@ Kokoro/
 # Spreadsheet authoring sidecars and temporary Excel lock files.
 *.xlsx.inspect.ndjson
 ~$*.xlsx
+
+# Local production debugging artifacts (not deployed).
+.build-debug/

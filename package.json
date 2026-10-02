@@ -29,7 +29,7 @@
     "test:unit": "node --import tsx --test tests/unit/*.test.ts",
     "test:e2e": "playwright test",
     "audit:prod": "npm audit --omit=dev --audit-level=high",
-    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --minify-syntax --minify-whitespace --sourcemap --outfile=dist/server.cjs",
+    "build": "vite build && node scripts/build-production.mjs",
     "start": "NODE_ENV=production node dist/server.cjs",
     "lint": "tsc --noEmit"
   },
