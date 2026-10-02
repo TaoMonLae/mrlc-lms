@@ -1,0 +1,32 @@
+/* React Bits Card Nav grouping adapted to the LMS's assessment workflow.
+   Base UI supplies focus, keyboard navigation, dismissal and collision handling. */
+.exam-profile-header { color: var(--foreground); margin-top: 16px; }
+.exam-profile-title { padding: 4px 0 22px; }
+.exam-profile-eyebrow { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; color: var(--muted-foreground); font-size: 10px; letter-spacing: .12em; font-weight: 650; }
+.exam-profile-title h1 { font-size: clamp(24px, 2.4vw, 34px); line-height: 1.25; font-weight: 650; letter-spacing: -.035em; margin: 12px 0 8px; max-width: 1000px; overflow-wrap: anywhere; text-wrap: balance; }
+.exam-profile-title p { display: flex; flex-wrap: wrap; gap: 8px; color: var(--muted-foreground); font-size: 13px; }
+.exam-commandbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+.exam-command-groups, .exam-command-primary { display: flex; align-items: center; gap: 6px; }
+.exam-command-trigger, .exam-preview-link, .exam-studio-link { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 9px 14px; border-radius: 7px; font-size: 13px; font-weight: 550; white-space: nowrap; transition: background-color .16s, color .16s; }
+.exam-command-trigger { color: var(--foreground); cursor: pointer; }
+.exam-command-trigger > svg:last-child { color: var(--muted-foreground); transition: transform .18s; }
+.exam-command-trigger[data-popup-open] { background: var(--accent); color: var(--accent-foreground); }
+.exam-command-trigger[data-popup-open] > svg:last-child { transform: rotate(180deg); }
+.exam-command-trigger:hover, .exam-preview-link:hover { background: var(--accent); color: var(--accent-foreground); }
+.exam-preview-link { color: var(--muted-foreground); }
+.exam-studio-link { background: #14736d; color: #fff; border: 1px solid #14736d; }
+.exam-studio-link:hover { background: #105f5a; }
+.exam-command-menu { width: 294px; max-width: calc(100vw - 24px); padding: 8px; border-radius: 12px; }
+.exam-menu-heading { font-size: 10px; font-weight: 650; letter-spacing: .1em; color: var(--muted-foreground); padding: 8px 10px 12px; border-bottom: 1px solid var(--border); margin-bottom: 5px; }
+.exam-command-menu [role=menuitem] { padding: 11px 10px; gap: 12px; border-radius: 7px; cursor: pointer; align-items: flex-start; }
+.exam-command-menu [role=menuitem] > svg { margin-top: 3px; }
+.exam-command-menu strong { display: block; font-size: 13px; font-weight: 550; }
+.exam-command-menu small { display: block; color: var(--muted-foreground); font-size: 11px; line-height: 1.5; margin-top: 3px; }
+.exam-commandbar :is(button,a):focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+@media (max-width: 700px) {
+  .exam-commandbar { flex-direction: column; align-items: stretch; gap: 8px; padding: 8px; }
+  .exam-command-groups, .exam-command-primary { display: grid; grid-template-columns: 1fr 1fr; }
+  .exam-command-primary { border-top: 1px solid var(--border); padding-top: 8px; }
+  .exam-command-trigger, .exam-preview-link, .exam-studio-link { padding: 8px; font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .exam-commandbar *, .exam-command-menu { transition: none !important; animation: none !important; } }

@@ -36,8 +36,13 @@ async function setup(page: Page, questions: any[] = [], attempts: any[] = []) {
 test('empty Studio exposes question types, saves a question, and preserves hidden policy and settings', async ({ page }, info) => {
   const { writes } = await setup(page);
   await page.goto('/exams/studio-a/studio');
+  if (info.project.name === 'desktop-chromium') await page.setViewportSize({ width: 1680, height: 1100 });
   await expect(page.getByRole('heading', { name: 'Build your first question' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Question bank & rubrics', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Advanced schedule', exact: true })).toBeVisible();
   await page.screenshot({ path: info.outputPath('studio-empty-light.png'), fullPage: true });
+  await page.locator('.gs-types').first().scrollIntoViewIfNeeded();
+  await page.screenshot({ path: info.outputPath('studio-question-types.png') });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   await page.getByRole('button', { name: 'Multiple choice Choose one correct answer' }).click();
   await page.getByPlaceholder('Type the question.').fill(choice.text);
@@ -158,8 +163,10 @@ test('dark theme, media, math, details and valid AI generation work together', a
   await page.getByRole('menuitem', { name: 'Dark', exact: true }).click();
   await expect(page.locator('html')).toHaveClass(/dark/);
   await page.getByPlaceholder('Type the question.').fill('Evaluate $2^2$.');
+  await expect(page.getByRole('button', { name: 'x²', exact: true })).not.toBeVisible();
   await page.getByRole('button', { name: 'ƒx Math', exact: true }).click();
   await expect(page.getByRole('button', { name: 'x²', exact: true })).toBeVisible();
+  await page.getByText('Passage & image', { exact: true }).click();
   await page.locator('.gs-editor input[type=file]').setInputFiles({ name: 'question.png', mimeType: 'image/png', buffer: Buffer.from('test-image') });
   await expect(page.getByAltText('Question media', { exact: true })).toBeVisible();
   await page.getByPlaceholder('Paste a reading passage,').fill('Use this source passage.');
@@ -169,11 +176,44 @@ test('dark theme, media, math, details and valid AI generation work together', a
   await page.getByPlaceholder('Type the question.').scrollIntoViewIfNeeded();
   await page.screenshot({ path: info.outputPath('studio-dark-editor.png') });
   await page.getByRole('button', { name: 'Generate 3 similar' }).click();
-  await expect(page.getByRole('button', { name: 'Questions (4)', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Edit question 4', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Details', exact: true }).click();
   await page.getByLabel('Instructions', { exact: true }).fill('Read all questions carefully.');
   await page.getByLabel('Time limit (minutes)', { exact: true }).fill('45');
   await page.getByRole('button', { name: 'Save draft', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'All changes saved' })).toBeVisible();
   expect(writes.filter(w => w.path === '/api/exams/studio-a').at(-1)!.body.duration).toBe(45);
+});
+
+
+test('responsive authoring workspace keeps drafts while changing steps and preview width', async ({ page }, info) => {
+  await setup(page, [choice]);
+  await page.setViewportSize({ width: 1680, height: 1050 });
+  await page.goto('/exams/studio-a/studio');
+  const preview = page.getByRole('complementary', { name: 'Live student preview' });
+  await expect(preview).toBeVisible();
+  await preview.getByRole('button', { name: 'Phone view', exact: true }).click();
+  await expect(preview.getByRole('button', { name: 'Phone view', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await preview.getByRole('button', { name: /Mercury/ }).click();
+  await expect(preview.getByRole('button', { name: /Mercury/ })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByPlaceholder('Type the question.').fill('A revised question');
+  await page.getByRole('button', { name: 'Hide live preview', exact: true }).click();
+  await expect(preview).not.toBeVisible();
+  await page.getByRole('button', { name: 'Show live preview', exact: true }).click();
+  await expect(preview).toBeVisible();
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+  await expect(preview).not.toBeVisible();
+  await page.getByRole('button', { name: 'Questions', exact: true }).click();
+  await expect(page.getByPlaceholder('Type the question.')).toHaveValue('A revised question');
+  await expect(preview).toBeVisible();
+  await page.screenshot({ path: info.outputPath('studio-wide-editor.png'), fullPage: true });
+  await page.getByLabel('Question points').scrollIntoViewIfNeeded();
+  await expect(page.getByRole('button', { name: 'Save draft', exact: true })).toBeInViewport();
+  await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'All changes saved' })).toBeVisible();
+  await page.setViewportSize({ width: 820, height: 1180 });
+  await expect(preview).not.toBeVisible();
+  await expect(page.getByRole('button', { name: 'Preview as student', exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+  await page.screenshot({ path: info.outputPath('studio-tablet.png'), fullPage: true });
 });

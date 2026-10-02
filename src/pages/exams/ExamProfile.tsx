@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router';
-import { ArrowLeft, Edit, Play, Users, BarChart3, Clock, CheckCircle2, Settings, Trash2, BookOpenCheck, Loader2 } from 'lucide-react';
+import { ArrowLeft, Edit, Play, Users, BarChart3, Clock, CheckCircle2, Settings, Trash2, BookOpenCheck, Loader2, ChevronDown, CalendarClock, Printer, ListChecks, Radio } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import './exam-profile.css';
 import { toast } from 'sonner';
 import { apiSend } from '../../lib/api';
 
@@ -159,36 +161,42 @@ export default function ExamProfile() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Exams
         </Button>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{exam.title}</h1>
-            <Badge className={exam.status === 'PUBLISHED' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-amber-100 text-amber-800 hover:bg-amber-100'}>{exam.status}</Badge>
+        <header className="exam-profile-header">
+          <div className="exam-profile-title">
+            <div className="exam-profile-eyebrow">EXAM OVERVIEW <Badge className={exam.status === 'PUBLISHED' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-amber-100 text-amber-800 hover:bg-amber-100'}>{exam.status}</Badge></div>
+            <h1>{exam.title}</h1>
+            <p>{exam.className}<span aria-hidden="true">·</span>{exam.subject}</p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button className="bg-aubergine-600 hover:bg-aubergine-700 text-white" render={<Link to={`/exams/${id}/studio`} />} nativeButton={false}>
-              <Edit className="mr-2 h-4 w-4" /> Open in Studio
-            </Button>
-            <Button variant="outline" render={<Link to={`/exam2/${id}/author`} />} nativeButton={false}>
-              Author content
-            </Button>
-            <Button variant="outline" render={<Link to={`/exam2/${id}/schedule`} />} nativeButton={false}>
-              Schedule
-            </Button>
-            <Button variant="outline" render={<Link to={`/exam2/grading?examId=${id}`} />} nativeButton={false}>Grade responses</Button>
-            <Button variant="outline" render={<Link to={`/exam2/${id}/invigilator`} />} nativeButton={false}>Monitor attempts</Button>
-            <Button variant="outline" render={<Link to={`/exam2/${id}/print`} />} nativeButton={false}>Print exam</Button>
-            <Button variant="outline" onClick={handleSyncGradebook} disabled={syncing}>
-              {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BookOpenCheck className="mr-2 h-4 w-4" />}
-              Sync to Gradebook
-            </Button>
-            <Button variant="secondary" className="text-aubergine-600 bg-aubergine-50 hover:bg-aubergine-100 dark:bg-aubergine-900/20 dark:hover:bg-aubergine-900/40" render={<Link to={`/exams/${id}/preview`} />} nativeButton={false}>
-              <Play className="mr-2 h-4 w-4" /> Preview
-            </Button>
-            <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900/40 dark:hover:bg-red-900/20" onClick={handleDelete}>
-              <Trash2 className="mr-2 h-4 w-4" /> Archive
-            </Button>
-          </div>
-        </div>
+          <nav className="exam-commandbar" aria-label="Exam actions">
+            <div className="exam-command-groups">
+              <DropdownMenu>
+                <DropdownMenuTrigger className="exam-command-trigger"><Settings size={16} />Manage exam<ChevronDown size={14} /></DropdownMenuTrigger>
+                <DropdownMenuContent className="exam-command-menu" sideOffset={10}>
+                  <div className="exam-menu-heading">EXAM WORKSPACE</div>
+                  <DropdownMenuItem render={<Link to={`/exam2/${id}/author`} />} nativeButton={false}><Edit /><span><strong>Author content</strong><small>Question bank, content & rubrics</small></span></DropdownMenuItem>
+                  <DropdownMenuItem render={<Link to={`/exam2/${id}/schedule`} />} nativeButton={false}><CalendarClock /><span><strong>Schedule</strong><small>Availability, access & release</small></span></DropdownMenuItem>
+                  <DropdownMenuItem render={<Link to={`/exam2/${id}/print`} />} nativeButton={false}><Printer /><span><strong>Print exam</strong><small>Prepare a paper copy</small></span></DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem variant="destructive" onClick={handleDelete}><Trash2 /><span><strong>Archive</strong><small>Keep records, stop new attempts</small></span></DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="exam-command-trigger"><ListChecks size={16} />Responses<ChevronDown size={14} /></DropdownMenuTrigger>
+                <DropdownMenuContent className="exam-command-menu" sideOffset={10}>
+                  <div className="exam-menu-heading">STUDENT RESPONSES</div>
+                  <DropdownMenuItem render={<Link to={`/exam2/${id}/invigilator`} />} nativeButton={false}><Radio /><span><strong>Monitor attempts</strong><small>Follow students during the exam</small></span></DropdownMenuItem>
+                  <DropdownMenuItem render={<Link to={`/exam2/grading?examId=${id}`} />} nativeButton={false}><CheckCircle2 /><span><strong>Grade responses</strong><small>Review answers & award marks</small></span></DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSyncGradebook} disabled={syncing}>{syncing ? <Loader2 className="animate-spin" /> : <BookOpenCheck />}<span><strong>{syncing ? 'Syncing…' : 'Sync to Gradebook'}</strong><small>Transfer each student’s best score</small></span></DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <div className="exam-command-primary">
+              <Link className="exam-preview-link" to={`/exams/${id}/preview`}><Play size={15} />Preview</Link>
+              <Link className="exam-studio-link" to={`/exams/${id}/studio`}><Edit size={16} />Open in Studio</Link>
+            </div>
+          </nav>
+        </header>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

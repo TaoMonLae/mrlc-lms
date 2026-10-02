@@ -1,19 +1,19 @@
 /**
  * Guided Studio — a ground-up redesign of the exam authoring experience.
  *
- * A three-pane builder (setup rail · focus editor · live student preview) that
+ * A focused builder (question outline · editor · contextual live preview) that
  * lets a teacher build, schedule and configure grading for an exam while
  * trying student answer controls without creating an attempt. Wired to the existing `/api/exams`
  * endpoints (load: GET /api/exams/:id, save: PUT /api/exams/:id) and the AI
  * assistant (POST /api/ai/chat) for "Generate similar".
  *
- * References and verification: docs/exams/AUDIT-DESIGN.md.
+ * References and verification: docs/exams/STUDIO-REDESIGN-2026-10-02.md.
  */
 import { useEffect, useMemo, useRef, useState, useId, Children, cloneElement, isValidElement } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import {
-  ArrowLeft, ArrowUp, ArrowDown, Copy, Check, ChevronDown, GripVertical, Loader2, Plus, Sparkles, Trash2, X,
-  FileText, ListChecks, CalendarClock, Award, Play,
+  ArrowLeft, ArrowUp, ArrowDown, Copy, Check, ChevronDown, Loader2, Plus, Sparkles, Trash2, X,
+  FileText, ListChecks, CalendarClock, Play, PanelRight, Eye, CircleDot, SquareCheck, AlignLeft, TextCursorInput, ChevronRight, BookOpen,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -172,6 +172,7 @@ export default function GuidedStudio() {
   // ui
   const [step, setStep] = useState<StepKey>('questions');
   const [showTypePicker, setShowTypePicker] = useState(false);
+  const [previewVisible, setPreviewVisible] = useState(true);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'phone'>('desktop');
   const [showMathTools, setShowMathTools] = useState(false);
   const [drag, setDrag] = useState<{ from: number; over: number } | null>(null);
@@ -281,7 +282,6 @@ export default function GuidedStudio() {
   const autoPoints = useMemo(() => questions.filter((q) => isObjective(q.uiType)).reduce((s, q) => s + (Number(q.points) || 0), 0), [questions]);
   const manualPoints = totalPoints - autoPoints;
   const passPoints = Math.round((passMark / 100) * totalPoints * 100) / 100;
-  const estMinutes = duration || Math.max(5, questions.length * 2);
 
   const windowInfo = useMemo(() => {
     if (!opensAt || !closesAt) return null;
@@ -300,9 +300,10 @@ export default function GuidedStudio() {
     grading: Number.isFinite(passMark) && passMark >= 0 && passMark <= 100,
   };
   const doneCount = Object.values(stepsDone).filter(Boolean).length;
-  const readiness = Math.round((doneCount / 4) * 100);
+  const showLivePreview = step === 'questions' && questions.length > 0 && previewVisible;
 
-  useEffect(() => { setShowMathTools(hasMath(questions[sel]?.text) || questions[sel]?.options.some((o) => hasMath(o.t))); }, [sel]); // eslint-disable-line
+  // Keep the flag boolean: undefined would activate MathField's default toolbar.
+  useEffect(() => { setShowMathTools(Boolean(hasMath(questions[sel]?.text) || questions[sel]?.options.some((o) => hasMath(o.t)))); }, [sel, questions[sel]?.id]); // eslint-disable-line
 
   /* ---------------- question mutations ---------------- */
   const update = (i: number, patch: Partial<Question>) => setQuestions((prev) => prev.map((q, idx) => (idx === i ? { ...q, ...patch } : q)));
@@ -535,11 +536,12 @@ export default function GuidedStudio() {
     <div className="guided-studio" style={{ background: C.canvas, minHeight: '100vh', padding: '20px 16px', fontFamily: 'Inter, ui-sans-serif, system-ui' }}>
       <div className="gs-shell" style={{ maxWidth: 1600, margin: '0 auto', background: C.surface, border: `1px solid ${C.border}`, borderRadius: 20, boxShadow: '0 20px 50px -30px rgba(0,0,0,.35)', overflow: 'hidden' }}>
 
-        <div className="gs-breadcrumb"><button onClick={() => leaveStudio(`/exams/${id}`)}><ArrowLeft size={15} /> Exam overview</button><span> / </span><span>Exam Studio</span><span className="gs-save-state" role="status">{saving || saveMessage.startsWith('Save incomplete') ? saveMessage : dirty ? 'Unsaved changes' : saveMessage || 'Ready to edit'}</span></div>
+        <header className="gs-studio-header">
+        <div className="gs-breadcrumb"><button onClick={() => leaveStudio(`/exams/${id}`)}><ArrowLeft size={15} /> Exam overview</button><span> / </span><span className="gs-studio-label">Exam Studio</span><span className="gs-save-state" role="status">{saving || saveMessage.startsWith('Save incomplete') ? saveMessage : dirty ? 'Unsaved changes' : saveMessage || 'Ready to edit'}</span></div>
         {/* ---------- Top bar ---------- */}
         <div className="gs-topbar" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '15px 24px', borderBottom: `1px solid ${C.border2}` }}>
           <div style={{ width: 34, height: 34, borderRadius: 9, background: C.purple, display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 900, flexShrink: 0 }}>
-            {(title[0] || 'E').toUpperCase()}
+            <FileText size={20} />
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <input
@@ -565,44 +567,32 @@ export default function GuidedStudio() {
           </button>
         </div>
 
-        {/* ---------- Readiness ribbon ---------- */}
-        <div className="gs-readiness" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 24px', background: C.tintBar, borderBottom: `1px solid ${C.border}` }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: C.purpleText, letterSpacing: '.02em' }}>Exam readiness</span>
-          <div style={{ flex: 1, height: 8, borderRadius: 999, background: C.tint100, overflow: 'hidden', maxWidth: 420 }}>
-            <div style={{ width: `${readiness}%`, height: '100%', background: C.purple, transition: 'width .3s' }} />
+        <nav className="gs-workflow" aria-label="Exam setup">
+          <div className="gs-workflow-steps">
+            <StepRow number={1} label="Details" done={stepsDone.details} active={step === 'details'} onClick={() => setStep('details')} />
+            <StepRow number={2} label="Questions" done={stepsDone.questions} active={step === 'questions'} onClick={() => setStep('questions')} />
+            <StepRow number={3} label="Schedule" done={stepsDone.schedule} active={step === 'schedule'} onClick={() => setStep('schedule')} />
+            <StepRow number={4} label="Grading & release" done={stepsDone.grading} active={step === 'grading'} onClick={() => setStep('grading')} />
           </div>
-          <span style={{ fontSize: 12, color: C.muted }}>{doneCount} of 4 steps</span>
-          <span style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 600, color: C.ink }}>{totalPoints} pts · ~{estMinutes} min</span>
-        </div>
+          <span className="gs-workflow-status">{doneCount === 4 ? <Check size={14} /> : <span className="gs-progress-dots" aria-hidden="true">{[0, 1, 2, 3].map(n => <i key={n} data-done={n < doneCount} />)}</span>}{doneCount} of 4 ready</span>
+        </nav>
+        </header>
 
-        {/* ---------- Body grid ---------- */}
-        <div className="gs-workspace" style={{ display: 'grid', gridTemplateColumns: '220px minmax(0, 1fr) 300px', minHeight: 560 }}>
-
-          {/* Left rail */}
-          <div className="gs-rail" style={{ background: C.panel, borderRight: `1px solid ${C.border2}`, padding: '18px 14px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <div>
-              <RailLabel>Setup</RailLabel>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 8 }}>
-                <StepRow icon={<FileText size={15} />} label="Details" done={stepsDone.details} active={step === 'details'} onClick={() => setStep('details')} />
-                <StepRow icon={<ListChecks size={15} />} label={`Questions${questions.length ? ` (${questions.length})` : ''}`} done={stepsDone.questions} active={step === 'questions'} onClick={() => setStep('questions')} />
-                <StepRow icon={<CalendarClock size={15} />} label="Schedule" done={stepsDone.schedule} active={step === 'schedule'} onClick={() => setStep('schedule')} />
-                <StepRow icon={<Award size={15} />} label="Grading & release" done={stepsDone.grading} active={step === 'grading'} onClick={() => setStep('grading')} />
-              </div>
-            </div>
-
-            <div className="gs-tools"><button onClick={() => leaveStudio(`/exam2/${id}/author`)}>Question bank & rubrics ↗</button><button onClick={() => leaveStudio(`/exam2/${id}/schedule`)}>Access codes & advanced schedule ↗</button></div>
+        <div className={`gs-workspace${showLivePreview ? ' gs-with-preview' : ''}`}>
+          <aside className="gs-rail" aria-label="Question outline">
             <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <RailLabel>Outline</RailLabel>
-                <span style={{ fontSize: 11, color: C.muted2 }}>{questions.length} q</span>
+                <RailLabel>Exam outline</RailLabel>
+                <span style={{ fontSize: 11, color: C.muted2 }}>{questions.length}</span>
               </div>
-              <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 5, marginTop: 8, overflow: 'auto' }}>
+              <div className="gs-outline-list">
+                {!questions.length && <div className="gs-outline-empty"><FileText size={22} /><strong>Your exam starts here</strong><p>Add a question to begin building your outline.</p></div>}
                 {questions.map((q, i) => {
                   const td = typeDef(q.uiType);
                   const isOver = drag?.over === i && drag.from !== i;
                   return (
-                    <div key={q.id} role="button" tabIndex={0} aria-label={`Edit question ${i + 1}`} aria-current={sel === i ? 'true' : undefined} onKeyDown={e => { if (e.target !== e.currentTarget) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSel(i); setStep('questions'); } }} draggable={!hasAttempts}
-                      onDragStart={() => !hasAttempts && setDrag({ from: i, over: i })}
+                    <div className="gs-outline-item" key={q.id} role="button" tabIndex={0} aria-label={`Edit question ${i + 1}`} aria-current={step === 'questions' && sel === i ? 'true' : undefined} onKeyDown={e => { if (e.target !== e.currentTarget) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSel(i); setStep('questions'); } }} draggable={!hasAttempts && !saving}
+                      onDragStart={() => !hasAttempts && !saving && setDrag({ from: i, over: i })}
                       onDragOver={(e) => { e.preventDefault(); setDrag((d) => (d ? { ...d, over: i } : d)); }}
                       onDrop={onDrop} onDragEnd={() => setDrag(null)}
                       onClick={() => { setSel(i); setStep('questions'); }}
@@ -614,12 +604,9 @@ export default function GuidedStudio() {
                         borderTop: isOver ? `2px solid ${C.purple}` : undefined,
                         opacity: drag?.from === i ? 0.4 : 1, transition: 'all .12s',
                       }}>
-                      <GripVertical size={13} style={{ color: '#c8c8c8', flexShrink: 0 }} />
-                      <span style={{ width: 7, height: 7, borderRadius: 999, background: td.color, flexShrink: 0 }} />
-                      <span style={{ fontSize: 12, fontWeight: sel === i ? 700 : 600, color: sel === i ? C.purpleText : C.ink, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {i + 1} · {q.text || td.label}
-                      </span>
-                      <span style={{ fontSize: 11, color: C.muted2 }}>{q.points}pt</span>
+                      <span className="gs-question-number">{String(i + 1).padStart(2, '0')}</span>
+                      <span className="gs-outline-copy"><strong>{q.text || 'Untitled question'}</strong><small>{td.label} · {q.points} pts</small></span>
+                      <span className="gs-question-health" title={questionIssue(q) || 'Question ready'} aria-label={questionIssue(q) ? 'Needs attention' : 'Question ready'}>{questionIssue(q) ? <span /> : <Check size={12} />}</span>
                       <button disabled={hasAttempts || saving} aria-label={`Delete question ${i + 1}`} onClick={(e) => { e.stopPropagation(); if (window.confirm(`Delete question ${i + 1}?`)) { removeQuestion(i); setDirty(true); } }} style={{ border: 'none', background: 'transparent', color: '#cdcdcd', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                         <Trash2 size={13} />
                       </button>
@@ -631,23 +618,26 @@ export default function GuidedStudio() {
               {/* Add question + type picker — kept OUTSIDE the scroll list above so
                   the popover is never clipped; it opens upward for the same reason. */}
               <div style={{ position: 'relative', marginTop: 8, flexShrink: 0 }}>
-                <button disabled={hasAttempts || saving} onClick={() => setShowTypePicker((v) => !v)}
+                <button className="gs-add-question" disabled={hasAttempts || saving} onClick={() => setShowTypePicker((v) => !v)}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 10, border: `1.5px dashed ${C.tint100}`, background: C.tint7, color: C.purpleText, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                   <Plus size={14} /> Add question
                 </button>
 
               </div>
             </div>
-          </div>
+            <div className="gs-exam-totals"><div><strong>{totalPoints}</strong><span>Total points</span></div><div><strong>{duration}<small> min</small></strong><span>Time limit</span></div></div>
+            <div className="gs-tools"><button onClick={() => leaveStudio(`/exam2/${id}/author`)}><BookOpen size={14} /><span>Question bank & rubrics</span><ChevronRight size={13} /></button><button onClick={() => leaveStudio(`/exam2/${id}/schedule`)}><CalendarClock size={14} /><span>Advanced schedule</span><ChevronRight size={13} /></button></div>
+          </aside>
 
           {/* Center editor */}
-          <div className="gs-editor" style={{ padding: '26px 32px', overflow: 'auto' }}>
+          <div className={`gs-editor${step === 'questions' && !cur ? ' gs-editor-empty' : ''}`}>
+            <div className="gs-editor-paper">
             {hasAttempts && <p className="gs-notice">Students have started this exam. Questions are read-only to protect their answers.</p>}
             <fieldset disabled={saving} style={{ minWidth: 0 }}>
             {step === 'details' && <DetailsStep {...{ title, setTitle, subjectId, setSubjectId, classId, setClassId, examType, setExamType, subjects, classes, duration, setDuration, instructions, setInstructions, audience, questionTheme, setQuestionTheme, applyPreset, hasAttempts, goNext: () => setStep('questions') }} />}
             {step === 'questions' && (
               cur ? (
-                <><div className="gs-question-actions"><span>Question {sel + 1} of {questions.length}</span><button disabled={hasAttempts || sel === 0} aria-label="Move question up" onClick={() => { setQuestions(prev => { const next = [...prev]; [next[sel - 1], next[sel]] = [next[sel], next[sel - 1]]; return next; }); setSel(sel - 1); setDirty(true); }}><ArrowUp size={16} /></button><button disabled={hasAttempts || sel === questions.length - 1} aria-label="Move question down" onClick={() => { setQuestions(prev => { const next = [...prev]; [next[sel], next[sel + 1]] = [next[sel + 1], next[sel]]; return next; }); setSel(sel + 1); setDirty(true); }}><ArrowDown size={16} /></button><button disabled={hasAttempts} onClick={() => { setQuestions(prev => [...prev, { ...cur, id: crypto.randomUUID(), options: cur.options.map(o => ({ ...o })) }]); setSel(questions.length); setDirty(true); }}><Copy size={15} /> Duplicate</button></div><fieldset disabled={hasAttempts} style={{ minWidth: 0 }}>
+                <><div className="gs-question-actions"><span className="gs-editor-position"><span className="gs-editor-index">{String(sel + 1).padStart(2, '0')}</span><span>Question {sel + 1} of {questions.length}<small>{isObjective(cur.uiType) ? 'Automatically graded' : 'Teacher graded'}</small></span></span><button className="gs-preview-toggle" aria-label={previewVisible ? 'Hide live preview' : 'Show live preview'} aria-expanded={previewVisible} aria-controls="studio-live-preview" onClick={() => setPreviewVisible(v => !v)}><PanelRight size={16} /></button><button disabled={hasAttempts || sel === 0} aria-label="Move question up" onClick={() => { setQuestions(prev => { const next = [...prev]; [next[sel - 1], next[sel]] = [next[sel], next[sel - 1]]; return next; }); setSel(sel - 1); setDirty(true); }}><ArrowUp size={16} /></button><button disabled={hasAttempts || sel === questions.length - 1} aria-label="Move question down" onClick={() => { setQuestions(prev => { const next = [...prev]; [next[sel], next[sel + 1]] = [next[sel + 1], next[sel]]; return next; }); setSel(sel + 1); setDirty(true); }}><ArrowDown size={16} /></button><button disabled={hasAttempts} onClick={() => { setQuestions(prev => [...prev, { ...cur, id: crypto.randomUUID(), options: cur.options.map(o => ({ ...o })) }]); setSel(questions.length); setDirty(true); }}><Copy size={15} /> Duplicate</button></div><fieldset disabled={hasAttempts} style={{ minWidth: 0 }}>
                 <QuestionEditor
                   q={cur} index={sel} total={questions.length}
                   isMathSubject={isMathSubject} showMathTools={showMathTools} setShowMathTools={setShowMathTools}
@@ -663,29 +653,29 @@ export default function GuidedStudio() {
             {step === 'grading' && (
               <GradingStep {...{ totalPoints, autoPoints, manualPoints, passMark, setPassMark, passPoints, release, setRelease, releaseAt, setReleaseAt, showAnswers, setShowAnswers, goPublish: () => save('PUBLISHED') }} />
             )}
-            <div className="gs-editor-save"><span>{dirty ? 'Changes are not saved yet.' : 'Your exam is up to date.'}</span><button disabled={saving} onClick={() => save()}>{saving ? 'Saving…' : 'Save this exam'}</button></div>
             </fieldset>
+            </div>
           </div>
 
           {/* Right live preview */}
-          <div className="gs-live-preview" style={{ borderLeft: `1px solid ${C.border2}`, background: C.preview, padding: '18px 18px', overflow: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <RailLabel>Live student preview</RailLabel>
-              <button onClick={() => setPreviewDevice((d) => (d === 'desktop' ? 'phone' : 'desktop'))} style={{ fontSize: 11, fontWeight: 700, color: C.purpleText, background: 'transparent', border: 'none', cursor: 'pointer' }}>
-                {previewDevice === 'desktop' ? 'Desktop view' : 'Phone view'}
-              </button>
+          {showLivePreview && <aside id="studio-live-preview" className="gs-live-preview" aria-label="Live student preview">
+            <div className="gs-preview-heading"><div><Eye size={16} /><RailLabel>Student view</RailLabel></div><span className="gs-live-badge">Live</span></div>
+            <div className="gs-device-switch" aria-label="Preview width">
+              <button aria-pressed={previewDevice === 'desktop'} onClick={() => setPreviewDevice('desktop')}>Desktop view</button>
+              <button aria-pressed={previewDevice === 'phone'} onClick={() => setPreviewDevice('phone')}>Phone view</button>
             </div>
             <div style={{ maxWidth: previewDevice === 'phone' ? 230 : '100%', margin: previewDevice === 'phone' ? '0 auto' : undefined }}>
-              <PreviewCard q={cur} index={sel} total={questions.length} minutes={estMinutes} />
+              <PreviewCard q={cur} index={sel} total={questions.length} minutes={duration} />
             </div>
-            <p style={{ textAlign: 'center', fontSize: 11.5, color: C.muted2, marginTop: 12 }}>Try the answer controls here. Preview answers are not saved.</p>
-          </div>
+            <p className="gs-preview-note">Try answering as a student.<br />Preview answers are not saved.</p>
+            <button className="gs-preview-expand" onClick={() => setPlayerOpen(true)}><Play size={13} /> Open full preview <ChevronRight size={14} /></button>
+          </aside>}
         </div>
       </div>
 
       <Dialog open={showTypePicker} onOpenChange={setShowTypePicker}><DialogContent className="sm:max-w-xl"><DialogTitle>Add a question</DialogTitle><DialogDescription>Choose how students will respond.</DialogDescription><div className="grid grid-cols-2 gap-2">{TYPES.map(t => <button key={t.key} className="rounded border p-4 text-left hover:bg-muted" onClick={() => addQuestion(t.key)}>{t.label}</button>)}</div></DialogContent></Dialog>
       {/* Player overlay */}
-      {playerOpen && <StudentPlayer questions={questions} title={title} minutes={estMinutes} onClose={() => setPlayerOpen(false)} />}
+      {playerOpen && <StudentPlayer questions={questions} title={title} minutes={duration} onClose={() => setPlayerOpen(false)} />}
 
       {/* Publish modal */}
       {published && (
@@ -718,20 +708,11 @@ function StatusPill({ status }: { status: string }) {
   return <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: s.fg, background: s.bg, padding: '5px 10px', borderRadius: 999 }}>{status.charAt(0) + status.slice(1).toLowerCase()}</span>;
 }
 
-function StepRow({ icon, label, done, active, onClick }: { icon: React.ReactNode; label: string; done: boolean; active: boolean; onClick: () => void }) {
-  return (
-    <button aria-current={active ? 'step' : undefined} onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 9px', borderRadius: 10, border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', background: active ? C.tint100 : 'transparent' }}>
-      <span style={{
-        width: 20, height: 20, borderRadius: 999, display: 'grid', placeItems: 'center', flexShrink: 0,
-        background: done ? C.green : active ? C.purple : C.surface,
-        border: done || active ? 'none' : '2px solid #dcdcdc',
-        color: '#fff',
-      }}>
-        {done ? <Check size={12} strokeWidth={3} /> : active ? <span style={{ width: 6, height: 6, borderRadius: 999, background: '#fff' }} /> : null}
-      </span>
-      <span style={{ fontSize: 13, fontWeight: active ? 700 : 600, color: active ? C.purpleText : C.ink }}>{label}</span>
-    </button>
-  );
+function StepRow({ number, label, done, active, onClick }: { number: number; label: string; done: boolean; active: boolean; onClick: () => void }) {
+  return <button className="gs-step" aria-current={active ? 'step' : undefined} aria-label={label} onClick={onClick}>
+    <span className="gs-step-number" data-done={done}>{done ? <Check size={13} /> : String(number).padStart(2, '0')}</span>
+    <span>{label}</span>
+  </button>;
 }
 
 function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
@@ -762,6 +743,7 @@ function QuestionEditor(props: {
   return (
     <div>
       {questionIssue(q) && <p className="gs-notice" role="status">{questionIssue(q)}</p>}
+      <div className="gs-question-settings">
       <Field label="Question type">
         <select aria-label="Question type" value={q.uiType} onChange={e => switchType(e.target.value as UIType)} style={{ width: '100%', padding: '10px 12px', border: `1px solid ${C.border}`, borderRadius: 6 }}>
           {TYPES.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
@@ -784,6 +766,8 @@ function QuestionEditor(props: {
         </div>
       )}
 
+      </div>
+
       {/* QUESTION label + math toggle */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <RailLabel>Question</RailLabel>
@@ -799,20 +783,6 @@ function QuestionEditor(props: {
         showToolbar={showMathTools}
       />
       <p style={{ fontSize: 11, color: C.muted2, margin: '6px 0 20px' }}>Inline $…$ · display $$…$$</p>
-
-      <div className="gs-detail-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(180px,.7fr)', gap: 14, marginBottom: 20 }}>
-        <div>
-          <RailLabel>Reading passage or source (optional)</RailLabel>
-          <textarea value={q.passageText || ''} onChange={(e) => update({ passageText: e.target.value })} rows={5}
-            placeholder="Paste a reading passage, source text, chart description, or scenario. Students see it beside the question."
-            style={{ width: '100%', marginTop: 8, border: `1px solid ${C.border3}`, borderRadius: 12, padding: '10px 12px', fontSize: 13, outline: 'none', resize: 'vertical', fontFamily: 'inherit', color: C.ink, background: C.surface }} />
-        </div>
-        <div>
-          <RailLabel>Question picture (optional)</RailLabel>
-          <div style={{ marginTop: 8 }}><QuestionImageField value={q.imageUrl} onChange={(imageUrl) => update({ imageUrl })} /></div>
-          <p style={{ fontSize: 10.5, color: C.muted, marginTop: 6 }}>PNG, JPG, WebP, or GIF · up to 10 MB.</p>
-        </div>
-      </div>
 
       {/* type-specific editors */}
       {optionLike && (
@@ -864,6 +834,24 @@ function QuestionEditor(props: {
         </div>
       )}
 
+      <details className="gs-supporting-material" open={q.passageText || q.imageUrl ? true : undefined}>
+        <summary><BookOpen size={15} /><span>Passage & image</span><small>Optional supporting material</small><ChevronDown size={14} /></summary>
+      <div className="gs-detail-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(180px,.7fr)', gap: 14, marginBottom: 20 }}>
+        <div>
+          <RailLabel>Reading passage or source (optional)</RailLabel>
+          <textarea value={q.passageText || ''} onChange={(e) => update({ passageText: e.target.value })} rows={5}
+            placeholder="Paste a reading passage, source text, chart description, or scenario. Students see it beside the question."
+            style={{ width: '100%', marginTop: 8, border: `1px solid ${C.border3}`, borderRadius: 12, padding: '10px 12px', fontSize: 13, outline: 'none', resize: 'vertical', fontFamily: 'inherit', color: C.ink, background: C.surface }} />
+        </div>
+        <div>
+          <RailLabel>Question picture (optional)</RailLabel>
+          <div style={{ marginTop: 8 }}><QuestionImageField value={q.imageUrl} onChange={(imageUrl) => update({ imageUrl })} /></div>
+          <p style={{ fontSize: 10.5, color: C.muted, marginTop: 6 }}>PNG, JPG, WebP, or GIF · up to 10 MB.</p>
+        </div>
+      </div>
+
+      </details>
+
       {/* footer */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 26, paddingTop: 18, borderTop: `1px solid ${C.border2}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -889,11 +877,17 @@ function EmptyEditor({ onAdd }: { onAdd: (type: UIType) => void }) {
     DRAG: ['Fill in the blanks', 'Place words from a word bank'], DROPDOWN: ['Drop-down', 'Choose from a list'],
     HOTSPOT: ['Multiple selection', 'Choose all correct answers'], EXTENDED: ['Extended response', 'Evidence and reasoning'],
   };
+  const icons = { MCQ: CircleDot, TF: Check, SHORT: AlignLeft, ESSAY: FileText, DRAG: TextCursorInput, DROPDOWN: ChevronDown, HOTSPOT: SquareCheck, EXTENDED: BookOpen };
   return <motion.div className="gs-empty" initial={reduceMotion ? false : { opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .18 }}>
-    <ListChecks size={28} style={{ color: C.purpleText }} />
-    <h2>Build your first question</h2>
-    <p>Start with a question type. Add your prompt and answer key, then try it in the student preview.</p>
-    <div className="gs-types">{TYPES.map(t => <button key={t.key} onClick={() => onAdd(t.key)}><Plus size={16} style={{ color: C.purpleText, flexShrink: 0 }} /><span><strong>{labels[t.key][0]}</strong><small>{labels[t.key][1]}</small></span></button>)}</div>
+    <div className="gs-empty-intro"><span className="gs-kicker"><ListChecks size={15} /> QUESTION BUILDER</span>
+      <h2>Build your first question</h2>
+      <p>What would you like to assess? Choose a response type, then add your question and answer key.</p>
+    </div>
+    <div className="gs-type-groups">{[true, false].map(objective => <section key={String(objective)} className="gs-type-group">
+      <div className="gs-type-group-heading"><h3>{objective ? 'Selected responses' : 'Written responses'}</h3><span>{objective ? 'Auto graded' : 'Teacher graded'}</span></div>
+      <div className="gs-types">{TYPES.filter(t => t.objective === objective).map(t => { const Icon = icons[t.key]; return <button key={t.key} onClick={() => onAdd(t.key)}><span className="gs-type-icon"><Icon size={19} /></span><span><strong>{labels[t.key][0]}</strong><small>{labels[t.key][1]}</small></span><Plus size={15} className="gs-type-add" /></button>; })}</div>
+    </section>)}</div>
+    <div className="gs-empty-hint"><Eye size={16} /><span>See it from the student’s side. A live preview appears as you build.</span></div>
   </motion.div>;
 }
 
