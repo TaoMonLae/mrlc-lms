@@ -322,7 +322,7 @@ export default function StudentHomework() {
       item.status === "OPEN" && item.mySubmission?.status !== "MARKED";
     const isOpen = openId === item.id;
     return (
-      <article key={item.id} className="hw-student-card">
+      <article key={item.id} className="hw-student-card" data-open={isOpen}>
         <p className="hw-eyebrow mb-3">
           {item.subjectName || "Independent learning"} / Due{" "}
           {formatDateOnly(item.dueDate)}
@@ -561,10 +561,10 @@ export default function StudentHomework() {
   };
 
   return (
-    <div className="hw-workspace">
+    <div className="hw-workspace hw-student-workspace">
       <HomeworkMasthead
         audience="Student desk"
-        title="A little progress, every day."
+        title="My homework"
         description="Your assignments, next steps, and teacher feedback — together in one place."
       />
       {focusedAssignment && (

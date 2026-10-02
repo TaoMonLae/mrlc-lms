@@ -380,13 +380,11 @@ export default function HomeworkDetail() {
       return submission?.status.toLowerCase() === studentFilter;
     return true;
   });
-  const studentsWithWork = data.class.students.filter((student) =>
-    Boolean(subFor(student.id)),
-  );
-  const reviewIndex = studentsWithWork.findIndex(
+  const reviewStudents = data.class.students;
+  const reviewIndex = reviewStudents.findIndex(
     (student) => student.id === reviewStudentId,
   );
-  const reviewStudent = reviewIndex >= 0 ? studentsWithWork[reviewIndex] : null;
+  const reviewStudent = reviewIndex >= 0 ? reviewStudents[reviewIndex] : null;
   const reviewSubmission = reviewStudent ? subFor(reviewStudent.id) : null;
   const reviewFiles = filesForSubmission(reviewSubmission);
   const reviewFile =
@@ -402,17 +400,17 @@ export default function HomeworkDetail() {
     : { score: "", feedback: "" };
 
   const moveReview = (direction: -1 | 1) => {
-    if (!studentsWithWork.length) return;
+    if (!reviewStudents.length) return;
     const nextIndex =
       reviewIndex < 0
         ? 0
-        : (reviewIndex + direction + studentsWithWork.length) %
-          studentsWithWork.length;
-    openReview(studentsWithWork[nextIndex].id);
+        : (reviewIndex + direction + reviewStudents.length) %
+          reviewStudents.length;
+    openReview(reviewStudents[nextIndex].id);
   };
 
   return (
-    <div className="hw-workspace">
+    <div className="hw-workspace hw-detail">
       <div>
         <Button
           variant="ghost"
@@ -546,9 +544,7 @@ export default function HomeworkDetail() {
                   : " · check-off (no marks)"}
               </p>
               {!reviewing && data.instructions && (
-                <p className="mt-2 max-w-2xl whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">
-                  {data.instructions}
-                </p>
+                <details className="hw-brief"><summary>Assignment instructions</summary><p>{data.instructions}</p></details>
               )}
               {data.attachmentUrl && (
                 <HomeworkFileLink
@@ -633,25 +629,20 @@ export default function HomeworkDetail() {
         )}
       </div>
 
-      {!reviewing && <><div className="hw-stats">
-        {[
-          ["Needs review", submittedCount, "text-sky-600"],
-          ["Marked", markedCount, "text-emerald-600"],
-          ["Redo", redoCount, "text-amber-600"],
-          [
-            "Missing",
-            data.class.students.filter((student) => !subFor(student.id)).length,
-            "text-rose-600",
-          ],
-        ].map(([label, value, color]) => (
-          <div key={String(label)}>
-            <p className={`text-xl font-bold ${color}`}>{value}</p>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-              {label}
-            </p>
-          </div>
+      {!reviewing && <>
+      <nav className="hw-status-strip" aria-label="Filter submissions">
+        {([
+          ["all", "All students", data.class.students.length],
+          ["submitted", "Needs review", submittedCount],
+          ["marked", "Marked", markedCount],
+          ["redo", "Changes requested", redoCount],
+          ["missing", "Missing", data.class.students.filter(student => !subFor(student.id)).length],
+        ] as const).map(([key, label, count]) => (
+          <button key={key} type="button" aria-pressed={studentFilter === key} onClick={() => setStudentFilter(key)}>
+            <span>{label}</span><strong>{count}</strong>
+          </button>
         ))}
-      </div>
+      </nav>
       <div className="hw-toolbar">
         <Button
           className="hw-primary"
@@ -716,28 +707,12 @@ export default function HomeworkDetail() {
           onChange={(e) => setStudentQuery(e.target.value)}
           placeholder="Search student name or code"
         />
-        <Select
-          value={studentFilter}
-          onValueChange={(value) =>
-            setStudentFilter(value as typeof studentFilter)
-          }
-        >
-          <SelectTrigger className="w-full sm:w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All students</SelectItem>
-            <SelectItem value="submitted">Needs review</SelectItem>
-            <SelectItem value="marked">Marked</SelectItem>
-            <SelectItem value="redo">Redo</SelectItem>
-            <SelectItem value="missing">Missing</SelectItem>
-          </SelectContent>
-        </Select>
+        <p className="hw-roster-count" role="status">{filteredStudents.length} of {data.class.students.length} students</p>
       </div>
 
       </>}
-      {reviewing && (!reviewStudent || !reviewSubmission) && <section className="hw-review p-8"><h2>Submission not found</h2><p className="hw-description">This student has not submitted work for this assignment.</p><Link to={`/teacher/homework/${id}`}>Back to assignment</Link></section>}
-      {reviewing && reviewStudent && reviewSubmission && (
+      {reviewing && !reviewStudent && <section className="hw-review p-8"><h2>Student not found</h2><p className="hw-description">This student is not in the assignment roster.</p><Link to={`/teacher/homework/${id}`}>Back to assignment</Link></section>}
+      {reviewing && reviewStudent && (
         <section className="hw-review">
           <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-5 py-4 dark:border-surface-raised dark:bg-surface-raised/40 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -747,21 +722,20 @@ export default function HomeworkDetail() {
                   {`${reviewStudent.user?.firstName ?? ""} ${reviewStudent.user?.lastName ?? ""}`.trim() ||
                     reviewStudent.studentCode}
                 </h2>
-                {reviewSubmission.status === "SUBMITTED" && (
+                {reviewSubmission?.status === "SUBMITTED" && (
                   <Badge variant="secondary">Needs review</Badge>
                 )}
-                {reviewSubmission.status === "MARKED" && (
+                {reviewSubmission?.status === "MARKED" && (
                   <Badge className="bg-emerald-500 text-white">Marked</Badge>
                 )}
-                {reviewSubmission.status === "REDO" && (
+                {reviewSubmission?.status === "REDO" && (
                   <Badge className="bg-amber-500 text-white">
                     Changes requested
                   </Badge>
                 )}
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                {reviewStudent.studentCode} · submitted{" "}
-                {new Date(reviewSubmission.submittedAt).toLocaleString()} ·{" "}
+                {reviewStudent.studentCode} · {reviewSubmission ? `Submitted ${new Date(reviewSubmission.submittedAt).toLocaleString()}` : "No online submission · record paper work here"} ·{" "}
                 {reviewFiles.length}{" "}
                 {reviewFiles.length === 1 ? "document" : "documents"}
               </p>
@@ -772,20 +746,20 @@ export default function HomeworkDetail() {
                 size="sm"
                 className="h-8 w-8 p-0"
                 onClick={() => moveReview(-1)}
-                disabled={studentsWithWork.length < 2}
+                disabled={reviewStudents.length < 2}
                 aria-label="Previous submission"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <span className="px-1 text-xs text-slate-500">
-                {reviewIndex + 1}/{studentsWithWork.length}
+                {reviewIndex + 1}/{reviewStudents.length}
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 className="h-8 w-8 p-0"
                 onClick={() => moveReview(1)}
-                disabled={studentsWithWork.length < 2}
+                disabled={reviewStudents.length < 2}
                 aria-label="Next submission"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -804,15 +778,15 @@ export default function HomeworkDetail() {
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-[minmax(0,1.5fr)_minmax(300px,0.75fr)]">
+          <div className="hw-review-layout">
             <div className="space-y-4 p-5 lg:border-r lg:border-slate-200 lg:dark:border-surface-raised">
-              {reviewSubmission.text && (
+              {reviewSubmission?.text && (
                 <div>
                   <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">
                     Student answer
                   </p>
                   <p className="whitespace-pre-wrap break-words rounded-lg bg-slate-50 p-3 text-sm text-slate-700 dark:bg-surface-raised dark:text-slate-200">
-                    {reviewSubmission.text}
+                    {reviewSubmission?.text}
                   </p>
                 </div>
               )}
@@ -914,14 +888,14 @@ export default function HomeworkDetail() {
                     </div>
                   )}
                 </div>
-              ) : !reviewSubmission.text ? (
+              ) : !reviewSubmission?.text ? (
                 <p className="rounded-lg border border-dashed border-slate-200 p-8 text-center text-sm text-slate-400 dark:border-surface-raised">
-                  This submission was recorded as handed in on paper.
+                  {reviewSubmission ? "This submission was recorded as handed in on paper." : "No online submission yet. If this student handed in work on paper, enter a score or feedback and mark it reviewed."}
                 </p>
               ) : null}
             </div>
 
-            <div className="space-y-4 bg-slate-50/60 p-5 dark:bg-surface-raised/20">
+            <div className="hw-feedback-panel space-y-4 p-5">
               <div>
                 <h3 className="font-bold text-slate-900 dark:text-white">
                   Teacher feedback
@@ -1031,7 +1005,7 @@ export default function HomeworkDetail() {
                   variant="outline"
                   className="text-amber-700 dark:text-amber-300"
                   onClick={() => mark(reviewStudent.id, "REDO")}
-                  disabled={busy !== null}
+                  disabled={busy !== null || !reviewSubmission}
                 >
                   <RotateCcw className="mr-2 h-4 w-4" /> Request changes
                 </Button>
@@ -1041,187 +1015,32 @@ export default function HomeworkDetail() {
         </section>
       )}
 
-      {!reviewing && <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo">
-        <table className="min-w-[760px] w-full text-left text-sm">
-          <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:bg-surface-raised/50">
-            <tr>
-              <th className="px-4 py-3">Student</th>
-              <th className="px-4 py-3">Submission</th>
-              {data.maxMarks != null && (
-                <th className="px-4 py-3 w-24">Score</th>
-              )}
-              <th className="px-4 py-3">Feedback</th>
-              <th className="px-4 py-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {filteredStudents.map((st) => {
-              const sub = subFor(st.id);
-              const submissionFiles = filesForSubmission(sub);
-              const name =
-                `${st.user?.firstName ?? ""} ${st.user?.lastName ?? ""}`.trim() ||
-                st.studentCode;
-              const d = drafts[st.id] ?? {
-                score: sub?.score != null ? String(sub.score) : "",
-                feedback: sub?.feedback ?? "",
-              };
-              // Compare calendar dates, not instants — a submission made
-              // later in the day on the due date shouldn't be flagged
-              // "late" just because it's past UTC midnight (see dates.ts).
-              const late =
-                sub &&
-                toLocalDateString(new Date(sub.submittedAt)) >
-                  data.dueDate.slice(0, 10);
-              return (
-                <tr
-                  key={st.id}
-                  className="align-top hover:bg-slate-50 dark:hover:bg-surface-raised/40"
-                >
-                  <td className="px-4 py-3">
-                    <p className="font-semibold text-slate-900 dark:text-white">
-                      {name}
-                    </p>
-                    <p className="font-mono text-[11px] text-slate-400">
-                      {st.studentCode}
-                    </p>
-                    {sub?.status === "MARKED" && (
-                      <Badge className="mt-1 bg-emerald-500 text-white">
-                        Marked
-                      </Badge>
-                    )}
-                    {sub?.status === "REDO" && (
-                      <Badge className="mt-1 bg-amber-500 text-white">
-                        Redo
-                      </Badge>
-                    )}
-                    {sub?.status === "SUBMITTED" && (
-                      <Badge className="mt-1" variant="secondary">
-                        Submitted{late ? " · late" : ""}
-                      </Badge>
-                    )}
-                    {!sub && (
-                      <Badge className="mt-1" variant="outline">
-                        Missing
-                      </Badge>
-                    )}
-                  </td>
-                  <td className="max-w-[260px] px-4 py-3">
-                    {sub ? (
-                      <div className="space-y-1">
-                        {sub.text && (
-                          <p className="whitespace-pre-wrap break-words text-xs text-slate-600 dark:text-slate-300">
-                            {sub.text}
-                          </p>
-                        )}
-                        {submissionFiles.length > 0 && (
-                          <p className="inline-flex items-center gap-1 text-xs text-aubergine-600">
-                            <Paperclip className="h-3 w-3" />
-                            {submissionFiles.length}{" "}
-                            {submissionFiles.length === 1
-                              ? "document"
-                              : "documents"}
-                          </p>
-                        )}
-                        <p className="text-[10px] text-slate-400">
-                          {new Date(sub.submittedAt).toLocaleString()}
-                        </p>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-slate-400">
-                        No submission yet (mark anyway if handed in on paper)
-                      </span>
-                    )}
-                  </td>
-                  {data.maxMarks != null && (
-                    <td className="px-4 py-3">
-                      <Input
-                        aria-label={`Score for ${name}`}
-                        disabled={busy !== null}
-                        type="number"
-                        min="0"
-                        max={data.maxMarks}
-                        className="h-8 w-20"
-                        value={d.score}
-                        placeholder="—"
-                        onChange={(e) =>
-                          setDrafts((prev) => ({
-                            ...prev,
-                            [st.id]: { ...d, score: e.target.value },
-                          }))
-                        }
-                      />
-                    </td>
-                  )}
-                  <td className="px-4 py-3">
-                    <Input
-                      aria-label={`Feedback for ${name}`}
-                      disabled={busy !== null}
-                      className="h-8"
-                      value={d.feedback}
-                      maxLength={5000}
-                      placeholder="Optional feedback"
-                      onChange={(e) =>
-                        setDrafts((prev) => ({
-                          ...prev,
-                          [st.id]: { ...d, feedback: e.target.value },
-                        }))
-                      }
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end gap-1.5">
-                      {sub && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8"
-                          disabled={busy !== null}
-                          render={<Link to={`/teacher/homework/${id}/review/${st.id}`} />}
-                          role="link"
-                          nativeButton={false}
-                        >
-                          <Eye className="mr-1 h-3.5 w-3.5" /> Review
-                        </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-emerald-600"
-                        disabled={busy !== null}
-                        onClick={() => mark(st.id, "MARKED")}
-                      >
-                        <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Mark
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 text-amber-600"
-                        disabled={busy !== null || !sub}
-                        onClick={() => mark(st.id, "REDO")}
-                        title="Send back for redo"
-                      >
-                        <RotateCcw className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-            {filteredStudents.length === 0 && (
-              <tr>
-                <td
-                  colSpan={data.maxMarks != null ? 5 : 4}
-                  className="px-4 py-10 text-center text-slate-500"
-                >
-                  {data.class.students.length === 0
-                    ? "No students in this class."
-                    : "No students match these filters."}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>}
+      {!reviewing && <section className="hw-roster" aria-label="Student submissions">
+        <div className="hw-roster-heading" aria-hidden="true"><span>Student</span><span>Submission</span><span>Score</span><span>Review</span></div>
+        {filteredStudents.map(st => {
+          const sub = subFor(st.id);
+          const files = filesForSubmission(sub);
+          const name = `${st.user?.firstName ?? ""} ${st.user?.lastName ?? ""}`.trim() || st.studentCode;
+          const late = sub && toLocalDateString(new Date(sub.submittedAt)) > data.dueDate.slice(0, 10);
+          const status = sub?.status ?? "MISSING";
+          return <article className="hw-roster-row" key={st.id}>
+            <div className="hw-roster-identity">
+              <span className="hw-initials" aria-hidden="true">{name.split(/\s+/).map(part => part[0]).slice(0, 2).join('')}</span>
+              <div><h2>{name}</h2><span className="hw-student-code">{st.studentCode}</span></div>
+            </div>
+            <div className="hw-roster-submission">
+              <span className="hw-status" data-status={status}>{status === "SUBMITTED" ? "Needs review" : status === "MARKED" ? "Marked" : status === "REDO" ? "Changes requested" : "Missing"}{late && status === "SUBMITTED" ? " · late" : ""}</span>
+              <p className="hw-submission-excerpt">{sub?.text || (files.length ? `${files.length} attached document${files.length === 1 ? '' : 's'}` : sub ? "Handed in on paper" : "No online submission")}</p>
+              {sub && <small>{formatDateOnly(sub.submittedAt)}{files.length > 0 && sub.text ? ` · ${files.length} attachment${files.length === 1 ? '' : 's'}` : ''}</small>}
+            </div>
+            <div className="hw-roster-score"><span className="hw-mobile-label">Score </span>{sub?.score != null ? <><strong>{sub.score}</strong><span> / {data.maxMarks ?? '—'}</span></> : <span>{data.maxMarks == null ? 'Check-off' : 'Not scored'}</span>}</div>
+            <Button size="sm" variant="outline" className="hw-roster-action" render={<Link to={`/teacher/homework/${id}/review/${st.id}`} />} role="link" nativeButton={false}>
+              {sub ? <><Eye className="mr-1 h-3.5 w-3.5" /> Review</> : <><Pencil className="mr-1 h-3.5 w-3.5" /> Record paper work</>}
+            </Button>
+          </article>;
+        })}
+        {!filteredStudents.length && <div className="hw-roster-empty"><p>{data.class.students.length ? "No students match these filters." : "No students in this class."}</p>{data.class.students.length > 0 && <Button variant="ghost" onClick={() => { setStudentQuery(''); setStudentFilter('all'); }}>Clear filters</Button>}</div>}
+      </section>}
     </div>
   );
 }

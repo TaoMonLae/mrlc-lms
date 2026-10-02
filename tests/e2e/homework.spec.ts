@@ -1,3 +1,4 @@
+import { CURRENT_RELEASE } from '../../src/data/releases';
 import { expect, test, type Page } from '@playwright/test';
 test.use({ serviceWorkers: 'block' });
 const file = { url: '/uploads/homework-media/00000000-0000-0000-0000-000000000001-00000000-0000-0000-0000-000000000002.txt', originalName: 'answer.txt', mimeType: 'text/plain', size: 12 };
@@ -10,24 +11,14 @@ async function darkTheme(page: Page) {
   await expect(page.getByRole('menuitem', { name: 'Dark', exact: true })).toHaveCount(0);
 }
 async function captureWorkspace(page: Page, path: string) {
-  // Do not snapshot/restore a Framer Motion entrance at opacity 0 and freeze it there.
+  await expect(page.locator('.hw-workspace')).toBeVisible();
   await expect.poll(() => page.locator('.hw-workspace').evaluate(el => {
     let opacity = 1;
     for (let node = el as HTMLElement; node; node = node.parentElement!) opacity *= Number(getComputedStyle(node).opacity);
     return opacity;
   })).toBe(1);
   await page.locator('#main-content').evaluate(el => el.scrollTo(0, 0));
-  // The app scrolls an inner main; expand only during capture to see the complete workspace.
-  const styles = await page.evaluate(() => {
-    const originals: [string, string | null][] = [];
-    for (let el = document.querySelector('.hw-workspace') as HTMLElement; el; el = el.parentElement!) {
-      const key = `capture-${originals.length}`; originals.push([key, el.getAttribute('style')]); el.dataset.captureId = key;
-      el.style.overflow = 'visible'; el.style.height = 'auto'; el.style.maxHeight = 'none';
-    }
-    return originals;
-  });
-  try { await page.locator('.hw-workspace').screenshot({ path }); }
-  finally { await page.evaluate(styles => { for (const [key, value] of styles) { const el = document.querySelector(`[data-capture-id="${key}"]`)!; if (value === null) el.removeAttribute('style'); else el.setAttribute('style', value); el.removeAttribute('data-capture-id'); } }, styles); }
+  await page.screenshot({ path, animations: 'disabled' });
 }
 async function fixture(page: Page, role = 'STUDENT', documentType = 'text', withQueue = false) {
   const user = { id: `${role}-homework-test`, role, firstName: role, lastName: 'Tester', isActive: true };
@@ -35,15 +26,17 @@ async function fixture(page: Page, role = 'STUDENT', documentType = 'text', with
   let data = structuredClone(assignment);
   if (documentType !== 'text') data.submissions[0].attachments = [{ ...file, url: file.url.replace(/\.txt$/, documentType === 'pdf' ? '.pdf' : '.png'), originalName: documentType === 'pdf' ? 'answer.pdf' : 'answer.png', mimeType: documentType === 'pdf' ? 'application/pdf' : 'image/png' }];
   if (withQueue) {
+    data.submissions[0].text = 'Evaporation turns water into vapour. '.repeat(100) + 'Complete answer ends here.';
+    data.class.students.push({ id: 'student-paper', studentCode: 'ST-003', user: { firstName: 'Paper', lastName: 'Student' } });
     data.class.students.push({ id: 'student-b', studentCode: 'ST-002', user: { firstName: 'Nai', lastName: 'Aung' } });
     data.submissions.push({ ...data.submissions[0], id: 'submission-b', studentId: 'student-b', text: 'Second student answer.' });
   }
   let mySubmission: any = null;
   let failSave = true;
-  await page.addInitScript(user => {
+  await page.addInitScript(({ user, releaseId }) => {
     sessionStorage.setItem('auth_token', 'homework-test'); sessionStorage.setItem('auth_user', JSON.stringify(user));
-    localStorage.setItem(`mrlc:release-seen:${user.id}`, '2026-09-06-language-quest-course-path');
-  }, user);
+    localStorage.setItem(`mrlc:release-seen:${user.id}`, releaseId);
+  }, { user, releaseId: CURRENT_RELEASE.id });
   await page.route('**/uploads/homework-media/**', route => {
     expect(route.request().headers().authorization).toBe('Bearer homework-test');
     if (route.request().url().endsWith('.png')) return route.fulfill({ contentType: 'image/png', body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aWKsAAAAASUVORK5CYII=', 'base64') });
@@ -62,8 +55,11 @@ async function fixture(page: Page, role = 'STUDENT', documentType = 'text', with
     if (path === '/api/homework/homework-a/mark') {
       const body = route.request().postDataJSON(); writes.push({ path, body });
       if (failSave) { failSave = false; return route.fulfill({ status: 500, json: { error: 'Could not save feedback. Try again.' } }); }
-      data.submissions[0] = { ...data.submissions[0], ...body };
-      return route.fulfill({ json: data.submissions[0] });
+      const existing = data.submissions.findIndex(sub => sub.studentId === body.studentId);
+      const saved = { id: `submission-${body.studentId}`, text: '', attachments: [], submittedAt: new Date().toISOString(), ...body };
+      if (existing >= 0) data.submissions[existing] = { ...data.submissions[existing], ...body };
+      else data.submissions.push(saved);
+      return route.fulfill({ json: saved });
     }
     if (path === '/api/homework/homework-a') return route.fulfill({ json: data });
     if (path === '/api/homework') return route.fulfill({ json: [data] });
@@ -156,6 +152,8 @@ test('review queue moves to another independent student URL only after a success
   await expect(page).toHaveURL(/\/review\/student-b$/);
   await expect(page.getByRole('heading', { name: /Review: Nai Aung/ })).toBeVisible();
   await page.getByRole('button', { name: 'Previous submission' }).click();
+  await expect(page).toHaveURL(/\/review\/student-paper$/);
+  await page.getByRole('button', { name: 'Previous submission' }).click();
   await expect(page).toHaveURL(/\/review\/student-a$/);
 });
 
@@ -174,4 +172,37 @@ test('teacher desk filters assignments and remains reachable on mobile', async (
   await captureWorkspace(page, info.outputPath('teacher-desk-mobile-dark.png'));
   await page.getByRole('link', { name: /Explain the water cycle/ }).click();
   await expect(page).toHaveURL(/\/teacher\/homework\/homework-a$/);
+});
+
+
+test('compact roster filters students and records paper work in the review workspace', async ({ page }, info) => {
+  const writes = await fixture(page, 'TEACHER', 'text', true);
+  await page.goto('/teacher/homework/homework-a');
+  await expect(page.locator('.hw-roster-row')).toHaveCount(3);
+  expect(await page.locator('.hw-submission-excerpt').first().evaluate(el => el.getBoundingClientRect().height)).toBeLessThan(40);
+  await page.locator('.hw-roster-row').first().getByRole('link', { name: 'Review', exact: true }).click();
+  await expect(page.locator('.hw-review').getByText(/Complete answer ends here/)).toBeVisible();
+  await page.getByRole('link', { name: 'Back to assignment' }).click();
+  await expect(page.locator('.hw-roster-row')).toHaveCount(3);
+  await expect(page.getByPlaceholder('Optional feedback')).toHaveCount(0);
+  await captureWorkspace(page, info.outputPath('roster-desktop.png'));
+  await page.getByRole('button', { name: 'Missing 1', exact: true }).click();
+  await expect(page.locator('.hw-roster-row')).toHaveCount(1);
+  await page.getByLabel('Search students').fill('unknown');
+  await expect(page.getByText('No students match these filters.')).toBeVisible();
+  await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
+  await expect(page.locator('.hw-roster-row')).toHaveCount(3);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await captureWorkspace(page, info.outputPath('roster-mobile.png'));
+  await page.getByRole('link', { name: 'Record paper work' }).click();
+  await expect(page.getByRole('heading', { name: 'Review: Paper Student' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Request changes', exact: true })).toBeDisabled();
+  await page.getByLabel('Score out of 10').fill('8');
+  await page.getByLabel('Feedback', { exact: true }).fill('Reviewed on paper.');
+  await page.getByRole('button', { name: 'Mark reviewed', exact: true }).click();
+  await expect(page.getByText('Could not save feedback. Try again.', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Mark reviewed', exact: true }).click();
+  await expect(page.locator('.hw-review').getByText('Marked', { exact: true })).toBeVisible();
+  expect(writes.at(-1)?.body).toMatchObject({ studentId: 'student-paper', score: 8, feedback: 'Reviewed on paper.', status: 'MARKED' });
 });

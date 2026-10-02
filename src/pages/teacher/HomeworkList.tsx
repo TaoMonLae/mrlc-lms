@@ -321,7 +321,7 @@ export default function HomeworkList() {
   );
 
   return (
-    <div className="hw-workspace">
+    <div className="hw-workspace hw-teacher-desk">
       {contextClassId && (
         <Link
           to={`/classwork?class=${encodeURIComponent(contextClassId)}`}
