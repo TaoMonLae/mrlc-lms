@@ -3,7 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 test.use({ serviceWorkers: 'block' });
 const file = { url: '/uploads/homework-media/00000000-0000-0000-0000-000000000001-00000000-0000-0000-0000-000000000002.txt', originalName: 'answer.txt', mimeType: 'text/plain', size: 12 };
 const student = { id: 'student-a', studentCode: 'ST-001', user: { firstName: 'Aye', lastName: 'Mon' } };
-const assignment = { id: 'homework-a', title: 'Explain the water cycle', instructions: 'Describe evaporation, condensation and precipitation. Include one example.', attachmentUrl: null, dueDate: '2026-10-01T00:00:00Z', maxMarks: 10, status: 'OPEN', subject: { id: 'science', name: 'Science' }, class: { id: 'class-a', name: 'GED Year 1', students: [student], _count: { students: 1 } }, submissions: [{ id: 'submission-a', studentId: student.id, text: 'Water evaporates when heated.', status: 'SUBMITTED', submittedAt: '2026-09-18T06:00:00Z', score: null, feedback: null, attachments: [file] }] };
+const assignment = { id: 'homework-a', title: 'Explain the water cycle', instructions: 'Describe evaporation, condensation and precipitation. Include one example.', attachmentUrl: null as string | null, dueDate: '2026-10-01T00:00:00Z', maxMarks: 10, status: 'OPEN', subject: { id: 'science', name: 'Science' }, class: { id: 'class-a', name: 'GED Year 1', students: [student], _count: { students: 1 } }, submissions: [{ id: 'submission-a', studentId: student.id, text: 'Water evaporates when heated.', status: 'SUBMITTED', submittedAt: '2026-09-18T06:00:00Z', score: null, feedback: null, attachments: [file] }] };
 async function darkTheme(page: Page) {
   await page.getByRole('button', { name: 'Toggle theme between light and dark mode' }).click();
   await page.getByRole('menuitem', { name: 'Dark', exact: true }).click();
@@ -20,10 +20,11 @@ async function captureWorkspace(page: Page, path: string) {
   await page.locator('#main-content').evaluate(el => el.scrollTo(0, 0));
   await page.screenshot({ path, animations: 'disabled' });
 }
-async function fixture(page: Page, role = 'STUDENT', documentType = 'text', withQueue = false) {
+async function fixture(page: Page, role = 'STUDENT', documentType = 'text', withQueue = false, resourceUrl: string | null = null) {
   const user = { id: `${role}-homework-test`, role, firstName: role, lastName: 'Tester', isActive: true };
   const writes: { path: string; body: any }[] = [];
   let data = structuredClone(assignment);
+  data.attachmentUrl = resourceUrl;
   if (documentType !== 'text') data.submissions[0].attachments = [{ ...file, url: file.url.replace(/\.txt$/, documentType === 'pdf' ? '.pdf' : '.png'), originalName: documentType === 'pdf' ? 'answer.pdf' : 'answer.png', mimeType: documentType === 'pdf' ? 'application/pdf' : 'image/png' }];
   if (withQueue) {
     data.submissions[0].text = 'Evaporation turns water into vapour. '.repeat(100) + 'Complete answer ends here.';
@@ -205,4 +206,30 @@ test('compact roster filters students and records paper work in the review works
   await page.getByRole('button', { name: 'Mark reviewed', exact: true }).click();
   await expect(page.locator('.hw-review').getByText('Marked', { exact: true })).toBeVisible();
   expect(writes.at(-1)?.body).toMatchObject({ studentId: 'student-paper', score: 8, feedback: 'Reviewed on paper.', status: 'MARKED' });
+});
+
+
+for (const role of ['TEACHER', 'STUDENT']) test(`${role} opens a linked library book in the signed-in tab`, async ({ page, context }) => {
+  const readerPath = '/elibrary/book-homework/read';
+  await fixture(page, role, 'text', false, readerPath);
+  await page.route(/\/api\/ebooks\/book-homework(?:\/|$)/, route => {
+    expect(route.request().headers().authorization).toBe('Bearer homework-test');
+    const path = new URL(route.request().url()).pathname;
+    if (path.endsWith('/comic/pages/1')) return route.fulfill({ contentType: 'image/png', body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aWKsAAAAASUVORK5CYII=', 'base64') });
+    if (path.endsWith('/comic/manifest')) return route.fulfill({ json: { pageCount: 1 } });
+    if (path === '/api/ebooks/book-homework') return route.fulfill({ json: { id: 'book-homework', title: 'Homework reading book', format: 'CBZ', downloadAllowed: false } });
+    return route.fulfill({ json: {} });
+  });
+  await page.goto(role === 'TEACHER' ? '/teacher/homework/homework-a' : '/student/homework');
+  const link = page.getByRole('link', { name: role === 'TEACHER' ? 'Linked E-Book' : 'Read the book' });
+  await expect(link).toHaveAttribute('target', '_self');
+  const tabsBefore = context.pages().length;
+  await link.click();
+  await expect(page).toHaveURL(new RegExp(`${readerPath}$`));
+  await expect(page.getByRole('region', { name: 'CBZ comic reader' })).toBeVisible();
+  await expect.poll(() => page.getByRole('img', { name: 'Comic page 1', exact: true }).evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(1);
+  expect(context.pages()).toHaveLength(tabsBefore);
+  expect(await page.evaluate(() => sessionStorage.getItem('auth_token'))).toBe('homework-test');
+  await page.goBack();
+  await expect(link).toBeVisible();
 });
