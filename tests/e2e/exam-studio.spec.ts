@@ -113,7 +113,7 @@ test('preview supports multiple selections and tap-to-place words', async ({ pag
   await preview.getByRole('button', { name: /Mercury/ }).click(); await preview.getByRole('button', { name: /Earth/ }).click();
   await expect(preview.getByRole('button', { name: /Mercury/ })).toHaveAttribute('aria-pressed', 'true');
   await expect(preview.getByRole('button', { name: /Earth/ })).toHaveAttribute('aria-pressed', 'true');
-  await preview.getByRole('button', { name: 'Next →' }).click();
+  await preview.getByRole('button', { name: 'Next question' }).click();
   await preview.getByRole('button', { name: 'Earth', exact: true }).click(); await preview.getByRole('button', { name: 'Blank 1' }).click();
   await expect(preview.getByRole('button', { name: 'Blank 1' })).toContainText('Earth');
   await page.screenshot({ path: info.outputPath('studio-preview.png') });
@@ -216,4 +216,33 @@ test('responsive authoring workspace keeps drafts while changing steps and previ
   await expect(page.getByRole('button', { name: 'Preview as student', exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   await page.screenshot({ path: info.outputPath('studio-tablet.png'), fullPage: true });
+});
+
+
+test('student paper preview supports dropdowns, flags, passages and a non-submitting review', async ({ page }, info) => {
+  const { writes } = await setup(page, [
+    { ...choice, type: 'DROPDOWN', text: 'A judge works in the _____ branch.', options: ['Legislative', 'Executive', 'Judicial'] },
+    { id: 'q2', type: 'ESSAY', text: 'Explain why powers are separated.', passageText: 'The Constitution divides power among three branches. Each branch has distinct responsibilities.', points: 10 },
+  ]);
+  await page.goto('/exams/studio-a/studio');
+  await page.getByRole('button', { name: 'Preview as student', exact: true }).click();
+  const preview = page.getByRole('dialog', { name: 'Student preview' });
+  await expect(preview.getByRole('combobox')).toHaveValue('');
+  await preview.getByRole('combobox').selectOption('0');
+  await preview.getByRole('button', { name: 'Flag for review', exact: true }).click();
+  await expect(preview.getByRole('button', { name: 'Question 1, answered, flagged', exact: true })).toBeVisible();
+  await page.screenshot({ path: info.outputPath('exam-paper-preview.png'), fullPage: true });
+  await preview.getByRole('button', { name: 'Next question' }).click();
+  await expect(preview.getByText('Reading passage', { exact: true })).toBeVisible();
+  await preview.getByRole('textbox').fill('To prevent any branch from holding all power.');
+  await page.screenshot({ path: info.outputPath('exam-paper-passage.png'), fullPage: true });
+  expect(await preview.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+  await preview.getByRole('button', { name: 'Review answers', exact: true }).click();
+  await expect(preview.getByText('2 of 2 answered · 1 flagged for review.')).toBeVisible();
+  await preview.getByRole('button', { name: 'Question 1 Answered', exact: true }).click();
+  await expect(preview.getByRole('combobox')).toHaveValue('0');
+  await preview.getByRole('button', { name: /Review answers/ }).first().click();
+  await preview.getByRole('button', { name: 'Finish preview' }).click();
+  await expect(preview).not.toBeVisible();
+  expect(writes.filter(w => w.path.includes('/attempts/'))).toHaveLength(0);
 });

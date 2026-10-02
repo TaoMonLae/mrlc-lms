@@ -18,6 +18,7 @@ import {
 import { motion, useReducedMotion } from 'motion/react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import './guided-studio.css';
+import ExamPaper from '../../components/exams/ExamPaper';
 import { toast } from 'sonner';
 import { apiGet, apiSend } from '../../lib/api';
 import { Switch } from '@/components/ui/switch';
@@ -1178,7 +1179,7 @@ function StudentInput({ q, value, onChange, small }: { q: Question; value: any; 
   if (q.uiType === 'DROPDOWN') {
     return (
       <select aria-label="Preview answer" value={value ?? ''} onChange={(e) => onChange(e.target.value)} style={{ width: '100%', border: `1px solid ${C.border3}`, borderRadius: 10, padding: optPad, fontSize: fs, outline: 'none' }}>
-        <option value="">Select…</option>
+        <option value="">Select an answer</option>
         {q.options.map((o, i) => <option key={i} value={i}>{o.t}</option>)}
       </select>
     );
@@ -1222,92 +1223,35 @@ function StudentInput({ q, value, onChange, small }: { q: Question; value: any; 
 function StudentPlayer({ questions, title, minutes, onClose }: { questions: Question[]; title: string; minutes: number; onClose: () => void }) {
   const [pIdx, setPIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<number, any>>({});
+  const [flags, setFlags] = useState<Record<number, boolean>>({});
   const [remaining, setRemaining] = useState(minutes * 60);
-  const timerRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    timerRef.current = window.setInterval(() => setRemaining((r) => Math.max(0, r - 1)), 1000);
-    return () => { if (timerRef.current) window.clearInterval(timerRef.current); };
-  }, []);
-
   const dialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const deadline = Date.now() + minutes * 60000;
+    const timer = window.setInterval(() => setRemaining(Math.max(0, Math.ceil((deadline - Date.now()) / 1000))), 1000);
+    return () => window.clearInterval(timer);
+  }, [minutes]);
   useEffect(() => { const dialog = dialogRef.current; dialog?.showModal(); return () => dialog?.close(); }, []);
   const q = questions[pIdx];
-  const total = questions.length;
-  const frac = minutes > 0 ? remaining / (minutes * 60) : 1;
-  const mm = Math.floor(remaining / 60), ss = remaining % 60;
-
-  if (!q) {
-    return (
-      <dialog ref={dialogRef} onCancel={onClose} aria-label="Student preview" className="guided-studio" style={{ ...overlayStyle, margin: 0, maxWidth: 'none', maxHeight: 'none', width: '100vw', height: '100dvh', border: 0 }}>
-        <div style={{ background: C.surface, borderRadius: 16, padding: 40, textAlign: 'center' }}>
-          <p style={{ fontSize: 15, color: C.muted }}>No questions to preview yet.</p>
-          <button onClick={onClose} style={{ marginTop: 14, fontSize: 13, fontWeight: 700, color: '#fff', background: C.action, border: 'none', borderRadius: 10, padding: '9px 18px', cursor: 'pointer' }}>Close</button>
-        </div>
-      </dialog>
-    );
-  }
-
-  return (
-    <dialog ref={dialogRef} onCancel={onClose} aria-label="Student preview" className="guided-studio" style={{ ...overlayStyle, margin: 0, maxWidth: 'none', maxHeight: 'none', width: '100vw', height: '100dvh', border: 0 }}>
-      {/* header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 24px' }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: C.ink }}>{title || 'Untitled exam'}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: C.muted, marginTop: 2 }}>
-            <span style={{ width: 7, height: 7, borderRadius: 999, background: C.green }} /> Preview only · answers are not saved
-          </div>
-        </div>
-        <TimerRing frac={frac} mm={mm} />
-        <button aria-label="Close preview" onClick={onClose} style={{ width: 36, height: 36, borderRadius: 999, border: `1px solid ${C.border3}`, background: C.surface, color: C.ink, cursor: 'pointer', display: 'grid', placeItems: 'center' }}><X size={17} /></button>
-      </div>
-
-      {/* progress dots */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '4px 24px 0' }}>
-        <div style={{ flex: 1, display: 'flex', gap: 6 }}>
-          {questions.map((_, i) => <div key={i} style={{ flex: 1, height: 4, borderRadius: 999, background: i <= pIdx ? C.purple : '#dcdcdc' }} />)}
-        </div>
-        <span style={{ fontSize: 12, color: C.muted, whiteSpace: 'nowrap' }}>Question {pIdx + 1} of {total}</span>
-      </div>
-
-      {/* question */}
-      <div style={{ flex: 1, overflow: 'auto', display: 'grid', placeItems: 'start center', padding: '40px 24px' }}>
-        <div style={{ width: '100%', maxWidth: 720 }}>
-          <h2 style={{ fontSize: 24, fontWeight: 800, color: C.ink, lineHeight: 1.35, marginBottom: 26 }}>{renderQuestionText(q.text || 'Question text')}</h2>
-          {q.passageText && <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, background: C.panel, border: `1px solid ${C.border2}`, borderRadius: 14, padding: 18, marginBottom: 20, color: C.ink }}>{q.passageText}</div>}
-          {q.imageUrl && <img src={q.imageUrl} alt="Question illustration" style={{ display: 'block', maxWidth: '100%', maxHeight: 320, objectFit: 'contain', borderRadius: 12, marginBottom: 20 }} />}
-          <StudentInput key={q.id} q={q} value={answers[pIdx] ?? null} onChange={(v) => setAnswers((a) => ({ ...a, [pIdx]: v }))} />
-        </div>
-      </div>
-
-      {/* footer */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderTop: `1px solid ${C.border2}` }}>
-        <button onClick={() => setPIdx((i) => Math.max(0, i - 1))} disabled={pIdx === 0} style={{ fontSize: 13, fontWeight: 700, color: C.ink, background: C.surface, border: `1px solid ${C.border3}`, borderRadius: 10, padding: '9px 16px', cursor: pIdx === 0 ? 'not-allowed' : 'pointer', opacity: pIdx === 0 ? 0.4 : 1 }}>← Previous</button>
-        {pIdx < total - 1 ? (
-          <button onClick={() => setPIdx((i) => i + 1)} style={{ fontSize: 13, fontWeight: 700, color: '#fff', background: C.action, border: 'none', borderRadius: 10, padding: '9px 18px', cursor: 'pointer' }}>Next →</button>
-        ) : (
-          <button onClick={() => { toast.success('Preview complete. No attempt was submitted.'); onClose(); }} style={{ fontSize: 13, fontWeight: 800, color: '#fff', background: C.green, border: 'none', borderRadius: 10, padding: '9px 20px', cursor: 'pointer' }}>Submit exam</button>
-        )}
-      </div>
-    </dialog>
-  );
-}
-
-const overlayStyle: React.CSSProperties = { position: 'fixed', inset: 0, zIndex: 60, background: C.canvas, color: C.ink, display: 'flex', flexDirection: 'column', fontFamily: 'Inter, ui-sans-serif, system-ui' };
-
-function TimerRing({ frac, mm }: { frac: number; mm: number }) {
-  const r = 22, circ = 2 * Math.PI * r;
-  return (
-    <div style={{ position: 'relative', width: 54, height: 54 }}>
-      <svg width={54} height={54} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={27} cy={27} r={r} fill="none" stroke="#e6e6e6" strokeWidth={4} />
-        <circle cx={27} cy={27} r={r} fill="none" stroke={C.purple} strokeWidth={4} strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - frac)} style={{ transition: 'stroke-dashoffset 1s linear' }} />
-      </svg>
-      <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 800, color: C.ink }}>
-        <div style={{ textAlign: 'center', lineHeight: 1 }}>{mm}<div style={{ fontSize: 7.5, fontWeight: 700, color: C.muted2 }}>MIN</div></div>
-      </div>
-    </div>
-  );
+  const complete = (question: Question, index: number) => {
+    const value = answers[index];
+    if (question.uiType === 'DRAG') {
+      const blanks = (question.text.match(/_{2,}/g) || []).length;
+      return blanks > 0 && Array.from({ length: blanks }, (_, i) => i).every(i => value?.[i] !== undefined);
+    }
+    if (Array.isArray(value)) return value.length > 0;
+    return value !== null && value !== undefined && String(value).trim() !== '';
+  };
+  return <dialog ref={dialogRef} onCancel={onClose} aria-label="Student preview" className="guided-studio ep-preview-dialog">
+    {q ? <ExamPaper title={title || 'Untitled exam'} preview status={minutes > 0 && remaining === 0 ? 'Preview timer ended · you can keep exploring' : 'Preview only · answers are not saved'} remaining={minutes > 0 ? remaining : null}
+      questions={questions.map((item, i) => ({ id: item.id, points: item.points, answered: complete(item, i), flagged: !!flags[i] }))} index={pIdx}
+      prompt={renderQuestionText(q.text || 'Question text')} passage={q.passageText ? <MathText>{q.passageText}</MathText> : undefined} imageUrl={q.imageUrl}
+      onNavigate={setPIdx} onFlag={() => setFlags(f => ({ ...f, [pIdx]: !f[pIdx] }))} onClose={onClose}
+      onSubmit={() => { toast.success('Preview complete. No attempt was submitted.'); onClose(); }}>
+      <p className="mb-4 text-sm" style={{ color: 'var(--ep-muted)' }}>{q.uiType === 'HOTSPOT' ? 'Select all answers that apply.' : q.uiType === 'DROPDOWN' ? 'Choose an answer from the list.' : ['SHORT', 'ESSAY', 'EXTENDED'].includes(q.uiType) ? 'Write your response below.' : q.uiType === 'DRAG' ? 'Complete each blank using the word bank.' : 'Select one answer.'}</p>
+      <StudentInput key={q.id} q={q} value={answers[pIdx] ?? null} onChange={v => setAnswers(a => ({ ...a, [pIdx]: v }))} />
+    </ExamPaper> : <div className="p-8"><p>No questions to preview yet.</p><button onClick={onClose}>Close</button></div>}
+  </dialog>;
 }
 
 /* ------------------------------------------------------------------ */

@@ -3,8 +3,9 @@ import { useParams, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { authHeaders } from '../../lib/api';
-import { Clock, Save, Flag, Pause, Send, AlertTriangle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Save, Pause, AlertTriangle, Loader2 } from 'lucide-react';
 import MathText from '../../components/MathText';
+import ExamPaper from '../../components/exams/ExamPaper';
 import { splitDragText } from '../../lib/dragBlanks';
 
 /**
@@ -191,7 +192,7 @@ export default function ExamPlayer() {
 
   const setAnswer = (qid: string, patch: Answer) => { setAnswers((p) => ({ ...p, [qid]: { ...p[qid], ...patch } })); answerVersions.current[qid] = (answerVersions.current[qid] || 0) + 1; dirty.current.add(qid); };
 
-  const goTo = async (next: number) => { if (await save('NAVIGATE')) setIdx(Math.max(0, Math.min(questions.length - 1, next))); };
+  const goTo = async (next: number) => { if (!(await save('NAVIGATE'))) return false; setIdx(Math.max(0, Math.min(questions.length - 1, next))); return true; };
 
   const reportIntegrity = useCallback(async (type: string, detail?: string) => {
     if (!attemptId || !sessionToken || !examSettings.lockdownBrowser) return;
@@ -240,11 +241,6 @@ export default function ExamPlayer() {
 
   const handleSubmit = async (auto = false) => {
     if (submitPending.current) return;
-    if (!auto) {
-      const unanswered = questions.filter((question) => !answerIsComplete(question, answersRef.current[question.id])).length;
-      const warning = unanswered ? ` ${unanswered} question${unanswered === 1 ? ' is' : 's are'} unanswered.` : '';
-      if (!confirm(`Submit your exam?${warning} You will not be able to change your answers.`)) return;
-    }
     submitPending.current = true;
     setSubmitting(true);
     try {
@@ -298,9 +294,6 @@ export default function ExamPlayer() {
   if (!questions.length) return <div className="mx-auto mt-20 max-w-xl rounded-xl border border-amber-200 bg-amber-50 p-8 text-center text-amber-900 dark:bg-amber-900/10 dark:text-amber-100"><AlertTriangle className="mx-auto mb-3 h-9 w-9" /><h2 className="font-bold">No questions are available</h2><p className="mt-1 text-sm">Ask your teacher to review this exam before you continue.</p></div>;
 
   const q = questions[idx];
-  const mm = String(Math.floor(remaining / 60)).padStart(2, '0');
-  const ss = String(remaining % 60).padStart(2, '0');
-  const low = timerArmed.current && remaining <= 60;
 
   const selectedChoices = (questionId: string) => {
     const selected = answers[questionId]?.selectedOptions;
@@ -443,24 +436,16 @@ export default function ExamPlayer() {
     );
   };
 
-  const hasPassage = Boolean(q?.passageText);
-
-  const themeClass = examSettings.questionTheme === 'colorful'
-    ? 'exam-theme-colorful [&_.exam-card]:rounded-3xl [&_.exam-card]:border-2 [&_.exam-card]:border-violet-200 dark:[&_.exam-card]:border-violet-800'
-    : examSettings.questionTheme === 'focus' ? 'exam-theme-focus contrast-125' : '';
-
-  return (
-    <div className={`${hasPassage ? 'max-w-6xl' : 'max-w-3xl'} ${themeClass} mx-auto min-w-0 pb-32`} data-no-i18n>
-      <div className="sticky top-0 z-10 mb-6 flex min-w-0 items-center justify-between gap-3 border-b border-slate-200 bg-white/90 py-3 backdrop-blur dark:border-surface-raised dark:bg-canvas/90">
-        <div className="min-w-0">
-          <h1 className="truncate font-bold text-slate-900 dark:text-white">{examTitle}</h1>
-          <p className="text-[11px] text-slate-400 font-medium">{saveError ? 'Changes not saved' : saving ? 'Saving…' : dirty.current.size ? 'Unsaved changes' : savedAt ? `Saved ${new Date(savedAt).toLocaleTimeString()}` : 'Not saved yet'}</p>
-        </div>
-        <div className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono font-bold ${low ? 'bg-red-500 text-white motion-safe:animate-pulse' : 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'}`}>
-          <Clock className="h-4 w-4" /> {timerArmed.current ? `${mm}:${ss}` : 'Untimed'}
-        </div>
-      </div>
-
+  return <ExamPaper
+    title={examTitle} theme={examSettings.questionTheme}
+    status={saveError ? 'Changes not saved' : saving ? 'Saving…' : dirty.current.size ? 'Unsaved changes' : savedAt ? `Saved ${new Date(savedAt).toLocaleTimeString()}` : 'Not saved yet'}
+    remaining={timerArmed.current ? remaining : null}
+    questions={questions.map(question => ({ id: question.id, points: question.points, answered: answerIsComplete(question, answers[question.id]), flagged: !!answers[question.id]?.flaggedForReview }))}
+    index={idx} prompt={<MathText>{q.text}</MathText>} passage={q.passageText ? <MathText>{q.passageText}</MathText> : undefined} imageUrl={q.imageUrl}
+    onNavigate={goTo} onFlag={() => setAnswer(q.id, { flaggedForReview: !answers[q.id]?.flaggedForReview })}
+    onSubmit={() => void handleSubmit(false)} busy={saving || submitting} answerDisabled={submitting || (timerArmed.current && remaining === 0)}
+    tools={<><Button variant="outline" size="sm" disabled={saving || submitting} onClick={() => save('AUTOSAVE')} aria-label="Save answers"><Save className="h-4 w-4 mr-1" />Save</Button>{canPause && <Button variant="outline" size="sm" disabled={saving || submitting} onClick={handlePause} aria-label="Pause exam"><Pause className="h-4 w-4 mr-1" />Pause</Button>}</>}
+    notices={<>
       {saveError && <div role="alert" className="mb-4 rounded-lg border border-destructive/40 bg-card p-4 text-sm"><p>{saveError}</p><p className="mt-1 text-muted-foreground">Keep this page open so you can retry without losing your answers.</p><Button variant="outline" className="mt-3" disabled={saving || submitting} onClick={() => timerArmed.current && remaining === 0 ? void handleSubmit(true) : void save('AUTOSAVE')}>Retry</Button></div>}
       {examSettings.lockdownBrowser && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
@@ -469,74 +454,10 @@ export default function ExamPlayer() {
         </div>
       )}
 
-      {hasPassage ? (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Passage */}
-          <div className="exam-card max-h-[45vh] space-y-4 overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-surface-raised dark:bg-surface-indigo sm:p-6 md:sticky md:top-20 md:col-span-6 md:max-h-[70vh]">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b pb-2 dark:border-surface-raised">Passage</h3>
-            <div className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
-              <MathText>{q.passageText || ''}</MathText>
-            </div>
-          </div>
-
-          {/* Right Column: Question & Answer */}
-          <div className="exam-card space-y-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-surface-raised dark:bg-surface-indigo sm:p-6 md:col-span-6">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Question {idx + 1} of {questions.length} · {q?.points} pts</span>
-              <Button variant="ghost" size="sm" onClick={() => setAnswer(q.id, { flaggedForReview: !answers[q.id]?.flaggedForReview })} className={answers[q.id]?.flaggedForReview ? 'text-amber-600' : 'text-slate-400'}>
-                <Flag className="h-4 w-4 mr-1" /> {answers[q.id]?.flaggedForReview ? 'Flagged' : 'Flag'}
-              </Button>
-            </div>
-            <p className="text-base font-medium text-slate-900 dark:text-white whitespace-pre-wrap"><MathText>{q?.text || ''}</MathText></p>
-            {q?.imageUrl && <img src={q.imageUrl} alt="Question media" className="max-h-72 rounded-lg border border-slate-200 dark:border-surface-raised" />}
-            <fieldset disabled={submitting || (timerArmed.current && remaining === 0)}>{renderAnswerInput()}</fieldset>
-          </div>
-        </div>
-      ) : (
-        <div className="exam-card space-y-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-surface-raised dark:bg-surface-indigo sm:p-6">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Question {idx + 1} of {questions.length} · {q?.points} pts</span>
-            <Button variant="ghost" size="sm" onClick={() => setAnswer(q.id, { flaggedForReview: !answers[q.id]?.flaggedForReview })} className={answers[q.id]?.flaggedForReview ? 'text-amber-600' : 'text-slate-400'}>
-              <Flag className="h-4 w-4 mr-1" /> {answers[q.id]?.flaggedForReview ? 'Flagged' : 'Flag'}
-            </Button>
-          </div>
-          <p className="text-base font-medium text-slate-900 dark:text-white whitespace-pre-wrap"><MathText>{q?.text || ''}</MathText></p>
-          {q?.imageUrl && <img src={q.imageUrl} alt="Question illustration" className="max-h-80 max-w-full rounded-lg border border-slate-200 object-contain dark:border-surface-raised" />}
-          <fieldset disabled={submitting || (timerArmed.current && remaining === 0)}>{renderAnswerInput()}</fieldset>
-        </div>
-      )}
-
-      {/* question navigator */}
-      <div className="mt-5 space-y-3">
-        <div className="flex flex-wrap justify-between gap-2 text-sm text-muted-foreground">
-          <span>{questions.filter((question) => answerIsComplete(question, answers[question.id])).length}/{questions.length} answered</span>
-          <span>{questions.filter((question) => answers[question.id]?.flaggedForReview).length} flagged for review</span>
-        </div>
-        <progress aria-label="Questions answered" value={questions.filter((question) => answerIsComplete(question, answers[question.id])).length} max={questions.length} className="block h-2 w-full overflow-hidden rounded-full accent-primary" />
-      <nav className="flex flex-wrap items-center gap-1.5" aria-label="Question navigation">
-        {questions.map((qq, i) => (
-          <button key={qq.id} type="button" disabled={saving || submitting} onClick={() => goTo(i)} aria-label={`Question ${i + 1}${answerIsComplete(qq, answers[qq.id]) ? ', answered' : ', unanswered'}${answers[qq.id]?.flaggedForReview ? ', flagged' : ''}`} aria-current={i === idx ? 'step' : undefined}
-            className={`relative h-11 w-11 rounded-lg text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${i === idx ? 'bg-aubergine-600 text-white' : answers[qq.id]?.flaggedForReview ? 'bg-amber-100 text-amber-800 border border-amber-300' : answerIsComplete(qq, answers[qq.id]) ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 dark:bg-surface-raised text-slate-600 dark:text-slate-300'}`}>
-            {i + 1}
-            {answers[qq.id]?.flaggedForReview && <Flag aria-hidden="true" className="absolute right-0.5 top-0.5 size-2.5" />}
-          </button>
-        ))}
-      </nav>
-      </div>
-
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur dark:border-surface-raised dark:bg-canvas/95">
-        <div className={`${hasPassage ? 'max-w-6xl' : 'max-w-3xl'} mx-auto flex items-center justify-between gap-2`}>
-          <div className="flex gap-1.5 sm:gap-2">
-            <Button variant="outline" size="sm" disabled={idx === 0 || saving || submitting} onClick={() => goTo(idx - 1)} aria-label="Previous question"><ChevronLeft className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Previous</span></Button>
-            <Button variant="outline" size="sm" disabled={idx >= questions.length - 1 || saving || submitting} onClick={() => goTo(idx + 1)} aria-label="Next question"><span className="hidden sm:inline">Next</span><ChevronRight className="h-4 w-4 sm:ml-1" /></Button>
-          </div>
-          <div className="flex min-w-0 gap-1.5 sm:gap-2">
-            <Button variant="outline" size="sm" disabled={saving || submitting} onClick={() => save('AUTOSAVE')} aria-label="Save answers"><Save className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Save</span></Button>
-            {canPause && <Button variant="outline" size="sm" disabled={saving || submitting} onClick={handlePause} aria-label="Pause exam"><Pause className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Pause</span></Button>}
-            <Button size="sm" disabled={saving || submitting} className="bg-primary text-primary-foreground" aria-label="Submit exam" onClick={() => handleSubmit(false)}><Send className="h-4 w-4 sm:mr-1" /><span className="hidden min-[380px]:inline">{submitting ? 'Submitting…' : 'Submit'}</span></Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    </>}
+  >
+    {['ESSAY', 'SHORT_ANSWER', 'EXTENDED', 'WRITTEN'].includes(q.type) && <p className="mb-4 text-sm" style={{ color: 'var(--ep-muted)' }}>Write your response below.</p>}
+    {q.type === 'DROPDOWN' && <p className="mb-4 text-sm" style={{ color: 'var(--ep-muted)' }}>Choose an answer from the list.</p>}
+    {renderAnswerInput()}
+  </ExamPaper>;
 }
