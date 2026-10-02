@@ -182,3 +182,79 @@ test('schedule load failure cannot expose empty settings for saving', async ({ p
   await expect(page.getByLabel('Duration (minutes)')).toHaveValue('30');
   await expect(page.getByLabel('Release mode')).toHaveValue('AFTER_GRADING');
 });
+
+test('restored answers count toward progress and Studio blanks work in the live player', async ({ page }, info) => {
+  const { writes } = await fixture(page);
+  await page.route('**/api/attempts/attempt-a/state', route => route.fulfill({ json: {
+    attempt: { state: 'IN_PROGRESS', sessionToken: 'session-a', remainingSeconds: 0 },
+    exam: { title: 'Answer recovery check', settings: {} },
+    questions: [
+      { id: 'q1', type: 'ESSAY', text: 'Explain evaporation.', points: 5 },
+      { id: 'q2', type: 'MCQ', text: 'Choose a planet.', points: 5, options: ['Earth', 'Sun'] },
+      { id: 'q3', type: 'DRAG_DROP', text: 'Complete the sentence.', points: 5, dragText: 'The {{b0}} orbits the {{b1}}.', dragBank: [{ key: 'earth', label: 'Earth' }, { key: 'sun', label: 'Sun' }] },
+    ],
+    answers: [{ questionId: 'q1', answerText: 'Water becomes vapour.', selectedOptions: [] }, { questionId: 'q2', answerText: 'Earth', selectedOptions: [] }],
+  } }));
+  await page.goto('/exam2/attempts/attempt-a/play');
+  await expect(page.getByRole('progressbar', { name: 'Questions answered' })).toHaveAttribute('value', '2');
+  await expect(page.getByLabel('Your answer')).toHaveValue('Water becomes vapour.');
+  await page.getByRole('button', { name: 'Question 2, answered', exact: true }).click();
+  await expect(page.getByRole('button', { name: /Earth/ })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Question 3, unanswered', exact: true }).click();
+  await page.getByRole('button', { name: 'Earth', exact: true }).click();
+  await page.getByRole('button', { name: 'Empty answer blank', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Sun', exact: true }).click();
+  await page.getByRole('button', { name: 'Empty answer blank', exact: true }).click();
+  await expect(page.getByRole('progressbar', { name: 'Questions answered' })).toHaveAttribute('value', '3');
+  await page.getByRole('button', { name: 'Save answers' }).click();
+  expect(writes.filter(w => w.path.endsWith('/save')).at(-1)?.body.answers[0].selectedOptions).toEqual({ b0: 'earth', b1: 'sun' });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+  await page.screenshot({ path: info.outputPath('player-progress-blanks.png'), fullPage: true });
+  page.once('dialog', async dialog => { expect(dialog.message()).not.toContain('unanswered'); await dialog.accept(); });
+  await page.getByRole('button', { name: 'Submit exam' }).click();
+  await expect(page).toHaveURL(/attempt-a\/result/);
+});
+
+test('exam catalogue and invigilator recover failed loads without showing false empty states', async ({ page }, info) => {
+  await fixture(page, 'TEACHER');
+  let failed = true;
+  await page.route('**/api/exams', route => route.fulfill(failed ? { status: 503, json: { error: 'Temporarily unavailable' } } : { json: [{ id: 'exam-a', title: 'Science checkpoint', status: 'PUBLISHED' }] }));
+  await page.goto('/exams');
+  await expect(page.getByRole('alert')).toContainText('Could not load exams');
+  await expect(page.getByText('No exams found')).toHaveCount(0);
+  failed = false;
+  await page.getByRole('button', { name: 'Retry', exact: true }).click();
+  await expect(page.getByText('Science checkpoint', { exact: true })).toBeVisible();
+  failed = true;
+  await page.route('**/api/exams/exam-a/invigilator', route => route.fulfill(failed ? { status: 503, json: { error: 'Unavailable' } } : { json: { summary: { notStarted: 0, inProgress: 1, paused: 0, submitted: 0, disconnected: 0 }, students: [{ studentId: 's1', name: 'Ada Lee', attemptId: 'a1', state: 'IN_PROGRESS', remainingSeconds: 120, securityWarnings: 0 }] } }));
+  await page.goto('/exam2/exam-a/invigilator');
+  await expect(page.getByRole('alert')).toContainText('Could not refresh');
+  failed = false;
+  await page.getByRole('button', { name: 'Retry', exact: true }).click();
+  await expect(page.getByText('Ada Lee')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+  await page.screenshot({ path: info.outputPath('invigilator-responsive.png'), fullPage: true });
+  failed = true;
+  await expect(page.getByRole('alert')).toContainText('out of date', { timeout: 15000 });
+  await expect(page.getByRole('button', { name: '+Time', exact: true })).toBeDisabled();
+  await expect(page.getByText('Ada Lee')).toBeVisible();
+});
+
+test('completed submission cannot trigger an unload save while the result screen is loading', async ({ page }) => {
+  const { writes } = await fixture(page);
+  // Keep the lazy result route suspended so the player's unload listener is
+  // still mounted when a browser reload/navigation occurs after submission.
+  await page.route('**/ExamResultView.tsx*', route => route.fulfill({ contentType: 'application/javascript', body: 'await new Promise(resolve => { window.releaseExamResult = resolve; }); export default function Result() { return null; }' }));
+  await page.goto('/exam2/attempts/attempt-a/play');
+  await page.getByLabel('Your answer').fill('Final response');
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: 'Submit exam' }).click();
+  await expect.poll(() => writes.filter(w => w.path.endsWith('/submit')).length).toBe(1);
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem('exam_attempt_session_attempt-a'))).toBeNull();
+  const saveRequest = page.waitForRequest(request => request.url().endsWith('/save'), { timeout: 500 }).then(() => true, () => false);
+  await page.evaluate(() => window.dispatchEvent(new Event('beforeunload')));
+  const unloadSaved = await saveRequest;
+  await page.evaluate(() => (window as any).releaseExamResult?.());
+  expect(unloadSaved).toBe(false);
+  expect(writes.find(w => w.path.endsWith('/submit'))?.body.answers[0].answerText).toBe('Final response');
+});

@@ -26,7 +26,7 @@ function answerIsComplete(question: Q, answer?: Answer): boolean {
     const matches = answer?.selectedOptions && !Array.isArray(answer.selectedOptions) ? answer.selectedOptions : {};
     return blankIds.length > 0 && blankIds.every((blankId) => Boolean(matches[blankId]));
   }
-  if (Array.isArray(answer?.selectedOptions)) return answer.selectedOptions.length > 0;
+  if (Array.isArray(answer?.selectedOptions) && answer.selectedOptions.length > 0) return true;
   return Boolean(answer?.answerText?.trim());
 }
 
@@ -260,6 +260,9 @@ export default function ExamPlayer() {
         countdownDeadline.current = timerArmed.current ? Date.now() + reconciled * 1000 : null;
         setRemaining(reconciled);
       } else if (ok || ['SUBMITTED', 'AUTO_SUBMITTED', 'PENDING_GRADING', 'FINALIZED', 'RELEASED'].includes(data.state)) {
+        // The final snapshot is now persisted. Result-route recovery can reload
+        // the page; its unload handler must not try to save a completed exam.
+        dirty.current.clear();
         sessionStorage.removeItem(`exam_attempt_session_${attemptId}`);
         toast.success(data.autoSubmitted ? 'Time expired — your exam was submitted.' : 'Exam submitted.');
         navigate(`/exam2/attempts/${attemptId}/result`);
@@ -393,6 +396,7 @@ export default function ExamPlayer() {
     if (q?.type === 'DROPDOWN' && Array.isArray(q?.options) && q.options.length) {
       return (
         <select
+          aria-label="Your answer"
           value={answers[q.id]?.answerText ?? ''}
           onChange={(e) => setAnswer(q.id, { answerText: e.target.value })}
           className="w-full max-w-md rounded-lg border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-4 py-3 text-sm">
@@ -406,17 +410,20 @@ export default function ExamPlayer() {
     }
     if (!TEXT_ANSWER_TYPES.includes(q?.type) && Array.isArray(q?.options) && q.options.length) {
       return (
-        <div className="space-y-2">
+        <div className="space-y-2" role="group" aria-label="Answer choices">
+          <p className="text-sm text-muted-foreground">{(q.multipleSelection ?? q.partialCredit) ? 'Select all answers that apply.' : 'Select one answer.'}</p>
           {(q.options as any[]).map((opt, i) => {
             const val = String(typeof opt === 'object' ? opt.value ?? opt.text ?? i : opt);
             const multi = q.multipleSelection ?? q.partialCredit;
             const selected = multi ? selectedChoices(q.id).includes(val) : answers[q.id]?.answerText === val;
             return (
               <button key={i} type="button"
+                aria-pressed={selected}
                 onClick={() => multi
                   ? setAnswer(q.id, { selectedOptions: selected ? selectedChoices(q.id).filter((v) => v !== val) : [...selectedChoices(q.id), val] })
                   : setAnswer(q.id, { answerText: val })}
-                className={`w-full text-left px-4 py-3 rounded-lg border transition-colors ${selected ? 'border-aubergine-500 bg-aubergine-50 dark:bg-aubergine-900/20' : 'border-slate-200 dark:border-surface-raised hover:border-slate-300'}`}>
+                className={`flex min-h-11 w-full items-center gap-3 text-left px-4 py-3 rounded-lg border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${selected ? 'border-aubergine-500 bg-aubergine-50 dark:bg-aubergine-900/20' : 'border-slate-200 dark:border-surface-raised hover:border-slate-300'}`}>
+                <span aria-hidden="true" className={`flex size-6 shrink-0 items-center justify-center rounded border text-xs font-semibold ${selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground'}`}>{selected ? '✓' : String.fromCharCode(65 + i)}</span>
                 <MathText className="text-sm font-medium text-slate-800 dark:text-slate-200">{String(typeof opt === 'object' ? opt.text ?? opt.value : opt)}</MathText>
               </button>
             );
@@ -427,6 +434,7 @@ export default function ExamPlayer() {
 
     return (
       <textarea
+        aria-label="Your answer"
         className="w-full min-h-[140px] rounded-lg border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas p-3 text-sm"
         placeholder="Type your answer…"
         value={answers[q?.id]?.answerText || ''}
@@ -499,14 +507,21 @@ export default function ExamPlayer() {
       )}
 
       {/* question navigator */}
-      <div className="mt-4 flex flex-wrap items-center gap-1.5" aria-label="Question navigation">
+      <div className="mt-5 space-y-3">
+        <div className="flex flex-wrap justify-between gap-2 text-sm text-muted-foreground">
+          <span>{questions.filter((question) => answerIsComplete(question, answers[question.id])).length}/{questions.length} answered</span>
+          <span>{questions.filter((question) => answers[question.id]?.flaggedForReview).length} flagged for review</span>
+        </div>
+        <progress aria-label="Questions answered" value={questions.filter((question) => answerIsComplete(question, answers[question.id])).length} max={questions.length} className="block h-2 w-full overflow-hidden rounded-full accent-primary" />
+      <nav className="flex flex-wrap items-center gap-1.5" aria-label="Question navigation">
         {questions.map((qq, i) => (
           <button key={qq.id} type="button" disabled={saving || submitting} onClick={() => goTo(i)} aria-label={`Question ${i + 1}${answerIsComplete(qq, answers[qq.id]) ? ', answered' : ', unanswered'}${answers[qq.id]?.flaggedForReview ? ', flagged' : ''}`} aria-current={i === idx ? 'step' : undefined}
-            className={`h-8 w-8 rounded text-xs font-bold ${i === idx ? 'bg-aubergine-600 text-white' : answers[qq.id]?.flaggedForReview ? 'bg-amber-100 text-amber-700 border border-amber-300' : answerIsComplete(qq, answers[qq.id]) ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 dark:bg-surface-raised text-slate-500'}`}>
+            className={`relative h-11 w-11 rounded-lg text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${i === idx ? 'bg-aubergine-600 text-white' : answers[qq.id]?.flaggedForReview ? 'bg-amber-100 text-amber-800 border border-amber-300' : answerIsComplete(qq, answers[qq.id]) ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 dark:bg-surface-raised text-slate-600 dark:text-slate-300'}`}>
             {i + 1}
+            {answers[qq.id]?.flaggedForReview && <Flag aria-hidden="true" className="absolute right-0.5 top-0.5 size-2.5" />}
           </button>
         ))}
-        <span className="ml-2 text-xs font-semibold text-slate-500">{questions.filter((question) => answerIsComplete(question, answers[question.id])).length}/{questions.length} answered</span>
+      </nav>
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur dark:border-surface-raised dark:bg-canvas/95">

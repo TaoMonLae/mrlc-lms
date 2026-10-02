@@ -34,3 +34,12 @@ test('numeric tolerance, negative marking, and manual answers retain their behav
   assert.equal(scoreExamObjective({ type: 'TRUE_FALSE', points: 2, correctAnswer: 'true', negativePoints: 0.5 }, { answerText: 'false' }).score, -0.5);
   assert.deepEqual(scoreExamObjective({ type: 'ESSAY', points: 6 }, { answerText: 'response' }), { score: 0, correct: null, manual: true });
 });
+
+test('restored single-choice and numeric answers are scored despite empty choice arrays', () => {
+  for (const type of ['MCQ', 'TRUE_FALSE', 'DROPDOWN']) {
+    assert.deepEqual(scoreExamObjective({ type, points: 4, correctAnswer: 'correct' }, { answerText: 'correct', selectedOptions: [] }), { score: 4, correct: true, manual: false });
+    assert.equal(scoreExamObjective({ type, points: 4, correctAnswer: 'correct', negativePoints: 1 }, { answerText: 'wrong', selectedOptions: [] }).score, -1);
+  }
+  assert.equal(scoreExamObjective({ type: 'NUMERIC', points: 2, correctAnswer: '10', numericTolerance: 0.2 }, { answerText: '10.1', selectedOptions: [] }).score, 2);
+  assert.equal(scoreExamObjective({ type: 'MCQ', points: 4, correctAnswer: 'correct' }, { answerText: '', selectedOptions: [] }).score, 0);
+});

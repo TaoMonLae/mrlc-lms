@@ -57,7 +57,7 @@ export function scoreExamObjective(question: any, answer: any): ExamScoreResult 
     return { score: clamp(score), correct, manual: false };
   }
 
-  if (Array.isArray(answer?.selectedOptions)) {
+  if (Array.isArray(answer?.selectedOptions) && answer.selectedOptions.length > 0) {
     // Choice controls represent a set. De-duplicating here prevents crafted
     // payloads from counting one weighted option multiple times.
     const selectedValues: string[] = (answer.selectedOptions as unknown[]).map((value) => String(value));

@@ -54,12 +54,10 @@ export function parseDragBlankText(raw: string): { text: string; blanks: DragBla
 
 export async function composeQuestionSet(prisma: any, examId: string, seed: string): Promise<any[]> {
   const legacyQuestions: any[] = await prisma.question
-    .findMany({ where: { examId }, include: { optionRows: { orderBy: { orderIndex: "asc" } } }, orderBy: { orderIndex: "asc" } })
-    .catch(() => [] as any[]);
+    .findMany({ where: { examId }, include: { optionRows: { orderBy: { orderIndex: "asc" } } }, orderBy: { orderIndex: "asc" } });
   const fixedLinks: any[] = await prisma.examQuestion
-    .findMany({ where: { examId }, include: { question: { include: { optionRows: { orderBy: { orderIndex: "asc" } } } } }, orderBy: { displayOrder: "asc" } })
-    .catch(() => [] as any[]);
-  const rules: any[] = await prisma.examBlueprintRule.findMany({ where: { examId } }).catch(() => [] as any[]);
+    .findMany({ where: { examId }, include: { question: { include: { optionRows: { orderBy: { orderIndex: "asc" } } } } }, orderBy: { displayOrder: "asc" } });
+  const rules: any[] = await prisma.examBlueprintRule.findMany({ where: { examId } });
 
   const chosen: any[] = [];
   const used = new Set<string>();
@@ -95,7 +93,10 @@ export async function composeQuestionSet(prisma: any, examId: string, seed: stri
         NOT: { id: { in: Array.from(used) } },
       },
       include: { optionRows: { orderBy: { orderIndex: "asc" } } },
-    }).catch(() => [] as any[]);
+    });
+    if (candidates.length < r.count) {
+      throw Object.assign(new Error("Not enough approved questions to satisfy this exam's random question rules"), { http: 409 });
+    }
     const shuffled: any[] = seededShuffle(candidates, `${seed}:rule${ruleIdx++}`);
     for (const q of shuffled.slice(0, r.count)) {
       if (used.has(q.id)) continue;

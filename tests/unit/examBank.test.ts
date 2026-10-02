@@ -31,3 +31,33 @@ test('legacy multi-answer indexes are normalized before option shuffling', () =>
   const frozen = freezeAttempt([question], { shuffleQuestions: false, shuffleOptions: true }, 'another-seed').frozenContent[0];
   assert.deepEqual(frozen.correctAnswers, ['A', 'C']);
 });
+
+test('question assembly fails instead of delivering a partial paper after a database failure', async () => {
+  const { composeQuestionSet } = await import('../../examBank');
+  const fail = async () => { throw new Error('Database unavailable'); };
+  const empty = async () => [];
+  for (const source of ['question', 'examQuestion', 'examBlueprintRule']) {
+    const db: any = {
+      question: { findMany: empty }, examQuestion: { findMany: empty }, examBlueprintRule: { findMany: empty },
+    };
+    db[source].findMany = fail;
+    await assert.rejects(() => composeQuestionSet(db, 'e1', 'seed'), /Database unavailable/);
+  }
+});
+
+test('random rules require enough unused questions and propagate candidate lookup failures', async () => {
+  const { composeQuestionSet } = await import('../../examBank');
+  let lookupFails = false;
+  const db = {
+    question: { findMany: async ({ where }: any) => {
+      if (where.examId) return [{ id: 'fixed', type: 'ESSAY' }];
+      if (lookupFails) throw new Error('Candidate lookup failed');
+      return [{ id: 'candidate' }];
+    } },
+    examQuestion: { findMany: async () => [] },
+    examBlueprintRule: { findMany: async () => [{ count: 2 }] },
+  };
+  await assert.rejects(() => composeQuestionSet(db, 'e1', 'seed'), /Not enough approved questions/);
+  lookupFails = true;
+  await assert.rejects(() => composeQuestionSet(db, 'e1', 'seed'), /Candidate lookup failed/);
+});

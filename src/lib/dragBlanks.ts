@@ -30,7 +30,7 @@ export function parseDragBlankText(raw: string): { text: string; blanks: DragBla
 export function toDragBlankText(text: string, blanks: DragBlank[]): string {
   const byId: Record<string, string> = {};
   for (const b of blanks) byId[b.id] = b.answer;
-  return String(text || '').replace(/\{\{(\d+)\}\}/g, (_m, id) => `[[${byId[id] ?? ''}]]`);
+  return String(text || '').replace(/\{\{([^{}]+)\}\}/g, (_m, id) => `[[${byId[id] ?? ''}]]`);
 }
 
 /** Split "{{id}}"-token text into alternating plain-text and blank segments,
@@ -40,7 +40,7 @@ export type DragTextSegment = { kind: 'text'; text: string } | { kind: 'blank'; 
 
 export function splitDragText(text: string): DragTextSegment[] {
   const segments: DragTextSegment[] = [];
-  const re = /\{\{(\d+)\}\}/g;
+  const re = /\{\{([^{}]+)\}\}/g;
   let last = 0;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text))) {

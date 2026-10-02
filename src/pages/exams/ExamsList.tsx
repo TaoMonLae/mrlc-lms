@@ -27,6 +27,8 @@ type ExamListRow = {
 export default function ExamsList() {
   const [exams, setExams] = useState<ExamListRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [retry, setRetry] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [showArchived, setShowArchived] = useState(false);
 
@@ -52,16 +54,19 @@ export default function ExamsList() {
   };
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchExams = async () => {
       setLoading(true);
+      setLoadError('');
       try {
         const token = sessionStorage.getItem('auth_token');
         const res = await fetch(`/api/exams${showArchived ? '?archived=1' : ''}`, {
+          signal: controller.signal,
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) {
           if (res.status === 401 || res.status === 403) {
-            toast.error('You do not have permission to view exams');
+            throw new Error('You do not have permission to view exams.');
           } else {
             const body = await res.json().catch(() => ({}));
             throw new Error(body.error || 'Failed to fetch exams');
@@ -69,6 +74,7 @@ export default function ExamsList() {
           return;
         }
         const data = await res.json();
+        if (controller.signal.aborted) return;
         setExams((Array.isArray(data) ? data : []).map((e: any) => ({
           id: e.id,
           title: e.title || 'Untitled',
@@ -79,14 +85,14 @@ export default function ExamsList() {
           className: e.class?.name || '—',
         })));
       } catch (error: any) {
-        console.error('Error fetching exams:', error);
-        toast.error(error?.message || 'Failed to load exams');
+        if (!controller.signal.aborted) setLoadError(error?.message || 'Could not load exams. Check your connection and retry.');
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
-    fetchExams();
-  }, [showArchived]);
+    void fetchExams();
+    return () => controller.abort();
+  }, [showArchived, retry]);
 
   const filteredExams = exams.filter(e => {
     const q = searchTerm.toLowerCase();
@@ -132,10 +138,12 @@ export default function ExamsList() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <span className="ml-3 text-slate-500">Loading exams...</span>
         </div>
+      ) : loadError ? (
+        <div role="alert" className="space-y-3 rounded-xl border border-destructive/40 bg-card p-6"><h2 className="font-semibold">Could not load exams</h2><p className="text-sm text-muted-foreground">{loadError}</p><Button variant="outline" onClick={() => setRetry(n => n + 1)}>Retry</Button></div>
       ) : filteredExams.length === 0 ? (
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-12 text-center">
           <p className="text-lg font-medium text-slate-900 dark:text-white">No exams found</p>
-          <p className="text-sm text-slate-500">{searchTerm ? 'Try adjusting your search.' : 'Create your first exam to get started.'}</p>
+          <p className="text-sm text-slate-500">{searchTerm ? 'Try adjusting your search.' : showArchived ? 'Archived exams will appear here. Your active exams are still available under Show active.' : 'Create your first exam to get started.'}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

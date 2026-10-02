@@ -69,6 +69,9 @@ export function registerExamPhase2Routes(deps: Deps): void {
   const examLimiter = rateLimit({
     windowMs: 60 * 1000,
     max: 120,
+    // Authentication runs before this limiter. Classroom devices commonly
+    // share one public IP, but each learner needs an independent save budget.
+    keyGenerator: (req) => user(req).userId,
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: "Too many requests, slow down." },
@@ -633,9 +636,9 @@ export function registerExamPhase2Routes(deps: Deps): void {
         const accom = assignment?.accommodationId
           ? await tx.examAccommodation.findUnique({ where: { id: assignment.accommodationId } })
           : await accommodationFor(student.id, examId);
-        const baseMin = exam.durationMinutes || 60;
-        const effMin = effectiveExamDurationMinutes(baseMin, accom);
-        const serverDeadline = new Date(now + effMin * 60000 + (exam.gracePeriodMinutes || 0) * 60000);
+        const baseMin = exam.durationMinutes;
+        const effMin = baseMin > 0 ? effectiveExamDurationMinutes(baseMin, accom) : null;
+        const serverDeadline = effMin == null ? null : new Date(now + effMin * 60000 + (exam.gracePeriodMinutes || 0) * 60000);
 
         const composed = await composeQuestionSet(tx, examId, randomSeed);
         if (!composed.length) throw Object.assign(new Error("This exam has no questions"), { http: 409 });
@@ -1115,12 +1118,14 @@ export function registerExamPhase2Routes(deps: Deps): void {
       if (!attempt) { res.status(404).json({ error: "Attempt not found" }); return; }
       if (!student || attempt.studentId !== student.id) { res.status(403).json({ error: "Forbidden" }); return; }
 
-      const policy = await prisma.examResultPolicy.findUnique({ where: { examId: attempt.examId } }).catch(() => null);
+      // A missing policy keeps legacy defaults; a failed lookup must never
+      // turn a hidden/scheduled policy into immediate release.
+      const policy = await prisma.examResultPolicy.findUnique({ where: { examId: attempt.examId } });
       const mode = policy?.releaseMode || "IMMEDIATE";
       const now = Date.now();
       let released = false;
       if (mode === "IMMEDIATE") released = ["SUBMITTED", "AUTO_SUBMITTED", "FINALIZED", "RELEASED"].includes(attempt.state);
-      else if (mode === "SCHEDULED") released = !!(policy?.releaseAt && attempt.isCompleted && now >= new Date(policy.releaseAt).getTime());
+      else if (mode === "SCHEDULED") released = !!(policy?.releaseAt && ["SUBMITTED", "AUTO_SUBMITTED", "FINALIZED", "RELEASED"].includes(attempt.state) && now >= new Date(policy.releaseAt).getTime());
       else if (mode === "AFTER_GRADING") released = ["FINALIZED", "RELEASED"].includes(attempt.state);
       else if (mode === "HIDDEN") released = false;
 
@@ -1228,7 +1233,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
             const lines = blanks.map((b: any, i: number) => matches[b.id] != null && bankLabel[matches[b.id]] ? `${i + 1}. ${bankLabel[matches[b.id]]}` : null).filter(Boolean);
             return lines.length ? lines.join("   ") : null;
           }
-          if (Array.isArray(ans?.selectedOptions)) {
+          if (Array.isArray(ans?.selectedOptions) && ans.selectedOptions.length > 0) {
             const labels = ans.selectedOptions.map((answer: unknown) => optionLabel(q, answer)).filter(Boolean);
             return labels.length ? labels.join(", ") : null;
           }
