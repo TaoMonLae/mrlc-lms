@@ -431,7 +431,7 @@ Never use the demo passwords in production. Set the three seed password variable
 | `SMTP_SECURE` | No | `false` | Use implicit TLS; normally `true` for port 465 |
 | `SMTP_USER` | Provider-specific | — | SMTP username |
 | `SMTP_PASS` | Provider-specific | — | SMTP password or app password |
-| `SMTP_FROM` | No | `MRLC LMS <no-reply@mrlc.local>` | From address for password resets and notifications |
+| `SMTP_FROM` | No | `System Admin \| MRLC LMS <no-reply@mrlc.local>` | Sender mailbox for password resets and notifications; display name is standardized by the application |
 | `EBOOK_DIR` | No | `./data/ebooks` | Persistent PDF/EPUB storage |
 | `VIDEO_FILES_DIR` | No | `./data/videos` | Persistent uploaded and converted video storage |
 | `BACKUP_DIR` | No | `./data/backups` | PostgreSQL backup storage |

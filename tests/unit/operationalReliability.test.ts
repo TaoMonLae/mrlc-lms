@@ -60,6 +60,7 @@ test('a failed delivery receipt update never requeues already accepted email', a
   await h.send(); await h.send();
   assert.equal(h.sent.length, 1); assert.equal(h.message.status, 'SENT');
   assert.equal(h.message.textBody, null); assert.equal(h.errors.length, 1);
+  assert.deepEqual(h.sent[0].from, { name: 'System Admin | MRLC LMS', address: 'school@example.test' });
 });
 
 test('queued notifications respect opt-outs made after queueing; account mail still delivers', async () => {

@@ -1,3 +1,4 @@
+import { buildPasswordResetEmail } from "./lib/emailTemplates";
 import { deliverOutboxMessage } from "./lib/emailDelivery";
 import { asyncHandler } from "./lib/asyncHandler";
 import { accountStillMatchesToken, consumeRecoveryCode } from "./lib/sessionAccess";
@@ -600,7 +601,7 @@ const prisma = new PrismaClient({ adapter });
 const APP_URL = (process.env.APP_URL || "http://localhost:8000").replace(/\/$/, "");
 const SMTP_HOST = process.env.SMTP_HOST?.trim();
 const SMTP_PORT = Math.max(1, Number(process.env.SMTP_PORT || 587));
-const SMTP_FROM = process.env.SMTP_FROM?.trim() || "MRLC LMS <no-reply@mrlc.local>";
+const SMTP_FROM = process.env.SMTP_FROM?.trim() || "System Admin | MRLC LMS <no-reply@mrlc.local>";
 const smtpTransport = SMTP_HOST ? nodemailer.createTransport({
   host: SMTP_HOST,
   port: SMTP_PORT,
@@ -609,12 +610,6 @@ const smtpTransport = SMTP_HOST ? nodemailer.createTransport({
     ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
     : undefined,
 }) : null;
-
-function escapeEmailHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (character) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-  })[character] || character);
-}
 
 async function queueEmail(input: {
   userId?: string | null;
@@ -2343,15 +2338,14 @@ async function startServer() {
             },
           });
         });
-        const resetUrl = `${APP_URL}/reset-password?token=${encodeURIComponent(rawToken)}`;
-        const displayName = user.firstName || user.lastName || "there";
         await queueEmail({
           userId: user.id,
           toEmail: user.email,
-          subject: "Reset your MRLC LMS password",
           dedupeKey: `password-reset:${resetToken.id}`,
-          textBody: `Hello ${displayName},\n\nUse this link to reset your MRLC LMS password. It expires in 30 minutes:\n${resetUrl}\n\nIf you did not request this, you can ignore this message.`,
-          htmlBody: `<p>Hello ${escapeEmailHtml(displayName)},</p><p>Use the button below to reset your MRLC LMS password. This link expires in 30 minutes.</p><p><a href="${escapeEmailHtml(resetUrl)}" style="display:inline-block;padding:12px 18px;background:#4338ca;color:#fff;text-decoration:none;border-radius:8px">Reset password</a></p><p>If you did not request this, you can ignore this message.</p>`,
+          ...buildPasswordResetEmail({
+            recipientName: [user.firstName, user.lastName].filter(Boolean).join(' '),
+            appUrl: APP_URL, token: rawToken,
+          }),
         });
         void processEmailOutbox();
         void createAuditLog(user.id, user.email, "REQUEST", "PASSWORD_RESET", resetToken.id,

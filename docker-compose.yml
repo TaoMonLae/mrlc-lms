@@ -30,7 +30,7 @@ services:
       SMTP_SECURE: "${SMTP_SECURE:-false}"
       SMTP_USER: "${SMTP_USER:-}"
       SMTP_PASS: "${SMTP_PASS:-}"
-      SMTP_FROM: "${SMTP_FROM:-MRLC LMS <no-reply@mrlc.local>}"
+      SMTP_FROM: "${SMTP_FROM:-System Admin | MRLC LMS <no-reply@mrlc.local>}"
       PORT: "8000"
       NODE_ENV: "production"
       # Set to "true" on first run to create the starter accounts, then remove.

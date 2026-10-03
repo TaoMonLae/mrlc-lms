@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { notificationService, syncTeacherAppUpdates } from '../../lib/notifications';
 import { registerNotificationRoutes } from '../../notificationRoutes';
+import { CURRENT_RELEASE } from '../../src/data/releases';
 import { announcementAudienceWhere } from '../../lib/announcementAudience';
 
 const defaults = { inAppEnabled: true, emailEnabled: true, homeworkReminders: true, resultNotifications: true, interventionReminders: true, payrollNotifications: true, classNotifications: true, appUpdates: true };
@@ -9,7 +10,7 @@ function setup() {
   const notifications: any[] = [], deliveries: any[] = [], emails: any[] = [];
   const preferences = new Map<string, any>();
   const users = [
-    { id: 'a', email: 'A@example.org', role: 'TEACHER', isActive: true, isExternalLearner: false },
+    { id: 'a', email: 'A@example.org', firstName: 'Nai', lastName: 'Mon', role: 'TEACHER', isActive: true, isExternalLearner: false },
     { id: 'b', email: 'b@example.org', role: 'TEACHER', isActive: true, isExternalLearner: false },
     { id: 'c', email: 'c@example.org', role: 'TEACHER', isActive: false, isExternalLearner: false },
   ];
@@ -57,6 +58,8 @@ test('repeated events queue one private email and one delivery per channel', asy
   await h.service.ensure(input); await h.service.ensure(input);
   assert.equal(h.notifications.length, 1); assert.equal(h.emails.length, 1); assert.equal(h.deliveries.length, 2);
   assert.equal(h.emails[0].toEmail, 'a@example.org');
+  assert.match(h.emails[0].textBody, /Dear Nai Mon,/);
+  assert.match(h.emails[0].textBody, /System Admin/);
   assert.match(h.emails[0].htmlBody, /&lt;private&gt; &amp; ready/);
   assert.match(h.emails[0].textBody, /https:\/\/school.example\/my-payroll/);
 });
@@ -115,6 +118,7 @@ test('release sweep reaches active teachers without bell requests and does not r
   await syncTeacherAppUpdates(h.db, 'https://school.example'); await syncTeacherAppUpdates(h.db, 'https://school.example');
   assert.deepEqual(h.notifications.map((n) => n.userId), ['a', 'b']);
   assert.equal(h.emails.length, 2); assert.ok(h.notifications.every((n) => n.href === '/updates'));
+  assert.ok(h.emails[0].textBody.includes(CURRENT_RELEASE.highlights[0].description));
 });
 
 function routes(h = setup()) {

@@ -1,7 +1,8 @@
+import { systemAdminSender } from './emailSender';
 import type { EmailOutbox, PrismaClient } from '@prisma/client';
 import { notificationTypeEnabled } from '../shared/notificationPreferences';
 
-type MailTransport = { sendMail: (mail: { from: string; to: string; subject: string; text?: string; html?: string }) => Promise<unknown> };
+type MailTransport = { sendMail: (mail: { from: string | { name: string; address: string }; to: string; subject: string; text?: string; html?: string }) => Promise<unknown> };
 
 export async function deliverOutboxMessage(db: PrismaClient, transport: MailTransport, message: EmailOutbox, from: string,
   logger: { error: (...args: any[]) => void }) {
@@ -34,7 +35,7 @@ export async function deliverOutboxMessage(db: PrismaClient, transport: MailTran
     }
   }
   try {
-    await transport.sendMail({ from, to: message.toEmail, subject: message.subject, text: message.textBody || undefined, html: message.htmlBody || undefined });
+    await transport.sendMail({ from: systemAdminSender(from), to: message.toEmail, subject: message.subject, text: message.textBody || undefined, html: message.htmlBody || undefined });
   } catch (error: any) {
     const attempts = message.attempts + 1;
     const lastError = String(error?.message || 'Email delivery failed').slice(0, 500);

@@ -1,3 +1,4 @@
+import { buildNotificationEmail } from './emailTemplates';
 import { notificationTypeEnabled } from '../shared/notificationPreferences';
 export { notificationTypeEnabled } from '../shared/notificationPreferences';
 import type { Prisma, PrismaClient, Announcement, TimetableEntry, PayrollRun } from '@prisma/client';
@@ -7,13 +8,12 @@ type Db = Prisma.TransactionClient;
 export type NotificationInput = {
   userId: string; type: string; title: string; message: string; href?: string | null; sourceId: string;
 };
-const html = (value: string) => value.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
 
 // Call inside the same transaction as the triggering mutation. Notification,
 // delivery records and mail are committed together, before the SMTP worker runs.
 export function notificationService(db: Db, appUrl: string) {
   const ensure = async (input: NotificationInput) => {
-    const user = await db.user.findUnique({ where: { id: input.userId }, select: { email: true, isActive: true, isExternalLearner: true } });
+    const user = await db.user.findUnique({ where: { id: input.userId }, select: { email: true, firstName: true, lastName: true, isActive: true, isExternalLearner: true } });
     if (!user?.isActive || user.isExternalLearner) return null;
     const preference = await db.notificationPreference.upsert({ where: { userId: input.userId }, update: {}, create: { userId: input.userId } });
     if (!notificationTypeEnabled(input.type, preference) || (!preference.inAppEnabled && !preference.emailEnabled)) return null;
@@ -32,12 +32,13 @@ export function notificationService(db: Db, appUrl: string) {
       });
     }
     if (preference.emailEnabled) {
-      const href = `${appUrl.replace(/\/$/, '')}${input.href?.startsWith('/') ? input.href : '/'}`;
+      const email = buildNotificationEmail({ ...input, appUrl,
+        recipientName: [user.firstName, user.lastName].filter(Boolean).join(' '),
+        release: input.type === 'APP_UPDATE' && input.sourceId === `app-update:${CURRENT_RELEASE.id}` ? CURRENT_RELEASE : undefined,
+      });
       const dedupeKey = `notification:${notification.id}`;
       await db.emailOutbox.upsert({ where: { dedupeKey }, update: {}, create: {
-        userId: input.userId, toEmail: user.email.trim().toLowerCase(), subject: input.title, dedupeKey,
-        textBody: `${input.message}\n\nOpen MRLC LMS: ${href}`,
-        htmlBody: `<p>${html(input.message)}</p><p><a href="${html(href)}">Open MRLC LMS</a></p>`,
+        userId: input.userId, toEmail: user.email.trim().toLowerCase(), dedupeKey, ...email,
       } });
     }
     return notification;
