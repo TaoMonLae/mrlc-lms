@@ -1531,6 +1531,9 @@ model NotificationPreference {
   resultNotifications   Boolean  @default(true)
   interventionReminders Boolean  @default(true)
   emailEnabled          Boolean  @default(false)
+  payrollNotifications  Boolean  @default(true)
+  classNotifications    Boolean  @default(true)
+  appUpdates            Boolean  @default(true)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 }
@@ -1549,6 +1552,7 @@ model NotificationDelivery {
 
   @@index([status, channel, createdAt])
   @@index([notificationId])
+  @@unique([notificationId, channel])
 }
 
 model AuthSession {

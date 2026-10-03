@@ -1,3 +1,4 @@
+import ReleaseUpdates from "./pages/ReleaseUpdates";
 import FinanceProcedures from './pages/financial/FinanceProcedures';
 import FinanceWorkspace from './components/financial/FinanceWorkspace';
 import { Suspense } from "react";
@@ -370,6 +371,7 @@ export default function App() {
                 </Route>
                 <Route path="/profile" element={<MyProfile />} />
                 <Route path="/my-payroll" element={<MyPayroll />} />
+                <Route path="/updates" element={<ReleaseUpdates />} />
                 <Route element={<ProtectedRoute allowedRoles={['TEACHER', 'STUDENT', 'ADMIN']} />}>
                   <Route path="/classwork" element={<Classwork />} />
                 </Route>

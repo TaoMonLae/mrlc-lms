@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -49,6 +50,7 @@ export function TopBar() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
+  const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
   const [viewedAnnouncements, setViewedAnnouncements] = useState<Set<string>>(new Set());
   const viewedAnnouncementsKey = `viewed_announcements:${user?.id || 'anonymous'}`;
 
@@ -71,22 +73,33 @@ export function TopBar() {
     }
   }, [viewedAnnouncementsKey]);
 
-  // Fetch on mount AND whenever the bell is opened, so announcements published
-  // after page load show up without a full refresh.
+  // Refresh while signed in and discard stale responses after an account switch.
   useEffect(() => {
-    if (!notifOpen && announcements.length > 0) return;
-    Promise.all([
-      apiGet<any[]>("/api/announcements").catch(() => []),
-      apiGet<{ notifications: NotificationRow[] }>("/api/notifications").catch(() => ({ notifications: [] })),
-    ]).then(([announcementRows, notificationData]) => {
-      setAnnouncements(Array.isArray(announcementRows) ? announcementRows : []);
-      setNotifications(notificationData.notifications || []);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notifOpen]);
+    setAnnouncements([]);
+    setNotifications([]);
+    setNotificationUnreadCount(0);
+    if (!user?.id) return;
+    const controller = new AbortController();
+    const refresh = async () => {
+      const [announcementRows, notificationData] = await Promise.allSettled([
+        apiGet<Announcement[]>("/api/announcements", { signal: controller.signal }),
+        apiGet<{ notifications: NotificationRow[]; unreadCount: number }>("/api/notifications", { signal: controller.signal }),
+      ]);
+      if (controller.signal.aborted) return;
+      if (announcementRows.status === 'fulfilled') setAnnouncements(announcementRows.value);
+      if (notificationData.status === 'fulfilled') {
+        setNotifications(notificationData.value.notifications || []);
+        setNotificationUnreadCount(notificationData.value.unreadCount);
+      }
+    };
+    void refresh();
+    const timer = setInterval(() => void refresh(), 60_000);
+    return () => { controller.abort(); clearInterval(timer); };
+  }, [notifOpen, user?.id]);
 
   const activeAnnouncements = announcements
-    .filter((a) => a.status === "ACTIVE")
+    .filter((a) => a.status === "ACTIVE" && (!a.expiresAt || new Date(a.expiresAt) > new Date()))
+    .filter((a) => !notifications.some((notification) => notification.href === `/announcements/${a.id}`))
     .sort((a, b) => {
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
@@ -97,8 +110,7 @@ export function TopBar() {
   const unreadAnnouncements = activeAnnouncements.filter(
     (ann) => !viewedAnnouncements.has(ann.id)
   );
-  const unreadNotifications = notifications.filter((notification) => !notification.readAt);
-  const unreadCount = unreadAnnouncements.length + unreadNotifications.length;
+  const unreadCount = unreadAnnouncements.length + notificationUnreadCount;
 
   // Mark announcement as viewed when clicked
   const markAsViewed = (announcementId: string) => {
@@ -110,18 +122,25 @@ export function TopBar() {
     });
   };
 
-  // Mark all as viewed
+  // Persist read state before removing unread indicators.
   const markAllAsViewed = async () => {
-    const allIds = activeAnnouncements.map((ann) => ann.id);
-    setViewedAnnouncements(new Set(allIds));
-    localStorage.setItem(viewedAnnouncementsKey, JSON.stringify(allIds));
-    setNotifications((rows) => rows.map((row) => ({ ...row, readAt: row.readAt || new Date().toISOString() })));
-    await apiSend('/api/notifications/read-all', 'POST').catch(() => undefined);
+    try {
+      await apiSend('/api/notifications/read-all', 'POST');
+      const allIds = activeAnnouncements.map((ann) => ann.id);
+      setViewedAnnouncements(new Set(allIds));
+      localStorage.setItem(viewedAnnouncementsKey, JSON.stringify(allIds));
+      setNotifications((rows) => rows.map((row) => ({ ...row, readAt: row.readAt || new Date().toISOString() })));
+      setNotificationUnreadCount(0);
+    } catch { toast.error('Could not mark notifications as read'); }
   };
 
   const markNotificationRead = async (notificationId: string) => {
-    setNotifications((rows) => rows.map((row) => row.id === notificationId ? { ...row, readAt: row.readAt || new Date().toISOString() } : row));
-    await apiSend(`/api/notifications/${notificationId}/read`, 'PATCH').catch(() => undefined);
+    if (notifications.find((row) => row.id === notificationId)?.readAt) return;
+    try {
+      await apiSend(`/api/notifications/${notificationId}/read`, 'PATCH');
+      setNotifications((rows) => rows.map((row) => row.id === notificationId ? { ...row, readAt: row.readAt || new Date().toISOString() } : row));
+      setNotificationUnreadCount((count) => Math.max(0, count - 1));
+    } catch { toast.error('Could not mark notification as read'); }
   };
 
   return (
@@ -298,6 +317,7 @@ export function TopBar() {
                       to={`/announcements/${ann.id}`}
                       onClick={(e) => {
                         e.stopPropagation();
+                        markAsViewed(ann.id);
                         setNotifOpen(false);
                       }}
                       className="flex flex-col gap-1 w-full"

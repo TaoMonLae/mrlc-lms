@@ -24,7 +24,7 @@ export function ReleaseUpdatesProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const [hasUnseenRelease, setHasUnseenRelease] = useState(false);
-  const canShowHere = canAutoShowReleaseUpdates(location.pathname);
+  const canShowHere = location.pathname !== '/updates' && canAutoShowReleaseUpdates(location.pathname);
 
   useEffect(() => {
     if (isLoading || !user) {

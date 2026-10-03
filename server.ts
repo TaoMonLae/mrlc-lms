@@ -1,3 +1,6 @@
+import { announcementAudienceWhere } from "./lib/announcementAudience";
+import { notificationService, syncTeacherAppUpdates, type NotificationInput } from "./lib/notifications";
+import { registerNotificationRoutes } from "./notificationRoutes";
 import { saveStudioQuestions } from "./shared/examStudioPersistence";
 import { examAvailability, teacherExamStatus } from "./shared/examAvailability";
 import { collectSchoolFee, syncDonationCampaign, financeTransaction, reviewExpense, recordExpensePayment } from './lib/financeOperations';
@@ -4229,10 +4232,10 @@ async function startServer() {
       ]);
       if (!klass) { res.status(404).json({ error: "Class not found" }); return; }
       if (!teacher) { res.status(404).json({ error: "Teacher not found" }); return; }
-      await prisma.classTeacher.upsert({
-        where: { classId_teacherId: { classId: id, teacherId } },
-        update: {},
-        create: { classId: id, teacherId },
+      await prisma.$transaction(async (tx) => {
+        const assigned = await tx.classTeacher.createMany({ data: [{ classId: id, teacherId }], skipDuplicates: true });
+        if (!assigned.count) return;
+        await notificationService(tx, APP_URL).assignment(teacherId, id, klass.name, true, crypto.randomUUID());
       });
       const teacherName = `${teacher.user?.firstName ?? ""} ${teacher.user?.lastName ?? ""}`.trim() || teacher.teacherCode;
       await createAuditLog(jwtUser.userId, jwtUser.email, "ASSIGN", "CLASS_TEACHER", id,
@@ -4249,7 +4252,10 @@ async function startServer() {
     const jwtUser = (req as any).user as JwtPayload;
     const { id, teacherId } = req.params;
     try {
-      await prisma.classTeacher.delete({ where: { classId_teacherId: { classId: id, teacherId } } });
+      await prisma.$transaction(async (tx) => {
+        const assignment = await tx.classTeacher.delete({ where: { classId_teacherId: { classId: id, teacherId } }, include: { class: true } });
+        await notificationService(tx, APP_URL).assignment(teacherId, id, assignment.class.name, false, crypto.randomUUID());
+      });
       await createAuditLog(jwtUser.userId, jwtUser.email, "UNASSIGN", "CLASS_TEACHER", id,
         `Teacher ${teacherId} removed from class ${id}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
       res.json({ success: true });
@@ -5139,52 +5145,9 @@ async function startServer() {
   });
 
   // ── Student Success, interventions, and notifications ─────────────────────
-  const ensureNotification = async (input: {
-    userId: string; type: string; title: string; message: string; href?: string | null; sourceId: string;
-  }) => {
-    const preference = await prisma.notificationPreference.upsert({
-      where: { userId: input.userId }, update: {}, create: { userId: input.userId },
-      include: { user: { select: { email: true } } },
-    });
-    const typeEnabled = input.type === "HOMEWORK_DUE"
-      ? preference.homeworkReminders
-      : input.type.startsWith("HOMEWORK_")
-        ? preference.resultNotifications
-      : input.type === "EXAM_RESULT"
-        ? preference.resultNotifications
-        : input.type.startsWith("INTERVENTION_")
-          ? preference.interventionReminders
-          : true;
-    if (!typeEnabled) return null;
-    if (!preference.inAppEnabled && !preference.emailEnabled) return null;
-    const notification = await prisma.notification.upsert({
-      where: { userId_sourceId: { userId: input.userId, sourceId: input.sourceId } },
-      update: { title: input.title, message: input.message, href: input.href ?? null },
-      create: {
-        ...input,
-        href: input.href ?? null,
-        deliveries: {
-          create: [
-            ...(preference.inAppEnabled ? [{ channel: "IN_APP", status: "SENT", attempts: 1, sentAt: new Date() }] : []),
-            ...(preference.emailEnabled ? [{ channel: "EMAIL", status: "QUEUED" }] : []),
-          ],
-        },
-      },
-    });
-    if (preference.emailEnabled) {
-      const href = input.href ? `${APP_URL}${input.href.startsWith("/") ? input.href : `/${input.href}`}` : APP_URL;
-      await queueEmail({
-        userId: input.userId,
-        toEmail: preference.user.email,
-        subject: input.title,
-        dedupeKey: `notification:${notification.id}`,
-        textBody: `${input.message}\n\nOpen MRLC LMS: ${href}`,
-        htmlBody: `<p>${escapeEmailHtml(input.message)}</p><p><a href="${escapeEmailHtml(href)}">Open MRLC LMS</a></p>`,
-      });
-      void processEmailOutbox();
-    }
-    return notification;
-  };
+  const ensureNotification = (input: NotificationInput) => prisma.$transaction(
+    (tx) => notificationService(tx, APP_URL).ensure(input),
+  );
 
   const syncStudentNotifications = async (userId: string) => {
     const student = await prisma.student.findUnique({ where: { userId }, select: { id: true, classId: true } });
@@ -5425,43 +5388,12 @@ async function startServer() {
     }
   });
 
-  app.get("/api/notifications", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    try {
-      await Promise.all([
-        jwtUser.role === "STUDENT" ? syncStudentNotifications(jwtUser.userId) : Promise.resolve(),
-        syncInterventionNotifications(jwtUser.userId),
-      ]);
-      const preference = await prisma.notificationPreference.upsert({ where: { userId: jwtUser.userId }, update: {}, create: { userId: jwtUser.userId } });
-      const rows = preference.inAppEnabled ? await prisma.notification.findMany({
-        where: { userId: jwtUser.userId }, orderBy: { createdAt: "desc" }, take: 50,
-      }) : [];
-      res.json({ notifications: rows, unreadCount: rows.filter((row) => !row.readAt).length, preferences: preference });
-    } catch (err: any) {
-      if (err?.code === "P2021" || err?.code === "P2022") { res.json({ notifications: [], unreadCount: 0, migrationRequired: true }); return; }
-      logger.error("Error fetching notifications:", err); res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  app.patch("/api/notifications/:id/read", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    await prisma.notification.updateMany({ where: { id: req.params.id, userId: jwtUser.userId }, data: { readAt: new Date() } });
-    res.json({ success: true });
-  });
-  app.post("/api/notifications/read-all", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    await prisma.notification.updateMany({ where: { userId: jwtUser.userId, readAt: null }, data: { readAt: new Date() } });
-    res.json({ success: true });
-  });
-  app.put("/api/notifications/preferences", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    const fields = ["inAppEnabled", "homeworkReminders", "resultNotifications", "interventionReminders", "emailEnabled"] as const;
-    const data: Record<string, boolean> = {};
-    for (const field of fields) if (typeof req.body?.[field] === "boolean") data[field] = req.body[field];
-    const preference = await prisma.notificationPreference.upsert({
-      where: { userId: jwtUser.userId }, update: data, create: { userId: jwtUser.userId, ...data },
-    });
-    res.json(preference);
+  registerNotificationRoutes({
+    app, prisma, authMiddleware, logger,
+    sync: (user) => Promise.all([
+      user.role === "STUDENT" ? syncStudentNotifications(user.userId) : Promise.resolve(),
+      syncInterventionNotifications(user.userId),
+    ]),
   });
 
   // ── Cases (Support/Safeguarding) API ──────────────────────────────────────
@@ -7429,16 +7361,7 @@ async function startServer() {
   app.get("/api/announcements", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
-      // Audience filtering: students see ALL/STUDENTS (+ their class); teachers see
-      // ALL/TEACHERS/CLASS; admins see everything. Archived items are hidden from
-      // non-managers.
-      const where: any = {};
-      if (jwtUser.role === "STUDENT") {
-        where.status = "ACTIVE";
-        where.audience = { in: ["ALL", "STUDENTS", "CLASS"] };
-      } else if (jwtUser.role === "TEACHER") {
-        where.audience = { in: ["ALL", "TEACHERS", "STUDENTS", "CLASS"] };
-      }
+      const where = await announcementAudienceWhere(prisma, jwtUser);
       const announcements = await prisma.announcement.findMany({
         where,
         orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
@@ -7460,7 +7383,7 @@ async function startServer() {
   app.get("/api/announcements/:id", authMiddleware, async (req, res) => {
     const { id } = req.params;
     try {
-      const announcement = await prisma.announcement.findUnique({ where: { id } });
+      const announcement = await prisma.announcement.findFirst({ where: { AND: [{ id }, await announcementAudienceWhere(prisma, (req as any).user)] } });
       if (!announcement) {
         res.status(404).json({ error: "Announcement not found" });
         return;
@@ -7484,20 +7407,24 @@ async function startServer() {
       return;
     }
     try {
-      const announcement = await prisma.announcement.create({
-        data: {
-          title,
-          body,
-          audience: audience || "ALL",
-          classId: classId || null,
-          className: className || null,
-          pinned: Boolean(pinned),
-          expiresAt: expiresAt ? new Date(expiresAt) : null,
-          status: status || "ACTIVE",
-          createdById: jwtUser.userId,
-          createdByName: jwtUser.email,
-        },
-      });
+      const announcement = await prisma.$transaction(async (tx) => {
+        const announcement = await tx.announcement.create({
+          data: {
+            title,
+            body,
+            audience: audience || "ALL",
+            classId: classId || null,
+            className: className || null,
+            pinned: Boolean(pinned),
+            expiresAt: expiresAt ? new Date(expiresAt) : null,
+            status: status || "ACTIVE",
+            createdById: jwtUser.userId,
+            createdByName: jwtUser.email,
+          },
+        });
+        await notificationService(tx, APP_URL).announcement(announcement);
+        return announcement;
+      }, { timeout: 30_000 });
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "CREATE", "ANNOUNCEMENT", announcement.id,
         `Announcement '${title}' created.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
@@ -7518,19 +7445,23 @@ async function startServer() {
     const { id } = req.params;
     const { title, body, audience, classId, className, pinned, expiresAt, status } = req.body;
     try {
-      const announcement = await prisma.announcement.update({
-        where: { id },
-        data: {
-          ...(title !== undefined ? { title } : {}),
-          ...(body !== undefined ? { body } : {}),
-          ...(audience !== undefined ? { audience } : {}),
-          ...(classId !== undefined ? { classId: classId || null } : {}),
-          ...(className !== undefined ? { className: className || null } : {}),
-          ...(pinned !== undefined ? { pinned: Boolean(pinned) } : {}),
-          ...(expiresAt !== undefined ? { expiresAt: expiresAt ? new Date(expiresAt) : null } : {}),
-          ...(status !== undefined ? { status } : {}),
-        },
-      });
+      const announcement = await prisma.$transaction(async (tx) => {
+        const announcement = await tx.announcement.update({
+          where: { id },
+          data: {
+            ...(title !== undefined ? { title } : {}),
+            ...(body !== undefined ? { body } : {}),
+            ...(audience !== undefined ? { audience } : {}),
+            ...(classId !== undefined ? { classId: classId || null } : {}),
+            ...(className !== undefined ? { className: className || null } : {}),
+            ...(pinned !== undefined ? { pinned: Boolean(pinned) } : {}),
+            ...(expiresAt !== undefined ? { expiresAt: expiresAt ? new Date(expiresAt) : null } : {}),
+            ...(status !== undefined ? { status } : {}),
+          },
+        });
+        await notificationService(tx, APP_URL).announcement(announcement);
+        return announcement;
+      }, { timeout: 30_000 });
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "UPDATE", "ANNOUNCEMENT", id,
         `Announcement '${announcement.title}' updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
@@ -7741,31 +7672,35 @@ async function startServer() {
         res.status(409).json({ error: "Schedule conflict detected", conflicts });
         return;
       }
-      const entry = await timetableDb.timetableEntry.create({
-        data: {
-          classId: candidate.classId || null,
-          className: candidate.className || null,
-          subjectId: candidate.subjectId || null,
-          subjectName: candidate.subjectName || null,
-          subjectColor: candidate.subjectColor || "bg-blue-500",
-          teacherId: candidate.teacherId || null,
-          teacherName: activeTeacherNames.get(candidate.teacherId) || null,
-          substituteTeacherId: candidate.substituteTeacherId || null,
-          substituteTeacherName: activeTeacherNames.get(candidate.substituteTeacherId) || null,
-          academicYear: candidate.academicYear,
-          term: candidate.term,
-          dayOfWeek: candidate.dayOfWeek,
-          startTime: candidate.startTime,
-          endTime: candidate.endTime,
-          room: candidate.room || null,
-          scheduleType: candidate.scheduleType,
-          recurrence: candidate.recurrence,
-          effectiveFrom: parseScheduleDate(candidate.effectiveFrom),
-          effectiveUntil: parseScheduleDate(candidate.effectiveUntil),
-          eventDate: parseScheduleDate(candidate.eventDate),
-          notes: candidate.notes || null,
-        },
-      });
+      const entry = await prisma.$transaction(async (tx) => {
+        const entry = await tx.timetableEntry.create({
+          data: {
+            classId: candidate.classId || null,
+            className: candidate.className || null,
+            subjectId: candidate.subjectId || null,
+            subjectName: candidate.subjectName || null,
+            subjectColor: candidate.subjectColor || "bg-blue-500",
+            teacherId: candidate.teacherId || null,
+            teacherName: activeTeacherNames.get(candidate.teacherId) || null,
+            substituteTeacherId: candidate.substituteTeacherId || null,
+            substituteTeacherName: activeTeacherNames.get(candidate.substituteTeacherId) || null,
+            academicYear: candidate.academicYear,
+            term: candidate.term,
+            dayOfWeek: candidate.dayOfWeek,
+            startTime: candidate.startTime,
+            endTime: candidate.endTime,
+            room: candidate.room || null,
+            scheduleType: candidate.scheduleType,
+            recurrence: candidate.recurrence,
+            effectiveFrom: parseScheduleDate(candidate.effectiveFrom),
+            effectiveUntil: parseScheduleDate(candidate.effectiveUntil),
+            eventDate: parseScheduleDate(candidate.eventDate),
+            notes: candidate.notes || null,
+          },
+        });
+        await notificationService(tx, APP_URL).timetable(entry, "created");
+        return entry;
+      }, { timeout: 30_000 });
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "CREATE", "TIMETABLE", entry.id,
         `Timetable slot created for ${entry.className || entry.classId} on ${entry.dayOfWeek}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
@@ -7824,34 +7759,38 @@ async function startServer() {
         res.status(409).json({ error: "Schedule conflict detected", conflicts });
         return;
       }
-      const entry = await timetableDb.timetableEntry.update({
-        where: { id },
-        data: {
-          ...(req.body.classId !== undefined ? { classId: req.body.classId } : {}),
-          ...(req.body.className !== undefined ? { className: req.body.className || null } : {}),
-          ...(req.body.subjectId !== undefined ? { subjectId: req.body.subjectId } : {}),
-          ...(req.body.subjectName !== undefined ? { subjectName: req.body.subjectName || null } : {}),
-          ...(req.body.subjectColor !== undefined ? { subjectColor: req.body.subjectColor || "bg-blue-500" } : {}),
-          teacherId: candidate.teacherId || null,
-          teacherName: activeTeacherNames.get(candidate.teacherId) || null,
-          substituteTeacherId: candidate.substituteTeacherId || null,
-          substituteTeacherName: activeTeacherNames.get(candidate.substituteTeacherId) || null,
-          ...(req.body.academicYear !== undefined ? { academicYear: req.body.academicYear || null } : {}),
-          ...(req.body.term !== undefined ? { term: req.body.term || null } : {}),
-          ...(req.body.dayOfWeek !== undefined ? { dayOfWeek: req.body.dayOfWeek } : {}),
-          ...(req.body.startTime !== undefined ? { startTime: req.body.startTime } : {}),
-          ...(req.body.endTime !== undefined ? { endTime: req.body.endTime } : {}),
-          ...(req.body.room !== undefined ? { room: req.body.room || null } : {}),
-          ...(req.body.scheduleType !== undefined ? { scheduleType: req.body.scheduleType } : {}),
-          ...(req.body.recurrence !== undefined ? { recurrence: req.body.recurrence } : {}),
-          ...(req.body.effectiveFrom !== undefined ? { effectiveFrom: parseScheduleDate(req.body.effectiveFrom) } : {}),
-          ...(req.body.effectiveUntil !== undefined ? { effectiveUntil: parseScheduleDate(req.body.effectiveUntil) } : {}),
-          ...(req.body.eventDate !== undefined ? { eventDate: parseScheduleDate(req.body.eventDate) } : {}),
-          ...(req.body.status !== undefined ? { status: req.body.status } : {}),
-          ...(req.body.cancellationReason !== undefined ? { cancellationReason: req.body.cancellationReason || null } : {}),
-          ...(req.body.notes !== undefined ? { notes: req.body.notes || null } : {}),
-        },
-      });
+      const entry = await prisma.$transaction(async (tx) => {
+        const entry = await tx.timetableEntry.update({
+          where: { id },
+          data: {
+            ...(req.body.classId !== undefined ? { classId: req.body.classId } : {}),
+            ...(req.body.className !== undefined ? { className: req.body.className || null } : {}),
+            ...(req.body.subjectId !== undefined ? { subjectId: req.body.subjectId } : {}),
+            ...(req.body.subjectName !== undefined ? { subjectName: req.body.subjectName || null } : {}),
+            ...(req.body.subjectColor !== undefined ? { subjectColor: req.body.subjectColor || "bg-blue-500" } : {}),
+            teacherId: candidate.teacherId || null,
+            teacherName: activeTeacherNames.get(candidate.teacherId) || null,
+            substituteTeacherId: candidate.substituteTeacherId || null,
+            substituteTeacherName: activeTeacherNames.get(candidate.substituteTeacherId) || null,
+            ...(req.body.academicYear !== undefined ? { academicYear: req.body.academicYear || null } : {}),
+            ...(req.body.term !== undefined ? { term: req.body.term || null } : {}),
+            ...(req.body.dayOfWeek !== undefined ? { dayOfWeek: req.body.dayOfWeek } : {}),
+            ...(req.body.startTime !== undefined ? { startTime: req.body.startTime } : {}),
+            ...(req.body.endTime !== undefined ? { endTime: req.body.endTime } : {}),
+            ...(req.body.room !== undefined ? { room: req.body.room || null } : {}),
+            ...(req.body.scheduleType !== undefined ? { scheduleType: req.body.scheduleType } : {}),
+            ...(req.body.recurrence !== undefined ? { recurrence: req.body.recurrence } : {}),
+            ...(req.body.effectiveFrom !== undefined ? { effectiveFrom: parseScheduleDate(req.body.effectiveFrom) } : {}),
+            ...(req.body.effectiveUntil !== undefined ? { effectiveUntil: parseScheduleDate(req.body.effectiveUntil) } : {}),
+            ...(req.body.eventDate !== undefined ? { eventDate: parseScheduleDate(req.body.eventDate) } : {}),
+            ...(req.body.status !== undefined ? { status: req.body.status } : {}),
+            ...(req.body.cancellationReason !== undefined ? { cancellationReason: req.body.cancellationReason || null } : {}),
+            ...(req.body.notes !== undefined ? { notes: req.body.notes || null } : {}),
+          },
+        });
+        await notificationService(tx, APP_URL).timetable(entry, "updated", current);
+        return entry;
+      }, { timeout: 30_000 });
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "UPDATE", "TIMETABLE", id,
         `Timetable slot ${id} updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
@@ -7891,15 +7830,19 @@ async function startServer() {
         res.status(409).json({ error: "Schedule conflict detected", conflicts });
         return;
       }
-      const entry = await timetableDb.timetableEntry.update({
-        where: { id },
-        data: {
-          substituteTeacherId: req.body.substituteTeacherId,
-          substituteTeacherName: activeTeacherNames.get(req.body.substituteTeacherId) || null,
-          status: "SUBSTITUTED",
-          notes: req.body.notes || current.notes,
-        },
-      });
+      const entry = await prisma.$transaction(async (tx) => {
+        const entry = await tx.timetableEntry.update({
+          where: { id },
+          data: {
+            substituteTeacherId: req.body.substituteTeacherId,
+            substituteTeacherName: activeTeacherNames.get(req.body.substituteTeacherId) || null,
+            status: "SUBSTITUTED",
+            notes: req.body.notes || current.notes,
+          },
+        });
+        await notificationService(tx, APP_URL).timetable(entry, "substituted", current);
+        return entry;
+      }, { timeout: 30_000 });
       await createAuditLog(jwtUser.userId, jwtUser.email, "SUBSTITUTE", "TIMETABLE", id, `Substitution assigned for timetable slot ${id}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
       res.json(entry);
     } catch (err) {
@@ -7916,10 +7859,14 @@ async function startServer() {
     }
     const { id } = req.params;
     try {
-      const entry = await timetableDb.timetableEntry.update({
-        where: { id },
-        data: { status: "CANCELLED", cancellationReason: req.body.reason || null },
-      });
+      const entry = await prisma.$transaction(async (tx) => {
+        const entry = await tx.timetableEntry.update({
+          where: { id },
+          data: { status: "CANCELLED", cancellationReason: req.body.reason || null },
+        });
+        await notificationService(tx, APP_URL).timetable(entry, "cancelled");
+        return entry;
+      }, { timeout: 30_000 });
       await createAuditLog(jwtUser.userId, jwtUser.email, "CANCEL", "TIMETABLE", id, `Timetable slot ${id} cancelled.`, req.ip, req.headers["user-agent"] || null, "WARNING");
       res.json(entry);
     } catch (err: any) {
@@ -7940,7 +7887,10 @@ async function startServer() {
     }
     const { id } = req.params;
     try {
-      await timetableDb.timetableEntry.delete({ where: { id } });
+      await prisma.$transaction(async (tx) => {
+        const entry = await tx.timetableEntry.delete({ where: { id } });
+        await notificationService(tx, APP_URL).timetable(entry, "deleted");
+      });
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "DELETE", "TIMETABLE", id,
         `Timetable slot ${id} deleted.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
@@ -13625,11 +13575,16 @@ async function startServer() {
           return;
         }
       }
-      const updated = await prisma.payrollRun.update({ where: { id: run.id }, data: { status: next } });
+      const updated = await prisma.$transaction(async (tx) => {
+        const updated = await tx.payrollRun.update({ where: { id: run.id, status: run.status, updatedAt: run.updatedAt }, data: { status: next } });
+        await notificationService(tx, APP_URL).payroll(updated);
+        return updated;
+      }, { timeout: 30_000 });
       await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "PAYROLL_RUN", run.id,
         `Payroll run ${run.periodMonth}/${run.periodYear} status ${run.status} → ${next}.`, req.ip, req.headers["user-agent"] || null, "INFO");
       res.json(updated);
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(409).json({ error: "Payroll changed while you were reviewing it. Refresh and try again." }); return; }
       logger.error("Error updating payroll run status:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
@@ -15260,18 +15215,22 @@ async function startServer() {
     const { id } = req.params;
     const { name, level, academicYear, room, capacity, description, status } = req.body || {};
     try {
-      const cls = await prisma.class.update({
-        where: { id },
-        data: {
-          ...(name !== undefined ? { name } : {}),
-          ...(level !== undefined ? { level } : {}),
-          ...(academicYear !== undefined ? { academicYear } : {}),
-          ...(room !== undefined ? { room: room || null } : {}),
-          ...(capacity !== undefined ? { capacity: capacity ? Number(capacity) : null } : {}),
-          ...(description !== undefined ? { description: description || null } : {}),
-          ...(status !== undefined ? { status: status === "ARCHIVED" ? "ARCHIVED" : "ACTIVE" } : {}),
-        },
-      });
+      const cls = await prisma.$transaction(async (tx) => {
+        const cls = await tx.class.update({
+          where: { id },
+          data: {
+            ...(name !== undefined ? { name } : {}),
+            ...(level !== undefined ? { level } : {}),
+            ...(academicYear !== undefined ? { academicYear } : {}),
+            ...(room !== undefined ? { room: room || null } : {}),
+            ...(capacity !== undefined ? { capacity: capacity ? Number(capacity) : null } : {}),
+            ...(description !== undefined ? { description: description || null } : {}),
+            ...(status !== undefined ? { status: status === "ARCHIVED" ? "ARCHIVED" : "ACTIVE" } : {}),
+          },
+        });
+        await notificationService(tx, APP_URL).classChanged(cls.id, cls.name, `${cls.id}:${cls.updatedAt.getTime()}`);
+        return cls;
+      }, { timeout: 30_000 });
       await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "CLASS", id,
         `Class '${cls.name}' updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
       res.json(cls);
@@ -23304,6 +23263,17 @@ async function startServer() {
   } else {
     logger.warn("SMTP_HOST is not configured; email will remain queued until SMTP is configured.");
   }
+  let releaseSyncRunning = false;
+  const syncReleaseMailingList = async () => {
+    if (releaseSyncRunning) return;
+    releaseSyncRunning = true;
+    try { await syncTeacherAppUpdates(prisma, APP_URL); }
+    catch (error) { logger.error("Teacher app-update notifications failed:", error); }
+    finally { releaseSyncRunning = false; }
+  };
+  void syncReleaseMailingList();
+  const releaseWorker = setInterval(() => void syncReleaseMailingList(), 5 * 60_000);
+  releaseWorker.unref();
   const emailWorker = setInterval(() => void processEmailOutbox(), 30_000);
   if (typeof (emailWorker as any).unref === "function") (emailWorker as any).unref();
 
@@ -23313,6 +23283,7 @@ async function startServer() {
     shuttingDown = true;
     logger.info("Shutting down server...");
     clearInterval(emailWorker);
+    clearInterval(releaseWorker);
     neonSnakeServer.close();
     // End long-lived SSE chat streams; otherwise they keep the server open.
     for (const set of chatStreams.values()) for (const r of set) { try { r.end(); } catch { /* ignore */ } }
