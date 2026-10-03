@@ -1,269 +1,160 @@
-import { useState, useRef, useEffect } from "react";
-import { useLocation } from "react-router";
-import { Sparkles, X, Send, Copy, Check, Trash2 } from "lucide-react";
-import { useAuth } from "../../providers/AuthProvider";
-import { apiSend } from "../../lib/api";
-import { useFloatingPanel } from "../../providers/FloatingPanelProvider";
-import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "motion/react";
-import { toast } from "sonner";
-import MiniMarkdown from "./MiniMarkdown";
+import { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router';
+import { Dialog } from '@base-ui/react/dialog';
+import { Sparkles, X, ArrowUp, ArrowUpRight, ArrowRight, Copy, Check, Plus, Maximize2, Minimize2, Square, RotateCcw, ClipboardList, ChartNoAxesCombined, UserRoundSearch, BookOpen, Languages, ShieldCheck, LoaderCircle } from 'lucide-react';
+import { useAuth } from '../../providers/AuthProvider';
+import { apiSend } from '../../lib/api';
+import { useFloatingPanel } from '../../providers/FloatingPanelProvider';
+import { toast } from 'sonner';
+import MiniMarkdown from './MiniMarkdown';
+import './ai-assistant.css';
 
 interface Message {
   id: string;
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
+  status?: 'pending' | 'complete' | 'failed' | 'stopped';
 }
-
+type Recovery = { id: string; prompt: string; message: string; stopped?: boolean };
+const ATTENTION_PROMPT = 'Give me a quick summary of what needs my attention right now — pending grading, exams closing soon, and anything notable.';
 const QUICK_PROMPTS = [
-  { label: "📋 What needs my attention?", prompt: "Give me a quick summary of what needs my attention right now — pending grading, exams closing soon, and anything notable." },
-  { label: "📊 Exam results", prompt: "Summarize the results of my most recent exam — average, pass rate, and how many are still awaiting grading." },
-  { label: "🔎 Look up a student", prompt: "Look up this student and summarize how they're doing: " },
-  { label: "📝 Lesson Plan", prompt: "Draft a detailed lesson plan for teaching a high school class about " },
-  { label: "🔄 Translate to Mon/Burmese", prompt: "Translate the following text into Mon and Burmese: " },
+  { label: 'Review exam results', description: 'See progress and grading', icon: ChartNoAxesCombined, prompt: 'Summarize the results of my most recent exam — average, pass rate, and how many are still awaiting grading.' },
+  { label: 'Look up a student', description: 'Understand their progress', icon: UserRoundSearch, prompt: "Look up this student and summarize how they're doing: " },
+  { label: 'Plan a lesson', description: 'Turn a topic into a plan', icon: BookOpen, prompt: 'Draft a detailed lesson plan for teaching a high school class about ' },
+  { label: 'Translate a text', description: 'English, Mon or Burmese', icon: Languages, prompt: 'Translate the following text into Mon and Burmese: ' },
 ];
 
+// Key the conversation to its owner; switching accounts must never retain school data.
 export default function AIAssistantWidget() {
   const { user } = useAuth();
+  if (!user || !['ADMIN', 'TEACHER'].includes(user.role)) return null;
+  return <AssistantPanel key={user.id} firstName={user.name?.trim().split(/\s+/)[0] || 'there'} />;
+}
+
+function AssistantPanel({ firstName }: { firstName: string }) {
   const location = useLocation();
-  const firstName = (user?.name || "").trim().split(/\s+/)[0] || "there";
-  // Coordinated with the Chat widget so only one floating panel is ever
-  // expanded at a time -- both anchor to the bottom-right corner.
   const { isOpen: open, isOtherOpen: chatOpen, setOpen } = useFloatingPanel('ai');
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [mobile, setMobile] = useState(false);
+  const [recovery, setRecovery] = useState<Recovery | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Restrict to Admins and Teachers
-  if (user?.role !== "ADMIN" && user?.role !== "TEACHER") return null;
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const requestRef = useRef<AbortController | null>(null);
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    const query = window.matchMedia('(max-width: 600px)');
+    const update = () => setMobile(query.matches);
+    update(); query.addEventListener('change', update);
+    return () => { query.removeEventListener('change', update); requestRef.current?.abort(); if (copyTimer.current) clearTimeout(copyTimer.current); };
+  }, []);
+  useEffect(() => {
+    const field = inputRef.current;
+    if (field) { field.style.height = 'auto'; field.style.height = `${Math.min(field.scrollHeight, 160)}px`; }
+  }, [input, open, expanded]);
+  useEffect(() => {
+    const scroll = scrollRef.current;
+    if (scroll) scroll.scrollTo({ top: scroll.scrollHeight, behavior: 'auto' });
+  }, [messages, loading, recovery, open]);
+
+  function choosePrompt(prompt: string) {
+    setInput(prompt);
+    inputRef.current?.focus();
+  }
+  function newConversation() {
+    requestRef.current?.abort(); requestRef.current = null;
+    setMessages([]); setInput(''); setRecovery(null); setLoading(false);
+    inputRef.current?.focus();
+  }
+  function stopResponse() {
+    requestRef.current?.abort(); requestRef.current = null;
+    setLoading(false);
+    const last = [...messages].reverse().find((message) => message.role === 'user' && message.status === 'pending');
+    if (last) {
+      setMessages((rows) => rows.map((row) => row.id === last.id ? { ...row, status: 'stopped' } : row));
+      setRecovery({ id: last.id, prompt: last.content, message: 'Response stopped. You can try again when you’re ready.', stopped: true });
     }
-  }, [messages, loading]);
-
-  async function handleSend(textToSend = input) {
-    const prompt = textToSend.trim();
-    if (!prompt) return;
-
-    const userMessage: Message = { id: Math.random().toString(), role: "user", content: prompt };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setLoading(true);
-
+  }
+  async function handleSend(text = input, retryId?: string) {
+    const prompt = text.trim();
+    if (!prompt || requestRef.current) return;
+    const controller = new AbortController(); requestRef.current = controller;
+    const id = retryId || crypto.randomUUID();
+    const history = messages.filter((message) => message.id !== retryId && (!message.status || message.status === 'complete')).slice(-10).map(({ role, content }) => ({ role, content }));
+    setMessages((rows) => retryId ? rows.map((row) => row.id === retryId ? { ...row, status: 'pending' } : row) : [...rows, { id, role: 'user', content: prompt, status: 'pending' }]);
+    if (!retryId) setInput('');
+    setRecovery(null); setLoading(true);
     try {
-      // Send recent conversation for memory, and the current page so the
-      // assistant knows what the user is looking at. The backend builds the
-      // system prompt + role-scoped situation snapshot.
-      const history = messages.slice(-10).map((m) => ({ role: m.role, content: m.content }));
-      const response = await apiSend<{ reply: string }>("/api/ai/chat", "POST", {
-        prompt,
-        messages: history,
-        pageContext: { path: location.pathname, title: typeof document !== "undefined" ? document.title : "" },
-      });
-
-      const assistantMessage: Message = {
-        id: Math.random().toString(),
-        role: "assistant",
-        content: response.reply
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to generate AI response");
+      const response = await apiSend<{ reply: string }>('/api/ai/chat', 'POST', {
+        prompt, messages: history, pageContext: { path: location.pathname, title: document.title },
+      }, { signal: controller.signal });
+      if (requestRef.current !== controller) return;
+      if (!response.reply?.trim()) throw new Error('The assistant returned an empty response. Please try again.');
+      setMessages((rows) => [...rows.map((row) => row.id === id ? { ...row, status: 'complete' as const } : row), { id: crypto.randomUUID(), role: 'assistant', content: response.reply }]);
+    } catch (error: any) {
+      if (requestRef.current !== controller || controller.signal.aborted) return;
+      setMessages((rows) => rows.map((row) => row.id === id ? { ...row, status: 'failed' } : row));
+      setRecovery({ id, prompt, message: error?.message || 'Could not connect to the assistant. Please try again.' });
     } finally {
-      setLoading(false);
+      if (requestRef.current === controller) { requestRef.current = null; setLoading(false); }
     }
   }
-
-  function handleCopy(content: string, msgId: string) {
-    navigator.clipboard.writeText(content);
-    setCopiedId(msgId);
-    toast.success("Copied to clipboard!");
-    setTimeout(() => setCopiedId(null), 2000);
+  async function handleCopy(message: Message) {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopiedId(message.id);
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+      copyTimer.current = setTimeout(() => setCopiedId(null), 2000);
+    } catch { toast.error('Could not copy. Select the response text to copy it.'); }
   }
 
-  return (
-    <>
-      {/* Floating Sparkle Button -- hidden while our own panel or the Chat
-          widget's panel is open, since both anchor to the same corner. */}
-      {!open && !chatOpen && (
-        <button
-          onClick={() => setOpen(true)}
-          className="group fixed bottom-4 right-[68px] z-50 grid size-11 place-items-center rounded-sm border border-academic-navy-deep bg-academic-gold text-academic-navy-deep transition-colors duration-150 hover:bg-academic-coral"
-          title="AI School Assistant"
-        >
-          <Sparkles className="h-5 w-5 transition-transform duration-300 group-hover:rotate-12" />
-        </button>
-      )}
-
-      {/* Side Assistant Panel */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, x: 400 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 400 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-border bg-card dark:bg-background sm:max-w-[420px]"
-          >
-            {/* Top accent bar (app aubergine → pink) */}
-            <div className="h-1 w-full shrink-0 bg-academic-gold" />
-
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-              <div className="flex items-center gap-2.5">
-                <div className="grid size-9 place-items-center rounded-sm bg-academic-gold text-academic-navy-deep">
-                  <Sparkles className="h-[18px] w-[18px]" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold leading-tight text-slate-900 dark:text-white">AI Assistant</h3>
-                  <p className="mt-0.5 flex items-center gap-1 text-[10px] text-slate-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    Context-aware · read-only
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                {messages.length > 0 && (
-                  <button
-                    onClick={() => setMessages([])}
-                    className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
-                    title="Clear conversation"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                )}
-                <button
-                  onClick={() => setOpen(false)}
-                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
-                  title="Close"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Chat Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-              {messages.length === 0 ? (
-                <div className="flex h-full flex-col justify-center space-y-5 px-1 py-6">
-                  <div className="text-center">
-                    <div className="mx-auto grid size-14 place-items-center rounded-sm bg-academic-gold text-academic-navy-deep">
-                      <Sparkles className="h-7 w-7" />
-                    </div>
-                    <h4 className="mt-3 text-base font-bold text-slate-900 dark:text-white">Hi {firstName} 👋</h4>
-                    <p className="mx-auto mt-1 max-w-[19rem] text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                      I can see your classes, exams, grading queue, attendance and recent activity — all read-only. Ask me anything, or start here:
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-1 gap-2 text-left">
-                    {QUICK_PROMPTS.map((qp, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setInput(qp.prompt)}
-                        className="group flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-left text-xs font-medium text-slate-700 transition-colors hover:border-aubergine-200 hover:bg-aubergine-50 hover:text-aubergine-900 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-300 dark:hover:border-aubergine-900/50 dark:hover:bg-aubergine-900/20"
-                      >
-                        <span className="flex-1">{qp.label}</span>
-                        <Send className="h-3.5 w-3.5 shrink-0 text-slate-300 transition-colors group-hover:text-aubergine-500" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                messages.map((m) => (
-                  <div key={m.id} className={`flex items-start gap-2.5 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                    {m.role === "assistant" && (
-                      <div className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-sm bg-academic-gold text-academic-navy-deep">
-                        <Sparkles className="h-3.5 w-3.5" />
-                      </div>
-                    )}
-                    <div
-                      className={`relative max-w-[82%] px-3.5 py-2.5 text-xs sm:text-sm ${
-                        m.role === "user"
-                          ? "rounded-2xl rounded-br-md bg-aubergine-600 text-white"
-                          : "rounded-2xl rounded-tl-md bg-aubergine-50 text-slate-800 dark:bg-slate-800/70 dark:text-slate-100"
-                      }`}
-                    >
-                      {m.role === "assistant" ? (
-                        <MiniMarkdown
-                          content={m.content}
-                          className="break-words leading-relaxed [&_p]:my-1 [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5 [&_h1]:text-base [&_h1]:font-bold [&_h1]:mt-2 [&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-2 [&_h3]:font-semibold [&_h3]:mt-1.5 [&_strong]:font-semibold [&_a]:text-aubergine-700 [&_a]:underline dark:[&_a]:text-aubergine-300 [&_code]:rounded [&_code]:bg-aubergine-100/70 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[0.85em] dark:[&_code]:bg-slate-900 [&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-900 [&_pre]:p-3 [&_pre]:text-slate-100 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_blockquote]:border-l-2 [&_blockquote]:border-aubergine-300 [&_blockquote]:pl-3 [&_blockquote]:italic [&_table]:my-2 [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-slate-300 [&_th]:bg-white/60 [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_td]:border [&_td]:border-slate-200 [&_td]:px-2 [&_td]:py-1 dark:[&_th]:border-slate-700 dark:[&_th]:bg-slate-800 dark:[&_td]:border-slate-700 [&_hr]:my-2 [&_hr]:border-slate-200"
-                        />
-                      ) : (
-                        <p className="whitespace-pre-wrap break-words leading-relaxed">{m.content}</p>
-                      )}
-
-                      {/* Copy Action for AI Responses */}
-                      {m.role === "assistant" && (
-                        <div className="mt-2 flex justify-end">
-                          <button
-                            onClick={() => handleCopy(m.content, m.id)}
-                            className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-aubergine-600 dark:text-slate-500 dark:hover:text-aubergine-300"
-                          >
-                            {copiedId === m.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                            {copiedId === m.id ? "Copied" : "Copy"}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-
-              {loading && (
-                <div className="flex items-start gap-2.5 justify-start">
-                  <div className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-sm bg-academic-gold text-academic-navy-deep">
-                    <Sparkles className="h-3.5 w-3.5 animate-pulse" />
-                  </div>
-                  <div className="flex items-center gap-2 rounded-2xl rounded-tl-md bg-aubergine-50 px-3.5 py-2.5 text-xs text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
-                    <span className="flex gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-aubergine-400 animate-bounce [animation-delay:-0.3s]" />
-                      <span className="h-1.5 w-1.5 rounded-full bg-aubergine-400 animate-bounce [animation-delay:-0.15s]" />
-                      <span className="h-1.5 w-1.5 rounded-full bg-aubergine-400 animate-bounce" />
-                    </span>
-                    Thinking…
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Composer */}
-            <div className="border-t border-slate-100 p-3 dark:border-slate-800">
-              <div className="flex items-end gap-2 rounded-sm border border-input bg-card p-1.5 pl-3 transition-colors focus-within:border-academic-teal focus-within:ring-2 focus-within:ring-academic-teal/25 dark:bg-background">
-                <textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                  placeholder="Ask about your classes, exams, grading…"
-                  rows={1}
-                  disabled={loading}
-                  className="max-h-32 min-h-[28px] flex-1 resize-none border-0 bg-transparent py-1.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-0 disabled:opacity-50 dark:text-slate-100"
-                />
-                <Button
-                  onClick={() => handleSend()}
-                  disabled={loading || !input.trim()}
-                  className="h-8 w-8 shrink-0 rounded-xl bg-aubergine-600 text-white hover:bg-aubergine-700 disabled:opacity-40"
-                  size="icon"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-              <p className="mt-1.5 px-1 text-center text-[10px] text-slate-400">
-                Read-only · sees your classes, exams &amp; activity · <kbd className="rounded bg-slate-100 px-1 dark:bg-slate-800">Shift+Enter</kbd> for a new line
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
-  );
+  return <Dialog.Root open={open} onOpenChange={setOpen} modal={mobile} disablePointerDismissal>
+    <Dialog.Trigger ref={triggerRef} className="ai-launcher" hidden={open || chatOpen} aria-label="Open AI assistant" title="AI school assistant">
+      <Sparkles size={20} aria-hidden="true" />
+    </Dialog.Trigger>
+    <Dialog.Portal>
+      {mobile && <Dialog.Backdrop className="ai-backdrop" />}
+      <Dialog.Popup className={`ai-panel${expanded ? ' ai-panel--expanded' : ''}`} initialFocus={mobile ? false : inputRef} finalFocus={triggerRef}>
+        <header className="ai-panel__header">
+          <div className="ai-panel__brand"><span className="ai-mark"><Sparkles size={19} aria-hidden="true" /></span><div><Dialog.Title className="ai-panel__title">AI Assistant</Dialog.Title><span className="ai-panel__subtitle">Your school workspace</span></div></div>
+          <div className="ai-panel__tools">
+            {messages.length > 0 && <button type="button" className="ai-icon-button" onClick={newConversation} aria-label="New conversation" title="New conversation"><Plus size={18} /></button>}
+            <button type="button" className="ai-icon-button ai-expand" onClick={() => setExpanded(!expanded)} aria-label={expanded ? 'Narrow assistant' : 'Expand assistant'} title={expanded ? 'Narrow assistant' : 'Expand assistant'}>{expanded ? <Minimize2 size={17} /> : <Maximize2 size={17} />}</button>
+            <Dialog.Close className="ai-icon-button" aria-label="Close AI assistant" title="Close (Esc)"><X size={20} /></Dialog.Close>
+          </div>
+        </header>
+        <Dialog.Description className="ai-panel__context"><ShieldCheck size={14} aria-hidden="true" /><span>School context, with view-only access</span></Dialog.Description>
+        <div ref={scrollRef} className="ai-panel__scroll">
+          {messages.length === 0 ? <div className="ai-welcome">
+            <div className="ai-welcome__intro"><p className="ai-eyebrow">LET’S MAKE ROOM FOR TEACHING</p><h2>What can I help<br />with today?</h2><p>Hi {firstName}. Get a clearer picture of your classes, or a head start on your next lesson.</p></div>
+            <button type="button" className="ai-featured" onClick={() => choosePrompt(ATTENTION_PROMPT)}>
+              <span className="ai-featured__top"><ClipboardList size={20} aria-hidden="true" /><span>START WITH A QUICK CHECK-IN</span><ArrowUpRight size={19} aria-hidden="true" /></span>
+              <strong>What needs my attention?</strong><span>Pending grading, upcoming exams and what’s next.</span>
+            </button>
+            <div className="ai-suggestions"><p className="ai-section-label">Or explore something specific</p><div className="ai-suggestions__grid">{QUICK_PROMPTS.map(({ label, description, icon: Icon, prompt }) => <button type="button" className="ai-suggestion" key={label} onClick={() => choosePrompt(prompt)}><span className="ai-suggestion__icons"><Icon size={19} aria-hidden="true" /><ArrowUpRight size={14} aria-hidden="true" /></span><strong>{label}</strong><span>{description}</span></button>)}</div></div>
+            <p className="ai-welcome__hint">Choose a starting point, then make it your own.<ArrowRight size={14} aria-hidden="true" /></p>
+          </div> : <div className="ai-conversation" role="log" aria-label="Conversation" aria-live="polite" aria-relevant="additions text">
+            {messages.map((message) => <article key={message.id} className={`ai-message ai-message--${message.role}`} aria-label={message.role === 'user' ? 'Your message' : 'Assistant response'}>
+              {message.role === 'user' ? <><p>{message.content}</p>{['failed', 'stopped'].includes(message.status || '') && <span className="ai-message__state">{message.status === 'failed' ? 'Not answered' : 'Stopped'}</span>}</> : <><div className="ai-message__author"><Sparkles size={15} aria-hidden="true" /><span>AI Assistant</span></div><MiniMarkdown content={message.content} className="ai-markdown" /><button type="button" className="ai-copy" onClick={() => void handleCopy(message)} aria-label={copiedId === message.id ? 'Response copied' : 'Copy response'}>{copiedId === message.id ? <Check size={14} /> : <Copy size={14} />}{copiedId === message.id ? 'Copied' : 'Copy response'}</button></>}
+            </article>)}
+          </div>}
+          {loading && <div className="ai-thinking" role="status"><LoaderCircle size={16} aria-hidden="true" /><span>Putting your answer together…</span></div>}
+          {recovery && <div className={`ai-recovery${recovery.stopped ? ' ai-recovery--stopped' : ''}`} role={recovery.stopped ? 'status' : 'alert'}><strong>{recovery.stopped ? 'Paused here' : 'Something went wrong'}</strong><p>{recovery.message}</p><button type="button" onClick={() => void handleSend(recovery.prompt, recovery.id)}><RotateCcw size={14} aria-hidden="true" />Try again</button></div>}
+        </div>
+        <footer className="ai-panel__footer">
+          <form className="ai-composer" onSubmit={(event) => { event.preventDefault(); void handleSend(); }}>
+            <label htmlFor="ai-message" className="sr-only">Message AI assistant</label>
+            <textarea id="ai-message" ref={inputRef} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void handleSend(); } }} placeholder={messages.length ? 'Ask a follow-up…' : 'Ask about your school day…'} rows={2} maxLength={8000} />
+            <div className="ai-composer__bottom"><span className="ai-composer__hint">{input.length > 7200 ? `${input.length.toLocaleString()} / 8,000` : <><kbd>Shift ↵</kbd> for a new line</>}</span>{loading ? <button type="button" className="ai-send" onClick={stopResponse} aria-label="Stop response" title="Stop response"><Square size={15} fill="currentColor" /></button> : <button type="submit" className="ai-send" disabled={!input.trim()} aria-label="Send message" title="Send message"><ArrowUp size={20} /></button>}</div>
+          </form>
+          <p className="ai-footer-note">AI can make mistakes. Check important details.</p>
+        </footer>
+      </Dialog.Popup>
+    </Dialog.Portal>
+  </Dialog.Root>;
 }
