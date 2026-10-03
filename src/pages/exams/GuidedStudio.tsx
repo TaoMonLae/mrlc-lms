@@ -4,15 +4,14 @@
  * A focused builder (question outline · editor · contextual live preview) that
  * lets a teacher build, schedule and configure grading for an exam while
  * trying student answer controls without creating an attempt. Wired to the existing `/api/exams`
- * endpoints (load: GET /api/exams/:id, save: PUT /api/exams/:id) and the AI
- * assistant (POST /api/ai/chat) for "Generate similar".
+ * endpoints (load: GET /api/exams/:id, save: PUT /api/exams/:id).
  *
  * References and verification: docs/exams/STUDIO-REDESIGN-2026-10-02.md.
  */
 import { useEffect, useMemo, useRef, useState, useId, Children, cloneElement, isValidElement } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import {
-  ArrowLeft, ArrowUp, ArrowDown, Copy, Check, ChevronDown, Loader2, Plus, Sparkles, Trash2, X,
+  ArrowLeft, ArrowUp, ArrowDown, Copy, Check, ChevronDown, Loader2, Plus, Trash2, X,
   FileText, ListChecks, CalendarClock, Play, PanelRight, Eye, CircleDot, SquareCheck, AlignLeft, TextCursorInput, ChevronRight, BookOpen,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
@@ -347,33 +346,6 @@ export default function GuidedStudio() {
     setDrag(null);
   };
 
-  /* ---------------- AI generate ---------------- */
-  const [generating, setGenerating] = useState(false);
-  const generateSimilar = async () => {
-    if (!cur || cur.uiType !== 'MCQ' || !cur.text.trim() || generating) return;
-    setGenerating(true);
-    try {
-      const prompt = `Generate 3 new multiple-choice questions similar in topic and difficulty to this one. Return ONLY a JSON array, each item: {"text": string, "options": [{"t": string, "c": boolean}] } with exactly 4 options and exactly one correct (c:true).\n\nReference question: ${cur.text}\nReference options: ${cur.options.map((o) => o.t).join(' | ')}`;
-      const res = await apiSend<{ reply: string }>('/api/ai/chat', 'POST', { prompt, systemInstruction: 'You are an exam item writer. Output valid JSON only, no markdown fences.' });
-      const raw = (res?.reply || '').replace(/```json|```/g, '').trim();
-      const arr = JSON.parse(raw);
-      if (!Array.isArray(arr) || !arr.length || arr.slice(0, 3).some((v: any) => !v.text?.trim() || !Array.isArray(v.options) || v.options.length !== 4 || v.options.some((o: any) => !String(o.t ?? o.text ?? '').trim()) || v.options.filter((o: any) => o.c === true).length !== 1)) throw new Error('Invalid AI response');
-      const gen: Question[] = arr.slice(0, 3).map((v: any) => ({
-        id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-        uiType: 'MCQ' as UIType, text: String(v.text || ''), points: cur.points,
-        options: (Array.isArray(v.options) ? v.options : []).slice(0, 4).map((o: any) => ({ t: String(o.t ?? o.text ?? ''), c: !!o.c })),
-        sample: '', explanation: '',
-      }));
-      setQuestions((prev) => [...prev, ...gen]);
-      setDirty(true);
-      toast.success(`Added ${gen.length} questions. Review their wording and answers before publishing.`);
-    } catch {
-      toast.error('Could not generate valid questions. Your exam is unchanged; try again.');
-    } finally {
-      setGenerating(false);
-    }
-  };
-
   const applyPreset = (preset: Audience) => {
     setAudience(preset);
     if (preset === 'GED') {
@@ -643,7 +615,7 @@ export default function GuidedStudio() {
                   q={cur} index={sel} total={questions.length}
                   isMathSubject={isMathSubject} showMathTools={showMathTools} setShowMathTools={setShowMathTools}
                   switchType={switchType} setCorrect={setCorrect} setOptText={setOptText} addOpt={addOpt} delOpt={delOpt}
-                  update={(patch) => update(sel, patch)} generateSimilar={generateSimilar} generating={generating}
+                  update={(patch) => update(sel, patch)}
                 />
                 </fieldset></>
               ) : <EmptyEditor onAdd={addQuestion} />
@@ -734,9 +706,8 @@ function QuestionEditor(props: {
   showMathTools: boolean; setShowMathTools: (v: boolean) => void;
   switchType: (t: UIType) => void; setCorrect: (i: number) => void; setOptText: (i: number, t: string) => void;
   addOpt: () => void; delOpt: (i: number) => void; update: (p: Partial<Question>) => void;
-  generateSimilar: () => void; generating: boolean;
 }) {
-  const { q, index, total, showMathTools, setShowMathTools, switchType, setCorrect, setOptText, addOpt, delOpt, update, generateSimilar, generating } = props;
+  const { q, index, total, showMathTools, setShowMathTools, switchType, setCorrect, setOptText, addOpt, delOpt, update } = props;
   const td = typeDef(q.uiType);
   const optionLike = q.uiType === 'MCQ' || q.uiType === 'TF' || q.uiType === 'DROPDOWN' || q.uiType === 'HOTSPOT';
   const manual = q.uiType === 'SHORT' || q.uiType === 'ESSAY' || q.uiType === 'EXTENDED';
@@ -860,11 +831,6 @@ function QuestionEditor(props: {
           <input aria-label="Question points" type="number" min={1} value={q.points} onChange={(e) => update({ points: Math.max(1, Number(e.target.value) || 1) })}
             style={{ width: 70, border: `1px solid ${C.border3}`, borderRadius: 9, padding: '7px 10px', fontSize: 14, outline: 'none' }} />
         </div>
-        <button onClick={generateSimilar} disabled={generating || q.uiType !== 'MCQ' || !q.text.trim()}
-          style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: '#fff', background: q.uiType === 'MCQ' ? C.purple : '#9a9a9a', border: 'none', borderRadius: 999, padding: '9px 16px', cursor: q.uiType === 'MCQ' ? 'pointer' : 'not-allowed', opacity: q.uiType === 'MCQ' ? 1 : 0.6 }}
-          title={q.uiType === 'MCQ' ? '' : 'Available for MCQ questions'}>
-          {generating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />} Generate 3 similar
-        </button>
       </div>
     </div>
   );

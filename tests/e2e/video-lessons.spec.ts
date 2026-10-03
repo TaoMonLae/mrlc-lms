@@ -1,3 +1,4 @@
+import { CURRENT_RELEASE } from '../../src/data/releases';
 import { expect, test } from '@playwright/test';
 test.use({ serviceWorkers: 'block' });
 test.beforeEach(async ({ page }) => {
@@ -12,10 +13,10 @@ test('ADMIN: saves teacher-owned lessons with unassigned class and subject, and 
   let lesson = { ...video, classId: null, subjectId: null, duration: null, isRequired: false, dueDate: null };
   const updates: any[] = [];
   let failNextSave = false;
-  await page.addInitScript(user => {
+  await page.addInitScript(({ user, releaseId }) => {
     sessionStorage.setItem('auth_token', 'video-test'); sessionStorage.setItem('auth_user', JSON.stringify(user));
-    localStorage.setItem(`mrlc:release-seen:${user.id}`, '2026-09-06-language-quest-course-path');
-  }, user);
+    localStorage.setItem(`mrlc:release-seen:${user.id}`, releaseId);
+  }, { user, releaseId: CURRENT_RELEASE.id });
   await page.route('**/api/**', route => {
     const path = new URL(route.request().url()).pathname;
     if (path.endsWith('/stream')) return route.fulfill({ contentType: 'text/event-stream', body: ': fixture\n\n' });
@@ -79,10 +80,10 @@ test('ADMIN: saves teacher-owned lessons with unassigned class and subject, and 
 for (const role of ['ADMIN', 'TEACHER', 'STUDENT']) test(`${role}: repaired YouTube links and responsive lesson layout`, async ({ page }, testInfo) => {
   const user = { id: role === 'TEACHER' ? 'teacher-test' : `${role}-video-test`, role, name: 'Video Tester', firstName: 'Video', lastName: 'Tester', email: 'video@example.test', isActive: true };
   let lesson = { ...video };
-  await page.addInitScript(user => {
+  await page.addInitScript(({ user, releaseId }) => {
     sessionStorage.setItem('auth_token', 'video-test'); sessionStorage.setItem('auth_user', JSON.stringify(user));
-    localStorage.setItem(`mrlc:release-seen:${user.id}`, '2026-09-06-language-quest-course-path');
-  }, user);
+    localStorage.setItem(`mrlc:release-seen:${user.id}`, releaseId);
+  }, { user, releaseId: CURRENT_RELEASE.id });
   const iframeRequests: string[] = [];
   await page.route('https://www.youtube.com/embed/**', route => {
     iframeRequests.push(route.request().url());
@@ -111,7 +112,8 @@ for (const role of ['ADMIN', 'TEACHER', 'STUDENT']) test(`${role}: repaired YouT
   const frame = page.locator('iframe');
   await expect(frame).toHaveAttribute('src', /youtube\.com\/embed\/-mzqQ_vNiKg\?rel=0&playsinline=1&enablejsapi=1&origin=/);
   await expect(frame).toHaveAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
-  const original = page.getByRole('link', { name: 'Open Original Video', exact: true });
+  await page.getByRole('tab', { name: 'About', exact: true }).click();
+  const original = page.getByRole('link', { name: 'Open original video', exact: true });
   await expect(original).toHaveAttribute('href', 'https://www.youtube.com/watch?v=-mzqQ_vNiKg');
   await page.getByRole('button', { name: 'Retry Player', exact: true }).click();
   await expect.poll(() => iframeRequests.length).toBeGreaterThanOrEqual(2);

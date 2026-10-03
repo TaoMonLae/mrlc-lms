@@ -15,6 +15,7 @@ const ChangePassword = lazy(() => import("./pages/ChangePassword"));
 const DashboardPage = lazy(() => import("./pages/Dashboard"));
 const FamilyPortal = lazy(() => import("./pages/family/FamilyPortal"));
 const FamilyInbox = lazy(() => import("./pages/family/FamilyInbox"));
+const NotificationSettings = lazy(() => import("./pages/NotificationSettings"));
 const MyProfile = lazy(() => import("./pages/MyProfile"));
 const MyPayroll = lazy(() => import("./pages/hr/MyPayroll"));
 import { PlaceholderPage } from "./pages/Placeholder";
@@ -315,7 +316,7 @@ export default function App() {
         <TooltipProvider>
           <BrowserRouter>
           <ReleaseUpdatesProvider>
-          <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-slate-500">Loading page…</div>}>
+          <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Loading page…</div>}>
           <ExternalLearnerBoundary>
           <Routes>
             <Route path="/" element={<LandingPage />} />
@@ -370,6 +371,7 @@ export default function App() {
                   <Route path="/family/inbox" element={<FamilyInbox />} />
                 </Route>
                 <Route path="/profile" element={<MyProfile />} />
+                <Route path="/notifications/settings" element={<NotificationSettings />} />
                 <Route path="/my-payroll" element={<MyPayroll />} />
                 <Route path="/updates" element={<ReleaseUpdates />} />
                 <Route element={<ProtectedRoute allowedRoles={['TEACHER', 'STUDENT', 'ADMIN']} />}>

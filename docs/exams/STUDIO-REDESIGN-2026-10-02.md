@@ -1,5 +1,7 @@
 # Exam Studio redesign — 2 October 2026
 
+> Historical redesign record. AI question generation was removed on 2026-10-03; the current Studio supports manual question authoring and bank workflows.
+
 ## Brief and build target
 
 A professional assessment-authoring workspace for teachers. Preserve the LMS's

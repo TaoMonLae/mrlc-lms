@@ -94,7 +94,11 @@ test('video learning permissions, privacy, completion and integration', { skip: 
       const report = await ok(await request(1, 'TEACHER', `${path}/learning/report`));
       const completed = report.find((r: any) => r.studentId === students[0]);
       assert.equal(completed.watched, true); assert.equal(completed.quiz, 'passed'); assert.equal(completed.homework, 'SUBMITTED');
+      await db.notificationPreference.upsert({ where: { userId: users[3] }, create: { userId: users[3], classNotifications: false }, update: { classNotifications: false } });
+      assert.equal((await ok(await request(1, 'TEACHER', `${path}/learning/reminders`, 'POST', { target: 'homework' }))).sent, 0);
+      await db.notificationPreference.update({ where: { userId: users[3] }, data: { classNotifications: true, emailEnabled: true } });
       assert.equal((await ok(await request(1, 'TEACHER', `${path}/learning/reminders`, 'POST', { target: 'homework' }))).sent, 1);
+      assert.equal(await db.emailOutbox.count({ where: { userId: users[3], subject: 'Video lesson reminder' } }), 1);
       assert.equal((await ok(await request(1, 'TEACHER', `${path}/learning/reminders`, 'POST', { target: 'homework' }))).sent, 0);
       assert.equal(await db.notification.count({ where: { userId: users[2], type: 'VIDEO_LESSON' } }), 0);
       assert.equal(await db.notification.count({ where: { userId: users[3], type: 'VIDEO_LESSON' } }), 1);
@@ -122,6 +126,7 @@ test('video learning permissions, privacy, completion and integration', { skip: 
     await db.class.deleteMany({ where: { id: { in: classes } } });
     if (subjectId) await db.subject.delete({ where: { id: subjectId } });
     await db.auditLog.deleteMany({ where: { userId: { in: users } } });
+    await db.emailOutbox.deleteMany({ where: { userId: { in: users } } });
     await db.user.deleteMany({ where: { id: { in: users } } });
     await db.$disconnect();
   }

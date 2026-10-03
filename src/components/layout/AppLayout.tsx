@@ -6,7 +6,6 @@ import { Outlet, useLocation, Navigate } from "react-router";
 import { motion, useReducedMotion } from "motion/react";
 import { useAuth } from "../../providers/AuthProvider";
 import ChatWidget from "../chat/ChatWidget";
-import AIAssistantWidget from "../ai/AIAssistantWidget";
 import { ChatProvider } from "../../providers/ChatProvider";
 import { SocialProvider } from "../../providers/SocialProvider";
 import { FloatingPanelProvider } from "../../providers/FloatingPanelProvider";
@@ -56,7 +55,6 @@ export function AppLayout() {
         </SidebarInset>
         {!takingExam && !playingWordConnect && !/^\/exam2\/grade\//.test(location.pathname) && !/^\/exams\/[^/]+\/(studio|edit)\/?$/.test(location.pathname) && <FloatingPanelProvider>
           <ChatWidget />
-          <AIAssistantWidget />
         </FloatingPanelProvider>}
       </div>
     </SidebarProvider>

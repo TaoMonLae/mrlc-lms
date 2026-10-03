@@ -5,7 +5,7 @@ const choice = { id: 'q1', type: 'MCQ', text: 'Which planet is closest to the Su
 async function setup(page: Page, questions: any[] = [], attempts: any[] = []) {
   const user = { id: 'studio-teacher', role: 'TEACHER', firstName: 'Exam', lastName: 'Teacher', isActive: true, cursorEffect: 'NONE' };
   const writes: { path: string; body: any }[] = [];
-  const state = { failLoad: false, failSchedule: false, failAI: true, policy: { releaseMode: 'HIDDEN', showScore: true, showCorrectAnswers: false, showPassFail: false, releaseAt: null } as any };
+  const state = { failLoad: false, failSchedule: false, policy: { releaseMode: 'HIDDEN', showScore: true, showCorrectAnswers: false, showPassFail: false, releaseAt: null } as any };
   await page.addInitScript(({ user, releaseId }) => {
     sessionStorage.setItem('auth_token', 'studio-test'); sessionStorage.setItem('auth_user', JSON.stringify(user));
     localStorage.setItem(`mrlc:release-seen:${user.id}`, releaseId);
@@ -20,7 +20,6 @@ async function setup(page: Page, questions: any[] = [], attempts: any[] = []) {
     if (['PUT', 'POST', 'DELETE'].includes(method)) {
       writes.push({ path, body: route.request().postDataJSON() });
       if (path.endsWith('/schedule') && state.failSchedule) return route.fulfill({ status: 500, json: { error: 'Schedule unavailable' } });
-      if (path === '/api/ai/chat') return state.failAI ? route.fulfill({ status: 503, json: { error: 'AI unavailable' } }) : route.fulfill({ json: { reply: JSON.stringify([1, 2, 3].map(n => ({ text: `Generated question ${n}`, options: choice.options.map((t, i) => ({ t, c: i === 0 })) }))) } });
       return route.fulfill({ json: { id: 'saved' } });
     }
     if (path.endsWith('/result-policy')) return state.failLoad ? route.fulfill({ status: 500, json: { error: 'Policy unavailable' } }) : route.fulfill({ json: state.policy });
@@ -81,11 +80,10 @@ test('publish waits for settings and retries partial saves without false success
   expect(writes.filter(w => w.body?.status === 'PUBLISHED')).toHaveLength(1);
 });
 
-test('question navigation, duplicate, reorder, deletion and AI failure preserve real content', async ({ page }) => {
+test('question navigation, duplicate, reorder and deletion preserve real content', async ({ page }) => {
   const { writes } = await setup(page, [choice]);
   await page.goto('/exams/studio-a/studio');
-  await page.getByRole('button', { name: 'Generate 3 similar' }).click();
-  await expect(page.getByText('Could not generate valid questions.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Generate 3 similar' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Duplicate', exact: true }).click();
   await page.getByPlaceholder('Type the question.').fill('Second question');
   await page.getByRole('button', { name: 'Move question up', exact: true }).click();
@@ -155,8 +153,8 @@ test('all eight question types remain reachable and serialize correctly', async 
   expect(writes.find(w => w.path === '/api/exams/studio-a')!.body.questions.map((q: any) => q.type)).toEqual(['MCQ', 'TRUE_FALSE', 'SHORT_ANSWER', 'ESSAY', 'DRAG_DROP', 'DROPDOWN', 'HOTSPOT', 'EXTENDED']);
 });
 
-test('dark theme, media, math, details and valid AI generation work together', async ({ page }, info) => {
-  const { state, writes } = await setup(page, [choice]); state.failAI = false;
+test('dark theme, media, math and details work together', async ({ page }, info) => {
+  const { writes } = await setup(page, [choice]);
   await page.route('**/test-question.png', route => route.fulfill({ contentType: 'image/png', body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jD1cAAAAASUVORK5CYII=', 'base64') }));
   await page.goto('/exams/studio-a/studio');
   await page.getByRole('button', { name: 'Toggle theme between light and dark mode' }).click();
@@ -175,8 +173,7 @@ test('dark theme, media, math, details and valid AI generation work together', a
   expect(writes.find(w => w.path === '/api/exams/studio-a')!.body.questions[0]).toMatchObject({ questionText: 'Evaluate $2^2$.', imageUrl: '/test-question.png', passageText: 'Use this source passage.' });
   await page.getByPlaceholder('Type the question.').scrollIntoViewIfNeeded();
   await page.screenshot({ path: info.outputPath('studio-dark-editor.png') });
-  await page.getByRole('button', { name: 'Generate 3 similar' }).click();
-  await expect(page.getByRole('button', { name: 'Edit question 4', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Generate 3 similar' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Details', exact: true }).click();
   await page.getByLabel('Instructions', { exact: true }).fill('Read all questions carefully.');
   await page.getByLabel('Time limit (minutes)', { exact: true }).fill('45');

@@ -120,7 +120,7 @@ export default function LoginPage() {
       )}
       <span className="min-w-0 leading-tight">
         <span className="block truncate text-sm font-bold tracking-[-0.01em] text-[#112d40]">{schoolName}</span>
-        <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-[#168c83]">School management portal</span>
+        <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-[#116d66]">School management portal</span>
       </span>
     </Link>
   );
@@ -143,7 +143,7 @@ export default function LoginPage() {
   return (
     <Auth1 brand={brand} footer={footer} heroAlt={`${schoolName} learning community`} heroReady={heroReady} heroSrc={heroUrl} schoolName={schoolName}>
       <div className="mb-8">
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#168c83]">{mfaRequired ? 'One more step' : 'Secure school access'}</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#116d66]">{mfaRequired ? 'One more step' : 'Secure school access'}</p>
         <h1 className="mt-3 text-balance text-4xl font-black leading-[0.98] tracking-[-0.05em] text-[#112d40] sm:text-5xl">
           {mfaRequired ? 'Check your authenticator.' : 'Sign in to your school day.'}
         </h1>
@@ -168,7 +168,7 @@ export default function LoginPage() {
 
         <div className="space-y-2">
           <label htmlFor="identifier" className="block text-sm font-bold text-[#112d40]">Email or username</label>
-          <Input id="identifier" type="text" autoComplete="username" spellCheck={false} placeholder="Enter your school email or username" aria-invalid={Boolean(errors.identifier)} aria-describedby={errors.identifier ? 'identifier-error' : undefined} className="h-12 rounded-none border-[#aebdc4] bg-white px-4 text-base shadow-none focus-visible:border-[#168c83] focus-visible:ring-[#168c83]/25" {...register('identifier', { onChange: clearFeedback })} />
+          <Input id="identifier" type="text" autoComplete="username" spellCheck={false} placeholder="Enter your school email or username" aria-invalid={Boolean(errors.identifier)} aria-describedby={errors.identifier ? 'identifier-error' : undefined} className="h-12 rounded-none border-[#aebdc4] bg-white text-[#112d40] placeholder:text-[#526875] dark:bg-white px-4 text-base shadow-none focus-visible:border-[#168c83] focus-visible:ring-[#168c83]/25" {...register('identifier', { onChange: clearFeedback })} />
           {errors.identifier && <p id="identifier-error" className="text-xs font-semibold text-red-600" role="alert">{errors.identifier.message}</p>}
         </div>
 
@@ -178,7 +178,7 @@ export default function LoginPage() {
             <Link to="/forgot-password" className="text-sm font-bold text-[#0d716a] underline-offset-4 hover:underline">Forgot password?</Link>
           </div>
           <div className="relative">
-            <Input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Enter your password" aria-invalid={Boolean(errors.password)} aria-describedby={errors.password ? 'password-error' : undefined} className="h-12 rounded-none border-[#aebdc4] bg-white px-4 pr-12 text-base shadow-none focus-visible:border-[#168c83] focus-visible:ring-[#168c83]/25" {...register('password', { onChange: clearFeedback })} />
+            <Input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Enter your password" aria-invalid={Boolean(errors.password)} aria-describedby={errors.password ? 'password-error' : undefined} className="h-12 rounded-none border-[#aebdc4] bg-white text-[#112d40] placeholder:text-[#526875] dark:bg-white px-4 pr-12 text-base shadow-none focus-visible:border-[#168c83] focus-visible:ring-[#168c83]/25" {...register('password', { onChange: clearFeedback })} />
             <button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute right-0 top-1/2 grid size-11 -translate-y-1/2 place-items-center text-[#526875] transition-colors duration-150 hover:text-[#112d40] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#168c83]">
               {showPassword ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
             </button>
@@ -191,7 +191,7 @@ export default function LoginPage() {
             <motion.div initial={reduceMotion ? false : { opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={reduceMotion ? undefined : { opacity: 0, height: 0 }} className="overflow-hidden">
               <div className="space-y-2 border-y border-[#cad4d9] bg-[#edf5f4] px-4 py-4">
                 <label htmlFor="mfa-code" className="block text-sm font-bold text-[#112d40]">Authentication code</label>
-                <Input id="mfa-code" value={mfaCode} onChange={(event) => { setMfaCode(event.target.value); setServerError(null); }} placeholder="6-digit or recovery code" autoComplete="one-time-code" autoCapitalize="none" spellCheck={false} inputMode="text" className="h-12 rounded-none border-[#aebdc4] bg-white px-4 font-mono tracking-[0.08em] focus-visible:border-[#168c83] focus-visible:ring-[#168c83]/25" />
+                <Input id="mfa-code" value={mfaCode} onChange={(event) => { setMfaCode(event.target.value); setServerError(null); }} placeholder="6-digit or recovery code" autoComplete="one-time-code" autoCapitalize="none" spellCheck={false} inputMode="text" className="h-12 rounded-none border-[#aebdc4] bg-white text-[#112d40] placeholder:text-[#526875] dark:bg-white px-4 font-mono tracking-[0.08em] focus-visible:border-[#168c83] focus-visible:ring-[#168c83]/25" />
               </div>
             </motion.div>
           )}

@@ -1,3 +1,5 @@
+> Historical record: the AI assistant was subsequently removed at the user’s request. Its interface and API are no longer shipped.
+
 # AI assistant redesign — 3 October 2026
 
 ## Brief and reference lock

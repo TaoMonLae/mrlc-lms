@@ -1,3 +1,4 @@
+import { CURRENT_RELEASE } from '../../src/data/releases';
 import { expect, test } from '@playwright/test';
 test.use({ serviceWorkers: 'block' });
 const student = { id: 'card-student', studentCode: 'ST-2026-006', preferredName: 'Aye Mon', gender: 'MALE', status: 'ACTIVE', boardingType: 'BOARDING', user: { firstName: 'Aye', lastName: 'Mon' } };
@@ -6,11 +7,11 @@ const card = { id: 'issued-card', type: 'STUDENT_ID_CARD', status: 'ACTIVE', doc
 for (const role of ['ADMIN', 'TEACHER', 'STUDENT']) test(`${role}: student photos and Documents controls respect ownership`, async ({ page }, testInfo) => {
   const user = { id: `${role.toLowerCase()}-card-test`, name: 'Aye Mon', email: 'card@example.test', role, firstName: 'Aye', lastName: 'Mon', isActive: true, studentId: student.id, boardingType: 'BOARDING' };
   let document = { id: 'supporting-doc', studentId: student.id, title: 'Identity record', documentType: 'UNHCR', fileUrl: '/uploads/student-docs/test.pdf', fileName: 'identity-record.pdf', fileSize: 12000, mimeType: 'application/pdf', createdAt: '2026-09-01', uploadedByName: 'Admin' };
-  await page.addInitScript(user => {
+  await page.addInitScript(({ user, releaseId }) => {
     sessionStorage.setItem('auth_token', 'card-test-token');
     sessionStorage.setItem('auth_user', JSON.stringify(user));
-    localStorage.setItem(`mrlc:release-seen:${user.id}`, '2026-09-06-language-quest-course-path');
-  }, user);
+    localStorage.setItem(`mrlc:release-seen:${user.id}`, releaseId);
+  }, { user, releaseId: CURRENT_RELEASE.id });
   await page.route('**/api/**', route => {
     const path = new URL(route.request().url()).pathname;
     if (path.endsWith('/stream')) return route.fulfill({ contentType: 'text/event-stream', body: ': fixture\n\n' });

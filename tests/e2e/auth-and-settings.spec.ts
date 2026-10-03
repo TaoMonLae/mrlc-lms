@@ -90,10 +90,10 @@ test('student-success hub and timetable filters render', async ({ page }) => {
   await expect(page.getByText('Students needing attention')).toBeVisible();
 
   await page.goto('/teacher/timetable');
-  await expect(page.getByRole('heading', { name: 'Teaching Schedule' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Teaching timetable' })).toBeVisible();
   await page.getByRole('button', { name: 'Filters' }).click();
-  await expect(page.getByText('Session type')).toBeVisible();
-  await expect(page.getByText('Status', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Day' }).click();
-  await expect(page.getByLabel('Day')).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Schedule type' })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Status', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'day', exact: true }).click();
+  await expect(page.getByRole('combobox', { name: 'Day focus' })).toBeVisible();
 });

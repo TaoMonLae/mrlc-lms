@@ -23,6 +23,8 @@ import { useSettings } from "@/src/providers/SettingsProvider";
 import { formatSchoolDate, formatSchoolTime, formatSchoolWeekday } from "@/src/lib/dateTime";
 import { useReleaseUpdates } from "@/src/providers/ReleaseUpdatesProvider";
 
+import { notificationPreferenceDefaults, type NotificationPreferences } from "@/shared/notificationPreferences";
+
 type NotificationRow = { id: string; type: string; title: string; message: string; href?: string | null; readAt?: string | null; createdAt: string };
 
 export function TopBar() {
@@ -49,6 +51,7 @@ export function TopBar() {
   }, [canSearch]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences | null>(null);
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
   const [viewedAnnouncements, setViewedAnnouncements] = useState<Set<string>>(new Set());
@@ -78,26 +81,32 @@ export function TopBar() {
     setAnnouncements([]);
     setNotifications([]);
     setNotificationUnreadCount(0);
+    setNotificationPreferences(null);
     if (!user?.id) return;
     const controller = new AbortController();
+    let refreshId = 0;
     const refresh = async () => {
+      const currentRefresh = ++refreshId;
       const [announcementRows, notificationData] = await Promise.allSettled([
         apiGet<Announcement[]>("/api/announcements", { signal: controller.signal }),
-        apiGet<{ notifications: NotificationRow[]; unreadCount: number }>("/api/notifications", { signal: controller.signal }),
+        apiGet<{ notifications: NotificationRow[]; unreadCount: number; preferences?: NotificationPreferences }>("/api/notifications", { signal: controller.signal }),
       ]);
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted || currentRefresh !== refreshId) return;
       if (announcementRows.status === 'fulfilled') setAnnouncements(announcementRows.value);
       if (notificationData.status === 'fulfilled') {
         setNotifications(notificationData.value.notifications || []);
-        setNotificationUnreadCount(notificationData.value.unreadCount);
+        setNotificationPreferences(notificationData.value.preferences || notificationPreferenceDefaults);
+        setNotificationUnreadCount(Number.isFinite(notificationData.value.unreadCount) ? notificationData.value.unreadCount : 0);
       }
     };
+    const onPreferencesChanged = () => void refresh();
+    window.addEventListener("notification-preferences-changed", onPreferencesChanged);
     void refresh();
     const timer = setInterval(() => void refresh(), 60_000);
-    return () => { controller.abort(); clearInterval(timer); };
+    return () => { controller.abort(); clearInterval(timer); window.removeEventListener("notification-preferences-changed", onPreferencesChanged); };
   }, [notifOpen, user?.id]);
 
-  const activeAnnouncements = announcements
+  const activeAnnouncements = (notificationPreferences?.inAppEnabled && notificationPreferences.classNotifications ? announcements : [])
     .filter((a) => a.status === "ACTIVE" && (!a.expiresAt || new Date(a.expiresAt) > new Date()))
     .filter((a) => !notifications.some((notification) => notification.href === `/announcements/${a.id}`))
     .sort((a, b) => {
@@ -156,7 +165,7 @@ export function TopBar() {
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
               <Search className="size-4" />
             </span>
-            <span className="block h-10 w-full rounded-sm border border-border bg-background py-2 pl-10 pr-14 text-sm text-muted-foreground transition-colors hover:border-academic-teal">
+            <span className="block h-10 w-full rounded-sm border border-border bg-background py-2 pl-10 pr-14 text-sm text-foreground transition-colors hover:border-academic-teal">
               Search school records…
             </span>
             <kbd className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm border border-border bg-card px-2 py-1 text-[10px] font-semibold tracking-[0.08em] text-muted-foreground">
@@ -248,7 +257,7 @@ export function TopBar() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative hidden size-10 rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground sm:flex"
+                className="relative flex size-10 rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground"
                 aria-label={`View ${unreadCount} unread notifications`}
               />
             }
@@ -260,7 +269,7 @@ export function TopBar() {
             )}
           </DropdownMenuTrigger>
 
-          <DropdownMenuContent align="end" className="w-80 p-0">
+          <DropdownMenuContent align="end" className="w-[min(20rem,calc(100vw-2rem))] p-0">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/10">
               <div className="flex items-center gap-2">
@@ -350,11 +359,11 @@ export function TopBar() {
             {/* Footer */}
             <div className="border-t border-slate-100 dark:border-white/10 px-4 py-2">
               <Link
-                to="/profile#notifications"
+                to="/notifications/settings"
                 onClick={() => setNotifOpen(false)}
                 className="text-xs text-aubergine-600 hover:text-aubergine-700 font-medium"
               >
-                <Settings className="mr-1 inline h-3 w-3" /> Notification preferences →
+                <Settings className="mr-1 inline h-3 w-3" /> Notification settings
               </Link>
             </div>
           </DropdownMenuContent>

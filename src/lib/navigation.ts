@@ -1,4 +1,5 @@
 import {
+  Bell,
   LayoutDashboard,
   Users,
   UserSquare2,
@@ -176,6 +177,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
     items: [
       { title: "Settings", url: "/settings", icon: Settings },
       { title: "Account & Security", url: "/profile", icon: ShieldAlert },
+      { title: "Notifications", url: "/notifications/settings", icon: Bell },
       { title: "Audit Log", url: "/settings/audit-log", icon: FileText },
       { title: "Export Data", url: "/settings/export", icon: Download },
       { title: "About", url: "/about", icon: Info },
@@ -236,6 +238,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
       { title: "My Payroll", url: "/my-payroll", icon: Wallet },
       { title: "My Profile", url: "/teacher/profile", icon: UserSquare2 },
       { title: "Account & Security", url: "/profile", icon: ShieldAlert },
+      { title: "Notifications", url: "/notifications/settings", icon: Bell },
       { title: "About", url: "/about", icon: Info },
     ],
   },
@@ -280,6 +283,7 @@ export const STUDENT_NAV: AdminNavEntry[] = [
     items: [
       { title: "My Profile", url: "/student/profile", icon: UserSquare2 },
       { title: "Account & Security", url: "/profile", icon: ShieldAlert },
+      { title: "Notifications", url: "/notifications/settings", icon: Bell },
       { title: "About", url: "/about", icon: Info },
     ],
   },
@@ -293,6 +297,7 @@ export const ROLE_NAV: Partial<Record<UserRole, AdminNavEntry[]>> = {
 };
 
 export const NAVIGATION_ITEMS: NavItem[] = [
+  { title: "Notifications", url: "/notifications/settings", icon: Bell, roles: ["STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"] },
   // Admin / General Navigation
   {
     title: "Dashboard",

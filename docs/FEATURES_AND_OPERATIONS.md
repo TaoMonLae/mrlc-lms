@@ -6,6 +6,12 @@ Learning management and school operations platform for the Mon Refugee Learning 
 
 MRLC LMS combines teaching, assessment, student services, communication, finance, digital resources, and school administration in one role-based web application. A single Express server exposes the API and serves the Vite/React frontend, with PostgreSQL managed through Prisma.
 
+## Notification preferences
+
+Signed-in school users can open **Notifications** from navigation or the notification bell. The settings page at `/notifications/settings` provides in-app and email delivery switches, with role-appropriate topics for payroll, classes and announcements, app updates, homework, results, and student support. Email is opt-in and requires the school SMTP configuration. Changes apply to both new delivery and existing bell entries; queued email is checked again before sending. See [Teacher notifications and email lists](TEACHER_NOTIFICATIONS.md).
+
+The AI Assistant and AI exam-question generation have been removed. The former `/api/ai/chat` endpoint returns a JSON 404.
+
 ## Webapp preview
 
 ![MRLC LMS webapp login portal](../docs/images/mrlc-lms-webapp-preview.jpg)
@@ -283,7 +289,6 @@ The service binds to `127.0.0.1` by default. Do not expose port `8810` publicly.
 - Social Space with 24-hour posts, likes, editable comments, pagination, reporting, and admin moderation.
 - Announcements with rich content and audience visibility.
 - Curated RSS news and an in-app article reader.
-- AI assistant for lesson planning, quiz generation, announcements, and translation using Gemini or a local Ollama model.
 - Daily Learning Quest, Word Trail, Learning Quest, Sudoku, Multiplayer Neon Snake, Snake vocabulary mode, and Checkers with account-backed progress, scores, or learning activity where applicable.
 - Global search across major school records.
 
@@ -436,11 +441,6 @@ Never use the demo passwords in production. Set the three seed password variable
 | `SEED_ADMIN_PASSWORD` | No | Demo password | Initial admin password |
 | `SEED_TEACHER_PASSWORD` | No | Demo password | Initial teacher password |
 | `SEED_STUDENT_PASSWORD` | No | Demo password | Initial student password |
-| `AI_PROVIDER` | No | `gemini` | `gemini` or `ollama` |
-| `GEMINI_API_KEY` | Gemini only | — | Google Gemini API key |
-| `GEMINI_MODEL` | No | `gemini-2.0-flash` in server code | Gemini model name |
-| `OLLAMA_API_URL` | Ollama only | `http://localhost:11434/api/chat` | Local Ollama chat endpoint |
-| `OLLAMA_MODEL` | No | `gemma2:9b` | Local Ollama model |
 | `KOKORO_API_URL` | No | unset | Private Kokoro endpoint; when unset Learning Quest uses browser speech |
 | `KOKORO_MODEL` | No | `hexgrad/Kokoro-82M` | Model identifier sent to the voice service |
 | `KOKORO_TIMEOUT_MS` | No | `120000` | Maximum server wait for one speech generation request |
@@ -617,7 +617,6 @@ mrlc-lms/
 ├── dailyQuest.ts               # Daily English Word practice, review, XP, and streak API
 ├── englishWordPractice.ts       # Shared curated English Word question provider
 ├── wordTrail.ts                 # Word Trail board state, rolls, answers, scores, and leaderboard API
-├── aiAssistant.ts              # Gemini/Ollama assistant integration
 ├── dictionary.ts               # Offline dictionary services
 ├── gutenberg.ts                # Gutendex/Project Gutenberg import
 ├── news.ts                     # RSS aggregation

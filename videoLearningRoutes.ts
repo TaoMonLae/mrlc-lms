@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { videoLearningSchema, quizPassed } from './shared/videoLearning';
 import { studentCanSeeClassworkExam } from './shared/classwork';
 import { homeworkTeacherScope } from './shared/homeworkAccess';
+import { notificationService } from './lib/notifications';
+import { notificationPreferenceDefaults, notificationTypeEnabled } from './shared/notificationPreferences';
 
 export type VideoActor = { userId: string; role: string };
 export async function canReadVideo(prisma: PrismaClient, actor: VideoActor, video: VideoLesson) {
@@ -16,10 +18,11 @@ class VideoError extends Error { constructor(public status: number, message: str
 const playlistSchema = z.object({ title: z.string().trim().min(1).max(100), videoIds: z.array(z.string().min(1)).min(1).max(100).refine(ids => new Set(ids).size === ids.length, 'Do not repeat lessons.') });
 const noteSchema = z.object({ seconds: z.number().int().min(0).max(86400), body: z.string().trim().min(1).max(3000), isQuestion: z.boolean().default(false) });
 
-export function registerVideoLearningRoutes({ app, prisma, authMiddleware, canManageExamClass, logger }: {
+export function registerVideoLearningRoutes({ app, prisma, authMiddleware, canManageExamClass, logger, appUrl = 'http://localhost:8000' }: {
   app: Express; prisma: PrismaClient; authMiddleware: RequestHandler;
   canManageExamClass: (actor: any, classId: string) => Promise<boolean>;
   logger: { error: (...args: any[]) => void };
+  appUrl?: string;
 }) {
   const actor = (req: Request) => (req as any).user as VideoActor;
   const wrap = (fn: (req: Request, res: Response) => Promise<void>): RequestHandler => async (req, res) => {
@@ -190,7 +193,21 @@ export function registerVideoLearningRoutes({ app, prisma, authMiddleware, canMa
     }
     const rows = (await reportFor(video, actor(req))).filter(r => target === 'watch' ? !r.watched : target === 'quiz' ? !['passed', 'not_assigned'].includes(r.quiz) : ['not_submitted', 'REDO'].includes(r.homework));
     const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kuala_Lumpur' }).format(new Date());
-    const result = await prisma.notification.createMany({ data: rows.map(r => ({ userId: r.userId, type: 'VIDEO_LESSON', title: 'Video lesson reminder', message: `Please ${target === 'watch' ? 'watch' : target === 'quiz' ? 'complete the quiz for' : 'submit the homework for'} “${video.title}”.`, href: `/videos/${video.id}`, sourceId: `video:${video.id}:${target}:${day}` })), skipDuplicates: true });
-    res.json({ sent: result.count });
+    const sent = await prisma.$transaction(async tx => {
+      const recipients = await tx.user.findMany({ where: { id: { in: rows.map(r => r.userId) }, isActive: true, isExternalLearner: false }, select: { id: true, notificationPreference: true } });
+      const service = notificationService(tx, appUrl);
+      let count = 0;
+      for (const recipient of recipients) {
+        const preference = recipient.notificationPreference || notificationPreferenceDefaults;
+        if (!notificationTypeEnabled('VIDEO_LESSON', preference) || (!preference.inAppEnabled && !preference.emailEnabled)) continue;
+        const input = { userId: recipient.id, type: 'VIDEO_LESSON', title: 'Video lesson reminder', message: `Please ${target === 'watch' ? 'watch' : target === 'quiz' ? 'complete the quiz for' : 'submit the homework for'} “${video.title}”.`, href: `/videos/${video.id}`, sourceId: `video:${video.id}:${target}:${day}` };
+        const created = await tx.notification.createMany({ data: [input], skipDuplicates: true });
+        if (!created.count) continue;
+        await service.ensure(input);
+        count += created.count;
+      }
+      return count;
+    }, { timeout: 30_000 });
+    res.json({ sent });
   }));
 }

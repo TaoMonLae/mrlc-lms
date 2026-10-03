@@ -1,3 +1,6 @@
+import { deliverOutboxMessage } from "./lib/emailDelivery";
+import { asyncHandler } from "./lib/asyncHandler";
+import { accountStillMatchesToken, consumeRecoveryCode } from "./lib/sessionAccess";
 import { announcementAudienceWhere } from "./lib/announcementAudience";
 import { notificationService, syncTeacherAppUpdates, type NotificationInput } from "./lib/notifications";
 import { registerNotificationRoutes } from "./notificationRoutes";
@@ -65,7 +68,6 @@ import { registerDictionaryRoutes } from "./dictionary";
 import { registerGutenbergRoutes } from "./gutenberg";
 import { registerSnakeGameRoutes } from "./snakeGame";
 import { registerNeonSnakeServer } from "./neonSnakeServer";
-import { registerAiAssistantRoutes } from "./aiAssistant";
 import { registerCheckersGameRoutes } from "./checkersGame";
 import { registerChessGameRoutes } from "./chessGame";
 import { registerPacmanGameRoutes } from "./pacmanGame";
@@ -651,55 +653,8 @@ async function processEmailOutbox() {
       take: 10,
     });
     for (const message of messages) {
-      const claimed = await prisma.emailOutbox.updateMany({
-        where: { id: message.id, status: "QUEUED" },
-        data: { status: "SENDING" },
-      });
-      if (!claimed.count) continue;
-      try {
-        await smtpTransport.sendMail({
-          from: SMTP_FROM,
-          to: message.toEmail,
-          subject: message.subject,
-          text: message.textBody || undefined,
-          html: message.htmlBody || undefined,
-        });
-        await prisma.emailOutbox.update({
-          where: { id: message.id },
-          data: {
-            status: "SENT", sentAt: new Date(), attempts: { increment: 1 }, lastError: null,
-            // Reset links and other potentially sensitive content should not
-            // remain in the database after successful delivery.
-            textBody: null, htmlBody: null,
-          },
-        });
-        if (message.dedupeKey?.startsWith("notification:")) {
-          const notificationId = message.dedupeKey.slice("notification:".length);
-          await prisma.notificationDelivery.updateMany({
-            where: { notificationId, channel: "EMAIL" },
-            data: { status: "SENT", sentAt: new Date(), attempts: { increment: 1 }, lastError: null },
-          });
-        }
-      } catch (error: any) {
-        const attempts = message.attempts + 1;
-        const lastError = String(error?.message || "Email delivery failed").slice(0, 500);
-        await prisma.emailOutbox.update({
-          where: { id: message.id },
-          data: {
-            status: attempts >= 5 ? "FAILED" : "QUEUED",
-            attempts,
-            lastError,
-            nextAttemptAt: new Date(Date.now() + Math.min(60, 2 ** attempts) * 60_000),
-          },
-        });
-        if (message.dedupeKey?.startsWith("notification:")) {
-          const notificationId = message.dedupeKey.slice("notification:".length);
-          await prisma.notificationDelivery.updateMany({
-            where: { notificationId, channel: "EMAIL" },
-            data: { status: attempts >= 5 ? "FAILED" : "QUEUED", attempts: { increment: 1 }, lastError },
-          });
-        }
-      }
+      try { await deliverOutboxMessage(prisma, smtpTransport, message, SMTP_FROM, logger); }
+      catch (error) { logger.error("Email outbox item failed:", error); }
     }
   } catch (error) {
     logger.error("Email outbox worker failed:", error);
@@ -835,7 +790,8 @@ function verifyToken(token: string): JwtPayload {
 
 async function verifyTokenSession(token: string): Promise<JwtPayload> {
   const payload = verifyToken(token);
-  if (payload.externalLearner) throw new Error("Learning-only account");
+  if (payload.externalLearner || payload.role === "GUARDIAN") throw new Error("School account required");
+  if (!await accountStillMatchesToken(prisma, payload)) throw new Error("Account access changed");
   if (!payload.sessionId) throw new Error("Missing sessionId");
 
   const session = await prisma.authSession.findUnique({ where: { id: payload.sessionId } });
@@ -911,11 +867,7 @@ async function verifyAndConsumeMfaCode(input: {
     return expected.length === candidate.length && crypto.timingSafeEqual(expected, candidate);
   });
   if (index < 0) return false;
-  await prisma.user.update({
-    where: { id: input.userId },
-    data: { mfaRecoveryCodeHashes: input.recoveryCodeHashes.filter((_, current) => current !== index) },
-  });
-  return true;
+  return consumeRecoveryCode(prisma, input.userId, input.recoveryCodeHashes, index);
 }
 
 // ─── Auth Middleware ──────────────────────────────────────────────────────────
@@ -947,14 +899,10 @@ async function authMiddleware(
       if (Date.now() - session.lastSeenAt.getTime() > 5 * 60 * 1000) {
         prisma.authSession.update({ where: { id: session.id }, data: { lastSeenAt: new Date() } }).catch(() => {});
       }
-    } else {
-      // Older tokens did not carry a session ID. Recheck their current role so
-      // an account converted to Guardian cannot retain its former privileges.
-      const current = await prisma.user.findUnique({ where: { id: payload.userId }, select: { role: true, isActive: true } });
-      if (!current?.isActive || current.role !== payload.role) {
-        res.status(401).json({ error: "Unauthorized: Account access changed" });
-        return;
-      }
+    }
+    if (!await accountStillMatchesToken(prisma, payload)) {
+      res.status(401).json({ error: "Unauthorized: Account access changed" });
+      return;
     }
     if (payload.externalLearner) {
       if (!isExternalLearnerApiRequestAllowed(req.method, req.originalUrl)) {
@@ -970,8 +918,13 @@ async function authMiddleware(
     }
     (req as any).user = payload;
     next();
-  } catch {
-    res.status(401).json({ error: "Unauthorized: Invalid or expired token" });
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError || error instanceof jwt.TokenExpiredError || error instanceof jwt.NotBeforeError) {
+      res.status(401).json({ error: "Unauthorized: Invalid or expired token" });
+      return;
+    }
+    logger.error("Session validation is unavailable:", error);
+    res.status(503).json({ error: "Authentication is temporarily unavailable. Please try again." });
   }
 }
 
@@ -2656,7 +2609,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/auth/logout", authMiddleware, async (req, res) => {
+  app.post("/api/auth/logout", authMiddleware, asyncHandler(async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.sessionId) await prisma.authSession.updateMany({ where: { id: jwtUser.sessionId, userId: jwtUser.userId }, data: { revokedAt: new Date() } });
     res.clearCookie("library_media_token", {
@@ -2684,7 +2637,7 @@ async function startServer() {
       path: "/api/chat/stream",
     });
     res.json({ success: true });
-  });
+  }));
 
   /**
    * GET /api/auth/me
@@ -2744,7 +2697,7 @@ async function startServer() {
     }
   });
 
-  app.get("/api/auth/mfa", authMiddleware, async (req, res) => {
+  app.get("/api/auth/mfa", authMiddleware, asyncHandler(async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const user = await prisma.user.findUnique({
       where: { id: jwtUser.userId },
@@ -2757,9 +2710,9 @@ async function startServer() {
       recoveryCodesRemaining: user.mfaRecoveryCodeHashes.length,
       recommendedForRole: ["ADMIN", "ACCOUNTANT"].includes(user.role),
     });
-  });
+  }));
 
-  app.post("/api/auth/mfa/setup", authMiddleware, validate(schemas.mfaPassword), async (req, res) => {
+  app.post("/api/auth/mfa/setup", authMiddleware, validate(schemas.mfaPassword), asyncHandler(async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const user = await prisma.user.findUnique({
       where: { id: jwtUser.userId },
@@ -2780,9 +2733,9 @@ async function startServer() {
       otpAuthUrl: totp.toString(),
       qrCodeDataUrl: await QRCode.toDataURL(totp.toString(), { width: 240, margin: 1, errorCorrectionLevel: "M" }),
     });
-  });
+  }));
 
-  app.post("/api/auth/mfa/enable", authMiddleware, validate(schemas.mfaCode), async (req, res) => {
+  app.post("/api/auth/mfa/enable", authMiddleware, validate(schemas.mfaCode), asyncHandler(async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const user = await prisma.user.findUnique({
       where: { id: jwtUser.userId },
@@ -2808,9 +2761,9 @@ async function startServer() {
     await createAuditLog(user.id, user.email, "ENABLE", "MFA", user.id,
       "Multi-factor authentication enabled; other sessions revoked.", req.ip || null, req.headers["user-agent"] || null, "WARNING");
     res.json({ success: true, recoveryCodes: recovery.codes });
-  });
+  }));
 
-  app.post("/api/auth/mfa/recovery-codes", authMiddleware, validate(schemas.mfaDisable), async (req, res) => {
+  app.post("/api/auth/mfa/recovery-codes", authMiddleware, validate(schemas.mfaDisable), asyncHandler(async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const user = await prisma.user.findUnique({
       where: { id: jwtUser.userId },
@@ -2829,9 +2782,9 @@ async function startServer() {
     const recovery = generateRecoveryCodes();
     await prisma.user.update({ where: { id: user.id }, data: { mfaRecoveryCodeHashes: recovery.hashes } });
     res.json({ recoveryCodes: recovery.codes });
-  });
+  }));
 
-  app.post("/api/auth/mfa/disable", authMiddleware, validate(schemas.mfaDisable), async (req, res) => {
+  app.post("/api/auth/mfa/disable", authMiddleware, validate(schemas.mfaDisable), asyncHandler(async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const user = await prisma.user.findUnique({
       where: { id: jwtUser.userId },
@@ -2860,9 +2813,9 @@ async function startServer() {
     await createAuditLog(user.id, user.email, "DISABLE", "MFA", user.id,
       "Multi-factor authentication disabled; other sessions revoked.", req.ip || null, req.headers["user-agent"] || null, "WARNING");
     res.json({ success: true });
-  });
+  }));
 
-  app.get("/api/auth/sessions", authMiddleware, async (req, res) => {
+  app.get("/api/auth/sessions", authMiddleware, asyncHandler(async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const sessions = await prisma.authSession.findMany({
       where: { userId: jwtUser.userId, revokedAt: null, expiresAt: { gt: new Date() } },
@@ -2870,20 +2823,20 @@ async function startServer() {
       orderBy: { lastSeenAt: "desc" },
     });
     res.json(sessions.map((session) => ({ ...session, current: session.id === jwtUser.sessionId })));
-  });
-  app.delete("/api/auth/sessions/:id", authMiddleware, async (req, res) => {
+  }));
+  app.delete("/api/auth/sessions/:id", authMiddleware, asyncHandler(async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     await prisma.authSession.updateMany({ where: { id: req.params.id, userId: jwtUser.userId }, data: { revokedAt: new Date() } });
     res.json({ success: true, current: req.params.id === jwtUser.sessionId });
-  });
-  app.post("/api/auth/sessions/revoke-others", authMiddleware, async (req, res) => {
+  }));
+  app.post("/api/auth/sessions/revoke-others", authMiddleware, asyncHandler(async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     await prisma.authSession.updateMany({
       where: { userId: jwtUser.userId, revokedAt: null, ...(jwtUser.sessionId ? { id: { not: jwtUser.sessionId } } : {}) },
       data: { revokedAt: new Date() },
     });
     res.json({ success: true });
-  });
+  }));
 
   // Any authenticated user may set their own personal cursor-effect
   // preference (distinct from the school-wide default in Settings > System,
@@ -5172,7 +5125,7 @@ async function startServer() {
         href: "/student/homework", sourceId: `homework-due:${homework.id}`,
       })));
     }
-    if (preference.resultNotifications) {
+    if (preference.resultNotifications || preference.homeworkReminders) {
       const [submissions, attempts] = await Promise.all([
         prisma.homeworkSubmission.findMany({
           where: { studentId: student.id, status: { in: ["MARKED", "REDO"] }, markedAt: { not: null } },
@@ -5316,13 +5269,13 @@ async function startServer() {
     }
   });
 
-  app.get("/api/interventions/assignees", authMiddleware, requirePermission("view_interventions"), async (_req, res) => {
+  app.get("/api/interventions/assignees", authMiddleware, requirePermission("view_interventions"), asyncHandler(async (_req, res) => {
     const users = await prisma.user.findMany({
       where: { isActive: true, role: { in: ["ADMIN", "TEACHER", "CASE_WORKER"] } },
       select: { id: true, firstName: true, lastName: true, role: true }, orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
     });
     res.json(users);
-  });
+  }));
 
   app.post("/api/interventions", authMiddleware, requirePermission("manage_interventions"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
@@ -6145,7 +6098,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/library/files", authMiddleware, uploadLibraryFile, async (req, res) => {
+  app.post("/api/library/files", authMiddleware, uploadLibraryFile, asyncHandler(async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
       res.status(403).json({ error: "Forbidden" });
@@ -6162,7 +6115,7 @@ async function startServer() {
       size: file.size,
       mimeType: file.mimetype,
     });
-  });
+  }));
 
   app.post("/api/library", authMiddleware, validate(schemas.library), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
@@ -6577,14 +6530,14 @@ async function startServer() {
     authMiddleware,
     requirePermission("manage_videos"),
     uploadVideoFile,
-    async (req, res) => {
+    asyncHandler(async (req, res) => {
       const file = (req as any).file as Express.Multer.File | undefined;
       if (!file) {
         res.status(400).json({ error: "Video file is required" });
         return;
       }
       await finishStoredVideoUpload(file, res);
-    }
+    })
   );
 
   type VideoChunkManifest = {
@@ -6768,7 +6721,7 @@ async function startServer() {
   // Transcode status for an uploaded video file (filesystem is the source of
   // truth: the final .mp4 only exists once conversion finished; a .failed
   // marker means it errored). Used by the player to show "Converting…".
-  app.get("/api/videos/transcode-status", authMiddleware, async (req, res) => {
+  app.get("/api/videos/transcode-status", authMiddleware, asyncHandler(async (req, res) => {
     const file = String(req.query.file || "");
     // Only a bare filename within the video dir — no path traversal.
     if (!file || file.includes("/") || file.includes("\\") || file.includes("..")) {
@@ -6779,7 +6732,7 @@ async function startServer() {
     const ready = fs.existsSync(target);
     const failed = !ready && fs.existsSync(`${target}.failed`);
     res.json({ ready, failed, processing: !ready && !failed });
-  });
+  }));
 
   // Caption/subtitle (.vtt/.srt) upload — stored alongside videos.
   app.post("/api/videos/captions", authMiddleware, requirePermission("manage_videos"), uploadCaptionFile, async (req, res) => {
@@ -14168,11 +14121,11 @@ async function startServer() {
     next();
   };
 
-  app.post("/api/exam-media", authMiddleware, examMediaRoleGuard, uploadExamMedia, async (req, res) => {
+  app.post("/api/exam-media", authMiddleware, examMediaRoleGuard, uploadExamMedia, asyncHandler(async (req, res) => {
     const file = (req as any).file as Express.Multer.File | undefined;
     if (!file) { res.status(400).json({ error: "Image file is required" }); return; }
     res.status(201).json({ url: `/uploads/exam-media/${file.filename}` });
-  });
+  }));
 
   const MANUAL_QUESTION_TYPES = new Set(["SHORT_ANSWER", "ESSAY", "WRITTEN", "EXTENDED"]);
   function publishQuestionError(q: any, index: number): string | null {
@@ -15421,19 +15374,14 @@ async function startServer() {
     });
   };
 
-  app.post("/api/settings/assets", authMiddleware, requirePermission("manage_settings"), uploadBrandingAsset, async (req, res) => {
+  app.post("/api/settings/assets", authMiddleware, requirePermission("manage_settings"), uploadBrandingAsset, asyncHandler(async (req, res) => {
     const file = (req as any).file as Express.Multer.File | undefined;
     if (!file) {
       res.status(400).json({ error: "Image file is required" });
       return;
     }
     res.json({ url: `/uploads/branding/${file.filename}` });
-  });
-
-  // POST /api/ai/chat — context-aware, read-only AI assistant (Admins/Teachers).
-  // Implemented in ./aiAssistant with conversation memory, page context, a
-  // role-scoped situation snapshot, and read-only data tools.
-  registerAiAssistantRoutes({ app, prisma, authMiddleware, logger });
+  }));
 
   // ── Data Export (CSV / JSON) ─────────────────────────────────────────────────
   const toCsv = (rows: Record<string, any>[]): string => {
@@ -17008,7 +16956,7 @@ async function startServer() {
   });
 
   // ── Backups and verification ─────────────────────────────────────────────────
-  app.get("/api/backups", authMiddleware, requirePermission("manage_settings"), async (_req, res) => {
+  app.get("/api/backups", authMiddleware, requirePermission("manage_settings"), asyncHandler(async (_req, res) => {
     const settings = await prisma.schoolProfile.findFirst({ select: { backupEnabled: true } }).catch(() => null);
     res.json({
       backups: listBackups(),
@@ -17017,7 +16965,7 @@ async function startServer() {
       backupHour: Number(process.env.BACKUP_HOUR || 2),
       offsiteConfigured: Boolean(OFFSITE_BACKUP_DIR),
     });
-  });
+  }));
 
   app.post("/api/backups/run", authMiddleware, requirePermission("manage_settings"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
@@ -17118,7 +17066,7 @@ async function startServer() {
     }
   });
 
-  app.get("/api/backups/:name/download", authMiddleware, requirePermission("manage_settings"), async (req, res) => {
+  app.get("/api/backups/:name/download", authMiddleware, requirePermission("manage_settings"), asyncHandler(async (req, res) => {
     const name = req.params.name;
     if (!isSafeBackupName(name)) {
       res.status(400).json({ error: "Invalid backup name" });
@@ -17137,8 +17085,10 @@ async function startServer() {
     } as const;
     res.setHeader("Content-Type", contentTypes[artifact.kind]);
     res.setHeader("Content-Disposition", `attachment; filename="${name.replace(/"/g, "")}"`);
-    fs.createReadStream(path.join(BACKUP_DIR, name)).pipe(res);
-  });
+    // sendFile forwards missing-file/read errors to Express instead of emitting
+    // an unhandled stream error if a backup is pruned during download.
+    res.sendFile(path.resolve(BACKUP_DIR, name));
+  }));
 
   // ── Global search (top bar) ──────────────────────────────────────────────────
   app.get("/api/search", authMiddleware, async (req, res) => {
@@ -20385,7 +20335,7 @@ async function startServer() {
   // ── Phase 2 advanced exam routes (registered before the SPA catch-all) ──────
   registerExamPhase2Routes({ app, prisma, authMiddleware, createAuditLog, logger, canManageExamClass });
   registerClassworkRoutes({ app, prisma, authMiddleware, logger, canManageExamClass });
-  registerVideoLearningRoutes({ app, prisma, authMiddleware, logger, canManageExamClass });
+  registerVideoLearningRoutes({ app, prisma, authMiddleware, logger, canManageExamClass, appUrl: APP_URL });
   // ── Phase 3 reusable question bank routes ───────────────────────────────────
   registerExamBankRoutes({ app, prisma, authMiddleware, createAuditLog, logger, canManageExamClass });
   // ── News / Daily Digest (RSS aggregation) ───────────────────────────────────
@@ -20461,11 +20411,11 @@ async function startServer() {
       res.status(400).json({ error: message });
     });
   };
-  app.post("/api/chat-media", authMiddleware, chatUploadLimiter, uploadChatMedia, async (req, res) => {
+  app.post("/api/chat-media", authMiddleware, chatUploadLimiter, uploadChatMedia, asyncHandler(async (req, res) => {
     const file = (req as any).file as Express.Multer.File | undefined;
     if (!file) { res.status(400).json({ error: "Image file is required" }); return; }
     res.status(201).json({ url: `/uploads/chat-media/${file.filename}` });
-  });
+  }));
 
   // ── Sticker packs ────────────────────────────────────────────────────────────
   const STICKER_EXTS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
@@ -21298,13 +21248,13 @@ async function startServer() {
   });
 
   // Presence: anyone with a live stream OR recent activity within the window.
-  app.get("/api/chat/presence", authMiddleware, async (_req, res) => {
+  app.get("/api/chat/presence", authMiddleware, asyncHandler(async (_req, res) => {
     const online = new Set<string>();
     for (const [uid, set] of chatStreams) if (set.size > 0) online.add(uid);
     const now = Date.now();
     for (const [uid, ts] of chatLastSeen) if (now - ts < PRESENCE_WINDOW_MS) online.add(uid);
     res.json({ online: [...online] });
-  });
+  }));
 
   // Heartbeat so a user with the app open stays "online" even if their SSE stream
   // is momentarily reconnecting. Called periodically by the client.
@@ -23097,6 +23047,9 @@ async function startServer() {
     }
   });
 
+  // API misses must return JSON before Vite/static SPA fallback can serve HTML.
+  app.use("/api", (_req, res) => { res.status(404).json({ error: "Not found" }); });
+
   // ── SPA fallback — registered AFTER every /api route so it never shadows one ──
   if (!isProduction) {
     // Keep the development server out of the production dependency/runtime path.
@@ -23178,7 +23131,8 @@ async function startServer() {
       res: express.Response,
       next: express.NextFunction
     ) => {
-      logger.error(err.stack);
+      logger.error(err?.stack || err);
+      if (res.headersSent) { next(err); return; }
       res.status(500).json({ error: "Internal Server Error" });
     }
   );

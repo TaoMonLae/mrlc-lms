@@ -1,3 +1,5 @@
+import { notificationTypeEnabled } from '../shared/notificationPreferences';
+export { notificationTypeEnabled } from '../shared/notificationPreferences';
 import type { Prisma, PrismaClient, Announcement, TimetableEntry, PayrollRun } from '@prisma/client';
 import { CURRENT_RELEASE } from '../src/data/releases';
 
@@ -6,19 +8,6 @@ export type NotificationInput = {
   userId: string; type: string; title: string; message: string; href?: string | null; sourceId: string;
 };
 const html = (value: string) => value.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
-
-export function notificationTypeEnabled(type: string, preference: {
-  homeworkReminders: boolean; resultNotifications: boolean; interventionReminders: boolean;
-  payrollNotifications: boolean; classNotifications: boolean; appUpdates: boolean;
-}) {
-  if (type === 'HOMEWORK_DUE') return preference.homeworkReminders;
-  if (type.startsWith('HOMEWORK_') || type === 'EXAM_RESULT') return preference.resultNotifications;
-  if (type.startsWith('INTERVENTION_')) return preference.interventionReminders;
-  if (type.startsWith('PAYROLL_')) return preference.payrollNotifications;
-  if (type.startsWith('CLASS_')) return preference.classNotifications;
-  if (type === 'APP_UPDATE') return preference.appUpdates;
-  return true;
-}
 
 // Call inside the same transaction as the triggering mutation. Notification,
 // delivery records and mail are committed together, before the SMTP worker runs.

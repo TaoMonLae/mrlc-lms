@@ -1,6 +1,7 @@
 import type { Express, RequestHandler } from 'express';
 import type { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
+import { disabledNotificationTypeFilters, publicNotificationPreferences } from './shared/notificationPreferences';
 
 const preferenceSchema = z.object({
   inAppEnabled: z.boolean().optional(), emailEnabled: z.boolean().optional(),
@@ -22,16 +23,21 @@ export function registerNotificationRoutes({ app, prisma, authMiddleware, sync, 
         .json({ error: 'Notifications are temporarily unavailable' });
     }
   };
+  app.get('/api/notifications/preferences', authMiddleware, handle(async (req, res) => {
+    const userId = (req as any).user.userId;
+    const preferences = await prisma.notificationPreference.upsert({ where: { userId }, update: {}, create: { userId } });
+    res.json(publicNotificationPreferences(preferences));
+  }));
   app.get('/api/notifications', authMiddleware, handle(async (req, res) => {
     const user = (req as any).user;
     await sync(user);
     const preferences = await prisma.notificationPreference.upsert({ where: { userId: user.userId }, update: {}, create: { userId: user.userId } });
-    const where = { userId: user.userId };
+    const where = { userId: user.userId, NOT: disabledNotificationTypeFilters(preferences) };
     const [notifications, unreadCount] = preferences.inAppEnabled ? await Promise.all([
       prisma.notification.findMany({ where, orderBy: { createdAt: 'desc' }, take: 50 }),
       prisma.notification.count({ where: { ...where, readAt: null } }),
     ]) : [[], 0];
-    res.json({ notifications, unreadCount, preferences });
+    res.json({ notifications, unreadCount, preferences: publicNotificationPreferences(preferences) });
   }));
   app.patch('/api/notifications/:id/read', authMiddleware, handle(async (req, res) => {
     const where = { id: req.params.id, userId: (req as any).user.userId };
@@ -50,6 +56,6 @@ export function registerNotificationRoutes({ app, prisma, authMiddleware, sync, 
     if (!parsed.success) { res.status(400).json({ error: 'Provide valid notification preferences' }); return; }
     const userId = (req as any).user.userId;
     const preference = await prisma.notificationPreference.upsert({ where: { userId }, update: parsed.data, create: { userId, ...parsed.data } });
-    res.json(preference);
+    res.json(publicNotificationPreferences(preference));
   }));
 }

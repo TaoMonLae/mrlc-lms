@@ -75,12 +75,12 @@ export default function SchoolOperationsDashboard({ actions, announcements, load
   ];
 
   return (
-    <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: reduceMotion ? 0 : 0.22 }} className="space-y-6">
+    <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: reduceMotion ? 0 : 0.22 }} className="dashboard-workspace space-y-6">
       <section className="grid overflow-hidden border border-academic-navy-deep bg-card lg:grid-cols-[minmax(0,1fr)_300px]" aria-labelledby="dashboard-heading">
         <div className="flex min-h-48 flex-col justify-between gap-8 p-5 sm:p-7 lg:p-8">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-academic-teal">School operations / overview</p>
-            <h1 id="dashboard-heading" className="mt-3 max-w-3xl text-balance text-4xl font-semibold leading-[0.98] tracking-[-0.04em] text-academic-navy-deep sm:text-5xl">
+            <h1 id="dashboard-heading" className="mt-3 max-w-3xl text-balance text-4xl font-semibold leading-[0.98] tracking-[-0.04em] text-foreground sm:text-5xl">
               The school day, at a glance.
             </h1>
             <p className="mt-4 max-w-2xl text-pretty text-sm leading-6 text-muted-foreground sm:text-base">

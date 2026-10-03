@@ -166,3 +166,29 @@ test('announcement reads use the same class audience boundary as notification re
   assert.deepEqual((studentWhere.AND as any[])[2].OR[0], { audience: { in: ['ALL', 'STUDENTS'] } });
   assert.deepEqual(await announcementAudienceWhere(h.db, { userId: 'admin', role: 'ADMIN' }), {});
 });
+
+test('preference responses round-trip through the strict API without leaking database metadata', async () => {
+  const h = routes(); h.preferences.set('a', { id: 'pref-row', userId: 'a', createdAt: new Date(), emailEnabled: false });
+  const loaded = await h.request('get', '/api/notifications/preferences');
+  assert.equal(Object.keys(loaded.body).length, 8);
+  assert.equal(loaded.body.id, undefined);
+  const saved = await h.request('put', '/api/notifications/preferences', 'a', { ...loaded.body, emailEnabled: true });
+  assert.equal(saved.status, 200); assert.equal(saved.body.emailEnabled, true);
+  assert.equal(h.preferences.get('b'), undefined);
+});
+
+test('preference loading does not require notification synchronization', async () => {
+  const h = routes();
+  h.db.notification.findMany = async () => { throw new Error('feed unavailable'); };
+  assert.equal((await h.request('get', '/api/notifications/preferences')).status, 200);
+  assert.equal((await h.request('get', '/api/notifications')).status, 500);
+});
+
+test('homework redo reminders follow the reminder setting independently of result notifications', async () => {
+  const h = setup(); h.preferences.set('a', { homeworkReminders: true, resultNotifications: false });
+  await h.service.ensure({ ...input, type: 'HOMEWORK_REDO' });
+  assert.equal(h.notifications.length, 1);
+  h.preferences.set('a', { homeworkReminders: false, resultNotifications: true });
+  await h.service.ensure({ ...input, type: 'HOMEWORK_REDO', sourceId: 'redo2' });
+  assert.equal(h.notifications.length, 1);
+});

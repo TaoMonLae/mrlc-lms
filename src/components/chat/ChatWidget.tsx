@@ -36,9 +36,7 @@ export default function ChatWidget() {
   const myId = user?.id;
   const canSave = user?.role === 'ADMIN' || user?.role === 'TEACHER';
   const isChatRoute = location.pathname.startsWith('/chat');
-  // Coordinated with the AI Assistant widget so only one floating panel is
-  // ever expanded at a time -- both anchor to the bottom-right corner.
-  const { isOpen: open, isOtherOpen: aiOpen, setOpen } = useFloatingPanel('chat');
+  const { isOpen: open, setOpen } = useFloatingPanel('chat');
   const [camera, setCamera] = useState(false);
   const [conversations, setConversations] = useState<ConvSummary[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -169,10 +167,6 @@ export default function ChatWidget() {
 
   // The full chat page has its own UI; don't double up there.
   if (location.pathname.startsWith('/chat')) return null;
-
-  // The AI Assistant's panel covers the same bottom-right corner; hide our
-  // trigger while it's open instead of floating on top of it.
-  if (!open && aiOpen) return null;
 
   if (!open) {
     return (

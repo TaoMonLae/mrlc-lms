@@ -1,13 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, ReactNode } from "react";
 import { useLocation } from "react-router";
 
-/**
- * Coordinates the app's floating bottom-right widgets (Chat, AI Assistant)
- * so at most one is expanded at a time. Without this, opening one panel
- * would leave the other widget's trigger button floating on top of it in
- * the same corner -- both widgets independently anchor to bottom-right.
- */
-type FloatingPanelId = "chat" | "ai";
+/** Keeps the floating chat panel scoped to the current page. */
+type FloatingPanelId = "chat";
 
 interface FloatingPanelContextValue {
   active: FloatingPanelId | null;
@@ -23,7 +18,7 @@ export function FloatingPanelProvider({ children }: { children: ReactNode }) {
   const prevPathRef = useRef(location.pathname);
 
   // Collapse whichever panel is open whenever the user navigates to a
-  // different page -- otherwise the expanded Chat/AI panel stays parked on
+  // different page -- otherwise the expanded chat panel stays parked on
   // top of the new page's content until manually closed.
   useEffect(() => {
     if (prevPathRef.current !== location.pathname) {
@@ -44,14 +39,13 @@ export function FloatingPanelProvider({ children }: { children: ReactNode }) {
   return <FloatingPanelContext.Provider value={value}>{children}</FloatingPanelContext.Provider>;
 }
 
-/** Returns whether `id`'s panel is open, plus a setter that opening one panel closes the other. */
+/** Returns the floating panel state and its controls. */
 export function useFloatingPanel(id: FloatingPanelId) {
   const ctx = useContext(FloatingPanelContext);
   if (!ctx) {
     throw new Error("useFloatingPanel must be used within a FloatingPanelProvider");
   }
   const isOpen = ctx.active === id;
-  const isOtherOpen = ctx.active !== null && ctx.active !== id;
   const setOpen = (next: boolean) => (next ? ctx.open(id) : ctx.close(id));
-  return { isOpen, isOtherOpen, setOpen };
+  return { isOpen, setOpen };
 }

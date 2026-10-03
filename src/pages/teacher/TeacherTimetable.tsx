@@ -131,7 +131,7 @@ export default function TeacherTimetable() {
   };
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-5 pb-12">
+    <div className="teaching-workspace mx-auto max-w-[1500px] space-y-5 pb-12">
       <header className="flex flex-col gap-5 border-b border-foreground pb-5 lg:flex-row lg:items-end lg:justify-between print:hidden">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-academic-teal">Teacher desk / Personal field plan</p>
@@ -221,7 +221,7 @@ function Measure({ label, value, note, attention = false }: { label: string; val
 }
 
 function FieldSelect({ label, value, onValueChange, options }: { label: string; value: string; onValueChange: (value: string) => void; options: { value: string; label: string }[] }) {
-  return <div className="bg-card p-3"><p className="font-mono text-[9px] uppercase tracking-[0.11em] text-muted-foreground">{label}</p><Select value={value} onValueChange={onValueChange}><SelectTrigger className="mt-1 h-8 w-full rounded-none border-0 border-b border-input px-0 focus-visible:ring-0"><SelectValue /></SelectTrigger><SelectContent className="rounded-none">{options.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>;
+  return <div className="bg-card p-3"><p className="font-mono text-[9px] uppercase tracking-[0.11em] text-muted-foreground">{label}</p><Select value={value} onValueChange={onValueChange}><SelectTrigger aria-label={label} className="mt-1 h-8 w-full rounded-none border-0 border-b border-input px-0 focus-visible:ring-0"><SelectValue /></SelectTrigger><SelectContent className="rounded-none">{options.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>;
 }
 
 function Interpretation({ label, value, note }: { label: string; value: string; note: string }) {

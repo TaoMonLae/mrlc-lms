@@ -15,10 +15,13 @@ function seriousViolations(results: Awaited<ReturnType<AxeBuilder['analyze']>>) 
 
 test('login has no serious or critical accessibility violations', async ({ page }) => {
   await page.goto('/login');
-  await expect(page.getByRole('heading', { name: 'Welcome Back' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sign in to your school day.' })).toBeVisible();
   await page.waitForTimeout(600); // scan the settled UI, not a translucent animation frame
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
-  expect(seriousViolations(results)).toEqual([]);
+  for (const dark of [false, true]) {
+    await page.evaluate(value => document.documentElement.classList.toggle('dark', value), dark);
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+    expect(seriousViolations(results)).toEqual([]);
+  }
 });
 
 test('authenticated dashboard has no serious or critical accessibility violations', async ({ page }) => {
@@ -28,15 +31,22 @@ test('authenticated dashboard has no serious or critical accessibility violation
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).not.toHaveURL(/\/login$/);
   await page.goto('/dashboard');
-  await expect(page.locator('#main-content')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'The school day, at a glance.' })).toBeVisible();
+  await expect(page.getByText('Loading student support…')).toHaveCount(0);
   await page.waitForTimeout(600);
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
-  expect(seriousViolations(results)).toEqual([]);
+  for (const dark of [false, true]) {
+    await page.evaluate(value => document.documentElement.classList.toggle('dark', value), dark);
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+    expect(seriousViolations(results)).toEqual([]);
+  }
 });
 
 test('password recovery has no serious or critical accessibility violations', async ({ page }) => {
   await page.goto('/forgot-password');
   await expect(page.getByRole('heading', { name: 'Reset your password' })).toBeVisible();
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
-  expect(seriousViolations(results)).toEqual([]);
+  for (const dark of [false, true]) {
+    await page.evaluate(value => document.documentElement.classList.toggle('dark', value), dark);
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+    expect(seriousViolations(results)).toEqual([]);
+  }
 });

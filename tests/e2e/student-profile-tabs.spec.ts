@@ -1,3 +1,4 @@
+import { CURRENT_RELEASE } from '../../src/data/releases';
 import { expect, test } from '@playwright/test';
 
 // Service-worker fetches bypass Playwright's page routes; use only fixture data.
@@ -5,11 +6,11 @@ test.use({ serviceWorkers: 'block' });
 
 test('student profile tabs remain readable and scrollable at every width', async ({ page }, testInfo) => {
   const user = { id: 'profile-tabs-admin', email: 'tabs@example.test', role: 'ADMIN', firstName: 'Profile', lastName: 'Tester', isActive: true };
-  await page.addInitScript((user) => {
+  await page.addInitScript(({ user, releaseId }) => {
     sessionStorage.setItem('auth_token', 'profile-tabs-test');
     sessionStorage.setItem('auth_user', JSON.stringify(user));
-    localStorage.setItem(`mrlc:release-seen:${user.id}`, '2026-09-06-language-quest-course-path');
-  }, user);
+    localStorage.setItem(`mrlc:release-seen:${user.id}`, releaseId);
+  }, { user, releaseId: CURRENT_RELEASE.id });
   await page.route('**/api/**', route => {
     const path = new URL(route.request().url()).pathname;
     if (path.endsWith('/stream')) return route.fulfill({ contentType: 'text/event-stream', body: ': fixture\n\n' });
