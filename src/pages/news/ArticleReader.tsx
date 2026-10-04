@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router";
 import {
   ArrowLeft,
@@ -25,7 +25,6 @@ import {
 import { apiGet } from "@/src/lib/api";
 import { usePermissions } from "@/src/lib/permissions";
 import { homeworkPrefillFor } from "@/src/lib/newsHomeworkPrefill";
-import { toast } from "sonner";
 
 interface ArticleDetail {
   id: string;
@@ -135,8 +134,9 @@ function NewsDefinitionDialog({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="h-11 w-11"
                 title="Pronounce"
+                aria-label={`Pronounce ${word}`}
                 onClick={pronounce}
               >
                 <Volume2 className="h-4 w-4" />
@@ -154,7 +154,7 @@ function NewsDefinitionDialog({
           <div className="space-y-4">
             {result.translations.length > 0 && (
               <section className="rounded-lg border border-accent-purple/10 bg-accent-purple/5 p-3">
-                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-accent-purple">
+                <p className="mb-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
                   Myanmar
                 </p>
                 {result.translations.map((item, index) => (
@@ -169,7 +169,7 @@ function NewsDefinitionDialog({
             )}
             {result.monMatches.length > 0 && (
               <section className="rounded-lg border border-amber-500/10 bg-amber-500/5 p-3">
-                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-amber-600 dark:text-amber-400">
+                <p className="mb-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
                   Mon
                 </p>
                 {result.monMatches.slice(0, 3).map((match, index) => (
@@ -182,9 +182,9 @@ function NewsDefinitionDialog({
                       .map((definition, definitionIndex) => (
                         <p
                           key={definitionIndex}
-                          className="text-xs text-slate-600 dark:text-slate-300"
+                          className="text-sm text-slate-600 dark:text-slate-300"
                         >
-                          <span className="text-slate-400">
+                          <span className="text-slate-600 dark:text-slate-300">
                             {MON_LANG_LABEL[definition.lang] || definition.lang}
                             :{" "}
                           </span>
@@ -202,7 +202,7 @@ function NewsDefinitionDialog({
                     key={index}
                     className="text-sm text-slate-700 dark:text-slate-200"
                   >
-                    <span className="mr-1 text-[10px] text-slate-400">
+                    <span className="mr-1 text-sm text-slate-600 dark:text-slate-300">
                       {entry.posLabel}
                     </span>
                     {entry.definition}
@@ -214,7 +214,7 @@ function NewsDefinitionDialog({
               to={`/dictionary?word=${encodeURIComponent(word)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="block pt-1 text-xs text-primary hover:underline"
+              className="inline-flex min-h-11 items-center text-sm text-primary hover:underline"
             >
               Open full Dictionary →
             </Link>
@@ -237,9 +237,36 @@ export default function ArticleReader() {
   const { isTeacher, isAdmin } = usePermissions();
   const [article, setArticle] = useState<ArticleDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [retry, setRetry] = useState(0);
   const [selectedText, setSelectedText] = useState<string | null>(null);
   const [defineWord, setDefineWord] = useState<string | null>(null);
-  const [textSize, setTextSize] = useState(19);
+  const [textSize, setTextSize] = useState(() => {
+    try {
+      const stored = Number(localStorage.getItem("mrlc:news-text-size"));
+      if ([17, 19, 21, 23, 25].includes(stored)) return stored;
+    } catch { /* Reading tools still work when storage is unavailable. */ }
+    return 19;
+  });
+  const proseRef = useRef<HTMLDivElement>(null);
+  const safeContent = useMemo(() => article?.content
+    ? DOMPurify.sanitize(article.content, { FORBID_ATTR: ["style", "class"] })
+    : null, [article?.content]);
+
+  useEffect(() => {
+    try { localStorage.setItem("mrlc:news-text-size", String(textSize)); } catch { /* Optional preference. */ }
+  }, [textSize]);
+
+  useEffect(() => {
+    const captureSelection = () => {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed) return;
+      if (!proseRef.current?.contains(selection.anchorNode) || !proseRef.current?.contains(selection.focusNode)) return;
+      setSelectedText(selection.toString().trim() || null);
+    };
+    document.addEventListener("selectionchange", captureSelection);
+    return () => document.removeEventListener("selectionchange", captureSelection);
+  }, []);
 
   // Get the category from navigation state, default to 'ALL' if not provided
   const fromCategory =
@@ -255,6 +282,7 @@ export default function ArticleReader() {
     if (!id) return;
     let cancelled = false;
     setLoading(true);
+    setLoadError(false);
     setArticle(null);
     setSelectedText(null);
     setDefineWord(null);
@@ -264,8 +292,7 @@ export default function ArticleReader() {
       })
       .catch(() => {
         if (!cancelled) {
-          toast.error("Article not found");
-          navigate("/news");
+          setLoadError(true);
         }
       })
       .finally(() => {
@@ -274,31 +301,32 @@ export default function ArticleReader() {
     return () => {
       cancelled = true;
     };
-  }, [id, navigate]);
+  }, [id, retry]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <span className="ml-3 text-slate-500">Loading article...</span>
+      <div className="news-page news-state" role="status">
+        <Loader2 className="animate-spin" size={28} aria-hidden="true" />
+        <p>Loading article…</p>
       </div>
     );
   }
 
-  if (!article) return null;
+  if (loadError || !article) return (
+    <div className="news-page news-state" role="alert">
+      <Newspaper size={28} aria-hidden="true" />
+      <h1>Article unavailable</h1>
+      <p>The article may have been removed, or the connection failed. Try again or return to your stories.</p>
+      <button className="news-action" onClick={() => setRetry((value) => value + 1)}>Retry article</button>
+      <Link className="news-reader-return" to={returnTo} state={{ fromCategory }}>Back to news</Link>
+    </div>
+  );
 
   const dateLabel = article.publishedAt || article.fetchedAt;
   // Full-article HTML only exists when the source's own feed included it —
   // see news.ts fullContentFrom(). We sanitize before rendering, same as the
   // chat message pattern elsewhere in the app.
-  const safeContent = article.content
-    ? DOMPurify.sanitize(article.content)
-    : null;
   const lookupWord = selectedText ? selectedLookupWord(selectedText) : null;
-  const captureSelection = () => {
-    const selected = window.getSelection()?.toString().trim() || "";
-    setSelectedText(selected || null);
-  };
   const clearSelection = () => {
     window.getSelection()?.removeAllRanges();
     setSelectedText(null);
@@ -348,7 +376,7 @@ export default function ArticleReader() {
           <aside className="news-study-desk" aria-label="Reading tools">
             <p className="news-eyebrow">Your reading desk</p>
             <div className="news-text-size">
-              <span>Text size</span>
+              <span>Text size <output aria-live="polite" aria-label="Article text size">{textSize}</output></span>
               <div>
                 <button
                   type="button"
@@ -396,14 +424,10 @@ export default function ArticleReader() {
           <div
             className="news-reader-body"
             style={
-              { "--news-reading-size": `${textSize}px` } as React.CSSProperties
+              { "--news-reading-size": `${textSize / 16}rem` } as React.CSSProperties
             }
           >
-            <div
-              onMouseUp={captureSelection}
-              onTouchEnd={captureSelection}
-              onKeyUp={captureSelection}
-            >
+            <div ref={proseRef}>
               {safeContent ? (
                 <div
                   className="news-prose"

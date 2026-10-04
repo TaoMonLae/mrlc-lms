@@ -38,6 +38,12 @@ const DEFAULT_SOURCES = [
   { name: "Inside Higher Ed", feedUrl: "https://www.insidehighered.com/rss.xml", category: "Education" },
   { name: "KQED MindShift", feedUrl: "https://ww2.kqed.org/mindshift/feed/", category: "Education" },
   { name: "eSchool News", feedUrl: "https://www.eschoolnews.com/category/top-news/feed/", category: "Education" },
+  { name: "Chalkbeat", feedUrl: "https://www.chalkbeat.org/arc/outboundfeeds/rss/", category: "Education" },
+  { name: "The 74", feedUrl: "https://www.the74million.org/feed/", category: "Education" },
+  { name: "K-12 Dive", feedUrl: "https://www.k12dive.com/feeds/news/", category: "Education" },
+  { name: "Higher Ed Dive", feedUrl: "https://www.highereddive.com/feeds/news/", category: "Education" },
+  { name: "The Hechinger Report", feedUrl: "https://hechingerreport.org/feed/", category: "Education" },
+  { name: "Khan Academy Blog", feedUrl: "https://blog.khanacademy.org/feed/", category: "Education" },
   // Myanmar — independent outlets only (deliberately excludes state/military-
   // run media like Global New Light of Myanmar or MRTV, given the audience).
   { name: "The Irrawaddy", feedUrl: "https://www.irrawaddy.com/feed", category: "Myanmar" },
@@ -57,9 +63,10 @@ const DEFAULT_SOURCES = [
   // STEM
   { name: "NASA Breaking News", feedUrl: "http://www.nasa.gov/rss/breaking_news.rss", category: "STEM" },
   { name: "ScienceDaily — All", feedUrl: "https://www.sciencedaily.com/rss/all.xml", category: "STEM" },
-  // GED / adult education — no dedicated GED-branded outlet exists publicly,
-  // so this pairs Hechinger's two overlapping-but-distinct adult-ed tags for
-  // more volume (the "adult-learning" tag alone only had 1 recent article).
+  { name: "Science News Explores", feedUrl: "https://www.snexplores.org/feed", category: "STEM" },
+  // GED preparation, study skills, literacy, and adult education reporting.
+  { name: "Essential Education — GED & HiSET Student Blog", feedUrl: "https://blog.essentialed.com/students/rss.xml", category: "GED" },
+  { name: "ProLiteracy — Adult Learning", feedUrl: "https://www.proliteracy.org/news/feed/", category: "GED" },
   { name: "The Hechinger Report — Adult Learning", feedUrl: "https://hechingerreport.org/tags/adult-learning/feed/", category: "GED" },
   { name: "The Hechinger Report — Adult Education", feedUrl: "https://hechingerreport.org/tags/adult-education/feed/", category: "GED" },
 ];
@@ -68,6 +75,9 @@ const DEFAULT_SOURCES = [
 // forever — mirrors the ephemeral-cleanup pattern already used for social
 // posts / chat photos in server.ts.
 const RETENTION_DAYS = 30;
+// GED study guides and adult-learning resources remain useful beyond the
+// daily news cycle. Keep a bounded year of material in this category.
+const GED_RETENTION_DAYS = 365;
 const MAX_ITEMS_PER_FEED = 30;
 const FETCH_TIMEOUT_MS = 15000;
 
@@ -187,9 +197,22 @@ export function registerNewsRoutes(deps: Deps): { refreshAllSources: () => Promi
   }
 
   async function pruneOldArticles(): Promise<void> {
-    const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000);
+    const now = Date.now();
+    const cutoff = new Date(now - RETENTION_DAYS * 24 * 60 * 60 * 1000);
+    const gedCutoff = new Date(now - GED_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+    const olderThan = (date: Date) => ({
+      OR: [{ publishedAt: { lt: date } }, { publishedAt: null, fetchedAt: { lt: date } }],
+    });
     await prisma.newsArticle.deleteMany({
-      where: { AND: [{ OR: [{ publishedAt: { lt: cutoff } }, { publishedAt: null, fetchedAt: { lt: cutoff } }] }] },
+      where: {
+        OR: [
+          { source: { category: { equals: "GED", mode: "insensitive" } }, ...olderThan(gedCutoff) },
+          {
+            source: { OR: [{ category: null }, { category: { not: "GED", mode: "insensitive" } }] },
+            ...olderThan(cutoff),
+          },
+        ],
+      },
     }).catch(() => {});
   }
 
@@ -409,7 +432,7 @@ export function registerNewsRoutes(deps: Deps): { refreshAllSources: () => Promi
     }
   });
 
-  // Seed starter sources once (no-op if any already exist), then let the
+  // Add missing default sources without changing existing rows, then let the
   // caller (server.ts) decide when to run the first real fetch.
   ensureDefaultSources().catch(() => {});
 

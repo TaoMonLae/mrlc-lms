@@ -61,6 +61,15 @@
         "value": "inter",
         "createdAt": "2026-10-04T00:18:54.320Z",
         "reason": "Agent review: existing Inter fallback is documented in src/index.css and loaded by index.html for multilingual and Learning Quest text; root DESIGN.md describes a separate Discord reference."
+      },
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "news.ts"
+        ],
+        "createdAt": "2026-10-04T01:21:47.798Z",
+        "reason": "Agent reviewed: news.ts parses publisher HTML using an img regex; the img mention is a code comment, not a rendered image element."
       }
     ]
   }

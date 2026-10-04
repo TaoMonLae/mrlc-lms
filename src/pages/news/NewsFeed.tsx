@@ -51,6 +51,8 @@ export default function NewsFeed() {
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [failedPage, setFailedPage] = useState(1);
+  const [categoriesError, setCategoriesError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -82,10 +84,12 @@ export default function NewsFeed() {
         setTotal(res.total);
         setPage(nextPage);
       } catch {
-        if (seq === requestSeqRef.current)
+        if (seq === requestSeqRef.current) {
+          setFailedPage(nextPage);
           setError(
             "The news desk could not load these stories. Please try again.",
           );
+        }
       } finally {
         if (seq === requestSeqRef.current) setLoading(false);
       }
@@ -93,11 +97,15 @@ export default function NewsFeed() {
     [category, query],
   );
 
-  useEffect(() => {
-    apiGet<string[]>("/api/news/categories")
-      .then(setCategories)
-      .catch(() => setCategories([]));
+  const loadCategories = useCallback(async () => {
+    setCategoriesError(false);
+    try {
+      setCategories(await apiGet<string[]>("/api/news/categories"));
+    } catch {
+      setCategoriesError(true);
+    }
   }, []);
+  useEffect(() => { void loadCategories(); }, [loadCategories]);
   useEffect(() => {
     setArticles([]);
     setTotal(0);
@@ -129,7 +137,7 @@ export default function NewsFeed() {
     try {
       await apiSend("/api/news/refresh", "POST");
       toast.success("News refreshed");
-      await load();
+      await Promise.all([load(), loadCategories()]);
     } catch (err: any) {
       toast.error(err.message || "Refresh failed");
     } finally {
@@ -227,12 +235,18 @@ export default function NewsFeed() {
           </button>
         ))}
       </nav>
+      {categoriesError && (
+        <div className="news-topics-error" role="alert">
+          <p>Topics could not be loaded. You can still browse or search stories.</p>
+          <button className="news-action" onClick={loadCategories}>Retry topics</button>
+        </div>
+      )}
       <div className="news-search-bar">
-        <form onSubmit={handleSearch}>
+        <form onSubmit={handleSearch} role="search">
           <Search size={18} aria-hidden="true" />
           <input
             aria-label="Search news articles"
-            placeholder="Find a story, an idea, a perspective…"
+            placeholder="Search news articles…"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
@@ -283,7 +297,7 @@ export default function NewsFeed() {
             <p>Gathering stories from your school’s sources.</p>
           </div>
         )}
-        {error && (
+        {error && !articles.length && (
           <div className="news-state" role="alert">
             <Newspaper size={28} />
             <h2>Let’s try that again.</h2>
@@ -291,7 +305,8 @@ export default function NewsFeed() {
             <button
               type="button"
               className="news-action"
-              onClick={() => load()}
+              onClick={() => load(failedPage)}
+              disabled={loading}
             >
               Retry loading
             </button>
@@ -336,7 +351,7 @@ export default function NewsFeed() {
           >
             <article className="news-lead">
               <div className="news-section-label">
-                <span>01 / In focus</span>
+                <span>In focus</span>
                 <span>{category === "ALL" ? "Latest edition" : category}</span>
               </div>
               <Link {...storyLink(lead)} className="news-story-link">
@@ -395,9 +410,6 @@ export default function NewsFeed() {
           >
             <div className="news-archive-heading">
               <div>
-                <p className="news-eyebrow">
-                  {showFrontPage ? "02 / Keep exploring" : "The news index"}
-                </p>
                 <h2 id="news-archive-title">
                   {query
                     ? "Stories matching your search"
@@ -431,7 +443,15 @@ export default function NewsFeed() {
             </div>
           </section>
         )}
-        {articles.length < total && (
+        {error && articles.length > 0 && (
+          <div className="news-load-error" role="alert">
+            <p>More stories could not be loaded. Your current stories are still here.</p>
+            <button className="news-action" onClick={() => load(failedPage)} disabled={loading}>
+              Retry loading stories
+            </button>
+          </div>
+        )}
+        {!error && articles.length < total && (
           <div className="news-load-more">
             <span>
               {articles.length} stories on your desk · {total} available
