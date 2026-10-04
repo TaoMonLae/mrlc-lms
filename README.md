@@ -168,6 +168,8 @@ The production dependency audit reported zero known vulnerabilities on that date
 
 Use a Node.js runtime satisfying `package.json`, a PostgreSQL database, an HTTPS reverse proxy and persistent storage. The Express application serves both the API and built client.
 
+Search discovery includes an XML sitemap, robots.txt and page-specific metadata for public pages. Set `APP_URL` to the production origin and follow the [SEO deployment and Search Console checklist](docs/SEO.md) after publishing.
+
 **Deployment template compatibility:** the current `Dockerfile` and Ubuntu automation still target Node.js 20. Align those files with the application's Node.js 22.22+ requirement before using them with this dependency set. The [deployment guide](deploy/DEPLOYMENT.md) remains useful for host and proxy configuration, but its older runtime instructions must be adjusted.
 
 For an existing PM2 deployment, after backing up the database and persistent files and updating the checkout:

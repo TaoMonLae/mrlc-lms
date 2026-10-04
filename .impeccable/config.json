@@ -49,6 +49,18 @@
         ],
         "createdAt": "2026-09-29T13:18:36.929Z",
         "reason": "Agent: current findings are an existing bottom scroll indicator misclassified as a side tab and an existing own-rank leaderboard cue; both predate reader changes"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "poppins",
+        "createdAt": "2026-10-04T00:18:54.265Z",
+        "reason": "Agent review: docs/language-quest/DESIGN-languagequest.md explicitly names Poppins as the Nista substitute; src/index.css scopes it to Learning Quest."
+      },
+      {
+        "rule": "design-system-font",
+        "value": "inter",
+        "createdAt": "2026-10-04T00:18:54.320Z",
+        "reason": "Agent review: existing Inter fallback is documented in src/index.css and loaded by index.html for multilingual and Learning Quest text; root DESIGN.md describes a separate Discord reference."
       }
     ]
   }

@@ -306,6 +306,7 @@ import { I18nProvider } from "./i18n/I18nProvider";
 const LandingPage = lazy(() => import("./pages/Landing"));
 import CursorEffect from "./components/CursorEffect";
 import DynamicFavicon from "./components/DynamicFavicon";
+import SeoMetadata from "./components/SeoMetadata";
 
 export default function App() {
   return (
@@ -315,6 +316,7 @@ export default function App() {
         <SettingsProvider>
         <TooltipProvider>
           <BrowserRouter>
+          <SeoMetadata />
           <ReleaseUpdatesProvider>
           <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Loading page…</div>}>
           <ExternalLearnerBoundary>

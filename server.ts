@@ -1,6 +1,8 @@
 import { buildPasswordResetEmail } from "./lib/emailTemplates";
 import { deliverOutboxMessage } from "./lib/emailDelivery";
 import { asyncHandler } from "./lib/asyncHandler";
+import { registerSeoRoutes, renderSeoHtml } from "./lib/seo";
+import { getSeoMetadata } from "./shared/seo";
 import { accountStillMatchesToken, consumeRecoveryCode } from "./lib/sessionAccess";
 import { announcementAudienceWhere } from "./lib/announcementAudience";
 import { notificationService, syncTeacherAppUpdates, type NotificationInput } from "./lib/notifications";
@@ -1970,6 +1972,7 @@ async function startServer() {
 
   app.use(express.json({ limit: "10mb" }));
   app.use(cookieParser());
+  registerSeoRoutes(app, APP_URL);
   const setPassiveUploadHeaders = (res: express.Response) => {
     res.setHeader("Content-Security-Policy", "default-src 'none'; sandbox");
     res.setHeader("X-Content-Type-Options", "nosniff");
@@ -23050,7 +23053,9 @@ async function startServer() {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
-      appType: "spa",
+      // Our handler must inject route metadata before HTML is sent. Vite's
+      // default SPA handler would respond before the fallback below runs.
+      appType: "custom",
     });
     app.use(vite.middlewares);
     app.get("*", async (req, res, next) => {
@@ -23063,7 +23068,11 @@ async function startServer() {
         const fs = await import("fs");
         let template = fs.readFileSync(path.resolve(process.cwd(), "index.html"), "utf-8");
         template = await vite.transformIndexHtml(url, template);
-        res.status(200).set({ "Content-Type": "text/html" }).end(template);
+        res.status(200).set({
+          "Content-Type": "text/html",
+          "Cache-Control": "no-cache",
+          "X-Robots-Tag": getSeoMetadata(req.path, APP_URL).robots,
+        }).end(renderSeoHtml(template, req.path, APP_URL));
       } catch (e) {
         vite.ssrFixStacktrace(e as Error);
         next(e);
@@ -23072,6 +23081,7 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), "dist");
     const distAssetsPath = path.join(distPath, "assets");
+    const htmlTemplate = fs.readFileSync(path.join(distPath, "index.html"), "utf-8");
 
     // Vite fingerprints everything in /assets, so these files can safely stay in
     // browser and CDN caches for a year. Public files keep a short cache window
@@ -23092,9 +23102,14 @@ async function startServer() {
       next();
     });
     app.use(express.static(distPath, {
+      // The root document must go through the SEO handler, too.
+      index: false,
       maxAge: "1d",
       setHeaders: (res, filePath) => {
         const filename = path.basename(filePath);
+        // Standalone utility HTML, including the offline page, is not a public
+        // search landing page. The SPA document is rendered below instead.
+        if (filename.endsWith(".html")) res.setHeader("X-Robots-Tag", "noindex, nofollow");
         if (
           filename === "index.html" ||
           filename === "sw.js" ||
@@ -23113,7 +23128,8 @@ async function startServer() {
         return;
       }
       res.setHeader("Cache-Control", "no-cache");
-      res.sendFile(path.join(distPath, "index.html"));
+      res.setHeader("X-Robots-Tag", getSeoMetadata(req.path, APP_URL).robots);
+      res.type("html").send(renderSeoHtml(htmlTemplate, req.path, APP_URL));
     });
   }
 
