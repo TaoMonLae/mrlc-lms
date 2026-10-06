@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router';
-import { ArrowLeft, Edit, Play, Users, BarChart3, Clock, CheckCircle2, Settings, Trash2, BookOpenCheck, Loader2, ChevronDown, CalendarClock, Printer, ListChecks, Radio } from 'lucide-react';
+import { ArrowLeft, Edit, Play, Users, BarChart3, Clock, CheckCircle2, Settings, Trash2, BookOpenCheck, Loader2, ChevronDown, CalendarClock, Printer, ListChecks, Radio, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import './exam-profile.css';
 import { toast } from 'sonner';
 import { apiSend } from '../../lib/api';
+import { apiGet } from '../../lib/api';
+import { useAuth } from '../../providers/AuthProvider';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 
 type SubmissionRow = {
   id: string;
@@ -37,9 +40,35 @@ const fullName = (u: any) => `${u?.firstName ?? ''} ${u?.lastName ?? ''}`.trim()
 export default function ExamProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [exam, setExam] = useState<ExamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [permissionOpen, setPermissionOpen] = useState(false);
+  const [permissionRows, setPermissionRows] = useState<{ teacherUserId: string; name: string; allowed: boolean }[]>([]);
+  const [permissionLoading, setPermissionLoading] = useState(false);
+  const [permissionBusy, setPermissionBusy] = useState<string | null>(null);
+  const [permissionError, setPermissionError] = useState('');
+
+  const openPermissions = async () => {
+    setPermissionOpen(true);
+    setPermissionLoading(true);
+    setPermissionError('');
+    try { setPermissionRows(await apiGet(`/api/exams/${id}/answer-key-permissions`)); }
+    catch (error: any) { setPermissionError(error.message || 'Could not load assigned teachers.'); }
+    finally { setPermissionLoading(false); }
+  };
+
+  const changePermission = async (teacherUserId: string, allowed: boolean) => {
+    setPermissionBusy(teacherUserId);
+    setPermissionError('');
+    try {
+      await apiSend(`/api/exams/${id}/answer-key-permissions`, 'PUT', { teacherUserId, allowed });
+      setPermissionRows(rows => rows.map(row => row.teacherUserId === teacherUserId ? { ...row, allowed } : row));
+      toast.success(allowed ? 'Answer-key permission granted' : 'Answer-key permission revoked');
+    } catch (error: any) { setPermissionError(error.message || 'Could not update permission.'); }
+    finally { setPermissionBusy(null); }
+  };
 
   const handleSyncGradebook = async () => {
     if (!confirm('Sync best exam scores into the gradebook for this class?')) return;
@@ -106,7 +135,7 @@ export default function ExamProfile() {
           submissions: completed.length,
           totalStudents: data.class?._count?.students ?? attempts.length,
           avgScore,
-          recentSubmissions: attempts.slice(0, 8).map((a: any) => ({
+          recentSubmissions: completed.slice(0, 8).map((a: any) => ({
             id: a.id,
             studentName: fullName(a.student?.user),
             studentId: a.studentId,
@@ -176,6 +205,7 @@ export default function ExamProfile() {
                   <DropdownMenuItem render={<Link to={`/exam2/${id}/author`} />} nativeButton={false}><Edit /><span><strong>Author content</strong><small>Question bank, content & rubrics</small></span></DropdownMenuItem>
                   <DropdownMenuItem render={<Link to={`/exam2/${id}/schedule`} />} nativeButton={false}><CalendarClock /><span><strong>Schedule</strong><small>Availability, access & release</small></span></DropdownMenuItem>
                   <DropdownMenuItem render={<Link to={`/exam2/${id}/print`} />} nativeButton={false}><Printer /><span><strong>Print exam</strong><small>Prepare a paper copy</small></span></DropdownMenuItem>
+                  {user?.role === 'ADMIN' && ['PUBLISHED', 'ACTIVE', 'SCHEDULED', 'CLOSED'].includes(exam.status) && <DropdownMenuItem onClick={openPermissions}><KeyRound /><span><strong>Answer-key permissions</strong><small>Allow an assigned teacher to correct published answers</small></span></DropdownMenuItem>}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem variant="destructive" onClick={handleDelete}><Trash2 /><span><strong>Archive</strong><small>Keep records, stop new attempts</small></span></DropdownMenuItem>
                 </DropdownMenuContent>
@@ -185,7 +215,8 @@ export default function ExamProfile() {
                 <DropdownMenuContent className="exam-command-menu" sideOffset={10}>
                   <div className="exam-menu-heading">STUDENT RESPONSES</div>
                   <DropdownMenuItem render={<Link to={`/exam2/${id}/invigilator`} />} nativeButton={false}><Radio /><span><strong>Monitor attempts</strong><small>Follow students during the exam</small></span></DropdownMenuItem>
-                  <DropdownMenuItem render={<Link to={`/exam2/grading?examId=${id}`} />} nativeButton={false}><CheckCircle2 /><span><strong>Grade responses</strong><small>Review answers & award marks</small></span></DropdownMenuItem>
+                  <DropdownMenuItem render={<Link to={`/exams/${id}/results`} />} nativeButton={false}><ListChecks /><span><strong>Review student answers</strong><small>See correct, incorrect & partial responses</small></span></DropdownMenuItem>
+                  <DropdownMenuItem render={<Link to={`/exam2/grading?examId=${id}`} />} nativeButton={false}><CheckCircle2 /><span><strong>Grade responses</strong><small>Award marks for written answers</small></span></DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSyncGradebook} disabled={syncing}>{syncing ? <Loader2 className="animate-spin" /> : <BookOpenCheck />}<span><strong>{syncing ? 'Syncing…' : 'Sync to Gradebook'}</strong><small>Transfer each student’s best score</small></span></DropdownMenuItem>
                 </DropdownMenuContent>
@@ -198,6 +229,24 @@ export default function ExamProfile() {
           </nav>
         </header>
       </div>
+
+      <Dialog open={permissionOpen} onOpenChange={setPermissionOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogTitle>Answer-key permissions</DialogTitle>
+          <DialogDescription>Choose which assigned teachers may correct the answer key after publication. Existing submitted answers are rescored when a key changes.</DialogDescription>
+          {permissionLoading && <p role="status">Loading teachers…</p>}
+          {permissionError && <p role="alert" className="text-sm text-destructive">{permissionError}</p>}
+          {!permissionLoading && !permissionRows.length && <p className="text-sm text-muted-foreground">No active teachers are assigned to this class.</p>}
+          <div className="space-y-2">
+            {permissionRows.map(row => <div key={row.teacherUserId} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+              <span className="font-medium">{row.name}</span>
+              <Button variant={row.allowed ? 'outline' : 'default'} size="sm" disabled={permissionBusy !== null} onClick={() => changePermission(row.teacherUserId, !row.allowed)}>
+                {permissionBusy === row.teacherUserId ? 'Saving…' : row.allowed ? 'Revoke' : 'Grant access'}
+              </Button>
+            </div>)}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
          <div className="bg-card p-5 rounded-sm border border-border shadow-sm flex items-center gap-4">
@@ -243,7 +292,7 @@ export default function ExamProfile() {
           <div className="bg-card border border-border rounded-sm overflow-hidden shadow-sm">
             <div className="p-4 border-b border-border flex justify-between items-center">
               <h2 className="font-semibold text-foreground">Recent Submissions</h2>
-              <Button variant="ghost" size="sm" render={<Link to={`/exam2/${id}/analytics`} />} nativeButton={false}>View All Results</Button>
+              <Button variant="ghost" size="sm" render={<Link to={`/exams/${id}/results`} />} nativeButton={false}>Review all answers</Button>
             </div>
             <div className="p-0 overflow-x-auto">
                <table className="w-full text-left text-sm">
@@ -261,10 +310,10 @@ export default function ExamProfile() {
                       <td className="px-6 py-3 font-medium text-foreground">
                         <Link to={`/students/${sub.studentId}`} className="hover:underline hover:text-aubergine-600">{sub.studentName}</Link>
                       </td>
-                      <td className="px-6 py-3 text-muted-foreground">{sub.score !== null ? `${sub.score}` : 'In progress'}</td>
+                      <td className="px-6 py-3 text-muted-foreground">{sub.score !== null ? `${sub.score}` : 'Pending grading'}</td>
                       <td className="px-6 py-3 text-muted-foreground">{formatTime(sub.startedAt, sub.completedAt)}</td>
                       <td className="px-6 py-3 text-right">
-                        <Button variant="ghost" size="sm" render={<Link to={`/exam2/${id}/analytics`} />} nativeButton={false}>View</Button>
+                        <Button variant="ghost" size="sm" render={<Link to={`/exams/${id}/results?attemptId=${sub.id}`} />} nativeButton={false}>Review</Button>
                       </td>
                     </tr>
                   ))}

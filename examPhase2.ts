@@ -7,6 +7,7 @@ import rateLimit from "express-rate-limit";
 import { composeQuestionSet, freezeAttempt, dragDropBank, seededShuffle } from "./examBank";
 import { analyticsQuestionConfig, analyticsSelectedValues, analyzeDistractorResponses, hasAnalyticsResponse } from "./shared/examAnalytics";
 import { scoreExamObjective } from "./shared/examScoring";
+import { scoreWithCorrectedKey } from "./shared/examAnswerKey";
 import {
   effectiveExamDurationMinutes,
   examAccommodationValidationError,
@@ -1070,7 +1071,9 @@ export function registerExamPhase2Routes(deps: Deps): void {
       for (const q0 of scoringQuestions) {
         const q = prep(q0);
         const a = ansByQ[q.id];
-        const r = scoreExamObjective(q, a || {});
+        const r = q0.answerKeyCorrectedAt
+          ? scoreWithCorrectedKey({ ...q0, negativePoints: attempt.exam.negativeMarking ? q0.negativePoints : null }, a || {}, frozenByQ[q0.id])
+          : scoreExamObjective(q, a || {});
         if (r.manual) { needsManual = true; }
         else total += r.score;
         // Persist per-answer scoring.
@@ -1159,6 +1162,8 @@ export function registerExamPhase2Routes(deps: Deps): void {
         const reviewQs = orderedQs.map((question: any) => {
           const frozen = frozenByQ[question.id];
           if (!frozen) return question;
+          const correctedKey = Boolean(question.answerKeyCorrectedAt);
+          const frozenOptions = frozen.scoringOptions ?? frozen.options ?? question.options;
           return {
             ...question,
             text: frozen.text,
@@ -1166,10 +1171,14 @@ export function registerExamPhase2Routes(deps: Deps): void {
             points: frozen.points,
             passageText: frozen.passageText ?? null,
             explanation: frozen.explanation ?? question.explanation,
-            options: frozen.scoringOptions ?? frozen.options ?? question.options,
-            optionRows: [],
-            correctAnswer: frozen.correctAnswer,
-            correctAnswers: frozen.correctAnswers,
+            options: correctedKey && question.type === "DRAG_DROP" && frozen.scoringOptions
+              ? { ...frozen.scoringOptions, blanks: question.options?.blanks ?? frozen.scoringOptions.blanks }
+              : frozenOptions,
+            optionRows: correctedKey ? question.optionRows : [],
+            correctAnswer: correctedKey ? question.correctAnswer : frozen.correctAnswer,
+            correctAnswers: correctedKey ? question.correctAnswers : frozen.correctAnswers,
+            _correctedKey: correctedKey,
+            _frozenBankOptions: frozen.scoringOptions ?? null,
             _canonicalOptions: question.options,
           };
         });
@@ -1201,9 +1210,17 @@ export function registerExamPhase2Routes(deps: Deps): void {
             const correctOptionIds = q.optionRows.filter((option: any) => option.isCorrect).map((option: any) => option.id);
             if (correctOptionIds.length) return correctOptionIds;
           }
-          return Array.isArray(q.correctAnswers) && q.correctAnswers.length
+          const raw = Array.isArray(q.correctAnswers) && q.correctAnswers.length
             ? q.correctAnswers
             : q.correctAnswer == null ? [] : [q.correctAnswer];
+          if (!q._correctedKey) return raw;
+          const canonical = Array.isArray(q._canonicalOptions) ? q._canonicalOptions : Array.isArray(q._canonicalOptions?.choices) ? q._canonicalOptions.choices : [];
+          return raw.map((answer: unknown) => {
+            const index = Number(answer);
+            if (!Number.isInteger(index) || canonical[index] == null) return answer;
+            const option = canonical[index];
+            return typeof option === "object" ? option.key ?? option.value ?? option.text ?? answer : option;
+          });
         };
         // For legacy MCQs the correct answer is stored as an option *index*; show
         // the option *text* so it matches the student's (text) answer.
@@ -1226,7 +1243,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
         const yourAnswerText = (q: any, ans: any) => {
           if (q.type === "DRAG_DROP") {
             const blanks = q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).blanks) ? (q.options as any).blanks : [];
-            const bank = dragDropBank(q.options);
+            const bank = dragDropBank(q._frozenBankOptions ?? q.options);
             const bankLabel: Record<string, string> = {};
             for (const item of bank) bankLabel[item.key] = item.label;
             const matches = ans?.selectedOptions && !Array.isArray(ans.selectedOptions) && typeof ans.selectedOptions === "object" ? ans.selectedOptions : {};
@@ -1247,7 +1264,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
           if (q.type !== "DRAG_DROP" || !showCorrect) return undefined;
           const blanks = q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).blanks) ? (q.options as any).blanks : [];
           if (!blanks.length) return undefined;
-          const bank = dragDropBank(q.options);
+          const bank = dragDropBank(q._frozenBankOptions ?? q.options);
           const bankLabel: Record<string, string> = {};
           for (const item of bank) bankLabel[item.key] = item.label;
           const matches = ans?.selectedOptions && !Array.isArray(ans.selectedOptions) && typeof ans.selectedOptions === "object" ? ans.selectedOptions : {};
@@ -1411,6 +1428,10 @@ function registerAuthoringRoutes(deps: any) {
       ownerExamId = owner.examId;
       const { ok } = await canManageExam(req, ownerExamId);
       if (!ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      const ownerExam = await prisma.exam.findUnique({ where: { id: ownerExamId }, select: { status: true, _count: { select: { attempts: true } } } });
+      if (ownerExam && (ownerExam._count.attempts > 0 || (user(req).role === "TEACHER" && ownerExam.status !== "DRAFT"))) {
+        res.status(409).json({ error: "Published question content is locked. Use the approved answer-key correction flow." }); return;
+      }
     } catch (err: any) {
       logger.error("question guard failed", err);
       res.status(500).json({ error: "Internal Server Error" });

@@ -636,6 +636,8 @@ model Exam {
   durationMinutes Int?
   totalMarks      Float?
   settings        Json?
+  // Admin-approved teacher user IDs permitted to correct published answer keys.
+  answerKeyEditTeacherIds String[] @default([])
 
   // Phase 2 scheduling
   availableFrom       DateTime?
@@ -696,6 +698,7 @@ model Question {
   points        Float
   options       Json? // Optional for multiple choice
   correctAnswer String? // Can be an option string or detailed answer
+  answerKeyCorrectedAt DateTime? // marks keys corrected after publication
   explanation   String? // Shown only after result release
   passageText   String? // Optional passage text (e.g. for GED RLA/Science/Social Studies split layout)
   imageUrl      String? // Optional image/media shown with the question

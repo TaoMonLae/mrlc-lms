@@ -144,14 +144,7 @@ export default function TeacherExams() {
                   </div>
 
                   <div className="p-5 flex-1 flex gap-2">
-                    {exam.status === 'NEEDS_GRADING' ? (
-                        <Button
-                          onClick={() => navigate(`/exam2/grading?examId=${encodeURIComponent(exam.id)}`)}
-                          className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-[11px] uppercase tracking-widest h-10 shadow-none"
-                        >
-                            Grade Now
-                        </Button>
-                    ) : exam.status === 'DRAFT' ? (
+                    {exam.status === 'DRAFT' ? (
                         <Button
                           onClick={() => navigate(`/exams/${exam.id}/studio`)}
                           className="w-full bg-aubergine-600 hover:bg-aubergine-700 text-white font-bold text-[11px] uppercase tracking-widest h-10"
@@ -161,12 +154,16 @@ export default function TeacherExams() {
                     ) : (
                         <Button
                           variant="outline"
-                          onClick={() => navigate(`/exam2/${exam.id}/analytics`)}
-                          className="w-full border-border font-bold text-[11px] uppercase tracking-widest h-10"
+                          onClick={() => navigate(`/exams/${exam.id}/results`)}
+                          className="min-w-[120px] flex-1 border-border font-bold text-[11px] uppercase tracking-widest h-10"
                         >
-                            View Results
+                            Review Answers
                         </Button>
                     )}
+                    {exam.status === 'NEEDS_GRADING' && <Button
+                      onClick={() => navigate(`/exam2/grading?examId=${encodeURIComponent(exam.id)}`)}
+                      className="min-w-[120px] flex-1 bg-slate-900 text-white shadow-none hover:bg-slate-800 dark:bg-white dark:text-slate-900 font-bold text-[11px] uppercase tracking-widest h-10"
+                    >Grade Now</Button>}
                     <Button
                       variant="ghost"
                       size="icon"
