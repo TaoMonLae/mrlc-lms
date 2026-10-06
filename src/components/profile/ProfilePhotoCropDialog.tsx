@@ -82,15 +82,15 @@ export function ProfilePhotoCropDialog({ file, open, onCancel, onCropped }: Prof
         </DialogHeader>
 
         <div className="space-y-5">
-          <div className="mx-auto aspect-square w-full max-w-[22rem] overflow-hidden rounded-2xl bg-slate-100 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-white/10">
+          <div className="mx-auto aspect-square w-full max-w-[22rem] overflow-hidden rounded-sm bg-muted ring-1 ring-border">
             {image ? <canvas ref={canvasRef} width={480} height={480} className="h-full w-full" aria-label="Cropped profile picture preview" />
-              : <div className="flex h-full items-center justify-center text-sm text-slate-400"><Loader2 className="mr-2 size-4 animate-spin" /> Loading photo…</div>}
+              : <div className="flex h-full items-center justify-center text-sm text-muted-foreground"><Loader2 className="mr-2 size-4 animate-spin" /> Loading photo…</div>}
           </div>
 
           <CropControl icon={ZoomIn} label="Zoom" value={zoom} min={1} max={3} step={0.01} onChange={setZoom} />
           <CropControl icon={MoveHorizontal} label="Horizontal position" value={positionX} min={-100} max={100} step={1} onChange={setPositionX} />
           <CropControl icon={MoveVertical} label="Vertical position" value={positionY} min={-100} max={100} step={1} onChange={setPositionY} />
-          <p className="text-xs leading-relaxed text-slate-500">Adjust the framing inside the square. The saved photo will be 1024 × 1024 pixels with no filters or visual effects.</p>
+          <p className="text-xs leading-relaxed text-muted-foreground">Adjust the framing inside the square. The saved photo will be 1024 × 1024 pixels with no filters or visual effects.</p>
         </div>
 
         <DialogFooter>
@@ -113,7 +113,7 @@ function CropControl({ icon: Icon, label, value, min, max, step, onChange }: {
 }) {
   return (
     <div className="space-y-2">
-      <Label className="flex items-center gap-2 text-xs"><Icon className="size-3.5 text-slate-400" /> {label}</Label>
+      <Label className="flex items-center gap-2 text-xs"><Icon className="size-3.5 text-muted-foreground" /> {label}</Label>
       <input type="range" min={min} max={max} step={step} value={value} onChange={(event) => onChange(Number(event.target.value))}
         className="h-2 w-full cursor-pointer accent-primary" aria-label={label} />
     </div>

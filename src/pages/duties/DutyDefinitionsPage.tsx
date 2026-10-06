@@ -142,12 +142,12 @@ export default function DutyDefinitionsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" render={<Link to="/duties" />} nativeButton={false}>
+        <Button aria-label="Back" variant="ghost" size="sm" render={<Link to="/duties" />} nativeButton={false}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Duty Types</h1>
-          <p className="text-sm text-slate-500">Configure the chores students can be assigned</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Duty Types</h1>
+          <p className="text-sm text-muted-foreground">Configure the chores students can be assigned</p>
         </div>
         {canManage && !formOpen && (
           <Button onClick={openCreate}>
@@ -160,7 +160,7 @@ export default function DutyDefinitionsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle>{editingId ? 'Edit Duty Type' : 'New Duty Type'}</CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => setFormOpen(false)}>
+            <Button aria-label="Close" variant="ghost" size="sm" onClick={() => setFormOpen(false)}>
               <X className="h-4 w-4" />
             </Button>
           </CardHeader>
@@ -248,11 +248,11 @@ export default function DutyDefinitionsPage() {
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <div className="text-center py-8 text-slate-500">Loading...</div>
+            <div className="text-center py-8 text-muted-foreground">Loading...</div>
           ) : definitions.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">No duty types yet.</div>
+            <div className="text-center py-8 text-muted-foreground">No duty types yet.</div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            <div className="divide-y divide-border">
               {definitions.map((def) => (
                 <div key={def.id} className="flex items-center justify-between p-4">
                   <div>
@@ -261,7 +261,7 @@ export default function DutyDefinitionsPage() {
                       <Badge variant="outline" className="text-xs">{def.code}</Badge>
                       {!def.isActive && <Badge variant="secondary" className="text-xs">Inactive</Badge>}
                     </div>
-                    <div className="text-xs text-slate-500 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       {def.type.replace('_', ' ')} · {def.requiredStudents} student{def.requiredStudents !== 1 ? 's' : ''}
                       {def.durationMinutes ? ` · ${def.durationMinutes} min` : ''} · {def.pointsAwarded} pt{def.pointsAwarded !== 1 ? 's' : ''}
                       {def._count ? ` · ${def._count.assignments} assignments` : ''}
@@ -269,10 +269,10 @@ export default function DutyDefinitionsPage() {
                   </div>
                   {canManage && (
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => openEdit(def)}>
+                      <Button aria-label="Edit" variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => openEdit(def)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleDelete(def.id)}>
+                      <Button aria-label="Delete" variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleDelete(def.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

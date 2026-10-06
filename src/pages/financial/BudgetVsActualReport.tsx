@@ -196,7 +196,7 @@ export default function BudgetVsActualReport() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground"></div>
       </div>
     );
   }
@@ -204,7 +204,7 @@ export default function BudgetVsActualReport() {
   if (!data) {
     return (
       <div className="flex items-center justify-center h-96">
-        <p className="text-gray-500">No data available</p>
+        <p className="text-muted-foreground">No data available</p>
       </div>
     );
   }
@@ -214,7 +214,7 @@ export default function BudgetVsActualReport() {
       <div className="print:hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Budget vs Actual Report</h1>
-          <p className="text-gray-500">Compare budgeted amounts with actual spending</p>
+          <p className="text-muted-foreground">Compare budgeted amounts with actual spending</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Select value={year.toString()} onValueChange={(value) => setYear(parseInt(value))}>
@@ -255,7 +255,7 @@ export default function BudgetVsActualReport() {
             ["Utilization", `${data.summary.overallUtilization.toFixed(1)}%`, `${data.budgets.length} active records`],
           ].map(([label, value, note], index) => (
             <div key={label} className={cn("min-w-0 px-5 py-5", index && "border-t border-foreground sm:border-l sm:border-t-0", index === 2 && "sm:border-l-0 sm:border-t xl:border-l xl:border-t-0")}>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{label}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{label}</p>
               <p className={cn("mt-2 truncate font-mono text-lg font-semibold tabular-nums", label === "Variance" && (data.summary.totalVariance >= 0 ? "text-academic-teal" : "text-academic-coral"))}>{value}</p>
               <p className="mt-1 text-xs text-muted-foreground">{note}</p>
             </div>
@@ -312,7 +312,7 @@ export default function BudgetVsActualReport() {
                           <TableCell>
                             <div>
                               <div className="font-medium">{budget.name}</div>
-                              <div className="text-xs text-gray-500">{budget.code}</div>
+                              <div className="text-xs text-muted-foreground">{budget.code}</div>
                             </div>
                           </TableCell>
                           <TableCell>
@@ -366,29 +366,29 @@ export default function BudgetVsActualReport() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
               <div>
-                <p className="text-sm text-gray-500">Total Budgets</p>
+                <p className="text-sm text-muted-foreground">Total Budgets</p>
                 <p className="text-2xl font-bold">{data.budgets.length}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Over Budget</p>
+                <p className="text-sm text-muted-foreground">Over Budget</p>
                 <p className="text-2xl font-bold text-red-600">
                   {data.budgets.filter(b => b.utilization >= 100).length}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">On Track</p>
+                <p className="text-sm text-muted-foreground">On Track</p>
                 <p className="text-2xl font-bold text-green-600">
                   {data.budgets.filter(b => b.utilization >= 70 && b.utilization < 100).length}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Under Budget</p>
+                <p className="text-sm text-muted-foreground">Under Budget</p>
                 <p className="text-2xl font-bold text-blue-600">
                   {data.budgets.filter(b => b.utilization < 70).length}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Overall Health</p>
+                <p className="text-sm text-muted-foreground">Overall Health</p>
                 <BudgetHealthIndicator
                   utilization={data.summary.overallUtilization}
                   threshold={90}
@@ -403,26 +403,26 @@ export default function BudgetVsActualReport() {
       <div className="hidden print:block">
         <PrintLayout title="Budget vs Actual Report" filters={{ "Fiscal Year": year.toString() }}>
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            <div className="border border-slate-300 p-3 rounded text-center">
-              <p className="text-xs text-slate-500 uppercase font-bold">Allocated</p>
+            <div className="border border-input p-3 rounded text-center">
+              <p className="text-xs text-muted-foreground uppercase font-bold">Allocated</p>
               <p className="text-lg font-bold mt-1">{formatMoney(data.summary.totalAllocated, currency)}</p>
             </div>
-            <div className="border border-slate-300 p-3 rounded text-center">
-              <p className="text-xs text-slate-500 uppercase font-bold">Actual Expenses</p>
+            <div className="border border-input p-3 rounded text-center">
+              <p className="text-xs text-muted-foreground uppercase font-bold">Actual Expenses</p>
               <p className="text-lg font-bold mt-1">{formatMoney(data.summary.totalActualExpenses, currency)}</p>
             </div>
-            <div className="border border-slate-300 p-3 rounded text-center">
-              <p className="text-xs text-slate-500 uppercase font-bold">Variance</p>
+            <div className="border border-input p-3 rounded text-center">
+              <p className="text-xs text-muted-foreground uppercase font-bold">Variance</p>
               <p className={`text-lg font-bold mt-1 ${data.summary.totalVariance >= 0 ? "text-green-700" : "text-red-700"}`}>
                 {data.summary.totalVariance >= 0 ? "+" : ""}{formatMoney(data.summary.totalVariance, currency)}
               </p>
             </div>
-            <div className="border border-slate-300 p-3 rounded text-center">
-              <p className="text-xs text-slate-500 uppercase font-bold">Utilization</p>
+            <div className="border border-input p-3 rounded text-center">
+              <p className="text-xs text-muted-foreground uppercase font-bold">Utilization</p>
               <p className="text-lg font-bold mt-1">{data.summary.overallUtilization.toFixed(1)}%</p>
             </div>
-            <div className="border border-slate-300 p-3 rounded text-center">
-              <p className="text-xs text-slate-500 uppercase font-bold">Total Budgets</p>
+            <div className="border border-input p-3 rounded text-center">
+              <p className="text-xs text-muted-foreground uppercase font-bold">Total Budgets</p>
               <p className="text-lg font-bold mt-1">{data.budgets.length}</p>
             </div>
           </div>
@@ -443,7 +443,7 @@ export default function BudgetVsActualReport() {
             <tbody>
               {data.budgets.map((budget) => (
                 <tr key={budget.id}>
-                  <td className="p-2">{budget.name} <span className="text-slate-500">({budget.code})</span></td>
+                  <td className="p-2">{budget.name} <span className="text-muted-foreground">({budget.code})</span></td>
                   <td className="p-2">{budget.category || "-"}</td>
                   <td className="text-right p-2">{formatMoney(budget.budget.allocated, currency)}</td>
                   <td className="text-right p-2">{formatMoney(budget.budget.spent, currency)}</td>

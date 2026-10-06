@@ -57,19 +57,19 @@ export function TrendChart({
       case "down":
         return <TrendingDown className="w-4 h-4 text-red-600" />;
       case "neutral":
-        return <Minus className="w-4 h-4 text-gray-600" />;
+        return <Minus className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
   const getTrendColor = () => {
-    if (!trend) return "text-gray-600";
+    if (!trend) return "text-muted-foreground";
     switch (trend.direction) {
       case "up":
         return "text-green-600";
       case "down":
         return "text-red-600";
       case "neutral":
-        return "text-gray-600";
+        return "text-muted-foreground";
     }
   };
 
@@ -146,7 +146,7 @@ export function TrendChart({
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>{title}</CardTitle>
-            {description && <p className="text-sm text-gray-500 mt-1">{description}</p>}
+            {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
             </div>
           {showTrend && trend && (
             <div className={cn("flex items-center gap-2", getTrendColor())}>
@@ -198,7 +198,7 @@ export function MultiTrendChart({
     <Card className={className}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        {description && <p className="text-sm text-gray-500 mt-1">{description}</p>}
+        {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={height}>
@@ -278,7 +278,7 @@ export function Sparkline({
       {showTrend && trend !== null && (
         <span
           className={`text-xs font-medium ${
-            trend > 0 ? "text-green-600" : trend < 0 ? "text-red-600" : "text-gray-600"
+            trend > 0 ? "text-green-600" : trend < 0 ? "text-red-600" : "text-muted-foreground"
           }`}
         >
           {trend > 0 ? "+" : ""}

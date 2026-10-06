@@ -52,7 +52,7 @@ export function UpdateScreen({
     <Dialog open={open} onOpenChange={(nextOpen) => { if (!nextOpen) onClose(); }}>
       <DialogContent
         showCloseButton={false}
-        className="z-[120] grid max-h-[calc(100dvh-2rem)] w-[min(980px,calc(100vw-2rem))] max-w-none grid-cols-1 grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden rounded-[24px] border-0 bg-white p-0 text-[#111118] shadow-[0_32px_90px_rgba(8,14,35,0.35)] sm:max-w-none lg:grid-cols-[0.38fr_0.62fr] lg:grid-rows-1"
+        className="z-[120] grid max-h-[calc(100dvh-2rem)] w-[min(980px,calc(100vw-2rem))] max-w-none grid-cols-1 grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden rounded-[24px] border-0 bg-card p-0 text-[#111118] shadow-[0_32px_90px_rgba(8,14,35,0.35)] sm:max-w-none lg:grid-cols-[0.38fr_0.62fr] lg:grid-rows-1"
       >
         <DialogTitle className="sr-only">What’s New: {release.title}</DialogTitle>
         <DialogDescription className="sr-only">{release.summary}</DialogDescription>
@@ -115,7 +115,7 @@ export function UpdateScreen({
                 exit={reduceMotion ? undefined : { opacity: 0, x: -14, filter: 'blur(4px)' }}
                 transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}
               >
-                <div className={cn('flex size-14 items-center justify-center rounded-2xl', accent.wash, accent.text)}>
+                <div className={cn('flex size-14 items-center justify-center rounded-sm', accent.wash, accent.text)}>
                   <Icon className="size-6" aria-hidden="true" />
                 </div>
                 <p className={cn('mt-8 font-mono text-[11px] font-bold uppercase tracking-[0.18em]', accent.text)}>

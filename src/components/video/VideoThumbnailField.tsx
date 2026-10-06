@@ -79,11 +79,11 @@ export function VideoThumbnailField({ value, file, error, onUrlChange, onFileCha
     <div className="space-y-2 md:col-span-2">
       <Label htmlFor="thumbnailUrl">Thumbnail (Optional)</Label>
       <div className="grid gap-3 sm:grid-cols-[180px_1fr]">
-        <div className="aspect-video overflow-hidden rounded-lg border border-dashed border-slate-300 bg-slate-100 dark:border-slate-700 dark:bg-slate-900">
+        <div className="aspect-video overflow-hidden rounded-lg border border-dashed border-input bg-muted">
           {preview ? (
             <img src={preview} alt="Video thumbnail preview" className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full flex-col items-center justify-center gap-1 text-slate-400">
+            <div className="flex h-full flex-col items-center justify-center gap-1 text-muted-foreground">
               <ImagePlus className="h-6 w-6" />
               <span className="text-xs">No thumbnail</span>
             </div>
@@ -112,7 +112,7 @@ export function VideoThumbnailField({ value, file, error, onUrlChange, onFileCha
               </Button>
             )}
           </div>
-          <p className="text-xs text-slate-400">JPG, PNG, or WEBP up to 5 MB. Images are optimized for video cards.</p>
+          <p className="text-xs text-muted-foreground">JPG, PNG, or WEBP up to 5 MB. Images are optimized for video cards.</p>
           {error && <p className="text-xs font-medium text-red-500">{error}</p>}
         </div>
       </div>

@@ -151,18 +151,18 @@ export default function TeacherNew() {
   return (
     <div className="space-y-6 max-w-[1000px] mx-auto pb-10">
       <div>
-        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/teachers" />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/teachers" />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Teachers
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Add New Teacher</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Fill in the details to register a new teacher in the system.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Add New Teacher</h1>
+        <p className="text-sm text-muted-foreground mt-1">Fill in the details to register a new teacher in the system.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Personal Information</h2>
+          <div className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-4">
+            <h2 className="text-lg font-semibold text-foreground mb-4">Personal Information</h2>
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
               <Input id="fullName" {...register('fullName')} placeholder="e.g. Htet Wai Yan" />
@@ -233,8 +233,8 @@ export default function TeacherNew() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Professional Details</h2>
+          <div className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-4">
+            <h2 className="text-lg font-semibold text-foreground mb-4">Professional Details</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Employment Type</Label>
@@ -248,7 +248,7 @@ export default function TeacherNew() {
                     <SelectItem value="VOLUNTEER">Volunteer</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-muted-foreground">
                   HR classification only. Full-time, part-time, and volunteer teachers receive the same Teacher role; class and subject assignments scope their access.
                 </p>
                 {errors.employmentType && <p className="text-xs text-red-500 font-medium">{errors.employmentType.message}</p>}
@@ -267,25 +267,25 @@ export default function TeacherNew() {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-4">Profile Picture</h2>
+          <div className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-4">
+            <h2 className="text-base font-semibold text-foreground mb-4">Profile Picture</h2>
             <div className="flex flex-col items-center gap-3">
-              <div className="h-24 w-24 rounded-full overflow-hidden bg-slate-100 dark:bg-surface-raised border border-slate-200 dark:border-surface-raised flex items-center justify-center text-slate-500 font-bold">
+              <div className="h-24 w-24 rounded-full overflow-hidden bg-muted border border-border flex items-center justify-center text-muted-foreground font-bold">
                 {profilePhotoUrl ? (
                   <img src={profilePhotoUrl} alt="Teacher profile preview" className="h-full w-full object-cover" />
                 ) : (
-                  <ImageIcon className="h-8 w-8 text-slate-400" />
+                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
                 )}
               </div>
               <Label htmlFor="teacher-photo" className="cursor-pointer">
-                <div className="inline-flex items-center rounded-md border border-slate-200 dark:border-surface-raised px-3 py-2 text-sm font-medium hover:bg-slate-50 dark:hover:bg-surface-raised">
+                <div className="inline-flex items-center rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted/50">
                   <Camera className="mr-2 h-4 w-4" />
                   Choose Photo
                 </div>
               </Label>
               <input id="teacher-photo" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" className="hidden" onChange={handlePhotoChange} />
             </div>
-            <p className="text-[10px] text-slate-500 text-center">JPG, PNG, WEBP, or SVG up to 5 MB.</p>
+            <p className="text-[11px] text-muted-foreground text-center">JPG, PNG, WEBP, or SVG up to 5 MB.</p>
           </div>
 
           <div className="space-y-3">

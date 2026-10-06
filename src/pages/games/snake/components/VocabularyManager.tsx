@@ -391,14 +391,14 @@ SERENDIPITY,Finding something good without looking for it,noun,medium,en`;
 
                   {teacherView && (
                     <div className="flex gap-1 ml-2">
-                      <Button
+                      <Button aria-label="Edit"
                         variant="ghost"
                         size="sm"
                         onClick={() => setEditingWord(word)}
                       >
                         <Edit className="size-4" />
                       </Button>
-                      <Button
+                      <Button aria-label="Delete"
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteWord(word.id)}

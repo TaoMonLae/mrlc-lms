@@ -90,23 +90,23 @@ export default function AttendanceReportsPage() {
     <div className="space-y-6 max-w-[1600px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/attendance" />} nativeButton={false}>
+          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/attendance" />} nativeButton={false}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Record Attendance
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Attendance Reports</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Monthly overview of student attendance records.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Attendance Reports</h1>
+          <p className="text-sm text-muted-foreground mt-1">Monthly overview of student attendance records.</p>
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" className="text-slate-700" onClick={() => window.print()} disabled={loading || rows.length === 0}>
+          <Button variant="outline" className="text-foreground" onClick={() => window.print()} disabled={loading || rows.length === 0}>
             <Download className="mr-2 h-4 w-4" />
             Export PDF
           </Button>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex flex-col sm:flex-row gap-4 items-end">
+      <div className="bg-card p-4 rounded-sm border border-border shadow-sm flex flex-col sm:flex-row gap-4 items-end">
         <div className="space-y-2 w-full sm:w-[250px]">
           <Label>Class</Label>
           <Select value={selectedClass} onValueChange={setSelectedClass}>
@@ -139,22 +139,22 @@ export default function AttendanceReportsPage() {
         <div className="flex-1"></div>
 
         {report && (
-          <div className="flex items-center gap-4 text-xs font-medium text-slate-600 dark:text-slate-300 flex-wrap">
-            <div>Class Average: <span className="font-bold text-slate-900 dark:text-white">{report.classAverage}%</span></div>
+          <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground flex-wrap">
+            <div>Class Average: <span className="font-bold text-foreground">{report.classAverage}%</span></div>
             <div>Perfect: <span className="font-bold text-emerald-600">{report.perfectCount}</span></div>
             <div>At Risk: <span className="font-bold text-red-600">{report.atRiskCount}</span></div>
           </div>
         )}
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
+      <div className="bg-card rounded-sm border border-border shadow-sm overflow-hidden">
         <div className="hidden print:block p-6 border-b">
-          <h2 className="text-xl font-bold text-slate-900">Attendance Report</h2>
-          <p className="text-sm text-slate-600">{classLabel} · {monthLabel}</p>
+          <h2 className="text-xl font-bold text-foreground">Attendance Report</h2>
+          <p className="text-sm text-muted-foreground">{classLabel} · {monthLabel}</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
+            <thead className="bg-muted/50 text-muted-foreground uppercase tracking-wider font-semibold text-[11px]">
               <tr>
                 <th className="px-6 py-4 min-w-[200px]">Student</th>
                 <th className="px-6 py-4">Student ID</th>
@@ -165,18 +165,18 @@ export default function AttendanceReportsPage() {
                 <th className="px-4 py-4 text-center">Rate</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-border">
               {loading && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500">Loading report...</td>
+                  <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">Loading report...</td>
                 </tr>
               )}
               {!loading && rows.map(student => (
-                <tr key={student.studentId} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
-                  <td className="px-6 py-3 font-semibold text-slate-900 dark:text-white">
+                <tr key={student.studentId} className="hover:bg-muted/50 transition-colors">
+                  <td className="px-6 py-3 font-semibold text-foreground">
                     <Link to={`/students/${student.studentId}`} className="hover:underline hover:text-aubergine-600">{student.name}</Link>
                   </td>
-                  <td className="px-6 py-3 text-slate-500 font-mono">{student.code || '—'}</td>
+                  <td className="px-6 py-3 text-muted-foreground font-mono">{student.code || '—'}</td>
                   <td className="px-4 py-3 text-center font-bold text-emerald-600">{student.present}</td>
                   <td className="px-4 py-3 text-center font-bold text-red-600">{student.absent}</td>
                   <td className="px-4 py-3 text-center font-bold text-amber-600">{student.late}</td>
@@ -190,7 +190,7 @@ export default function AttendanceReportsPage() {
               ))}
               {!loading && rows.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500">No attendance records found for this period.</td>
+                  <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">No attendance records found for this period.</td>
                 </tr>
               )}
             </tbody>

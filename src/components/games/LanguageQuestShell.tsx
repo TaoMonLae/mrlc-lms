@@ -126,7 +126,7 @@ function LanguageQuestShellContent() {
             </nav>
 
             <DropdownMenu>
-              <DropdownMenuTrigger
+              <DropdownMenuTrigger aria-label="Open menu"
                 render={<Button variant="outline" size="icon" className="h-10 w-10 shrink-0 rounded-xl border-slate-200 bg-white text-slate-700 shadow-sm lg:hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" aria-label="Open Learning Quest navigation" title="Navigation" />}
                 nativeButton={true}
               >

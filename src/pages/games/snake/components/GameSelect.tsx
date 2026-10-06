@@ -224,7 +224,7 @@ export default function GameSelect() {
               >
                 <BookOpen className="size-4 mr-1" /> Vocabulary
               </Button>
-              <Button variant="outline" size="sm" onClick={refreshLeaderboard} disabled={loading} title="Refresh">
+              <Button aria-label="Refresh" variant="outline" size="sm" onClick={refreshLeaderboard} disabled={loading} title="Refresh">
                 <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
               </Button>
             </div>

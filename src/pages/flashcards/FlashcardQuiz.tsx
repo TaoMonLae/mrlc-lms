@@ -1,48 +1,36 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router';
-import { ArrowLeft, Brain, CheckCircle2, XCircle, RotateCw, Grid3x3, SpellCheck, Settings2 } from 'lucide-react';
+import { Link, useParams } from 'react-router';
+import { Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { apiGet, apiSend } from '../../lib/api';
 import { MathText } from '@/src/components/MathText';
+import {
+  DeckGate, DeckShell, ModeIntro, ProgressRule, ResultSummary, StatePanel,
+  normalizeAnswer, percent, shuffle, useDeck, useDeckRoutes,
+  type DeckDetail, type FlashCard,
+} from './shared';
 
 type QType = 'MC' | 'TF' | 'FILL';
 
-interface CardT { id: string; term: string; definition: string; imageUrl?: string | null }
-interface DeckDetail { id: string; title: string; cards: CardT[] }
 interface Question {
   cardId: string;
   type: QType;
   term: string;
   definition: string;
   imageUrl?: string | null;
-  candidateDefinition?: string; // TF only -- the definition being tested
-  isMatchTrue?: boolean;        // TF only -- whether candidateDefinition is actually correct
-  choices?: string[];           // MC: shuffled definitions; TF: ['True', 'False']
+  candidateDefinition?: string; // True/False: the definition being judged
+  isMatchTrue?: boolean;        // True/False: whether it belongs to the term
+  choices?: string[];           // Multiple choice: shuffled definitions
 }
 interface AnsweredRecord { type: QType; term: string; correct: string; picked: string; isCorrect: boolean }
 
 const TYPE_OPTIONS: { key: QType; label: string; desc: string }[] = [
-  { key: 'MC', label: 'Multiple Choice', desc: 'Pick the correct definition from up to four options' },
-  { key: 'TF', label: 'True / False', desc: 'Say whether the shown definition matches the term' },
-  { key: 'FILL', label: 'Fill in the Blank', desc: 'Type the term from its definition' },
+  { key: 'MC', label: 'Multiple choice', desc: 'Pick the right definition from up to four.' },
+  { key: 'TF', label: 'True or false', desc: 'Decide whether a definition belongs to the term.' },
+  { key: 'FILL', label: 'Write the term', desc: 'Read the definition and type the term.' },
 ];
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-// Loose-but-meaningful equality for the Fill-in-the-Blank type, same rule as Spelling mode.
-function normalize(s: string): string {
-  return s.trim().toLowerCase().replace(/\s+/g, ' ');
-}
 
 function correctAnswerFor(q: Question): string {
   if (q.type === 'MC') return q.definition;
@@ -50,84 +38,71 @@ function correctAnswerFor(q: Question): string {
   return q.term;
 }
 
-function buildQuestions(cards: CardT[], types: QType[]): Question[] {
-  const pool = shuffle(cards);
-  return pool.map((card) => {
-    const distinctOtherDefinitions = Array.from(new Set(
-      cards.filter((candidate) => candidate.id !== card.id && candidate.definition !== card.definition).map((candidate) => candidate.definition),
+function buildQuestions(cards: FlashCard[], types: QType[]): Question[] {
+  return shuffle(cards).map((card) => {
+    const otherDefinitions = Array.from(new Set(
+      cards.filter((c) => c.id !== card.id && c.definition !== card.definition).map((c) => c.definition),
     ));
-    const viableTypes = types.filter((candidateType) => candidateType === 'FILL' || distinctOtherDefinitions.length > 0);
-    const type = viableTypes[Math.floor(Math.random() * viableTypes.length)] ?? 'FILL';
+    const viable = types.filter((t) => t === 'FILL' || otherDefinitions.length > 0);
+    const type = viable[Math.floor(Math.random() * viable.length)] ?? 'FILL';
     if (type === 'MC') {
-      const distractors = shuffle(distinctOtherDefinitions).slice(0, 3);
-      return {
-        cardId: card.id, type, term: card.term, definition: card.definition, imageUrl: card.imageUrl,
-        choices: shuffle([card.definition, ...distractors]),
-      };
+      return { cardId: card.id, type, term: card.term, definition: card.definition, imageUrl: card.imageUrl,
+        choices: shuffle([card.definition, ...shuffle(otherDefinitions).slice(0, 3)]) };
     }
     if (type === 'TF') {
       const isMatchTrue = Math.random() < 0.5;
-      const candidateDefinition = isMatchTrue ? card.definition : distinctOtherDefinitions[Math.floor(Math.random() * distinctOtherDefinitions.length)];
-      return {
-        cardId: card.id, type, term: card.term, definition: card.definition, imageUrl: card.imageUrl,
-        candidateDefinition, isMatchTrue, choices: ['True', 'False'],
-      };
+      return { cardId: card.id, type, term: card.term, definition: card.definition, imageUrl: card.imageUrl,
+        candidateDefinition: isMatchTrue ? card.definition : otherDefinitions[Math.floor(Math.random() * otherDefinitions.length)],
+        isMatchTrue, choices: ['True', 'False'] };
     }
-    return { cardId: card.id, type: 'FILL' as const, term: card.term, definition: card.definition, imageUrl: card.imageUrl };
+    return { cardId: card.id, type: 'FILL', term: card.term, definition: card.definition, imageUrl: card.imageUrl };
   });
 }
 
 export default function FlashcardQuiz() {
   const { id } = useParams<{ id: string }>();
-  const location = useLocation();
-  const isStudentRoute = location.pathname.startsWith('/student/');
-  const listUrl = isStudentRoute ? '/student/flashcards' : '/flashcards';
-  const studyUrl = isStudentRoute ? `/student/flashcards/${id}` : `/flashcards/${id}/study`;
-  const matchUrl = isStudentRoute ? `/student/flashcards/${id}/match` : `/flashcards/${id}/match`;
-  const spellUrl = isStudentRoute ? `/student/flashcards/${id}/spell` : `/flashcards/${id}/spell`;
+  const routes = useDeckRoutes(id);
+  const { deck, status, reload } = useDeck(id);
+  return (
+    <DeckGate status={status} deck={deck} reload={reload} listUrl={routes.list}>
+      {(loaded) => (
+        <DeckShell deck={loaded} routes={routes}>
+          {loaded.cards.length < 2
+            ? <StatePanel title="Quiz needs at least 2 cards" body="Add more cards to this deck, or study it with flashcards for now." />
+            : <Quiz key={loaded.id} deck={loaded} routes={routes} />}
+        </DeckShell>
+      )}
+    </DeckGate>
+  );
+}
 
-  const [deck, setDeck] = useState<DeckDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+function Quiz({ deck, routes }: { deck: DeckDetail; routes: ReturnType<typeof useDeckRoutes> }) {
   const [enabledTypes, setEnabledTypes] = useState<QType[]>(['MC', 'TF', 'FILL']);
   const [started, setStarted] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [index, setIndex] = useState(0);
   const [answered, setAnswered] = useState<{ value: string; isCorrect: boolean } | null>(null);
-  const [textDraft, setTextDraft] = useState('');
+  const [draft, setDraft] = useState('');
   const [answers, setAnswers] = useState<AnsweredRecord[]>([]);
   const [finished, setFinished] = useState(false);
-  const [bestScore, setBestScore] = useState<{ score: number; total: number } | null>(null);
+  const [best, setBest] = useState<{ score: number; total: number } | null>(null);
   const startedAtRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (!id) return;
-    setLoading(true);
-    setDeck(null);
-    setStarted(false);
-    setBestScore(null);
-    apiGet<DeckDetail>(`/api/flashcards/decks/${id}`)
-      .then((d) => setDeck(d))
-      .catch((e: any) => toast.error(e?.message || 'Failed to load deck'))
-      .finally(() => setLoading(false));
-    if (isStudentRoute) loadBest();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, isStudentRoute]);
+  const nextRef = useRef<HTMLButtonElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   const loadBest = () => {
-    if (!id) return;
-    apiGet<{ bestByMode: Record<string, { score: number; total: number }> }>(`/api/flashcards/decks/${id}/attempts`)
-      .then((r) => setBestScore(r?.bestByMode?.QUIZ ? { score: r.bestByMode.QUIZ.score, total: r.bestByMode.QUIZ.total } : null))
+    apiGet<{ bestByMode: Record<string, { score: number; total: number }> }>(`/api/flashcards/decks/${deck.id}/attempts`)
+      .then((r) => setBest(r?.bestByMode?.QUIZ ? { score: r.bestByMode.QUIZ.score, total: r.bestByMode.QUIZ.total } : null))
       .catch(() => {});
   };
+  useEffect(() => { if (routes.isStudentRoute) loadBest(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [deck.id]);
 
-  const toggleType = (t: QType) => {
+  const toggleType = (t: QType) =>
     setEnabledTypes((prev) => (prev.includes(t) ? (prev.length > 1 ? prev.filter((x) => x !== t) : prev) : [...prev, t]));
-  };
 
-  const startQuiz = () => {
-    if (!deck) return;
+  const start = () => {
     setQuestions(buildQuestions(deck.cards, enabledTypes));
-    setIndex(0); setAnswered(null); setTextDraft(''); setAnswers([]); setFinished(false);
+    setIndex(0); setAnswered(null); setDraft(''); setAnswers([]); setFinished(false);
     setStarted(true);
     startedAtRef.current = Date.now();
   };
@@ -135,30 +110,23 @@ export default function FlashcardQuiz() {
   const current = questions[index];
   const score = useMemo(() => answers.filter((a) => a.isCorrect).length, [answers]);
 
-  const submitChoice = (value: string) => {
+  const record = (value: string) => {
     if (answered || !current) return;
     const correct = correctAnswerFor(current);
-    const isCorrect = value === correct;
+    const isCorrect = current.type === 'FILL' ? normalizeAnswer(value) === normalizeAnswer(correct) : value === correct;
     setAnswered({ value, isCorrect });
     setAnswers((prev) => [...prev, { type: current.type, term: current.term, correct, picked: value, isCorrect }]);
-  };
-
-  const submitFill = () => {
-    if (answered || !current || !textDraft.trim()) return;
-    const correct = correctAnswerFor(current);
-    const isCorrect = normalize(textDraft) === normalize(correct);
-    setAnswered({ value: textDraft, isCorrect });
-    setAnswers((prev) => [...prev, { type: current.type, term: current.term, correct, picked: textDraft, isCorrect }]);
+    requestAnimationFrame(() => nextRef.current?.focus());
   };
 
   const next = () => {
-    setAnswered(null); setTextDraft('');
+    setAnswered(null); setDraft('');
     if (index + 1 >= questions.length) {
-      const finalScore = answers.filter((a) => a.isCorrect).length;
       setFinished(true);
-      if (isStudentRoute && id) {
+      requestAnimationFrame(() => resultRef.current?.querySelector<HTMLElement>('#result-heading')?.focus());
+      if (routes.isStudentRoute) {
         const durationMs = startedAtRef.current ? Date.now() - startedAtRef.current : null;
-        apiSend(`/api/flashcards/decks/${id}/attempts`, 'POST', { mode: 'QUIZ', score: finalScore, total: questions.length, durationMs })
+        apiSend(`/api/flashcards/decks/${deck.id}/attempts`, 'POST', { mode: 'QUIZ', score: answers.filter((a) => a.isCorrect).length, total: questions.length, durationMs })
           .then(loadBest)
           .catch(() => toast.error('Your quiz result could not be saved'));
       }
@@ -167,208 +135,165 @@ export default function FlashcardQuiz() {
     setIndex((i) => i + 1);
   };
 
-  if (loading) {
+  // Number keys pick an answer; Enter moves on once answered.
+  useEffect(() => {
+    if (!started || finished || !current) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (target?.closest('input, textarea')) return;
+      const n = Number(e.key);
+      if (!answered && current.choices && n >= 1 && n <= current.choices.length) { e.preventDefault(); record(current.choices[n - 1]); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [started, finished, current, answered]);
+
+  if (!started) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <span className="animate-spin rounded-full h-6 w-6 border-2 border-aubergine-600 border-t-transparent mr-2"></span>
-        <span className="text-slate-500">Loading quiz…</span>
-      </div>
-    );
-  }
-
-  if (!deck) {
-    return (
-      <div className="text-center py-12 text-slate-500">
-        <p>Deck not found, or it isn't assigned to your class.</p>
-        <Button variant="outline" className="mt-4" render={<Link to={listUrl} />}>Back to Flashcards</Button>
-      </div>
-    );
-  }
-
-  if (deck.cards.length < 2) {
-    return (
-      <div className="max-w-xl mx-auto text-center py-12 text-slate-500 space-y-4">
-        <Brain className="h-10 w-10 mx-auto text-slate-300" />
-        <p>Quiz mode needs at least 2 cards in this deck.</p>
-        <Button variant="outline" render={<Link to={listUrl} />}><ArrowLeft className="mr-2 h-4 w-4" /> Back to Flashcards</Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-10">
-      <div className="flex items-center gap-3 flex-wrap">
-        <Button variant="ghost" size="icon" render={<Link to={listUrl} />}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1 min-w-[160px]">
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <Brain className="h-5 w-5 text-aubergine-600" /> {deck.title} — Quiz
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" render={<Link to={studyUrl} />}>Study</Button>
-          <Button size="sm" variant="outline" render={<Link to={matchUrl} />}><Grid3x3 className="mr-1.5 h-3.5 w-3.5" /> Match</Button>
-          <Button size="sm" variant="outline" render={<Link to={spellUrl} />}><SpellCheck className="mr-1.5 h-3.5 w-3.5" /> Spell</Button>
-        </div>
-      </div>
-
-      {!started ? (
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-6 space-y-5">
-          <div className="flex items-center gap-2">
-            <Settings2 className="h-4 w-4 text-aubergine-600" />
-            <h2 className="font-semibold text-slate-900 dark:text-white">Question types</h2>
-          </div>
-          <div className="space-y-2">
+      <ModeIntro title="Quiz yourself" action={<Button size="lg" onClick={start} className="w-full sm:w-auto">Start quiz · {deck.cards.length} questions</Button>}>
+        <p className="text-sm text-muted-foreground">Every card becomes one question, using a type you choose below.</p>
+        <fieldset>
+          <legend className="text-sm font-semibold text-foreground">Question types</legend>
+          <div className="mt-2 divide-y divide-border border border-border">
             {TYPE_OPTIONS.map((opt) => (
-              <label key={opt.key} className="flex items-start gap-3 rounded-lg border border-slate-200 dark:border-surface-raised px-3 py-2.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                <Checkbox checked={enabledTypes.includes(opt.key)} onCheckedChange={() => toggleType(opt.key)} className="mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{opt.label}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{opt.desc}</p>
-                </div>
+              <label key={opt.key} className="flex min-h-12 cursor-pointer items-start gap-3 px-4 py-3 hover:bg-muted/40">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 accent-[var(--color-academic-teal)]"
+                  checked={enabledTypes.includes(opt.key)}
+                  onChange={() => toggleType(opt.key)}
+                  disabled={enabledTypes.length === 1 && enabledTypes.includes(opt.key)}
+                />
+                <span>
+                  <span className="block text-sm font-medium text-foreground">{opt.label}</span>
+                  <span className="block text-sm text-muted-foreground">{opt.desc}</span>
+                </span>
               </label>
             ))}
           </div>
-          <p className="text-xs text-slate-400">Each of the deck's {deck.cards.length} cards becomes one question, randomly using one of the types you've checked.</p>
-          <Button onClick={startQuiz} className="w-full">Start Quiz</Button>
-        </div>
-      ) : finished ? (
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-8 text-center space-y-4">
-          <p className="text-sm text-slate-500 uppercase tracking-widest font-semibold">Quiz Complete</p>
-          <p className="text-4xl font-bold text-aubergine-600">{score} / {questions.length}</p>
-          <p className="text-sm text-slate-500">{Math.round((score / questions.length) * 100)}% correct</p>
-          {isStudentRoute && bestScore && (
-            <p className="text-xs text-slate-400">Personal best: {bestScore.score} / {bestScore.total} ({Math.round((bestScore.score / bestScore.total) * 100)}%)</p>
-          )}
+          <p className="mt-2 text-xs text-muted-foreground">At least one type stays selected.</p>
+        </fieldset>
+        {best && <p className="text-sm text-muted-foreground">Your best: <span className="font-semibold tabular-nums text-foreground">{best.score} / {best.total}</span> ({percent(best.score, best.total)}%)</p>}
+      </ModeIntro>
+    );
+  }
 
-          {answers.some((a) => !a.isCorrect) && (
-            <div className="text-left mt-6 space-y-2">
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Review missed questions</p>
-              {answers.filter((a) => !a.isCorrect).map((a, i) => (
-                <div key={i} className="rounded-lg border border-rose-200 dark:border-rose-900/30 bg-rose-50 dark:bg-rose-900/10 p-3 text-sm">
-                  <p className="font-medium text-slate-800 dark:text-slate-200">{a.term}</p>
-                  <p className="text-rose-600">Your answer: {a.picked || '(nothing)'}</p>
-                  <p className="text-emerald-600">Correct: {a.correct}</p>
-                </div>
-              ))}
+  if (finished) {
+    const missed = answers.filter((a) => !a.isCorrect).map((a) => ({ term: a.term, given: a.picked, correct: a.correct }));
+    return (
+      <div ref={resultRef}>
+        <ResultSummary
+          heading={score === questions.length ? 'Every answer right.' : `${score} of ${questions.length} right.`}
+          stats={[
+            { label: 'Score', value: `${percent(score, questions.length)}%`, strong: true },
+            { label: 'Correct', value: String(score) },
+            { label: 'To review', value: String(questions.length - score) },
+            { label: 'Your best', value: best ? `${percent(best.score, best.total)}%` : '—' },
+          ]}
+          missed={missed}
+          missedTitle="Questions to review"
+          actions={<>
+            <Button onClick={start}>Take the quiz again</Button>
+            <Button variant="outline" onClick={() => setStarted(false)}>Change question types</Button>
+            <Button variant="ghost" render={<Link to={routes.study} />} nativeButton={false}>Back to the cards</Button>
+          </>}
+        />
+      </div>
+    );
+  }
+
+  if (!current) return null;
+  const correctValue = correctAnswerFor(current);
+
+  return (
+    <section aria-label={`Question ${index + 1} of ${questions.length}`}>
+      <div className="flex items-center justify-between pb-2 text-sm">
+        <span className="font-semibold tabular-nums text-foreground">Question {index + 1} of {questions.length}</span>
+        <span className="tabular-nums text-muted-foreground">{score} right so far</span>
+      </div>
+      <ProgressRule value={index} max={questions.length} label="Quiz progress" />
+
+      <div className="mt-4 border border-border bg-card">
+        <div className="border-b border-border px-5 py-5 sm:px-8 sm:py-7">
+          <p className="text-xs font-medium text-muted-foreground">
+            {current.type === 'MC' ? 'Choose the definition' : current.type === 'TF' ? 'Does this definition belong to the term?' : 'Write the term for this definition'}
+          </p>
+          {current.imageUrl && current.type !== 'FILL' && <img src={current.imageUrl} alt="" className="mt-4 max-h-32 w-auto object-contain" />}
+          {current.type === 'FILL'
+            ? <p className="mt-2 text-lg leading-relaxed text-foreground [overflow-wrap:anywhere]"><MathText>{current.definition}</MathText></p>
+            : <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground [overflow-wrap:anywhere]"><MathText>{current.term}</MathText></p>}
+          {current.type === 'TF' && (
+            <p className="mt-4 border border-border bg-background px-4 py-3 text-base leading-relaxed text-foreground [overflow-wrap:anywhere]"><MathText>{current.candidateDefinition ?? ''}</MathText></p>
+          )}
+        </div>
+
+        <div className="px-5 py-5 sm:px-8">
+          {current.choices ? (
+            <div className={current.type === 'TF' ? 'grid grid-cols-2 gap-2' : 'grid gap-2'} role="group" aria-label="Answers">
+              {current.choices.map((choice, i) => {
+                const isPicked = answered?.value === choice;
+                const isRight = choice === correctValue;
+                const state = !answered ? 'idle' : isRight ? 'right' : isPicked ? 'wrong' : 'dim';
+                return (
+                  <button
+                    key={`${i}-${choice}`}
+                    type="button"
+                    onClick={() => record(choice)}
+                    disabled={!!answered}
+                    aria-keyshortcuts={String(i + 1)}
+                    className={`group flex min-h-12 w-full items-start gap-3 border px-4 py-3 text-left text-sm transition-colors ${
+                      state === 'right' ? 'border-academic-teal bg-accent text-accent-foreground' :
+                      state === 'wrong' ? 'border-destructive bg-destructive/10 text-foreground' :
+                      state === 'dim' ? 'border-border text-muted-foreground' :
+                      'border-input bg-card text-foreground hover:border-foreground'
+                    }`}
+                  >
+                    <span aria-hidden="true" className={`grid h-6 w-6 shrink-0 place-items-center border text-xs font-semibold tabular-nums ${state === 'idle' ? 'border-input text-muted-foreground group-hover:border-foreground group-hover:text-foreground' : 'border-current'}`}>
+                      {state === 'right' ? <Check className="h-3.5 w-3.5" /> : state === 'wrong' ? <X className="h-3.5 w-3.5" /> : i + 1}
+                    </span>
+                    <span className="min-w-0 flex-1 pt-0.5 [overflow-wrap:anywhere]"><MathText>{choice}</MathText></span>
+                    {state === 'right' && <span className="sr-only">(correct answer)</span>}
+                    {state === 'wrong' && <span className="sr-only">(your answer, incorrect)</span>}
+                  </button>
+                );
+              })}
             </div>
+          ) : (
+            <form onSubmit={(e) => { e.preventDefault(); if (answered) next(); else if (draft.trim()) record(draft); }}>
+              <label htmlFor="quiz-answer" className="text-sm font-medium text-foreground">Your answer</label>
+              <Input
+                id="quiz-answer"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder="Type the term"
+                readOnly={!!answered}
+                aria-readonly={!!answered}
+                autoComplete="off"
+                autoFocus
+                className={`mt-1.5 h-12 text-lg ${answered ? (answered.isCorrect ? 'border-academic-teal' : 'border-destructive') : ''}`}
+              />
+            </form>
           )}
-
-          <div className="flex justify-center gap-3 pt-2">
-            <Button variant="outline" onClick={() => setStarted(false)}><Settings2 className="mr-2 h-4 w-4" /> Change Types</Button>
-            <Button variant="outline" onClick={startQuiz}><RotateCw className="mr-2 h-4 w-4" /> Retake Quiz</Button>
-            <Button render={<Link to={listUrl} />}>Back to Flashcards</Button>
-          </div>
+          <p className="mt-3 min-h-5 text-sm font-medium" aria-live="assertive">
+            {answered && (answered.isCorrect
+              ? <span className="text-accent-foreground">Correct.</span>
+              : <span className="text-destructive">Not quite. {current.type === 'FILL' ? `The term is “${current.term}”.` : current.type === 'TF' ? `The answer is ${correctValue}.` : 'The right definition is marked.'}</span>)}
+          </p>
         </div>
-      ) : current ? (
-        <>
-          <div className="h-1.5 w-full bg-slate-100 dark:bg-surface-raised rounded-full overflow-hidden">
-            <div className="h-full bg-aubergine-500 rounded-full transition-all" style={{ width: `${Math.round(((index) / questions.length) * 100)}%` }} />
-          </div>
-          <p className="text-center text-sm text-slate-500">Question {index + 1} of {questions.length}</p>
 
-          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-8">
-            {current.imageUrl && (
-              <img src={current.imageUrl} alt="" className="max-h-32 mx-auto mb-4 rounded-lg object-contain" />
-            )}
-
-            {current.type === 'MC' && (
-              <>
-                <p className="text-lg font-semibold text-slate-900 dark:text-white text-center mb-6"><MathText>{current.term}</MathText></p>
-                <div className="grid grid-cols-1 gap-3">
-                  {(current.choices ?? []).map((choice) => {
-                    const isPicked = answered?.value === choice;
-                    const isCorrect = choice === current.definition;
-                    const showState = !!answered;
-                    return (
-                      <button
-                        key={choice}
-                        type="button"
-                        onClick={() => submitChoice(choice)}
-                        disabled={!!answered}
-                        className={`text-left rounded-lg border px-4 py-3 text-sm transition-colors ${
-                          showState && isCorrect ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/10 text-emerald-800 dark:text-emerald-300' :
-                          showState && isPicked && !isCorrect ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/10 text-rose-700 dark:text-rose-300' :
-                          'border-slate-200 dark:border-surface-raised hover:border-aubergine-300 hover:bg-slate-50 dark:hover:bg-surface-raised/50 text-slate-700 dark:text-slate-200'
-                        }`}
-                      >
-                        <span className="flex items-center justify-between gap-2">
-                          <MathText>{choice}</MathText>
-                          {showState && isCorrect && <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />}
-                          {showState && isPicked && !isCorrect && <XCircle className="h-4 w-4 shrink-0 text-rose-600" />}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-
-            {current.type === 'TF' && (
-              <>
-                <p className="text-xs uppercase tracking-widest text-slate-400 text-center mb-2">Does this definition match the term?</p>
-                <p className="text-lg font-semibold text-slate-900 dark:text-white text-center mb-2"><MathText>{current.term}</MathText></p>
-                <p className="text-slate-600 dark:text-slate-300 text-center mb-6"><MathText>{current.candidateDefinition ?? ''}</MathText></p>
-                <div className="grid grid-cols-2 gap-3">
-                  {(current.choices ?? []).map((choice) => {
-                    const isPicked = answered?.value === choice;
-                    const isCorrect = choice === correctAnswerFor(current);
-                    const showState = !!answered;
-                    return (
-                      <button
-                        key={choice}
-                        type="button"
-                        onClick={() => submitChoice(choice)}
-                        disabled={!!answered}
-                        className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
-                          showState && isCorrect ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/10 text-emerald-800 dark:text-emerald-300' :
-                          showState && isPicked && !isCorrect ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/10 text-rose-700 dark:text-rose-300' :
-                          'border-slate-200 dark:border-surface-raised hover:border-aubergine-300 hover:bg-slate-50 dark:hover:bg-surface-raised/50 text-slate-700 dark:text-slate-200'
-                        }`}
-                      >
-                        {choice}
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-
-            {current.type === 'FILL' && (
-              <>
-                <p className="text-xs uppercase tracking-widest text-slate-400 text-center mb-2">Type the term for this definition</p>
-                <p className="text-slate-700 dark:text-slate-200 text-center mb-6"><MathText>{current.definition}</MathText></p>
-                <Input
-                  value={textDraft}
-                  onChange={(e) => setTextDraft(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { answered ? next() : submitFill(); } }}
-                  placeholder="Type your answer…"
-                  disabled={!!answered}
-                  className={`text-center text-lg ${answered ? (answered.isCorrect ? 'border-emerald-400' : 'border-rose-400') : ''}`}
-                  autoComplete="off"
-                />
-                {answered && (
-                  <p className={`text-center text-sm font-medium mt-3 flex items-center justify-center gap-1.5 ${answered.isCorrect ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {answered.isCorrect ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                    {answered.isCorrect ? 'Correct!' : `Correct answer: ${current.term}`}
-                  </p>
-                )}
-              </>
-            )}
-          </div>
-
-          <div className="flex justify-end">
-            {current.type === 'FILL' && !answered ? (
-              <Button onClick={submitFill} disabled={!textDraft.trim()}>Check Answer</Button>
-            ) : (
-              <Button onClick={next} disabled={!answered}>
-                {index + 1 >= questions.length ? 'Finish' : 'Next Question'}
-              </Button>
-            )}
-          </div>
-        </>
-      ) : null}
-    </div>
+        <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-3 sm:px-8">
+          <span className="hidden text-xs text-muted-foreground sm:block">{current.choices ? `Press 1–${current.choices.length} to answer` : 'Press Enter to check'}</span>
+          {current.type === 'FILL' && !answered ? (
+            <Button className="ml-auto" onClick={() => record(draft)} disabled={!draft.trim()}>Check answer</Button>
+          ) : (
+            <Button ref={nextRef} className="ml-auto" onClick={next} disabled={!answered}>
+              {index + 1 >= questions.length ? 'See results' : 'Next question'}
+            </Button>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }

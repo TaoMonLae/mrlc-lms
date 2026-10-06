@@ -29,11 +29,11 @@ export function WordTrailCard() {
     : "Roll, answer vocabulary questions, and race across a board of boosts and surprises.";
 
   return (
-    <Card className="relative overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(135deg,#126a65_0%,#168c83_54%,#347da7_100%)] p-5 text-white shadow-[0_12px_30px_rgba(22,140,131,0.14)]">
+    <Card className="relative overflow-hidden rounded-sm border border-white/10 bg-[linear-gradient(135deg,#126a65_0%,#168c83_54%,#347da7_100%)] p-5 text-white shadow-[0_12px_30px_rgba(22,140,131,0.14)]">
       <div className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-academic-gold/15 blur-2xl" aria-hidden="true" />
       <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-4">
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/20">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-sm bg-white/15 ring-1 ring-white/20">
             {loading
               ? <Loader2 className="h-6 w-6 animate-spin" />
               : active
@@ -57,7 +57,7 @@ export function WordTrailCard() {
         </div>
         {!loading && (
           <Button
-            className="shrink-0 rounded-lg bg-white font-bold text-[#126a65] shadow-sm hover:bg-[#fff8e8]"
+            className="shrink-0 rounded-lg bg-card font-bold text-[#126a65] shadow-sm hover:bg-[#fff8e8]"
             render={<Link to="/games/word-trail" />}
             nativeButton={false}
           >

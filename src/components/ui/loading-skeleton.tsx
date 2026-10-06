@@ -23,7 +23,7 @@ function Skeleton({
   return (
     <div
       className={cn(
-        "animate-pulse bg-slate-200 dark:bg-slate-700",
+        "animate-pulse bg-muted",
         variantStyles[variant],
         className
       )}
@@ -67,7 +67,7 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
  */
 export function CardSkeleton() {
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+    <div className="rounded-sm border border-border p-6 space-y-4">
       <div className="flex items-center justify-between">
         <Skeleton className="h-12 w-12" variant="circular" />
         <Skeleton className="h-8 w-24" variant="rectangular" />
@@ -104,7 +104,7 @@ export function FormSkeleton({ fieldCount = 4 }: { fieldCount?: number }) {
  */
 export function StatsCardSkeleton() {
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-5 space-y-2">
+    <div className="rounded-sm border border-border p-5 space-y-2">
       <div className="flex items-center justify-between">
         <Skeleton className="h-8 w-20" variant="text" />
         <Skeleton className="h-10 w-10" variant="circular" />
@@ -132,7 +132,7 @@ export function PageSkeleton() {
           <StatsCardSkeleton key={i} />
         ))}
       </div>
-      <div className="rounded-xl border border-slate-200 dark:border-slate-700">
+      <div className="rounded-sm border border-border">
         <TableSkeleton rows={8} />
       </div>
     </div>

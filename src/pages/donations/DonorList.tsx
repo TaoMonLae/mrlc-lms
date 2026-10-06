@@ -173,7 +173,7 @@ export default function DonorList() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground"></div>
       </div>
     );
   }
@@ -186,7 +186,7 @@ export default function DonorList() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Donors</h1>
-          <p className="text-gray-500">Manage donor database and relationships</p>
+          <p className="text-muted-foreground">Manage donor database and relationships</p>
         </div>
         {hasPermission("manage_donations") && (
           <Button onClick={handleCreateDonor}>
@@ -204,7 +204,7 @@ export default function DonorList() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{donors.length}</div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {activeDonors} active
             </p>
           </CardContent>
@@ -216,7 +216,7 @@ export default function DonorList() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalDonations}</div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Across all donors
             </p>
           </CardContent>
@@ -230,7 +230,7 @@ export default function DonorList() {
             <div className="text-2xl font-bold">
               {donors.filter(d => d.donorType === "ORGANIZATION").length}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Corporate donors
             </p>
           </CardContent>
@@ -244,7 +244,7 @@ export default function DonorList() {
             <div className="text-2xl font-bold">
               {donors.filter(d => d.donorType === "INDIVIDUAL").length}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Personal donors
             </p>
           </CardContent>
@@ -259,7 +259,7 @@ export default function DonorList() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder="Search donors..."
                 value={search}
@@ -292,7 +292,7 @@ export default function DonorList() {
               </SelectContent>
             </Select>
 
-            <div className="flex items-center text-sm text-gray-500">
+            <div className="flex items-center text-sm text-muted-foreground">
               {filteredDonors.length} of {donors.length} donors
             </div>
           </div>
@@ -322,7 +322,7 @@ export default function DonorList() {
                       {getDonorTypeIcon(donor.donorType)}
                       <div>
                         <div className="font-semibold">{donor.name}</div>
-                        <div className="text-xs text-gray-500">{donor.donorCode}</div>
+                        <div className="text-xs text-muted-foreground">{donor.donorCode}</div>
                       </div>
                     </div>
                   </TableCell>
@@ -372,7 +372,7 @@ export default function DonorList() {
                       </Button>
                       {hasPermission("manage_donations") && (
                         <>
-                          <Button
+                          <Button aria-label="Edit"
                             variant="ghost"
                             size="sm"
                             className="h-8 w-8 p-0"
@@ -381,7 +381,7 @@ export default function DonorList() {
                             <Pencil className="h-4 w-4" />
                           </Button>
                           {donor.isActive ? (
-                            <Button
+                            <Button aria-label="Delete"
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
@@ -390,7 +390,7 @@ export default function DonorList() {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           ) : (
-                            <Button
+                            <Button aria-label="Reactivate donor"
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
@@ -414,7 +414,7 @@ export default function DonorList() {
       {filteredDonors.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-gray-500">No donors found matching your criteria</p>
+            <p className="text-muted-foreground">No donors found matching your criteria</p>
           </CardContent>
         </Card>
       )}

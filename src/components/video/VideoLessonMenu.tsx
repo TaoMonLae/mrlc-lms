@@ -6,7 +6,7 @@ import type { VideoLesson } from '../../lib/video/types';
 
 export function VideoLessonMenu({ video, onDelete }: { video: VideoLesson; onDelete: (id: string) => void }) {
   return <DropdownMenu>
-    <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="size-9 shrink-0" aria-label={`Manage ${video.title}`} />} nativeButton>
+    <DropdownMenuTrigger aria-label="More actions" render={<Button variant="ghost" size="icon" className="size-9 shrink-0" aria-label={`Manage ${video.title}`} />} nativeButton>
       <MoreVertical className="size-4" />
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end">

@@ -83,7 +83,7 @@ export default function CameraCapture({ onCapture, onClose }: Props) {
     <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-black/90 p-4">
       <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onFile} />
 
-      <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-black">
+      <div className="relative w-full max-w-md overflow-hidden rounded-sm bg-black">
         {shot ? (
           <img src={shot} alt="captured" className="w-full" />
         ) : noCamera ? (
@@ -104,7 +104,7 @@ export default function CameraCapture({ onCapture, onClose }: Props) {
             <Button onClick={confirm}><Check className="mr-2 h-4 w-4" /> Use photo</Button>
           </>
         ) : !noCamera && (
-          <Button size="lg" className="h-14 w-14 rounded-full p-0" onClick={snap} disabled={!ready} title="Capture">
+          <Button aria-label="Capture" size="lg" className="h-14 w-14 rounded-full p-0" onClick={snap} disabled={!ready} title="Capture">
             <Camera className="h-6 w-6" />
           </Button>
         )}

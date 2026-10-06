@@ -177,7 +177,7 @@ export default function BookDetail() {
   };
 
   if (loading || !book) {
-    return <div className="flex items-center justify-center py-20 text-sm text-slate-500">Loading book…</div>;
+    return <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">Loading book…</div>;
   }
 
   const statusVariant = (s: BookLoan['status']) =>
@@ -189,7 +189,7 @@ export default function BookDetail() {
         <Button
           variant="ghost"
           size="sm"
-          className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white"
+          className="-ml-3 mb-2 text-muted-foreground hover:text-foreground"
           render={<Link to="/books" />}
           nativeButton={false}
         >
@@ -197,7 +197,7 @@ export default function BookDetail() {
         </Button>
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
               <BookMarked className="h-6 w-6 text-aubergine-600" /> {book.title}
             </h1>
             <div className="mt-2">
@@ -217,38 +217,38 @@ export default function BookDetail() {
             <Button variant="outline" render={<Link to={`/books/${id}/edit`} />} nativeButton={false}>
               <Pencil className="mr-2 h-4 w-4" /> Edit
             </Button>
-            <Button variant="outline" className="text-red-600 hover:text-red-700" onClick={handleDelete}>
+            <Button aria-label="Delete" variant="outline" className="text-red-600 hover:text-red-700" onClick={handleDelete}>
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm">
+      <div className="bg-card border border-border rounded-sm p-6 shadow-sm">
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
           {detailRows.map((row) => (
-            <div key={row.key} className="flex justify-between gap-4 border-b border-slate-100 dark:border-surface-raised pb-2">
-              <dt className="text-sm text-slate-500">{row.label}</dt>
-              <dd className="text-sm font-medium text-slate-900 dark:text-white text-right">
+            <div key={row.key} className="flex justify-between gap-4 border-b border-border pb-2">
+              <dt className="text-sm text-muted-foreground">{row.label}</dt>
+              <dd className="text-sm font-medium text-foreground text-right">
                 {book[row.key] != null && book[row.key] !== '' ? String(book[row.key]) : '—'}
               </dd>
             </div>
           ))}
         </dl>
         {book.description && (
-          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-surface-raised">
-            <p className="text-sm text-slate-500 mb-1">Description / Notes</p>
-            <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{book.description}</p>
+          <div className="mt-4 pt-4 border-t border-border">
+            <p className="text-sm text-muted-foreground mb-1">Description / Notes</p>
+            <p className="text-sm text-foreground whitespace-pre-wrap">{book.description}</p>
           </div>
         )}
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-surface-raised">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Borrowing History</h2>
+      <div className="bg-card border border-border rounded-sm shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <h2 className="text-sm font-semibold text-foreground">Borrowing History</h2>
         </div>
         {book.loans.length === 0 ? (
-          <div className="py-10 text-center text-sm text-slate-500">No borrowing records yet.</div>
+          <div className="py-10 text-center text-sm text-muted-foreground">No borrowing records yet.</div>
         ) : (
           <Table>
             <TableHeader>
@@ -264,13 +264,13 @@ export default function BookDetail() {
             <TableBody>
               {book.loans.map((loan) => (
                 <TableRow key={loan.id}>
-                  <TableCell className="font-medium text-slate-900 dark:text-white">
+                  <TableCell className="font-medium text-foreground">
                     {loan.borrowerName}
-                    {loan.borrowerType && <span className="ml-1 text-xs text-slate-400">({loan.borrowerType})</span>}
+                    {loan.borrowerType && <span className="ml-1 text-xs text-muted-foreground">({loan.borrowerType})</span>}
                   </TableCell>
-                  <TableCell className="text-slate-600 dark:text-slate-300">{fmt(loan.borrowedDate)}</TableCell>
-                  <TableCell className="text-slate-600 dark:text-slate-300">{fmt(loan.dueDate)}</TableCell>
-                  <TableCell className="text-slate-600 dark:text-slate-300">{fmt(loan.returnedDate)}</TableCell>
+                  <TableCell className="text-muted-foreground">{fmt(loan.borrowedDate)}</TableCell>
+                  <TableCell className="text-muted-foreground">{fmt(loan.dueDate)}</TableCell>
+                  <TableCell className="text-muted-foreground">{fmt(loan.returnedDate)}</TableCell>
                   <TableCell><Badge variant={statusVariant(loan.status)}>{loan.status}</Badge></TableCell>
                   <TableCell className="text-right">
                     {loan.status !== 'RETURNED' ? (
@@ -278,7 +278,7 @@ export default function BookDetail() {
                         <BookDown className="mr-2 h-4 w-4" /> Return
                       </Button>
                     ) : (
-                      <span className="text-xs text-slate-400">—</span>
+                      <span className="text-xs text-muted-foreground">—</span>
                     )}
                   </TableCell>
                 </TableRow>
@@ -306,7 +306,7 @@ export default function BookDetail() {
                   id="borrowerType"
                   value={borrowerType}
                   onChange={(e) => setBorrowerType(e.target.value)}
-                  className="w-full h-9 rounded-md border border-slate-200 dark:border-surface-raised bg-transparent px-3 text-sm"
+                  className="w-full h-9 rounded-md border border-border bg-transparent px-3 text-sm"
                 >
                   <option value="STUDENT">Student</option>
                   <option value="TEACHER">Teacher</option>

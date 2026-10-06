@@ -73,7 +73,7 @@ export default function TimetableEdit() {
           <span className="sr-only">Back to timetable</span>
         </Button>
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-academic-teal">Timetable / Revise field entry</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-academic-teal">Timetable / Revise field entry</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">Revise a schedule item</h1>
           <p className="mt-2 text-sm text-muted-foreground">Change timing, assignment, status, or the item’s effective date window.</p>
         </div>

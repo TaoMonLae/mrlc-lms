@@ -80,15 +80,15 @@ export default function ExamNew() {
   return (
     <div className="space-y-6 max-w-[560px] mx-auto">
       <div>
-        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/exams" />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/exams" />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Exams
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">New assessment</h1>
-        <p className="text-sm text-slate-500 mt-1">Just the basics — you'll build questions, scheduling and grading in the Studio.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">New assessment</h1>
+        <p className="text-sm text-muted-foreground mt-1">Just the basics — you'll build questions, scheduling and grading in the Studio.</p>
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-5">
+      <div className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-5">
         <div className="space-y-2">
           <Label>Exam title</Label>
           <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Algebra II — Unit 4 Mock" autoFocus />
@@ -127,7 +127,7 @@ export default function ExamNew() {
           </div>
         </div>
 
-        <div className="flex justify-end border-t border-slate-200 pt-5 dark:border-surface-raised">
+        <div className="flex justify-end border-t border-border pt-5">
           <Button onClick={create} disabled={saving} className="bg-aubergine-600 hover:bg-aubergine-700 text-white">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
             Create & open Studio

@@ -121,10 +121,10 @@ export default function LibraryList() {
     switch (type) {
       case 'PDF': return <FileText className="text-red-500" />;
       case 'IMAGE': return <ImageIcon className="text-blue-500" />;
-      case 'VIDEO': return <Video className="text-purple-500" />;
+      case 'VIDEO': return <Video className="text-accent-purple" />;
       case 'LINK': return <LinkIcon className="text-emerald-500" />;
       case 'DOCUMENT': return <File className="text-blue-700" />;
-      default: return <File className="text-slate-500" />;
+      default: return <File className="text-muted-foreground" />;
     }
   };
 
@@ -155,8 +155,8 @@ export default function LibraryList() {
     <div className="space-y-6 max-w-full mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Library Central</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Discover and manage learning resources.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Library Central</h1>
+          <p className="text-sm text-muted-foreground mt-1">Discover and manage learning resources.</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           {(isAdmin || isTeacher) && (
@@ -168,9 +168,9 @@ export default function LibraryList() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex flex-col md:flex-row gap-4 items-center">
+      <div className="bg-card p-4 rounded-sm border border-border shadow-sm flex flex-col md:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full md:w-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
             placeholder="Search resources by title or description..." 
             className="pl-9"
@@ -212,27 +212,27 @@ export default function LibraryList() {
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="ml-3 text-slate-500">Loading resources...</span>
+          <span className="ml-3 text-muted-foreground">Loading resources...</span>
         </div>
       ) : filteredResources.length === 0 ? (
-        <div className="text-center py-20 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm">
+        <div className="text-center py-20 bg-card border border-border rounded-sm shadow-sm">
           <FileText className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600 mb-4" />
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white">No resources found</h3>
-          <p className="text-slate-500 mt-1">Try adjusting your filters or search query.</p>
+          <h3 className="text-lg font-medium text-foreground">No resources found</h3>
+          <p className="text-muted-foreground mt-1">Try adjusting your filters or search query.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredResources.map((resource) => (
-            <div key={resource.id} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden hover:shadow-md transition-shadow group flex flex-col h-full">
+            <div key={resource.id} className="bg-card border border-border rounded-sm overflow-hidden hover:shadow-none transition-shadow group flex flex-col h-full">
               <div className="p-5 flex-1 flex flex-col">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 bg-slate-50 dark:bg-surface-raised rounded-xl">
+                  <div className="p-3 bg-muted/50 rounded-sm">
                     {getIconForType(resource.type)}
                   </div>
                   {canManage(resource) && (
                     <DropdownMenu>
                       <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity" />} nativeButton={true}>
-                        <MoreVertical className="h-4 w-4 text-slate-400" />
+                        <MoreVertical className="h-4 w-4 text-muted-foreground" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem render={<Link to={`/library/${resource.id}/edit`} className="flex w-full" />} nativeButton={false}>
@@ -247,12 +247,12 @@ export default function LibraryList() {
                   )}
                 </div>
                 
-                <h3 className="font-semibold text-slate-900 dark:text-white mb-2 line-clamp-2">
+                <h3 className="font-semibold text-foreground mb-2 line-clamp-2">
                   <Link to={`/library/${resource.id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                     {resource.title}
                   </Link>
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-300 line-clamp-2 mb-4 flex-1">
+                <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">
                   {resource.description}
                 </p>
 
@@ -261,14 +261,14 @@ export default function LibraryList() {
                      {resource.type}
                    </Badge>
                    {resource.visibility === 'TEACHERS_ONLY' && (
-                     <Badge variant="outline" className="text-xs font-normal border-purple-200 text-purple-700 dark:border-purple-800 dark:text-purple-300">
+                     <Badge variant="outline" className="text-xs font-normal border-border text-accent-purple">
                        Teachers Only
                      </Badge>
                    )}
                 </div>
               </div>
               
-              <div className="bg-slate-50 dark:bg-surface-raised/50 p-4 border-t border-slate-100 dark:border-surface-raised flex items-center justify-between gap-3 text-xs text-slate-500">
+              <div className="bg-muted/50 p-4 border-t border-border flex items-center justify-between gap-3 text-xs text-muted-foreground">
                 <div className="min-w-0">
                   <span className="block truncate max-w-[140px]">By {resource.uploadedByName || 'School Library'}</span>
                   <span>{formatDistanceToNow(new Date(resource.createdAt))} ago</span>

@@ -243,7 +243,7 @@ export default function DutyRosterDetail() {
       case 'FAILED':
         return 'bg-red-100 text-red-800';
       case 'EXCUSED':
-        return 'bg-slate-100 text-slate-800';
+        return 'bg-muted text-foreground';
       default:
         return 'bg-amber-100 text-amber-800';
     }
@@ -270,15 +270,15 @@ export default function DutyRosterDetail() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" render={<Link to="/duties/rosters" />} nativeButton={false}>
+        <Button aria-label="Back" variant="ghost" size="sm" render={<Link to="/duties/rosters" />} nativeButton={false}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{roster.name}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">{roster.name}</h1>
             <Badge variant="outline">{roster.status}</Badge>
           </div>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             {new Date(roster.startDate).toLocaleDateString()} - {new Date(roster.endDate).toLocaleDateString()} · max {roster.maxWeeklyDuties}/week/student
           </p>
         </div>
@@ -314,7 +314,7 @@ export default function DutyRosterDetail() {
                 <Label>Students ({selectedStudentIds.length} selected)</Label>
                 <div className="mt-2 max-h-48 overflow-y-auto border rounded-md p-2 space-y-1">
                   {students.map((s) => (
-                    <label key={s.id} className="flex items-center gap-2 text-sm py-1 px-1 rounded hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer">
+                    <label key={s.id} className="flex items-center gap-2 text-sm py-1 px-1 rounded hover:bg-muted/50 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={selectedStudentIds.includes(s.id)}
@@ -323,14 +323,14 @@ export default function DutyRosterDetail() {
                       {studentLabel(s)}
                     </label>
                   ))}
-                  {students.length === 0 && <p className="text-xs text-slate-500 p-2">No students found</p>}
+                  {students.length === 0 && <p className="text-xs text-muted-foreground p-2">No students found</p>}
                 </div>
               </div>
               <div>
                 <Label>Duty Types ({selectedDutyIds.length} selected)</Label>
                 <div className="mt-2 max-h-48 overflow-y-auto border rounded-md p-2 space-y-1">
                   {definitions.map((d) => (
-                    <label key={d.id} className="flex items-center gap-2 text-sm py-1 px-1 rounded hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer">
+                    <label key={d.id} className="flex items-center gap-2 text-sm py-1 px-1 rounded hover:bg-muted/50 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={selectedDutyIds.includes(d.id)}
@@ -340,7 +340,7 @@ export default function DutyRosterDetail() {
                     </label>
                   ))}
                   {definitions.length === 0 && (
-                    <p className="text-xs text-slate-500 p-2">
+                    <p className="text-xs text-muted-foreground p-2">
                       No duty types yet. <Link to="/duties/definitions" className="underline">Create one</Link>.
                     </p>
                   )}
@@ -470,7 +470,7 @@ export default function DutyRosterDetail() {
                   </TableCell>
                   {canManage && (
                     <TableCell>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleDeleteAssignment(a.id)}>
+                      <Button aria-label="Delete" variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleDeleteAssignment(a.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -479,7 +479,7 @@ export default function DutyRosterDetail() {
               ))}
               {roster.assignments.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={canManage ? 6 : 5} className="text-center py-8 text-slate-500">
+                  <TableCell colSpan={canManage ? 6 : 5} className="text-center py-8 text-muted-foreground">
                     No assignments yet.
                   </TableCell>
                 </TableRow>

@@ -93,7 +93,7 @@ export default function StudentDashboard() {
     { title: "Attendance", value: `${dash.stats.attendanceRate}%`, description: "This term", icon: CalendarCheck, color: "text-emerald-600", bg: "bg-emerald-50" },
     { title: "Exam Average", value: String(dash.stats.examAverage), description: "All subjects", icon: FileCheck, color: "text-blue-600", bg: "bg-blue-50" },
     { title: "Fee Balance", value: formatMoney(feeBalance, currency, { decimals: false }), description: "Outstanding", icon: Wallet, color: "text-aubergine-600", bg: "bg-aubergine-50" },
-    { title: "Class Size", value: String(dash.stats.classSize), description: dash.className, icon: TrendingUp, color: "text-purple-600", bg: "bg-purple-50" },
+    { title: "Class Size", value: String(dash.stats.classSize), description: dash.className, icon: TrendingUp, color: "text-accent-purple", bg: "bg-lavender" },
   ];
 
   const upcomingExams = dash.upcomingExams;
@@ -119,8 +119,8 @@ export default function StudentDashboard() {
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Welcome back! 👋</h1>
-          <p className="text-slate-500 mt-1 flex items-center gap-2">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Welcome back! 👋</h1>
+          <p className="text-muted-foreground mt-1 flex items-center gap-2">
             <span className="font-bold text-aubergine-600 dark:text-aubergine-400">{sanitizeText(dash.className)}</span>
             <span className="text-slate-300">•</span>
             <span>{dash.className === 'Unassigned' ? 'No academic year assigned' : 'Current academic year'}</span>
@@ -139,18 +139,18 @@ export default function StudentDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, idx) => (
-          <Card key={idx} className="border-none shadow-sm bg-white dark:bg-surface-indigo overflow-hidden group hover:shadow-md transition-all">
+          <Card key={idx} className="border-none shadow-sm bg-card overflow-hidden group hover:shadow-none transition-all">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-xl ${stat.bg} ${stat.color} transition-colors`}>
+                <div className={`p-3 rounded-sm ${stat.bg} ${stat.color} transition-colors`}>
                   <stat.icon className="h-6 w-6" />
                 </div>
-                <Badge variant="ghost" className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Stats</Badge>
+                <Badge variant="ghost" className="text-[11px] uppercase font-bold tracking-widest text-muted-foreground">Stats</Badge>
               </div>
               <div className="space-y-1">
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{stat.value}</h3>
-                <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{stat.title}</p>
-                <p className="text-[10px] text-slate-400 mt-2 flex items-center gap-1">
+                <h3 className="text-2xl font-bold text-foreground tracking-tight">{stat.value}</h3>
+                <p className="text-sm font-semibold text-muted-foreground">{stat.title}</p>
+                <p className="text-[11px] text-muted-foreground mt-2 flex items-center gap-1">
                   <Clock className="h-3 w-3" /> {stat.description}
                 </p>
               </div>
@@ -166,8 +166,8 @@ export default function StudentDashboard() {
         {/* Left Column: Exams & Results */}
         <div className="lg:col-span-2 space-y-8">
           {/* Upcoming Exams */}
-          <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 dark:border-surface-raised/50 pb-4">
+          <Card className="border-border shadow-sm overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-aubergine-50 dark:bg-aubergine-900/20 text-aubergine-600 rounded-lg">
                   <FileCheck className="h-5 w-5" />
@@ -183,20 +183,20 @@ export default function StudentDashboard() {
             </CardHeader>
             <CardContent className="p-0">
               {upcomingExams.map((exam, idx) => (
-                <div key={idx} className="flex items-center justify-between p-4 border-b last:border-0 border-slate-50 dark:border-surface-raised/50 hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
+                <div key={idx} className="flex items-center justify-between p-4 border-b last:border-0 border-border hover:bg-muted/50 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="h-10 w-10 flex items-center justify-center bg-aubergine-100 dark:bg-aubergine-900/30 text-aubergine-700 dark:text-aubergine-400 rounded-full font-bold text-xs uppercase">
                       {sanitizeText(exam.subject.substring(0, 2))}
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900 dark:text-white text-sm">{sanitizeText(exam.subject)}</h4>
-                      <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-500">
+                      <h4 className="font-bold text-foreground text-sm">{sanitizeText(exam.subject)}</h4>
+                      <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
                         <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {exam.time}</span>
                         <span className="flex items-center gap-1"><CalendarCheck className="h-3 w-3" /> {exam.date}</span>
                       </div>
                     </div>
                   </div>
-                  <Badge variant="secondary" className="bg-aubergine-50 text-aubergine-700 dark:bg-aubergine-900/20 dark:text-aubergine-400 font-bold text-[10px] uppercase">
+                  <Badge variant="secondary" className="bg-aubergine-50 text-aubergine-700 dark:bg-aubergine-900/20 dark:text-aubergine-400 font-bold text-[11px] uppercase">
                     {sanitizeText(exam.type)}
                   </Badge>
                 </div>
@@ -205,8 +205,8 @@ export default function StudentDashboard() {
           </Card>
 
           {/* Recent Results */}
-          <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 dark:border-surface-raised/50 pb-4">
+          <Card className="border-border shadow-sm overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg">
                   <GraduationCap className="h-5 w-5" />
@@ -222,18 +222,18 @@ export default function StudentDashboard() {
             </CardHeader>
             <CardContent className="p-0">
               {recentResults.map((result, idx) => (
-                <div key={idx} className="flex items-center justify-between p-4 border-b last:border-0 border-slate-50 dark:border-surface-raised/50 hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
+                <div key={idx} className="flex items-center justify-between p-4 border-b last:border-0 border-border hover:bg-muted/50 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="h-10 w-10 flex items-center justify-center bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full font-bold text-lg">
                       {result.grade}
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900 dark:text-white text-sm">{sanitizeText(result.subject)}</h4>
-                      <p className="text-[11px] text-slate-500 mt-1">Released on {result.date}</p>
+                      <h4 className="font-bold text-foreground text-sm">{sanitizeText(result.subject)}</h4>
+                      <p className="text-[11px] text-muted-foreground mt-1">Released on {result.date}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-slate-900 dark:text-white text-sm">{result.score}</p>
+                    <p className="font-bold text-foreground text-sm">{result.score}</p>
                     <Progress value={parseInt(result.score)} className="h-1 w-20 mt-2" />
                   </div>
                 </div>
@@ -246,7 +246,7 @@ export default function StudentDashboard() {
         <div className="space-y-8">
           {/* GED Readiness */}
           {dash.gedReadiness && dash.gedReadiness.length > 0 && (
-            <Card className="border-slate-200 dark:border-surface-raised shadow-sm">
+            <Card className="border-border shadow-sm">
               <CardHeader className="pb-4">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <GraduationCap className="h-4 w-4 text-aubergine-500" /> GED Readiness
@@ -259,25 +259,25 @@ export default function StudentDashboard() {
           )}
 
           {/* Announcements */}
-          <Card className="border-slate-200 dark:border-surface-raised shadow-sm">
+          <Card className="border-border shadow-sm">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-md flex items-center gap-2">
                   <Bell className="h-4 w-4 text-aubergine-500" /> Announcements
                 </CardTitle>
-                <Link to="/announcements" className="text-[10px] text-aubergine-600 font-bold uppercase tracking-widest hover:underline">View</Link>
+                <Link to="/announcements" className="text-[11px] text-aubergine-600 font-bold uppercase tracking-widest hover:underline">View</Link>
               </div>
             </CardHeader>
             <CardContent className="space-y-4 pt-0">
               {announcements.length === 0 ? (
-                <p className="text-xs text-slate-400">No announcements right now.</p>
+                <p className="text-xs text-muted-foreground">No announcements right now.</p>
               ) : (
                 announcements.map((ann) => (
                   <Link to={`/announcements/${ann.id}`} key={ann.id} className="group block cursor-pointer">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h5 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-aubergine-600 transition-colors line-clamp-1">{sanitizeText(ann.title)}</h5>
-                        <span className="text-[10px] text-slate-400 mt-1 flex items-center gap-1 font-medium">
+                        <h5 className="text-xs font-bold text-foreground group-hover:text-aubergine-600 transition-colors line-clamp-1">{sanitizeText(ann.title)}</h5>
+                        <span className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1 font-medium">
                           {ann.date} • {sanitizeText(ann.category)}
                         </span>
                       </div>
@@ -290,7 +290,7 @@ export default function StudentDashboard() {
           </Card>
 
           {/* Fee Alert if needed */}
-          <div className="bg-aubergine-50 dark:bg-aubergine-900/10 p-5 rounded-xl border border-aubergine-100 dark:border-aubergine-900/30 flex gap-4">
+          <div className="bg-aubergine-50 dark:bg-aubergine-900/10 p-5 rounded-sm border border-aubergine-100 dark:border-aubergine-900/30 flex gap-4">
             <AlertCircle className="h-6 w-6 text-aubergine-600 shrink-0" />
             <div>
               <h4 className="text-sm font-bold text-aubergine-900 dark:text-aubergine-400">Payment Due</h4>
@@ -302,26 +302,26 @@ export default function StudentDashboard() {
           </div>
 
           {/* Library Quick View */}
-          <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
-            <CardHeader className="pb-4 bg-slate-50 dark:bg-surface-raised/50 border-b border-slate-100 dark:border-surface-raised/50">
+          <Card className="border-border shadow-sm overflow-hidden">
+            <CardHeader className="pb-4 bg-muted/50 border-b border-border">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Library className="h-4 w-4 text-blue-500" /> New in Library
                 </CardTitle>
-                <Link to="/student/library" className="text-[10px] text-blue-600 font-bold uppercase tracking-widest hover:underline">Open</Link>
+                <Link to="/student/library" className="text-[11px] text-blue-600 font-bold uppercase tracking-widest hover:underline">Open</Link>
               </div>
             </CardHeader>
             <CardContent className="p-0">
               {libraryResources.length === 0 && (
-                <p className="p-4 text-xs text-slate-400">Nothing new yet — <Link to="/student/library" className="underline text-aubergine-600">browse the library</Link>.</p>
+                <p className="p-4 text-xs text-muted-foreground">Nothing new yet — <Link to="/student/library" className="underline text-aubergine-600">browse the library</Link>.</p>
               )}
               {libraryResources.map((res, idx) => (
-                <div key={idx} className="p-4 border-b last:border-0 border-slate-100 dark:border-surface-raised/50 flex items-center justify-between">
+                <div key={idx} className="p-4 border-b last:border-0 border-border flex items-center justify-between">
                   <div>
-                    <h5 className="text-xs font-bold text-slate-800 dark:text-white leading-tight">{sanitizeText(res.title)}</h5>
-                    <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-tighter font-bold">{sanitizeText(res.subject)}</p>
+                    <h5 className="text-xs font-bold text-foreground leading-tight">{sanitizeText(res.title)}</h5>
+                    <p className="text-[11px] text-muted-foreground mt-1 uppercase tracking-tighter font-bold">{sanitizeText(res.subject)}</p>
                   </div>
-                  <Badge variant="outline" className="text-[9px] h-5 border-slate-200 dark:border-surface-raised h-5 px-1 bg-white dark:bg-surface-raised">
+                  <Badge variant="outline" className="text-[11px] h-5 border-border h-5 px-1 bg-white dark:bg-surface-raised">
                     {sanitizeText(res.format)}
                   </Badge>
                 </div>

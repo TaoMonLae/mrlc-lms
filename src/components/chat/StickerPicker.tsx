@@ -35,22 +35,22 @@ export function StickerPicker({ onSelect }: { onSelect: (url: string) => void })
 
   return (
     <div className="relative" ref={ref}>
-      <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0" title="Stickers" onClick={() => setOpen((o) => !o)}>
-        <Smile className="h-4 w-4 text-slate-500" />
+      <Button aria-label="Stickers" type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0" title="Stickers" onClick={() => setOpen((o) => !o)}>
+        <Smile className="h-4 w-4 text-muted-foreground" />
       </Button>
       {open && (
-        <div className="absolute bottom-11 left-0 z-50 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-xl dark:border-surface-raised dark:bg-surface-indigo">
+        <div className="absolute bottom-11 left-0 z-50 w-56 rounded-sm border border-border bg-card p-2 shadow-none">
           {!loaded ? (
-            <p className="py-6 text-center text-xs text-slate-400">Loading…</p>
+            <p className="py-6 text-center text-xs text-muted-foreground">Loading…</p>
           ) : packs.length === 0 ? (
-            <p className="py-6 text-center text-xs text-slate-400">No stickers yet</p>
+            <p className="py-6 text-center text-xs text-muted-foreground">No stickers yet</p>
           ) : (
             <>
               {packs.length > 1 && (
-                <div className="mb-1 flex gap-1 overflow-x-auto border-b border-slate-100 pb-1 dark:border-surface-raised">
+                <div className="mb-1 flex gap-1 overflow-x-auto border-b border-border pb-1">
                   {packs.map((p, i) => (
                     <button key={p.name} type="button" onClick={() => setActive(i)}
-                      className={`shrink-0 rounded-md px-2 py-0.5 text-[10px] font-medium ${i === active ? 'bg-aubergine-100 text-aubergine-700' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-surface-raised/60'}`}>
+                      className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium ${i === active ? 'bg-aubergine-100 text-aubergine-700' : 'text-muted-foreground hover:bg-muted'}`}>
                       {p.name}
                     </button>
                   ))}
@@ -58,7 +58,7 @@ export function StickerPicker({ onSelect }: { onSelect: (url: string) => void })
               )}
               <div className="grid max-h-48 grid-cols-4 gap-1 overflow-y-auto">
                 {current?.stickers.map((url) => (
-                  <button key={url} type="button" onClick={() => { onSelect(url); setOpen(false); }} className="rounded-lg p-0.5 hover:bg-slate-100 dark:hover:bg-surface-raised/60">
+                  <button key={url} type="button" onClick={() => { onSelect(url); setOpen(false); }} className="rounded-lg p-0.5 hover:bg-muted">
                     <img src={url} alt="sticker" className="h-12 w-12 object-contain" loading="lazy" />
                   </button>
                 ))}

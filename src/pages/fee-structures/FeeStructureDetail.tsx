@@ -95,15 +95,15 @@ export default function FeeStructureDetail() {
   }
 
   if (!structure) {
-    return <div className="text-center py-8 text-slate-500">Fee structure not found</div>;
+    return <div className="text-center py-8 text-muted-foreground">Fee structure not found</div>;
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ACTIVE': return 'bg-green-100 text-green-800 border-green-200';
-      case 'DRAFT': return 'bg-slate-100 text-slate-800 border-slate-200';
+      case 'DRAFT': return 'bg-muted text-foreground border-border';
       case 'ARCHIVED': return 'bg-amber-100 text-amber-800 border-amber-200';
-      default: return 'bg-slate-100 text-slate-800 border-slate-200';
+      default: return 'bg-muted text-foreground border-border';
     }
   };
 
@@ -124,13 +124,13 @@ export default function FeeStructureDetail() {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" render={<Link to="/fee-structures" />} nativeButton={false}>
+          <Button aria-label="Back" variant="ghost" size="sm" render={<Link to="/fee-structures" />} nativeButton={false}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{structure.name}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">{structure.name}</h1>
             <div className="flex items-center gap-3 mt-1">
-              {structure.description && <p className="text-sm text-slate-500">{structure.description}</p>}
+              {structure.description && <p className="text-sm text-muted-foreground">{structure.description}</p>}
               <Badge className={getStatusColor(structure.status)} variant="outline">
                 {structure.status}
               </Badge>
@@ -179,29 +179,29 @@ export default function FeeStructureDetail() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Academic Year</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Academic Year</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-slate-400" />
+              <Calendar className="h-5 w-5 text-muted-foreground" />
               {structure.academicYear}
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Total Amount</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Amount</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-slate-400" />
+              <DollarSign className="h-5 w-5 text-muted-foreground" />
               {formatMoney(totalAmount, structure.currency || currency)}
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Fee Items</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Fee Items</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{structure.items?.length || 0}</div>
@@ -209,11 +209,11 @@ export default function FeeStructureDetail() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Assignments</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Assignments</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center gap-2">
-              <Users className="h-5 w-5 text-slate-400" />
+              <Users className="h-5 w-5 text-muted-foreground" />
               {structure.assignments?.length || 0}
             </div>
           </CardContent>
@@ -241,26 +241,26 @@ export default function FeeStructureDetail() {
             </CardHeader>
             <CardContent>
               {structure.items?.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">
+                <div className="text-center py-8 text-muted-foreground">
                   No fee items defined
                   {structure.status === 'ACTIVE' && ' (archive this structure first to add items)'}
                 </div>
               ) : (
                 <div className="space-y-3">
                   {structure.items.map((item: any) => (
-                    <div key={item.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                    <div key={item.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
-                          <div className="font-medium text-slate-900 dark:text-white">{item.name}</div>
+                          <div className="font-medium text-foreground">{item.name}</div>
                           {!item.isActive && (
                             <Badge variant="outline" className="text-xs">Inactive</Badge>
                           )}
                           <Badge variant="outline" className="text-xs">{getFrequencyLabel(item.frequency)}</Badge>
                         </div>
                         {item.description && (
-                          <div className="text-sm text-slate-500 mt-1">{item.description}</div>
+                          <div className="text-sm text-muted-foreground mt-1">{item.description}</div>
                         )}
-                        <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
+                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                           {item.applicableTo !== 'ALL' && (
                             <span>Applies to: {item.applicableTo}</span>
                           )}
@@ -276,7 +276,7 @@ export default function FeeStructureDetail() {
                           </div>
                         </div>
                         {canManage && structure.status !== 'ACTIVE' && (
-                          <Button
+                          <Button aria-label="Delete"
                             variant="ghost"
                             size="sm"
                             className="text-red-600"
@@ -310,18 +310,18 @@ export default function FeeStructureDetail() {
             </CardHeader>
             <CardContent>
               {structure.assignments?.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">
+                <div className="text-center py-8 text-muted-foreground">
                   No assignments yet. Add at least one fee item, activate this structure, then click "Assign Fees" above.
                 </div>
               ) : (
                 <div className="space-y-3">
                   {structure.assignments.map((assignment: any) => (
-                    <div key={assignment.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                    <div key={assignment.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                       <div className="flex-1">
-                        <div className="font-medium text-slate-900 dark:text-white">
+                        <div className="font-medium text-foreground">
                           {assignment.student?.preferredName || `${assignment.student?.user?.name || 'Student'}`}
                         </div>
-                        <div className="text-sm text-slate-500">
+                        <div className="text-sm text-muted-foreground">
                           {assignment.feeItem?.name} • Due: {new Date(assignment.dueDate).toLocaleDateString()}
                         </div>
                       </div>
@@ -355,17 +355,17 @@ export default function FeeStructureDetail() {
             </CardHeader>
             <CardContent>
               {structure.discounts?.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">No discounts configured</div>
+                <div className="text-center py-8 text-muted-foreground">No discounts configured</div>
               ) : (
                 <div className="space-y-3">
                   {structure.discounts.map((discount: any) => (
-                    <div key={discount.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                    <div key={discount.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                       <div className="flex-1">
-                        <div className="font-medium text-slate-900 dark:text-white">{discount.name}</div>
+                        <div className="font-medium text-foreground">{discount.name}</div>
                         {discount.description && (
-                          <div className="text-sm text-slate-500 mt-1">{discount.description}</div>
+                          <div className="text-sm text-muted-foreground mt-1">{discount.description}</div>
                         )}
-                        <div className="text-sm text-slate-500 mt-1">
+                        <div className="text-sm text-muted-foreground mt-1">
                           Valid: {new Date(discount.validFrom).toLocaleDateString()} - {discount.validTo ? new Date(discount.validTo).toLocaleDateString() : 'Ongoing'}
                         </div>
                       </div>
@@ -397,15 +397,15 @@ export default function FeeStructureDetail() {
             </CardHeader>
             <CardContent>
               {structure.paymentPlans?.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">No payment plans configured</div>
+                <div className="text-center py-8 text-muted-foreground">No payment plans configured</div>
               ) : (
                 <div className="space-y-3">
                   {structure.paymentPlans.map((plan: any) => (
-                    <div key={plan.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                    <div key={plan.id} className="p-4 bg-muted/50 rounded-lg">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <div className="font-medium text-slate-900 dark:text-white">{plan.name}</div>
-                          <div className="text-sm text-slate-500 mt-1">
+                          <div className="font-medium text-foreground">{plan.name}</div>
+                          <div className="text-sm text-muted-foreground mt-1">
                             {plan.student?.preferredName || 'Student'} • {plan.numberOfInstallments} installments
                           </div>
                         </div>

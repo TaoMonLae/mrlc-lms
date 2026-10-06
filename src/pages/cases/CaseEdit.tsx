@@ -77,17 +77,17 @@ export default function CaseEdit() {
   return (
     <div className="space-y-6 max-w-3xl mx-auto pb-10">
       <div>
-        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to={`/cases/${id}`} />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to={`/cases/${id}`} />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Case
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Edit Case</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Update case details and status.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Edit Case</h1>
+        <p className="text-sm text-muted-foreground mt-1">Update case details and status.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {selectedType === 'PROTECTION' && (
-           <div className="bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 p-4 rounded-xl border border-red-200 dark:border-red-900 flex items-start gap-3">
+           <div className="bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 p-4 rounded-sm border border-red-200 dark:border-red-900 flex items-start gap-3">
              <ShieldAlert className="h-5 w-5 mt-0.5 shrink-0" />
              <div>
                <h3 className="font-semibold">Protection Case Guidelines</h3>
@@ -96,7 +96,7 @@ export default function CaseEdit() {
            </div>
         )}
 
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm p-6 space-y-6">
+        <div className="bg-card border border-border rounded-sm overflow-hidden shadow-sm p-6 space-y-6">
            
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -107,7 +107,7 @@ export default function CaseEdit() {
                      <div 
                         key={s}
                         onClick={() => setValue('status', s as any)}
-                        className={`border rounded-lg p-3 flex items-center justify-center cursor-pointer text-sm font-medium transition-colors ${selectedStatus === s ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-surface-indigo dark:border-surface-raised dark:text-slate-300 dark:hover:bg-surface-raised'}`}
+                        className={`border rounded-lg p-3 flex items-center justify-center cursor-pointer text-sm font-medium transition-colors ${selectedStatus === s ? 'bg-slate-900 text-white border-foreground dark:bg-slate-100 dark:text-slate-900' : 'bg-card text-muted-foreground border-border hover:bg-muted/50'}`}
                      >
                        {s.replace('_', ' ')}
                      </div>

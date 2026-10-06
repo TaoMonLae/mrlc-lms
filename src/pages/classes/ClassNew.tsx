@@ -85,16 +85,16 @@ export default function ClassNew() {
   return (
     <div className="space-y-6 max-w-[800px] mx-auto pb-10">
       <div>
-        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/classes" />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/classes" />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Classes
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Create New Class</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Define a new academic class, its level, and year.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Create New Class</h1>
+        <p className="text-sm text-muted-foreground mt-1">Define a new academic class, its level, and year.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
+        <div className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Class Name</Label>
             <Input id="name" {...register('name')} placeholder="e.g. GED Prep Morning" />
@@ -150,7 +150,7 @@ export default function ClassNew() {
             {errors.status && <p className="text-xs text-red-500 font-medium">{errors.status.message}</p>}
           </div>
 
-          <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-surface-raised">
+          <div className="space-y-2 pt-2 border-t border-border">
             <Label className="flex items-center gap-2"><Users className="h-4 w-4 text-aubergine-600" /> Assigned Teachers</Label>
             <TeacherAssignSelect value={teacherIds} onChange={setTeacherIds} />
           </div>

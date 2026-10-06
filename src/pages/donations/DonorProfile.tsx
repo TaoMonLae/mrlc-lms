@@ -161,7 +161,7 @@ export default function DonorProfile() {
       case "CANCELLED":
         return "bg-red-100 text-red-800";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-foreground";
     }
   };
 
@@ -180,7 +180,7 @@ export default function DonorProfile() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground"></div>
       </div>
     );
   }
@@ -207,7 +207,7 @@ export default function DonorProfile() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold">{donor.name}</h1>
-            <p className="text-gray-500">{donor.donorCode}</p>
+            <p className="text-muted-foreground">{donor.donorCode}</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -247,7 +247,7 @@ export default function DonorProfile() {
             <div className="text-2xl font-bold text-green-600">
               RM{donor.statistics.totalDonated.toLocaleString()}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               All time
             </p>
           </CardContent>
@@ -261,7 +261,7 @@ export default function DonorProfile() {
             <div className="text-2xl font-bold">
               {donor.statistics.donationCount}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Total donations
             </p>
           </CardContent>
@@ -275,7 +275,7 @@ export default function DonorProfile() {
             <div className="text-2xl font-bold">
               RM{donor.statistics.averageDonation.toLocaleString()}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Per donation
             </p>
           </CardContent>
@@ -291,7 +291,7 @@ export default function DonorProfile() {
                 ? new Date(donor.statistics.lastDonationDate).toLocaleDateString()
                 : "Never"}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Most recent activity
             </p>
           </CardContent>
@@ -313,25 +313,25 @@ export default function DonorProfile() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <Mail className="w-5 h-5 text-gray-400 mt-1" />
+                  <Mail className="w-5 h-5 text-muted-foreground mt-1" />
                   <div>
-                    <p className="text-sm text-gray-500">Email</p>
+                    <p className="text-sm text-muted-foreground">Email</p>
                     <p className="font-medium">{donor.email || "Not provided"}</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <Phone className="w-5 h-5 text-gray-400 mt-1" />
+                  <Phone className="w-5 h-5 text-muted-foreground mt-1" />
                   <div>
-                    <p className="text-sm text-gray-500">Phone</p>
+                    <p className="text-sm text-muted-foreground">Phone</p>
                     <p className="font-medium">{donor.phone || "Not provided"}</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-gray-400 mt-1" />
+                  <MapPin className="w-5 h-5 text-muted-foreground mt-1" />
                   <div>
-                    <p className="text-sm text-gray-500">Address</p>
+                    <p className="text-sm text-muted-foreground">Address</p>
                     <p className="font-medium">
                       {donor.address && donor.city && donor.state
                         ? `${donor.address}, ${donor.city}, ${donor.state}`
@@ -341,9 +341,9 @@ export default function DonorProfile() {
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <User className="w-5 h-5 text-gray-400 mt-1" />
+                  <User className="w-5 h-5 text-muted-foreground mt-1" />
                   <div>
-                    <p className="text-sm text-gray-500">Preferred Contact</p>
+                    <p className="text-sm text-muted-foreground">Preferred Contact</p>
                     <p className="font-medium">{donor.preferredContact || "Not specified"}</p>
                   </div>
                 </div>
@@ -357,7 +357,7 @@ export default function DonorProfile() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <p className="text-sm text-gray-500">Type</p>
+                  <p className="text-sm text-muted-foreground">Type</p>
                   <Badge variant="outline" className="mt-1">
                     {donor.donorType}
                   </Badge>
@@ -365,9 +365,9 @@ export default function DonorProfile() {
 
                 {donor.organization && (
                   <div className="flex items-start gap-3">
-                    <Building2 className="w-5 h-5 text-gray-400 mt-1" />
+                    <Building2 className="w-5 h-5 text-muted-foreground mt-1" />
                     <div>
-                      <p className="text-sm text-gray-500">Organization</p>
+                      <p className="text-sm text-muted-foreground">Organization</p>
                       <p className="font-medium">{donor.organization}</p>
                     </div>
                   </div>
@@ -375,20 +375,20 @@ export default function DonorProfile() {
 
                 {donor.category && (
                   <div>
-                    <p className="text-sm text-gray-500">Category</p>
+                    <p className="text-sm text-muted-foreground">Category</p>
                     <p className="font-medium">{donor.category}</p>
                   </div>
                 )}
 
                 {donor.taxId && (
                   <div>
-                    <p className="text-sm text-gray-500">Tax ID</p>
+                    <p className="text-sm text-muted-foreground">Tax ID</p>
                     <p className="font-medium">{donor.taxId}</p>
                   </div>
                 )}
 
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
                   <p className="text-sm">
                     Donor since {new Date(donor.createdAt).toLocaleDateString()}
                   </p>
@@ -396,7 +396,7 @@ export default function DonorProfile() {
 
                 {donor.tags && donor.tags.length > 0 && (
                   <div>
-                    <p className="text-sm text-gray-500 mb-2">Tags</p>
+                    <p className="text-sm text-muted-foreground mb-2">Tags</p>
                     <div className="flex flex-wrap gap-2">
                       {donor.tags.map((tag, index) => (
                         <Badge key={index} variant="secondary">
@@ -409,7 +409,7 @@ export default function DonorProfile() {
 
                 {donor.notes && (
                   <div>
-                    <p className="text-sm text-gray-500">Notes</p>
+                    <p className="text-sm text-muted-foreground">Notes</p>
                     <p className="text-sm mt-1">{donor.notes}</p>
                   </div>
                 )}
@@ -471,7 +471,7 @@ export default function DonorProfile() {
           {donor.donations.length === 0 && (
             <Card>
               <CardContent className="py-12 text-center">
-                <p className="text-gray-500">No donations recorded yet</p>
+                <p className="text-muted-foreground">No donations recorded yet</p>
                 {hasPermission("manage_donations") && (
                   <Button onClick={handleCreateDonation} className="mt-4">
                     Record First Donation

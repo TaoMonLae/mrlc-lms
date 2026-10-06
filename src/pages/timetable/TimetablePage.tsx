@@ -176,7 +176,7 @@ export default function TimetablePage() {
     <div className="mx-auto max-w-[1600px] space-y-5 pb-12 print:max-w-none print:bg-white">
       <header className="flex flex-col gap-5 border-b border-foreground pb-5 lg:flex-row lg:items-end lg:justify-between print:hidden">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-academic-teal">Academics / Weekly field plan</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-academic-teal">Academics / Weekly field plan</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">Timetable control desk</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
             Read teaching load, room use, substitutions, and school exceptions on one ruled weekly canvas.
@@ -195,16 +195,16 @@ export default function TimetablePage() {
       </header>
 
       <div className="hidden print:block">
-        <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-slate-600">MRLC / Weekly timetable evidence</p>
+        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">MRLC / Weekly timetable evidence</p>
         <h1 className="mt-1 text-xl font-semibold">{formatTimetableRange(weekDates[0], weekDates[6])}</h1>
-        <p className="mt-1 text-xs text-slate-600">{academicYear || 'All academic years'} · {term || 'All terms'}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{academicYear || 'All academic years'} · {term || 'All terms'}</p>
       </div>
 
       <section className="border border-foreground bg-card print:hidden" aria-label="Timetable controls">
         {!isTeacher && !isStudent && (
           <div className="grid border-b border-foreground sm:grid-cols-[180px_1fr]">
             <div className="flex items-center border-b border-foreground bg-academic-navy-deep px-4 py-3 text-white sm:border-b-0 sm:border-r">
-              <p className="font-mono text-[10px] uppercase tracking-[0.13em] text-[#6dd4cb]">Arrange the week by</p>
+              <p className="font-mono text-[11px] uppercase tracking-[0.13em] text-[#6dd4cb]">Arrange the week by</p>
             </div>
             <div className="grid grid-cols-3">
               {(['class', 'teacher', 'room'] as const).map((mode) => (
@@ -268,27 +268,27 @@ export default function TimetablePage() {
         <div className="hidden overflow-x-auto lg:block print:block" tabIndex={0} role="region" aria-label="Weekly timetable grid">
           <div className="min-w-[1120px] print:min-w-0">
             <div className="grid grid-cols-[70px_repeat(7,minmax(0,1fr))] border-b border-foreground bg-muted/35">
-              <div className="flex items-end border-r border-foreground px-3 py-3 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Time</div>
+              <div className="flex items-end border-r border-foreground px-3 py-3 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground">Time</div>
               {TIMETABLE_DAYS.map((day, index) => {
                 const isToday = isSameLocalDate(weekDates[index], new Date());
                 return (
                   <div key={day} className={`border-r border-border px-3 py-3 last:border-r-0 ${isToday ? 'bg-academic-gold/22' : ''}`}>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{day.slice(0, 3)}</span>
+                      <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">{day.slice(0, 3)}</span>
                       <span className={`font-mono text-sm font-semibold tabular-nums ${isToday ? 'text-academic-gold-foreground' : ''}`}>{formatTimetableDay(weekDates[index])}</span>
                     </div>
-                    <p className="mt-2 text-[10px] text-muted-foreground">{weekEntries[index].length} item{weekEntries[index].length === 1 ? '' : 's'}</p>
+                    <p className="mt-2 text-[11px] text-muted-foreground">{weekEntries[index].length} item{weekEntries[index].length === 1 ? '' : 's'}</p>
                   </div>
                 );
               })}
             </div>
 
             {loading ? (
-              <div className="grid min-h-96 place-items-center"><div className="text-center"><RefreshCw className="mx-auto h-5 w-5 animate-spin text-academic-teal" /><p className="mt-3 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Reading timetable ledger</p></div></div>
+              <div className="grid min-h-96 place-items-center"><div className="text-center"><RefreshCw className="mx-auto h-5 w-5 animate-spin text-academic-teal" /><p className="mt-3 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground">Reading timetable ledger</p></div></div>
             ) : allVisible.length === 0 ? <EmptyWeek canManage={canManage} /> : (
               <div className="grid grid-cols-[70px_repeat(7,minmax(0,1fr))]">
                 <div className="relative border-r border-foreground" style={{ height: gridHeight }}>
-                  {hours.map((hour) => <div key={hour} className="absolute right-3 -translate-y-1/2 font-mono text-[10px] tabular-nums text-muted-foreground" style={{ top: (hour - minHour) * 60 * PX_PER_MINUTE }}>{String(hour).padStart(2, '0')}:00</div>)}
+                  {hours.map((hour) => <div key={hour} className="absolute right-3 -translate-y-1/2 font-mono text-[11px] tabular-nums text-muted-foreground" style={{ top: (hour - minHour) * 60 * PX_PER_MINUTE }}>{String(hour).padStart(2, '0')}:00</div>)}
                 </div>
                 {TIMETABLE_DAYS.map((day, index) => {
                   const isToday = isSameLocalDate(weekDates[index], new Date());
@@ -318,7 +318,7 @@ export default function TimetablePage() {
             return (
               <section key={day} className="border-b border-foreground last:border-b-0">
                 <header className={`flex items-center justify-between px-4 py-3 ${isToday ? 'bg-academic-gold/22' : 'bg-muted/35'}`}>
-                  <div><p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{day}</p><p className="mt-0.5 text-sm font-semibold">{formatTimetableDay(weekDates[index])}</p></div>
+                  <div><p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">{day}</p><p className="mt-0.5 text-sm font-semibold">{formatTimetableDay(weekDates[index])}</p></div>
                   <span className="font-mono text-xs text-muted-foreground">{entries.length} scheduled</span>
                 </header>
                 <div className="divide-y divide-border">{entries.map((entry) => <ScheduleBlock key={entry.id} entry={entry} viewType={viewType} canManage={canManage} mobile onDelete={setDeleteTarget} />)}</div>
@@ -337,7 +337,7 @@ export default function TimetablePage() {
       <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && !deleting && setDeleteTarget(null)}>
         <DialogContent className="rounded-none border-foreground" showCloseButton={!deleting}>
           <DialogHeader>
-            <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-academic-coral">Permanent timetable change</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-academic-coral">Permanent timetable change</p>
             <DialogTitle>Delete this schedule item?</DialogTitle>
             <DialogDescription>{deleteTarget ? `${timetableEntryTitle(deleteTarget)} · ${deleteTarget.dayOfWeek} ${deleteTarget.startTime}–${deleteTarget.endTime}` : ''}</DialogDescription>
           </DialogHeader>
@@ -352,15 +352,15 @@ export default function TimetablePage() {
 }
 
 function FilterInput({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (value: string) => void; placeholder: string }) {
-  return <label className="block bg-card p-3"><span className="font-mono text-[9px] uppercase tracking-[0.11em] text-muted-foreground">{label}</span><Input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="mt-1 h-8 rounded-none border-0 border-b border-input bg-transparent px-0 shadow-none focus-visible:border-academic-teal focus-visible:ring-0" /></label>;
+  return <label className="block bg-card p-3"><span className="font-mono text-[11px] uppercase tracking-[0.11em] text-muted-foreground">{label}</span><Input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="mt-1 h-8 rounded-none border-0 border-b border-input bg-transparent px-0 shadow-none focus-visible:border-academic-teal focus-visible:ring-0" /></label>;
 }
 
 function FilterSelect({ label, value, onValueChange, options, allLabel }: { label: string; value: string; onValueChange: (value: string) => void; options: { value: string; label: string }[]; allLabel: string }) {
-  return <div className="bg-card p-3"><p className="font-mono text-[9px] uppercase tracking-[0.11em] text-muted-foreground">{label}</p><Select value={value} onValueChange={onValueChange}><SelectTrigger className="mt-1 h-8 w-full rounded-none border-0 border-b border-input px-0 shadow-none focus-visible:ring-0"><SelectValue /></SelectTrigger><SelectContent className="rounded-none"><SelectItem value="all">{allLabel}</SelectItem>{options.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>;
+  return <div className="bg-card p-3"><p className="font-mono text-[11px] uppercase tracking-[0.11em] text-muted-foreground">{label}</p><Select value={value} onValueChange={onValueChange}><SelectTrigger className="mt-1 h-8 w-full rounded-none border-0 border-b border-input px-0 shadow-none focus-visible:ring-0"><SelectValue /></SelectTrigger><SelectContent className="rounded-none"><SelectItem value="all">{allLabel}</SelectItem>{options.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>;
 }
 
 function WeekMeasure({ label, value, note, attention = false }: { label: string; value: string; note: string; attention?: boolean }) {
-  return <div className="border-b border-border px-4 py-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"><p className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">{label}</p><p className={`mt-2 font-mono text-2xl font-semibold tabular-nums ${attention ? 'text-academic-coral' : 'text-foreground'}`}>{value}</p><p className="mt-1 text-[11px] text-muted-foreground">{note}</p></div>;
+  return <div className="border-b border-border px-4 py-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"><p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">{label}</p><p className={`mt-2 font-mono text-2xl font-semibold tabular-nums ${attention ? 'text-academic-coral' : 'text-foreground'}`}>{value}</p><p className="mt-1 text-[11px] text-muted-foreground">{note}</p></div>;
 }
 
 function EmptyWeek({ canManage }: { canManage: boolean }) {
@@ -372,9 +372,9 @@ function ScheduleBlock({ entry, viewType, canManage, onDelete, mobile = false, c
   const DetailIcon = viewType === 'teacher' ? BookOpen : User;
   const cancelled = entry.status === 'CANCELLED';
   if (mobile) {
-    return <article className={`grid grid-cols-[74px_minmax(0,1fr)_auto] border-l-4 px-4 py-4 ${eventTone(entry)}`}><div><p className="font-mono text-xs font-semibold tabular-nums">{entry.startTime}</p><p className="mt-1 font-mono text-[10px] text-muted-foreground">{entry.endTime}</p></div><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className="font-mono text-[9px] uppercase tracking-[0.1em] text-academic-teal">{scheduleTypeLabel(entry)}</span>{entry.status && entry.status !== 'ACTIVE' && <span className={cancelled ? 'text-academic-coral' : 'text-academic-gold-foreground'}>· {entry.status}</span>}</div><h3 className={`mt-1 truncate text-sm font-semibold ${cancelled ? 'line-through opacity-70' : ''}`}>{timetableEntryTitle(entry)}</h3><p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground"><span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{entry.room || 'No room'}</span><span className="inline-flex items-center gap-1"><DetailIcon className="h-3.5 w-3.5" />{counterpart}</span></p></div>{canManage && <ScheduleMenu entry={entry} onDelete={onDelete} />}</article>;
+    return <article className={`grid grid-cols-[74px_minmax(0,1fr)_auto] border-l-4 px-4 py-4 ${eventTone(entry)}`}><div><p className="font-mono text-xs font-semibold tabular-nums">{entry.startTime}</p><p className="mt-1 font-mono text-[11px] text-muted-foreground">{entry.endTime}</p></div><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className="font-mono text-[11px] uppercase tracking-[0.1em] text-academic-teal">{scheduleTypeLabel(entry)}</span>{entry.status && entry.status !== 'ACTIVE' && <span className={cancelled ? 'text-academic-coral' : 'text-academic-gold-foreground'}>· {entry.status}</span>}</div><h3 className={`mt-1 truncate text-sm font-semibold ${cancelled ? 'line-through opacity-70' : ''}`}>{timetableEntryTitle(entry)}</h3><p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground"><span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{entry.room || 'No room'}</span><span className="inline-flex items-center gap-1"><DetailIcon className="h-3.5 w-3.5" />{counterpart}</span></p></div>{canManage && <ScheduleMenu entry={entry} onDelete={onDelete} />}</article>;
   }
-  return <article className={`group relative h-full overflow-hidden border-l-[3px] border-y border-r px-2 py-1.5 transition-colors hover:bg-accent/45 ${eventTone(entry)}`}><div className="flex items-start justify-between gap-1"><p className="font-mono text-[9px] font-semibold uppercase tracking-[0.06em] tabular-nums text-muted-foreground">{entry.startTime}–{entry.endTime}</p>{canManage && !compact && <ScheduleMenu entry={entry} onDelete={onDelete} compact />}</div><h3 className={`truncate font-semibold leading-tight ${compact ? 'mt-0.5 text-[11px]' : 'mt-1 text-xs'} ${cancelled ? 'line-through opacity-65' : ''}`}>{timetableEntryTitle(entry)}</h3>{!compact && <div className="mt-1.5 space-y-1 text-[10px] leading-tight text-muted-foreground"><p className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3 shrink-0" />{entry.room || 'No room'}</p><p className="flex items-center gap-1 truncate"><DetailIcon className="h-3 w-3 shrink-0" />{counterpart}</p><p className="truncate font-mono text-[8px] uppercase tracking-[0.08em] text-academic-teal">{scheduleTypeLabel(entry)}{entry.status && entry.status !== 'ACTIVE' ? ` · ${entry.status}` : ''}</p></div>}</article>;
+  return <article className={`group relative h-full overflow-hidden border-l-[3px] border-y border-r px-2 py-1.5 transition-colors hover:bg-accent/45 ${eventTone(entry)}`}><div className="flex items-start justify-between gap-1"><p className="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] tabular-nums text-muted-foreground">{entry.startTime}–{entry.endTime}</p>{canManage && !compact && <ScheduleMenu entry={entry} onDelete={onDelete} compact />}</div><h3 className={`truncate font-semibold leading-tight ${compact ? 'mt-0.5 text-[11px]' : 'mt-1 text-xs'} ${cancelled ? 'line-through opacity-65' : ''}`}>{timetableEntryTitle(entry)}</h3>{!compact && <div className="mt-1.5 space-y-1 text-[11px] leading-tight text-muted-foreground"><p className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3 shrink-0" />{entry.room || 'No room'}</p><p className="flex items-center gap-1 truncate"><DetailIcon className="h-3 w-3 shrink-0" />{counterpart}</p><p className="truncate font-mono text-[11px] uppercase tracking-[0.08em] text-academic-teal">{scheduleTypeLabel(entry)}{entry.status && entry.status !== 'ACTIVE' ? ` · ${entry.status}` : ''}</p></div>}</article>;
 }
 
 function ScheduleMenu({ entry, onDelete, compact = false }: { entry: TimetableEntry; onDelete: (entry: TimetableEntry) => void; compact?: boolean }) {

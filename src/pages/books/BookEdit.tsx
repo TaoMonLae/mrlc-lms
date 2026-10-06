@@ -70,7 +70,7 @@ export default function BookEdit() {
 
   if (loading || !initial) {
     return (
-      <div className="flex items-center justify-center py-20 text-sm text-slate-500">Loading book…</div>
+      <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">Loading book…</div>
     );
   }
 
@@ -80,15 +80,15 @@ export default function BookEdit() {
         <Button
           variant="ghost"
           size="sm"
-          className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white"
+          className="-ml-3 mb-2 text-muted-foreground hover:text-foreground"
           render={<Link to={`/books/${id}`} />}
           nativeButton={false}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Edit Book</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Update this book's catalog details.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Edit Book</h1>
+        <p className="text-sm text-muted-foreground mt-1">Update this book's catalog details.</p>
       </div>
 
       <BookForm initial={initial} submitting={submitting} submitLabel="Save Changes" onSubmit={handleSubmit} onCancel={() => navigate(`/books/${id}`)} />

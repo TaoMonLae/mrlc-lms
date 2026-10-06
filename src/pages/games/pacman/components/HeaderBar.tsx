@@ -117,7 +117,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = React.memo(({
         </button>
 
         {/* High Scores Button */}
-        <button
+        <button aria-label="Leaderboard & Stats"
           onClick={onOpenLeaderboard}
           className="min-h-10 min-w-10 p-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/60 text-yellow-400 transition cursor-pointer"
           title="Leaderboard & Stats"
@@ -126,7 +126,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = React.memo(({
         </button>
 
         {/* How To Play */}
-        <button
+        <button aria-label="How to Play"
           onClick={onOpenHowToPlay}
           className="min-h-10 min-w-10 p-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/60 text-cyan-400 transition cursor-pointer"
           title="How to Play"
@@ -151,7 +151,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = React.memo(({
         )}
 
         {/* Settings Button */}
-        <button
+        <button aria-label="Game Settings"
           onClick={onOpenSettings}
           className="min-h-10 min-w-10 p-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/60 text-slate-300 hover:text-white transition cursor-pointer"
           title="Game Settings"

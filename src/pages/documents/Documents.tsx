@@ -29,7 +29,7 @@ type Doc = {
 };
 
 const statusStyle = (s: string) =>
-  s === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : s === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-slate-200 text-slate-600';
+  s === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : s === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-muted text-muted-foreground';
 
 export default function DocumentsPage() {
   const { isAdmin, user } = usePermissions();
@@ -170,15 +170,15 @@ export default function DocumentsPage() {
   return (
     <div className="space-y-6 max-w-[1500px] mx-auto">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
           <FileBadge className="h-6 w-6 text-aubergine-600" /> Official Documents
         </h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Generate verifiable student cards, report cards, transcripts and certificates.</p>
+        <p className="text-sm text-muted-foreground mt-1">Generate verifiable student cards, report cards, transcripts and certificates.</p>
       </div>
 
       {/* Generate */}
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-5">
-        <h3 className="font-semibold text-slate-900 dark:text-white mb-3 text-sm">Generate a Document</h3>
+      <div className="bg-card border border-border rounded-sm shadow-sm p-5">
+        <h3 className="font-semibold text-foreground mb-3 text-sm">Generate a Document</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
           <div className="space-y-1.5">
             <Label>Student</Label>
@@ -204,7 +204,7 @@ export default function DocumentsPage() {
           </div>
           <div className="space-y-1.5">
             <Label>Term / Period (optional)</Label>
-            <input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="e.g. Term 1 2026" className="h-9 w-full rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo px-3 text-sm" />
+            <input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="e.g. Term 1 2026" className="h-9 w-full rounded-md border border-border bg-card px-3 text-sm" />
           </div>
           <Button onClick={generate} disabled={generating} className="bg-primary text-primary-foreground">
             {generating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />} Generate
@@ -213,12 +213,12 @@ export default function DocumentsPage() {
       </div>
 
       {/* Bulk generate for a class */}
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-5">
+      <div className="bg-card border border-border rounded-sm shadow-sm p-5">
         <div className="flex items-center gap-2 mb-1">
           <Layers className="h-4 w-4 text-aubergine-600" />
-          <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Bulk generate for a class</h3>
+          <h3 className="font-semibold text-foreground text-sm">Bulk generate for a class</h3>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+        <p className="text-xs text-muted-foreground mb-3">
           Issue one document type for every active student in a class at once{isAdmin ? '' : ' — you can only pick classes you teach'}.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
@@ -231,7 +231,7 @@ export default function DocumentsPage() {
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {eligibleClasses.length === 0 && <div className="px-3 py-2 text-xs text-slate-400">No classes available</div>}
+                {eligibleClasses.length === 0 && <div className="px-3 py-2 text-xs text-muted-foreground">No classes available</div>}
                 {eligibleClasses.map((c) => (
                   <SelectItem key={c.id} value={c.id}>{c.name} · {c.studentCount} student{c.studentCount === 1 ? '' : 's'}</SelectItem>
                 ))}
@@ -249,7 +249,7 @@ export default function DocumentsPage() {
           </div>
           <div className="space-y-1.5">
             <Label>Term / Period (optional)</Label>
-            <input value={bulkTerm} onChange={(e) => setBulkTerm(e.target.value)} placeholder="e.g. Term 1 2026" className="h-9 w-full rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo px-3 text-sm" />
+            <input value={bulkTerm} onChange={(e) => setBulkTerm(e.target.value)} placeholder="e.g. Term 1 2026" className="h-9 w-full rounded-md border border-border bg-card px-3 text-sm" />
           </div>
           <Button onClick={generateBulk} disabled={bulkGenerating || !bulkClassId} className="bg-primary text-primary-foreground">
             {bulkGenerating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Layers className="h-4 w-4 mr-1" />}
@@ -259,9 +259,9 @@ export default function DocumentsPage() {
       </div>
 
       {/* List */}
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-surface-raised">
-          <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Issued Documents</h3>
+      <div className="bg-card border border-border rounded-sm shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h3 className="font-semibold text-foreground text-sm">Issued Documents</h3>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="w-[200px] h-9"><SelectValue>{typeFilter === 'all' ? 'All Types' : TYPE_LABELS[typeFilter]}</SelectValue></SelectTrigger>
             <SelectContent>
@@ -272,7 +272,7 @@ export default function DocumentsPage() {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 uppercase tracking-wider font-semibold text-[11px]">
+            <thead className="bg-muted/50 text-muted-foreground uppercase tracking-wider font-semibold text-[11px]">
               <tr>
                 <th className="px-6 py-3">Document No.</th>
                 <th className="px-4 py-3">Type</th>
@@ -283,17 +283,17 @@ export default function DocumentsPage() {
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {loading && <tr><td colSpan={7} className="px-6 py-8 text-center text-slate-500">Loading…</td></tr>}
-              {!loading && docs.length === 0 && <tr><td colSpan={7} className="px-6 py-8 text-center text-slate-500">No documents generated yet.</td></tr>}
+            <tbody className="divide-y divide-border">
+              {loading && <tr><td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">Loading…</td></tr>}
+              {!loading && docs.length === 0 && <tr><td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">No documents generated yet.</td></tr>}
               {!loading && docs.map((d) => (
-                <tr key={d.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                  <td className="px-6 py-3 font-mono text-xs font-semibold text-slate-900 dark:text-white">{d.documentNumber}</td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{TYPE_LABELS[d.type] || d.type}</td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{d.studentName} <span className="text-xs text-slate-400 font-mono">{d.studentCode}</span></td>
-                  <td className="px-4 py-3 text-slate-500">{new Date(d.issueDate).toLocaleDateString()}</td>
+                <tr key={d.id} className="hover:bg-muted/50">
+                  <td className="px-6 py-3 font-mono text-xs font-semibold text-foreground">{d.documentNumber}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{TYPE_LABELS[d.type] || d.type}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{d.studentName} <span className="text-xs text-muted-foreground font-mono">{d.studentCode}</span></td>
+                  <td className="px-4 py-3 text-muted-foreground">{new Date(d.issueDate).toLocaleDateString()}</td>
                   <td className="px-4 py-3 text-center"><Badge className={`${statusStyle(d.status)} border-0`}>{d.status}</Badge></td>
-                  <td className="px-4 py-3 text-center text-slate-500">{d.downloadCount}</td>
+                  <td className="px-4 py-3 text-center text-muted-foreground">{d.downloadCount}</td>
                   <td className="px-4 py-3 text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="h-8">Actions</Button>} nativeButton={true} />

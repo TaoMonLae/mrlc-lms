@@ -114,11 +114,11 @@ export function TeacherCsvImport({ onImported }: { onImported?: () => void }) {
 
         <div className="space-y-4">
           {/* Step 1: template */}
-          <div className="flex items-start gap-3 rounded-lg border border-slate-200 dark:border-surface-raised bg-slate-50 dark:bg-surface-raised/40 p-3">
+          <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/50 p-3">
             <FileSpreadsheet className="h-5 w-5 shrink-0 text-aubergine-600 mt-0.5" />
             <div className="text-sm">
-              <p className="font-medium text-slate-900 dark:text-white">Step 1 — Get the template</p>
-              <p className="text-slate-500 dark:text-slate-400">
+              <p className="font-medium text-foreground">Step 1 — Get the template</p>
+              <p className="text-muted-foreground">
                 Required columns: <code className="text-xs">firstName</code>, <code className="text-xs">lastName</code>, <code className="text-xs">email</code>. Optional: password (min 6 chars), employmentType (FULL_TIME, PART_TIME, or VOLUNTEER; defaults to FULL_TIME), subjects, phone, joinedDate, baseSalary, teacherCode, and notes.
               </p>
               <Button onClick={downloadTeacherTemplate} variant="ghost" size="sm" className="mt-1 -ml-2 text-aubergine-600">
@@ -128,11 +128,11 @@ export function TeacherCsvImport({ onImported }: { onImported?: () => void }) {
           </div>
 
           {/* Step 2: upload */}
-          <div className="rounded-lg border border-slate-200 dark:border-surface-raised p-3">
-            <p className="mb-2 text-sm font-medium text-slate-900 dark:text-white">Step 2 — Upload your filled-in file</p>
+          <div className="rounded-lg border border-border p-3">
+            <p className="mb-2 text-sm font-medium text-foreground">Step 2 — Upload your filled-in file</p>
             <input type="file" accept=".csv" onChange={handleFileChange} className="text-sm" />
             {file && rows.length > 0 && (
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-muted-foreground">
                 Parsed {rows.length} row{rows.length === 1 ? '' : 's'} · {validCount} ready{clientErrors.length ? ` · ${clientErrors.length} need fixing` : ''}.
               </p>
             )}

@@ -28,7 +28,7 @@ const STATUS_STYLES: Record<string, string> = {
   ACTIVE: 'bg-emerald-100 text-emerald-700',
   ON_LEAVE: 'bg-amber-100 text-amber-700',
   SUSPENDED: 'bg-orange-100 text-orange-700',
-  TERMINATED: 'bg-slate-200 text-slate-600',
+  TERMINATED: 'bg-muted text-muted-foreground',
 };
 
 const emptyForm = {
@@ -126,10 +126,10 @@ export default function StaffDirectory() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-indigo-100 p-2 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400"><Briefcase className="h-5 w-5" /></div>
+          <div className="rounded-lg bg-lavender p-2 text-accent-purple"><Briefcase className="h-5 w-5" /></div>
           <div>
-            <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Staff</h1>
-            <p className="text-sm text-slate-500">{employees.length} employees</p>
+            <h1 className="text-xl font-semibold text-foreground">Staff</h1>
+            <p className="text-sm text-muted-foreground">{employees.length} employees</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -200,7 +200,7 @@ export default function StaffDirectory() {
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input className="pl-8" placeholder="Search name, code, email…" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -219,9 +219,9 @@ export default function StaffDirectory() {
         </Select>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-slate-200">
+      <div className="overflow-hidden rounded-lg border border-border">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+          <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
             <tr>
               <th className="px-4 py-2">Code</th>
               <th className="px-4 py-2">Name</th>
@@ -232,32 +232,32 @@ export default function StaffDirectory() {
               <th className="px-4 py-2 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border">
             {loading ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">Loading…</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Loading…</td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">No employees found</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No employees found</td></tr>
             ) : filtered.map((e) => (
-              <tr key={e.id} className="hover:bg-slate-50">
-                <td className="px-4 py-2 font-mono text-xs text-slate-500">{e.employeeCode}</td>
+              <tr key={e.id} className="hover:bg-muted/50">
+                <td className="px-4 py-2 font-mono text-xs text-muted-foreground">{e.employeeCode}</td>
                 <td className="px-4 py-2">
-                  <Link to={`/staff/${e.id}`} className="font-medium text-indigo-600 hover:underline">
+                  <Link to={`/staff/${e.id}`} className="font-medium text-accent-purple hover:underline">
                     {e.firstName} {e.lastName}
                   </Link>
-                  {e.email && <div className="text-xs text-slate-400">{e.email}</div>}
+                  {e.email && <div className="text-xs text-muted-foreground">{e.email}</div>}
                 </td>
-                <td className="px-4 py-2 text-slate-600">{e.department?.name ?? '—'}</td>
-                <td className="px-4 py-2 text-slate-600">{e.designation?.title ?? '—'}</td>
+                <td className="px-4 py-2 text-muted-foreground">{e.department?.name ?? '—'}</td>
+                <td className="px-4 py-2 text-muted-foreground">{e.designation?.title ?? '—'}</td>
                 <td className="px-4 py-2 text-right">{formatMoney(e.baseSalary, e.currency)}</td>
                 <td className="px-4 py-2">
                   <Badge className={STATUS_STYLES[e.status] ?? ''}>{e.status.replace('_', ' ')}</Badge>
                 </td>
                 <td className="px-4 py-2 text-right">
                   <div className="flex justify-end gap-1">
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Edit" render={<Link to={`/staff/${e.id}`} />}>
-                      <Pencil className="h-4 w-4 text-slate-500" />
+                    <Button aria-label="Edit" size="sm" variant="ghost" className="h-7 w-7 p-0" title="Edit" render={<Link to={`/staff/${e.id}`} />}>
+                      <Pencil className="h-4 w-4 text-muted-foreground" />
                     </Button>
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Remove" onClick={() => handleDelete(e)}>
+                    <Button aria-label="Remove" size="sm" variant="ghost" className="h-7 w-7 p-0" title="Remove" onClick={() => handleDelete(e)}>
                       <Trash2 className="h-4 w-4 text-rose-500" />
                     </Button>
                   </div>

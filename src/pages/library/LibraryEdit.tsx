@@ -191,7 +191,7 @@ export default function LibraryEdit() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <span className="animate-spin rounded-full h-6 w-6 border-2 border-aubergine-600 border-t-transparent mr-2"></span>
-        <span className="text-slate-500">Loading resource...</span>
+        <span className="text-muted-foreground">Loading resource...</span>
       </div>
     );
   }
@@ -199,15 +199,15 @@ export default function LibraryEdit() {
   return (
     <div className="space-y-6 max-w-[800px] mx-auto pb-10">
       <div>
-        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to={`/library/${id}`} />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to={`/library/${id}`} />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Resource
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Edit Resource</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Edit Resource</h1>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6">
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm p-6 space-y-6">
+        <div className="bg-card border border-border rounded-sm overflow-hidden shadow-sm p-6 space-y-6">
             
           <div className="space-y-2">
             <Label htmlFor="title">Resource Title *</Label>
@@ -287,7 +287,7 @@ export default function LibraryEdit() {
           </div>
           
           {(resourceType === 'VIDEO' || resourceType === 'LINK') && (
-            <div className="pt-4 border-t border-slate-100 dark:border-surface-raised space-y-4">
+            <div className="pt-4 border-t border-border space-y-4">
                <div className="space-y-2">
                   <Label htmlFor="externalUrl">External URL</Label>
                   <Input id="externalUrl" {...register('externalUrl')} placeholder="https://..." />
@@ -297,10 +297,10 @@ export default function LibraryEdit() {
           )}
 
           {resourceType !== 'VIDEO' && resourceType !== 'LINK' && currentFileUrl && (
-            <div className="pt-4 border-t border-slate-100 dark:border-surface-raised space-y-3">
+            <div className="pt-4 border-t border-border space-y-3">
               <div className="space-y-1">
                 <Label>Attached file</Label>
-                <p className="text-xs text-slate-500 break-all">{currentFileUrl}</p>
+                <p className="text-xs text-muted-foreground break-all">{currentFileUrl}</p>
               </div>
               <input
                 ref={fileInputRef}

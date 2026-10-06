@@ -119,7 +119,7 @@ export function VendorAutocomplete({
     <div className={cn("relative", className)}>
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -130,7 +130,7 @@ export function VendorAutocomplete({
             className="pl-10"
           />
           {value && (
-            <Button
+            <Button aria-label="Close"
               variant="ghost"
               size="sm"
               className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
@@ -159,7 +159,7 @@ export function VendorAutocomplete({
             <ScrollArea className="max-h-60">
               {loading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-foreground"></div>
                 </div>
               ) : vendors.length > 0 ? (
                 <div className="p-2">
@@ -167,8 +167,8 @@ export function VendorAutocomplete({
                     <button
                       key={vendor.id}
                       className={cn(
-                        "w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors",
-                        index === selectedIndex && "bg-gray-100 dark:bg-gray-800"
+                        "w-full text-left px-3 py-2 rounded-md hover:bg-muted transition-colors",
+                        index === selectedIndex && "bg-muted"
                       )}
                       onClick={() => handleSelectVendor(vendor)}
                       onMouseEnter={() => setSelectedIndex(index)}
@@ -176,7 +176,7 @@ export function VendorAutocomplete({
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <Building2 className="w-4 h-4 text-gray-400" />
+                            <Building2 className="w-4 h-4 text-muted-foreground" />
                             <span className="font-medium">{vendor.name}</span>
                             {vendor.code && (
                               <Badge variant="outline" className="text-xs">
@@ -184,7 +184,7 @@ export function VendorAutocomplete({
                               </Badge>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                             {vendor.category && (
                               <span>{vendor.category}</span>
                             )}
@@ -196,13 +196,13 @@ export function VendorAutocomplete({
                             )}
                           </div>
                         </div>
-                        <Check className="w-4 h-4 text-gray-400" />
+                        <Check className="w-4 h-4 text-muted-foreground" />
                       </div>
                     </button>
                   ))}
                 </div>
               ) : (
-                <div className="py-8 text-center text-sm text-gray-500">
+                <div className="py-8 text-center text-sm text-muted-foreground">
                   {search.length < 2 ? (
                     "Type at least 2 characters to search"
                   ) : (

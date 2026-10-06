@@ -199,39 +199,39 @@ export default function BulkAttendance() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight dark:text-white uppercase">Bulk Attendance</h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">Mark attendance for multiple sessions at once.</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight uppercase">Bulk Attendance</h1>
+          <p className="text-sm text-muted-foreground mt-1 font-medium">Mark attendance for multiple sessions at once.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={toggleAllSessions} className="h-10 px-4 font-bold text-[11px] uppercase tracking-widest border-slate-200 dark:border-surface-raised">
+          <Button variant="outline" size="sm" onClick={toggleAllSessions} className="h-10 px-4 font-bold text-[11px] uppercase tracking-widest border-border">
             {sessions.every(s => s.selected) ? 'Deselect All' : 'Select All'} Sessions
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={saving || selectedComplete === 0} className="h-10 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-[11px] uppercase tracking-widest shadow-lg">
+          <Button size="sm" onClick={handleSave} disabled={saving || selectedComplete === 0} className="h-10 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-[11px] uppercase tracking-widest shadow-none">
             <Save className="h-3.5 w-3.5 mr-2" /> Save {selectedComplete > 0 ? `(${selectedComplete})` : ''}
           </Button>
         </div>
       </div>
 
       {/* Filters */}
-      <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
-        <div className="p-4 border-b border-slate-100 dark:border-surface-raised flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50/50 dark:bg-surface-raised/30">
+      <Card className="border-border bg-card shadow-sm">
+        <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-4 items-center justify-between bg-muted/30">
           <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto">
             <div className="flex flex-col gap-1.5 min-w-[160px]">
-              <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Date</span>
+              <span className="text-[11px] font-black uppercase text-muted-foreground tracking-widest px-1">Date</span>
               <Input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="h-10 border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo"
+                className="h-10 border-border bg-card"
               />
             </div>
           </div>
 
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Find session..."
-              className="pl-10 h-10 bg-white dark:bg-surface-indigo border-slate-200 dark:border-surface-raised"
+              className="pl-10 h-10 bg-card border-border"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -239,14 +239,14 @@ export default function BulkAttendance() {
         </div>
 
         {/* Progress Summary */}
-        <div className="px-4 py-3 bg-slate-50/50 dark:bg-surface-raised/30 border-b border-slate-100 dark:border-surface-raised">
+        <div className="px-4 py-3 bg-muted/30 border-b border-border">
           <div className="flex items-center justify-between text-xs">
             <div className="flex gap-4">
-              <span className="text-slate-500">{totalStudents} total students</span>
-              <span className="text-slate-500">{totalMarked} marked</span>
+              <span className="text-muted-foreground">{totalStudents} total students</span>
+              <span className="text-muted-foreground">{totalMarked} marked</span>
               <span className="text-emerald-600 font-medium">{selectedComplete}/{selectedTotal} sessions complete</span>
             </div>
-            <div className="w-48 bg-slate-200 rounded-full h-2">
+            <div className="w-48 bg-muted rounded-full h-2">
               <div
                 className="bg-emerald-500 h-2 rounded-full transition-all"
                 style={{ width: `${totalStudents > 0 ? (totalMarked / totalStudents) * 100 : 0}%` }}
@@ -258,25 +258,25 @@ export default function BulkAttendance() {
 
       {/* Sessions List */}
       {loading ? (
-        <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
+        <Card className="border-border bg-card shadow-sm">
           <CardContent className="p-8 text-center">
-            <p className="text-slate-500">Loading sessions...</p>
+            <p className="text-muted-foreground">Loading sessions...</p>
           </CardContent>
         </Card>
       ) : filteredSessions.length === 0 ? (
-        <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
+        <Card className="border-border bg-card shadow-sm">
           <CardContent className="p-8 text-center">
-            <p className="text-slate-500">No sessions found for the selected date.</p>
+            <p className="text-muted-foreground">No sessions found for the selected date.</p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
           {filteredSessions.map((sessionData, sessionIndex) => (
-            <Card key={sessionData.session.id} className={`border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm overflow-hidden ${!sessionData.selected ? 'opacity-60' : ''}`}>
+            <Card key={sessionData.session.id} className={`border-border bg-white dark:bg-surface-indigo shadow-sm overflow-hidden ${!sessionData.selected ? 'opacity-60' : ''}`}>
               {/* Session Header */}
               <div
                 onClick={() => toggleSessionExpanded(sessionIndex)}
-                className="p-4 border-b border-slate-100 dark:border-surface-raised bg-slate-50/50 dark:bg-surface-raised/30 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-surface-raised/40 transition-colors"
+                className="p-4 border-b border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -288,15 +288,15 @@ export default function BulkAttendance() {
                       className={`h-5 w-5 rounded border-2 flex items-center justify-center cursor-pointer ${
                         sessionData.selected
                           ? 'bg-primary border-primary'
-                          : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800'
+                          : 'border-input bg-card'
                       }`}
                     >
                       {sessionData.selected && <CheckCircle2 className="h-3 w-3 text-primary-foreground" />}
                     </div>
                     <Badge className={`h-3 w-3 rounded-full p-0 ${sessionData.session.subjectColor.replace('bg-', 'bg-') || 'bg-blue-500'}`} />
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">{sessionData.session.subjectName}</h3>
-                      <p className="text-[10px] text-slate-500 flex items-center gap-3">
+                      <h3 className="text-sm font-bold text-foreground">{sessionData.session.subjectName}</h3>
+                      <p className="text-[11px] text-muted-foreground flex items-center gap-3">
                         <span>{sessionData.session.className}</span>
                         <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {sessionData.session.startTime} - {sessionData.session.endTime}</span>
                         {sessionData.session.room && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {sessionData.session.room}</span>}
@@ -332,33 +332,33 @@ export default function BulkAttendance() {
               {/* Students List */}
               {sessionData.expanded && (
                 <div className="p-0">
-                  <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <div className="divide-y divide-border">
                     {sessionData.students.map((student) => (
-                      <div key={student.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 px-6 hover:bg-slate-50/50 dark:hover:bg-surface-raised/20 transition-colors gap-4">
+                      <div key={student.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 px-6 hover:bg-muted/30 transition-colors gap-4">
                         <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-500">
+                          <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
                             {student.name.substring(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">{student.name}</h4>
-                            <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">{student.studentId}</p>
+                            <h4 className="text-sm font-bold text-foreground uppercase tracking-tight">{student.name}</h4>
+                            <p className="text-[11px] font-bold text-muted-foreground tracking-widest uppercase">{student.studentId}</p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1 bg-slate-100 dark:bg-surface-raised p-1 rounded-lg w-fit">
+                        <div className="flex items-center gap-1 bg-muted p-1 rounded-lg w-fit">
                           {(['present', 'late', 'absent', 'excused'] as const).map((status) => (
                             <Button
                               key={status}
                               variant={sessionData.attendance[student.id] === status ? 'default' : 'ghost'}
                               size="sm"
                               onClick={() => handleStatusChange(sessionIndex, student.id, status)}
-                              className={`h-8 px-3 font-bold text-[10px] uppercase tracking-wider rounded-md ${
+                              className={`h-8 px-3 font-bold text-[11px] uppercase tracking-wider rounded-md ${
                                 sessionData.attendance[student.id] === status
                                   ? status === 'present' ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
                                     : status === 'late' ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-sm'
                                     : status === 'absent' ? 'bg-red-500 hover:bg-red-600 text-white shadow-sm'
                                     : 'bg-blue-500 hover:bg-blue-600 text-white shadow-sm'
-                                  : 'text-slate-500 hover:text-slate-700'
+                                  : 'text-muted-foreground hover:text-foreground'
                               }`}
                               disabled={!sessionData.selected}
                             >

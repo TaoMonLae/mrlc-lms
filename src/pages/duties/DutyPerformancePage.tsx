@@ -54,14 +54,14 @@ export default function DutyPerformancePage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" render={<Link to="/duties" />} nativeButton={false}>
+        <Button aria-label="Back" variant="ghost" size="sm" render={<Link to="/duties" />} nativeButton={false}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Trophy className="h-5 w-5" /> Duty Performance
           </h1>
-          <p className="text-sm text-slate-500">Top performers by points and completion rate (last 90 days by default)</p>
+          <p className="text-sm text-muted-foreground">Top performers by points and completion rate (last 90 days by default)</p>
         </div>
       </div>
 
@@ -96,11 +96,11 @@ export default function DutyPerformancePage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-slate-500">Loading...</TableCell>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell>
                 </TableRow>
               ) : leaderboard.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-slate-500">No duty activity in this period.</TableCell>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No duty activity in this period.</TableCell>
                 </TableRow>
               ) : (
                 leaderboard.map((entry, index) => (

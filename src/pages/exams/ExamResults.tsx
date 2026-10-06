@@ -32,7 +32,7 @@ export default function ExamResults() {
   }, [id, user, navigate]);
 
   return (
-    <div className="flex items-center justify-center py-32 text-slate-500">
+    <div className="flex items-center justify-center py-32 text-muted-foreground">
       <Loader2 className="h-6 w-6 animate-spin mr-2" /> Opening results…
     </div>
   );

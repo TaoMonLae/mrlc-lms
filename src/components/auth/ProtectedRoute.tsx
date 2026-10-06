@@ -18,10 +18,10 @@ export function ProtectedRoute({ requiredPermission, allowedRoles, strictRoles }
   // Auth is still being validated (checking existing token on mount)
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-muted/50">
         <div className="flex flex-col items-center gap-4">
           <div className="h-10 w-10 rounded-full border-4 border-aubergine-600 border-t-transparent animate-spin" />
-          <p className="text-sm font-medium text-slate-500">Verifying session…</p>
+          <p className="text-sm font-medium text-muted-foreground">Verifying session…</p>
         </div>
       </div>
     );
@@ -38,10 +38,10 @@ export function ProtectedRoute({ requiredPermission, allowedRoles, strictRoles }
   const requiresElevatedAccess = Boolean(requiredPermission || allowedRoles || strictRoles);
   if (requiresElevatedAccess && !isSessionVerified) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-        <div className="w-full max-w-md rounded-2xl border border-amber-200 bg-white p-6 text-center shadow-sm">
-          <h1 className="text-lg font-bold text-slate-900">Session verification unavailable</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+      <div className="min-h-screen flex items-center justify-center bg-muted/50 px-4">
+        <div className="w-full max-w-md rounded-sm border border-amber-200 bg-card p-6 text-center shadow-sm">
+          <h1 className="text-lg font-bold text-foreground">Session verification unavailable</h1>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
             We kept you signed in, but privileged access stays locked until the server confirms your account.
           </p>
           <button

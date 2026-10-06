@@ -89,16 +89,16 @@ export default function SubjectEdit() {
   return (
     <div className="space-y-6 max-w-[800px] mx-auto pb-10">
       <div>
-        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/subjects" />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/subjects" />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Subjects
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Edit Subject Details</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Update academic subject information.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Edit Subject Details</h1>
+        <p className="text-sm text-muted-foreground mt-1">Update academic subject information.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
+        <div className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Subject Name</Label>
             <Input id="name" {...register('name')} placeholder="e.g. Mathematical Reasoning" />

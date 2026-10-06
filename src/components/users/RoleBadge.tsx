@@ -32,7 +32,7 @@ const ROLE_CONFIG: Record<UserRole, { icon: any; color: string; description: str
   },
   STAFF: {
     icon: Users,
-    color: 'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400 border-slate-200 dark:border-slate-900',
+    color: 'bg-muted text-foreground border-border',
     description: 'Basic access'
   },
   ACCOUNTANT: {
@@ -42,7 +42,7 @@ const ROLE_CONFIG: Record<UserRole, { icon: any; color: string; description: str
   },
   CASE_WORKER: {
     icon: Briefcase,
-    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-900',
+    color: 'bg-lavender text-accent-purple border-border',
     description: 'Student support'
   },
   LIBRARIAN: {
@@ -63,7 +63,7 @@ export default function RoleBadge({ role, showDescription = false, className = '
         {ROLE_LABELS[role]}
       </Badge>
       {showDescription && (
-        <span className="text-xs text-slate-500 dark:text-slate-400">
+        <span className="text-xs text-muted-foreground">
           {config.description}
         </span>
       )}

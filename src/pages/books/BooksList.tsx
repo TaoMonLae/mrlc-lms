@@ -33,14 +33,14 @@ function BookCover({ title, coverUrl }: { title: string; coverUrl?: string | nul
       <img
         src={coverUrl}
         alt={`${title} cover`}
-        className="h-14 w-10 rounded-md border border-slate-200 bg-slate-100 object-cover shadow-sm dark:border-surface-raised"
+        className="h-14 w-10 rounded-md border border-border bg-muted object-cover shadow-sm"
         loading="lazy"
         onError={() => setHasError(true)}
       />
     );
   }
   return (
-    <div className="flex h-14 w-10 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-slate-400 dark:border-surface-raised dark:bg-surface-raised">
+    <div className="flex h-14 w-10 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground">
       <BookMarked className="h-5 w-5" />
     </div>
   );
@@ -89,10 +89,10 @@ export default function BooksList() {
     <div className="space-y-6 pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <BookMarked className="h-6 w-6 text-aubergine-600" /> Book Catalog
           </h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">
+          <p className="text-sm text-muted-foreground mt-1">
             Physical books held by the library. Add titles, track copies, and manage borrowing.
           </p>
         </div>
@@ -112,15 +112,15 @@ export default function BooksList() {
           { label: 'Available', value: totals.available },
           { label: 'On Loan', value: totals.onLoan },
         ].map((s) => (
-          <div key={s.label} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4 shadow-sm">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{s.label}</p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{s.value}</p>
+          <div key={s.label} className="bg-card border border-border rounded-sm p-4 shadow-sm">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{s.label}</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{s.value}</p>
           </div>
         ))}
       </div>
 
       <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -129,17 +129,17 @@ export default function BooksList() {
         />
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-card border border-border rounded-sm shadow-sm overflow-hidden">
         {loading ? (
-          <div className="py-16 text-center text-sm text-slate-500">Loading catalog…</div>
+          <div className="py-16 text-center text-sm text-muted-foreground">Loading catalog…</div>
         ) : filtered.length === 0 ? (
           <div className="py-16 text-center">
             <Library className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            <p className="text-sm font-medium text-foreground">
               {books.length === 0 ? 'No books in the catalog yet.' : 'No books match your search.'}
             </p>
             {books.length === 0 && (
-              <p className="text-xs text-slate-500 mt-1">Click “Add Book” to enter your first title.</p>
+              <p className="text-xs text-muted-foreground mt-1">Click “Add Book” to enter your first title.</p>
             )}
           </div>
         ) : (
@@ -164,10 +164,10 @@ export default function BooksList() {
                   <TableCell>
                     <BookCover title={b.title} coverUrl={b.coverUrl} />
                   </TableCell>
-                  <TableCell className="font-medium text-slate-900 dark:text-white">{b.title}</TableCell>
-                  <TableCell className="text-slate-600 dark:text-slate-300">{b.author || '—'}</TableCell>
-                  <TableCell className="hidden md:table-cell text-slate-600 dark:text-slate-300">{b.category || '—'}</TableCell>
-                  <TableCell className="hidden lg:table-cell text-slate-600 dark:text-slate-300">{b.shelfLocation || '—'}</TableCell>
+                  <TableCell className="font-medium text-foreground">{b.title}</TableCell>
+                  <TableCell className="text-muted-foreground">{b.author || '—'}</TableCell>
+                  <TableCell className="hidden md:table-cell text-muted-foreground">{b.category || '—'}</TableCell>
+                  <TableCell className="hidden lg:table-cell text-muted-foreground">{b.shelfLocation || '—'}</TableCell>
                   <TableCell className="text-right">
                     <Badge variant={b.availableCopies > 0 ? 'default' : 'secondary'}>
                       {b.availableCopies} / {b.totalCopies} available

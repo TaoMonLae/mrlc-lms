@@ -61,20 +61,20 @@ export default function VendorDetail() {
   }
 
   if (!vendor) {
-    return <div className="text-center py-8 text-slate-500">Vendor not found</div>;
+    return <div className="text-center py-8 text-muted-foreground">Vendor not found</div>;
   }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" render={<Link to="/vendors" />} nativeButton={false}>
+          <Button aria-label="Back" variant="ghost" size="sm" render={<Link to="/vendors" />} nativeButton={false}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{vendor.name}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">{vendor.name}</h1>
             <div className="flex items-center gap-3 mt-1">
-              {vendor.code && <p className="text-sm text-slate-500">{vendor.code}</p>}
+              {vendor.code && <p className="text-sm text-muted-foreground">{vendor.code}</p>}
               <Badge variant={vendor.isActive ? 'default' : 'secondary'}>
                 {vendor.isActive ? 'Active' : 'Inactive'}
               </Badge>
@@ -105,41 +105,41 @@ export default function VendorDetail() {
           </CardHeader>
           <CardContent className="space-y-4">
             {vendor.description && (
-              <p className="text-slate-600 dark:text-slate-300">{vendor.description}</p>
+              <p className="text-muted-foreground">{vendor.description}</p>
             )}
             <div className="space-y-3">
               {vendor.contactPerson && (
                 <div className="flex items-center gap-3">
-                  <Building2 className="h-5 w-5 text-slate-400" />
+                  <Building2 className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm text-slate-500">Contact Person</p>
-                    <p className="text-slate-900 dark:text-white">{vendor.contactPerson}</p>
+                    <p className="text-sm text-muted-foreground">Contact Person</p>
+                    <p className="text-foreground">{vendor.contactPerson}</p>
                   </div>
                 </div>
               )}
               {vendor.email && (
                 <div className="flex items-center gap-3">
-                  <Mail className="h-5 w-5 text-slate-400" />
+                  <Mail className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm text-slate-500">Email</p>
+                    <p className="text-sm text-muted-foreground">Email</p>
                     <a href={`mailto:${vendor.email}`} className="text-blue-600 hover:underline">{vendor.email}</a>
                   </div>
                 </div>
               )}
               {vendor.phone && (
                 <div className="flex items-center gap-3">
-                  <Phone className="h-5 w-5 text-slate-400" />
+                  <Phone className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm text-slate-500">Phone</p>
-                    <p className="text-slate-900 dark:text-white">{vendor.phone}</p>
+                    <p className="text-sm text-muted-foreground">Phone</p>
+                    <p className="text-foreground">{vendor.phone}</p>
                   </div>
                 </div>
               )}
               {vendor.website && (
                 <div className="flex items-center gap-3">
-                  <FileText className="h-5 w-5 text-slate-400" />
+                  <FileText className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm text-slate-500">Website</p>
+                    <p className="text-sm text-muted-foreground">Website</p>
                     <a href={vendor.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                       {vendor.website}
                     </a>
@@ -148,9 +148,9 @@ export default function VendorDetail() {
               )}
               {vendor.category && (
                 <div className="flex items-center gap-3">
-                  <FileText className="h-5 w-5 text-slate-400" />
+                  <FileText className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm text-slate-500">Category</p>
+                    <p className="text-sm text-muted-foreground">Category</p>
                     <Badge variant="outline">{vendor.category}</Badge>
                   </div>
                 </div>
@@ -167,8 +167,8 @@ export default function VendorDetail() {
             </CardHeader>
             <CardContent>
               <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-slate-400 mt-0.5" />
-                <div className="text-slate-900 dark:text-white">
+                <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                <div className="text-foreground">
                   {vendor.address && <p>{vendor.address}</p>}
                   {vendor.city && <p>{vendor.city}</p>}
                   {vendor.state && <p>{vendor.state}</p>}
@@ -189,26 +189,26 @@ export default function VendorDetail() {
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {vendor.taxId && (
                 <div>
-                  <p className="text-sm text-slate-500">Tax ID / GST Registration</p>
-                  <p className="text-slate-900 dark:text-white">{vendor.taxId}</p>
+                  <p className="text-sm text-muted-foreground">Tax ID / GST Registration</p>
+                  <p className="text-foreground">{vendor.taxId}</p>
                 </div>
               )}
               {vendor.paymentTerms && (
                 <div>
-                  <p className="text-sm text-slate-500">Payment Terms</p>
-                  <p className="text-slate-900 dark:text-white">{vendor.paymentTerms}</p>
+                  <p className="text-sm text-muted-foreground">Payment Terms</p>
+                  <p className="text-foreground">{vendor.paymentTerms}</p>
                 </div>
               )}
               {vendor.bankName && (
                 <div>
-                  <p className="text-sm text-slate-500">Bank Name</p>
-                  <p className="text-slate-900 dark:text-white">{vendor.bankName}</p>
+                  <p className="text-sm text-muted-foreground">Bank Name</p>
+                  <p className="text-foreground">{vendor.bankName}</p>
                 </div>
               )}
               {vendor.bankAccount && (
                 <div>
-                  <p className="text-sm text-slate-500">Bank Account</p>
-                  <p className="text-slate-900 dark:text-white font-mono">{vendor.bankAccount}</p>
+                  <p className="text-sm text-muted-foreground">Bank Account</p>
+                  <p className="text-foreground font-mono">{vendor.bankAccount}</p>
                 </div>
               )}
             </CardContent>
@@ -222,20 +222,20 @@ export default function VendorDetail() {
           </CardHeader>
           <CardContent className="grid grid-cols-3 gap-6">
             <div className="text-center">
-              <p className="text-sm text-slate-500">Total Purchases</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              <p className="text-sm text-muted-foreground">Total Purchases</p>
+              <p className="text-2xl font-bold text-foreground">
                 {formatMoney(vendor.totalPurchases || 0, currency)}
               </p>
             </div>
             <div className="text-center">
-              <p className="text-sm text-slate-500">Total Transactions</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              <p className="text-sm text-muted-foreground">Total Transactions</p>
+              <p className="text-2xl font-bold text-foreground">
                 {vendor.purchaseCount || 0}
               </p>
             </div>
             <div className="text-center">
-              <p className="text-sm text-slate-500">Last Purchase</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              <p className="text-sm text-muted-foreground">Last Purchase</p>
+              <p className="text-2xl font-bold text-foreground">
                 {vendor.lastPurchaseDate
                   ? new Date(vendor.lastPurchaseDate).toLocaleDateString()
                   : '—'}
@@ -254,14 +254,14 @@ export default function VendorDetail() {
           <CardContent>
             <div className="space-y-3">
               {vendor.expenses.map((expense: any) => (
-                <div key={expense.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                <div key={expense.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div>
-                    <p className="font-medium text-slate-900 dark:text-white">{expense.title}</p>
-                    <p className="text-sm text-slate-500">
+                    <p className="font-medium text-foreground">{expense.title}</p>
+                    <p className="text-sm text-muted-foreground">
                       {new Date(expense.expenseDate).toLocaleDateString()} • {expense.category}
                     </p>
                   </div>
-                  <p className="font-semibold text-slate-900 dark:text-white">
+                  <p className="font-semibold text-foreground">
                     {formatMoney(expense.amount, expense.currency || currency)}
                   </p>
                 </div>
@@ -283,7 +283,7 @@ export default function VendorDetail() {
             <CardTitle>Notes</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-slate-900 dark:text-white">{vendor.notes}</p>
+            <p className="text-foreground">{vendor.notes}</p>
           </CardContent>
         </Card>
       )}

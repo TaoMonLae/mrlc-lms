@@ -65,10 +65,10 @@ const initialForm = {
 const statusClass: Record<string, string> = {
   PENDING_APPROVAL: 'border-amber-200 bg-amber-50 text-amber-800',
   APPROVED: 'border-blue-200 bg-blue-50 text-blue-800',
-  PARTIAL: 'border-violet-200 bg-violet-50 text-violet-800',
+  PARTIAL: 'border-border bg-lavender text-accent-purple',
   PAID: 'border-emerald-200 bg-emerald-50 text-emerald-800',
   REJECTED: 'border-rose-200 bg-rose-50 text-rose-800',
-  CANCELLED: 'border-slate-200 bg-slate-50 text-slate-700',
+  CANCELLED: 'border-border bg-muted/50 text-foreground',
 };
 
 const readableStatus = (status: string) => status.replaceAll('_', ' ').toLowerCase().replace(/^./, (value) => value.toUpperCase());

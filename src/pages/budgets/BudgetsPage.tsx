@@ -49,8 +49,8 @@ export default function BudgetsPage() {
       case 'ACTIVE': return 'bg-green-100 text-green-800 border-green-200';
       case 'EXHAUSTED': return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'EXCEEDED': return 'bg-red-100 text-red-800 border-red-200';
-      case 'ARCHIVED': return 'bg-slate-100 text-slate-800 border-slate-200';
-      default: return 'bg-slate-100 text-slate-800 border-slate-200';
+      case 'ARCHIVED': return 'bg-muted text-foreground border-border';
+      default: return 'bg-muted text-foreground border-border';
     }
   };
 
@@ -71,7 +71,7 @@ export default function BudgetsPage() {
   };
 
   const getBudgetStatus = (budget: any) => {
-    if (budget.status === 'ARCHIVED') return { label: 'Archived', color: 'bg-slate-200' };
+    if (budget.status === 'ARCHIVED') return { label: 'Archived', color: 'bg-muted' };
     if (budget.spentAmount >= budget.allocatedAmount) return { label: 'Exhausted', color: 'bg-amber-200' };
     if (budget.spentAmount > budget.allocatedAmount) return { label: 'Exceeded', color: 'bg-red-200' };
     const percentUsed = (budget.spentAmount / budget.allocatedAmount) * 100;
@@ -85,8 +85,8 @@ export default function BudgetsPage() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Budgets</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Track and manage budget allocations.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Budgets</h1>
+          <p className="text-sm text-muted-foreground mt-1">Track and manage budget allocations.</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           {hasPermission('manage_budgets') && (
@@ -101,7 +101,7 @@ export default function BudgetsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Total Allocated</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Allocated</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatMoney(totalAllocated, currency)}</div>
@@ -109,7 +109,7 @@ export default function BudgetsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Total Spent</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Spent</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-amber-600">{formatMoney(totalSpent, currency)}</div>
@@ -117,7 +117,7 @@ export default function BudgetsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Total Remaining</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Remaining</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{formatMoney(totalRemaining, currency)}</div>
@@ -125,7 +125,7 @@ export default function BudgetsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Utilization</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Utilization</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -138,7 +138,7 @@ export default function BudgetsPage() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search budgets..."
             value={searchTerm}
@@ -176,25 +176,25 @@ export default function BudgetsPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Budget Name</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Code</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Fiscal Year</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-slate-500">Allocated</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-slate-500">Spent</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-slate-500">Remaining</th>
-                <th className="text-center py-3 px-4 text-sm font-medium text-slate-500">Status</th>
-                <th className="text-center py-3 px-4 text-sm font-medium text-slate-500"></th>
+              <tr className="border-b border-border">
+                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Budget Name</th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Code</th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Fiscal Year</th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Allocated</th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Spent</th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Remaining</th>
+                <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
+                <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground"></th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-8 text-slate-500">Loading...</td>
+                  <td colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</td>
                 </tr>
               ) : filteredBudgets.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-8 text-slate-500">
+                  <td colSpan={8} className="text-center py-8 text-muted-foreground">
                     {searchTerm || yearFilter !== 'ALL' || statusFilter !== 'ALL'
                       ? 'No budgets found matching your filters.'
                       : 'No budgets yet. Create your first budget to get started.'}
@@ -208,28 +208,28 @@ export default function BudgetsPage() {
                   const statusInfo = getBudgetStatus(budget);
 
                   return (
-                    <tr key={budget.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900">
+                    <tr key={budget.id} className="border-b border-border hover:bg-muted/50">
                       <td className="py-3 px-4">
-                        <div className="font-medium text-slate-900 dark:text-white">{budget.name}</div>
+                        <div className="font-medium text-foreground">{budget.name}</div>
                         {budget.category && (
                           <Badge variant="outline" className="text-xs mt-1">
                             {getCategoryLabel(budget.category)}
                           </Badge>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300">
+                      <td className="py-3 px-4 text-muted-foreground">
                         {budget.code || '—'}
                       </td>
-                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300">
+                      <td className="py-3 px-4 text-muted-foreground">
                         {budget.fiscalYear}
                       </td>
-                      <td className="py-3 px-4 text-right font-medium text-slate-900 dark:text-white">
+                      <td className="py-3 px-4 text-right font-medium text-foreground">
                         {formatMoney(budget.allocatedAmount, budget.currency || currency)}
                       </td>
-                      <td className="py-3 px-4 text-right font-medium text-slate-900 dark:text-white">
+                      <td className="py-3 px-4 text-right font-medium text-foreground">
                         {formatMoney(budget.spentAmount, budget.currency || currency)}
                       </td>
-                      <td className="py-3 px-4 text-right font-medium text-slate-900 dark:text-white">
+                      <td className="py-3 px-4 text-right font-medium text-foreground">
                         {formatMoney(budget.remainingAmount, budget.currency || currency)}
                       </td>
                       <td className="py-3 px-4 text-center">
@@ -238,7 +238,7 @@ export default function BudgetsPage() {
                         </Badge>
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" render={<Link to={`/budgets/${budget.id}`} />} nativeButton={false}>
+                        <Button aria-label={`View budget ${budget.name ?? ""}`.trim()} variant="ghost" size="sm" className="h-8 w-8 p-0" render={<Link to={`/budgets/${budget.id}`} />} nativeButton={false}>
                             <PieChart className="h-4 w-4" />
                           </Button>
                       </td>

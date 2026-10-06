@@ -18,7 +18,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = React.memo(({ isOpe
             <HelpCircle className="w-5 h-5 text-yellow-400" />
             <h2 className="text-lg font-black text-white tracking-wide">HOW TO PLAY</h2>
           </div>
-          <button
+          <button aria-label="Close"
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer"
           >

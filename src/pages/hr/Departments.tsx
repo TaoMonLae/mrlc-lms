@@ -86,10 +86,10 @@ export default function Departments() {
 
   return (
     <div className="space-y-6">
-      <Link to="/staff" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-foreground">
+      <Link to="/staff" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Back to staff
       </Link>
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Departments &amp; designations</h1>
+      <h1 className="text-xl font-semibold text-foreground">Departments &amp; designations</h1>
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-4 rounded-lg border border-border p-4">
@@ -99,13 +99,13 @@ export default function Departments() {
             <div className="w-24 space-y-1"><Label htmlFor="deptCode">Code</Label><Input id="deptCode" value={deptCode} onChange={(e) => setDeptCode(e.target.value)} /></div>
             <Button disabled={busy || loading} aria-label="Add department" onClick={addDept}><Plus className="h-4 w-4" /></Button>
           </div>
-          <ul className="divide-y divide-slate-100">
-            {loading ? <li className="py-3 text-sm text-slate-400">Loading…</li> :
-              departments.length === 0 ? <li className="py-3 text-sm text-slate-400">No departments yet.</li> :
+          <ul className="divide-y divide-border">
+            {loading ? <li className="py-3 text-sm text-muted-foreground">Loading…</li> :
+              departments.length === 0 ? <li className="py-3 text-sm text-muted-foreground">No departments yet.</li> :
               departments.map((d) => (
                 <li key={d.id} className="flex items-center justify-between py-2 text-sm">
-                  <span>{d.name} {d.code && <span className="text-xs text-slate-400">({d.code})</span>} <span className="text-xs text-slate-400">· {d._count?.employees ?? 0} staff</span></span>
-                  <Button variant="ghost" size="sm" disabled={busy || loading} aria-label={`Delete department ${d.name}`} onClick={() => delDept(d.id)}><Trash2 className="h-4 w-4 text-slate-400" /></Button>
+                  <span>{d.name} {d.code && <span className="text-xs text-muted-foreground">({d.code})</span>} <span className="text-xs text-muted-foreground">· {d._count?.employees ?? 0} staff</span></span>
+                  <Button variant="ghost" size="sm" disabled={busy || loading} aria-label={`Delete department ${d.name}`} onClick={() => delDept(d.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
                 </li>
               ))}
           </ul>
@@ -127,13 +127,13 @@ export default function Departments() {
             </div>
             <Button disabled={busy || loading} aria-label="Add designation" onClick={addDes}><Plus className="h-4 w-4" /></Button>
           </div>
-          <ul className="divide-y divide-slate-100">
-            {loading ? <li className="py-3 text-sm text-slate-400">Loading…</li> :
-              designations.length === 0 ? <li className="py-3 text-sm text-slate-400">No designations yet.</li> :
+          <ul className="divide-y divide-border">
+            {loading ? <li className="py-3 text-sm text-muted-foreground">Loading…</li> :
+              designations.length === 0 ? <li className="py-3 text-sm text-muted-foreground">No designations yet.</li> :
               designations.map((d) => (
                 <li key={d.id} className="flex items-center justify-between py-2 text-sm">
-                  <span>{d.title} {d.department && <span className="text-xs text-slate-400">· {d.department.name}</span>}</span>
-                  <Button variant="ghost" size="sm" disabled={busy || loading} aria-label={`Delete designation ${d.title}`} onClick={() => delDes(d.id)}><Trash2 className="h-4 w-4 text-slate-400" /></Button>
+                  <span>{d.title} {d.department && <span className="text-xs text-muted-foreground">· {d.department.name}</span>}</span>
+                  <Button variant="ghost" size="sm" disabled={busy || loading} aria-label={`Delete designation ${d.title}`} onClick={() => delDes(d.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
                 </li>
               ))}
           </ul>

@@ -179,15 +179,15 @@ export default function PaymentNew() {
   return (
     <div className="space-y-6 max-w-3xl mx-auto pb-10">
       <div>
-        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/fees" />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/fees" />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Fees
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Record Payment</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Charge a student a fee directly, with an optional discount and partial payment.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Record Payment</h1>
+        <p className="text-sm text-muted-foreground mt-1">Charge a student a fee directly, with an optional discount and partial payment.</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-card border border-border p-6 rounded-sm shadow-sm">
 
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2 md:col-span-2">
@@ -207,7 +207,7 @@ export default function PaymentNew() {
               {errors.studentId && <p className="text-xs text-red-500 font-medium">{errors.studentId.message}</p>}
             </div>
 
-            <div className="space-y-2 text-slate-500 font-medium md:col-span-2">
+            <div className="space-y-2 text-muted-foreground font-medium md:col-span-2">
                <span className="text-sm">Currency: {currency}</span>
             </div>
 
@@ -256,7 +256,7 @@ export default function PaymentNew() {
             </div>
          </div>
 
-         <div className="border-t border-slate-100 dark:border-surface-raised pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+         <div className="border-t border-border pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="totalAmount">Total Amount ({currency}) *</Label>
               <Input id="totalAmount" type="number" step="0.01" min="0" {...register('totalAmount')} />
@@ -269,9 +269,9 @@ export default function PaymentNew() {
               {errors.discountAmount && <p className="text-xs text-red-500 font-medium">{errors.discountAmount.message}</p>}
             </div>
 
-            <div className="space-y-2 md:col-span-2 bg-slate-50 dark:bg-surface-raised/50 rounded-lg p-4 flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Amount Due (after discount)</span>
-              <span className="text-lg font-bold text-slate-900 dark:text-white">{formatMoney(netAmount, currency)}</span>
+            <div className="space-y-2 md:col-span-2 bg-muted/50 rounded-lg p-4 flex items-center justify-between">
+              <span className="text-sm font-medium text-muted-foreground">Amount Due (after discount)</span>
+              <span className="text-lg font-bold text-foreground">{formatMoney(netAmount, currency)}</span>
             </div>
 
             <div className="space-y-2">
@@ -284,12 +284,12 @@ export default function PaymentNew() {
                 placeholder={netAmount.toFixed(2)}
                 {...register('amountPaid')}
               />
-              <p className="text-xs text-slate-400">Leave blank to record the full amount due as paid. Enter a smaller number for a partial payment.</p>
+              <p className="text-xs text-muted-foreground">Leave blank to record the full amount due as paid. Enter a smaller number for a partial payment.</p>
               {errors.amountPaid && <p className="text-xs text-red-500 font-medium">{errors.amountPaid.message}</p>}
             </div>
 
             <div className="space-y-2 rounded-lg p-4 flex items-center justify-between" style={{ background: isPartial ? 'rgba(245,158,11,0.08)' : undefined }}>
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Balance Remaining</span>
+              <span className="text-sm font-medium text-muted-foreground">Balance Remaining</span>
               <span className={`text-lg font-bold ${balance > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>{formatMoney(balance, currency)}</span>
             </div>
 
@@ -301,7 +301,7 @@ export default function PaymentNew() {
             )}
          </div>
 
-         <div className="border-t border-slate-100 dark:border-surface-raised pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+         <div className="border-t border-border pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label>Payment Method *</Label>
               <Select value={watch('paymentMethod')} onValueChange={(val: any) => setValue('paymentMethod', val)}>
@@ -325,7 +325,7 @@ export default function PaymentNew() {
 
             <div className="space-y-2">
               <Label htmlFor="receiptNumber">Receipt Number (Auto)</Label>
-              <Input id="receiptNumber" {...register('receiptNumber')} readOnly className="bg-slate-50 dark:bg-surface-raised/50" />
+              <Input id="receiptNumber" {...register('receiptNumber')} readOnly className="bg-muted/50" />
             </div>
 
             <div className="space-y-2 md:col-span-2">
@@ -334,7 +334,7 @@ export default function PaymentNew() {
             </div>
          </div>
 
-         <div className="pt-4 border-t border-slate-100 dark:border-surface-raised flex justify-end gap-3">
+         <div className="pt-4 border-t border-border flex justify-end gap-3">
              <Button type="button" variant="outline" onClick={() => navigate('/fees')}>
                Cancel
              </Button>

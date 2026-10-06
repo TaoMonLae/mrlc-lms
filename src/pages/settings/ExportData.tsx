@@ -95,11 +95,11 @@ export default function ExportDataPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-black text-slate-900 tracking-tight dark:text-white uppercase italic">Data Export Center</h1>
-        <p className="text-sm text-slate-500 mt-1 font-medium italic">Instantly download system data in CSV or JSON format for reporting and backup.</p>
+        <h1 className="text-3xl font-black text-foreground tracking-tight uppercase italic">Data Export Center</h1>
+        <p className="text-sm text-muted-foreground mt-1 font-medium italic">Instantly download system data in CSV or JSON format for reporting and backup.</p>
       </div>
 
-      <Card className="border-slate-200 dark:border-surface-raised">
+      <Card className="border-border">
         <CardHeader>
           <CardTitle className="font-bold flex items-center gap-2">
             <Database className="h-5 w-5 text-aubergine-600" /> Export Options
@@ -108,7 +108,7 @@ export default function ExportDataPage() {
         </CardHeader>
         <CardContent className="flex flex-col md:flex-row gap-6">
             <div className="w-full md:w-64 space-y-2">
-                <Label className="font-bold text-[10px] uppercase tracking-widest text-slate-500">Export Format</Label>
+                <Label className="font-bold text-[11px] uppercase tracking-widest text-muted-foreground">Export Format</Label>
                 <Select value={format} onValueChange={setFormat}>
                     <SelectTrigger className="font-bold uppercase tracking-widest text-xs">
                         <SelectValue />
@@ -120,7 +120,7 @@ export default function ExportDataPage() {
                 </Select>
             </div>
             <div className="w-full md:w-64 space-y-2">
-                <Label className="font-bold text-[10px] uppercase tracking-widest text-slate-500">Date Range (Optional)</Label>
+                <Label className="font-bold text-[11px] uppercase tracking-widest text-muted-foreground">Date Range (Optional)</Label>
                 <div className="flex gap-2">
                   <Input type="date" className="text-xs" />
                   <Input type="date" className="text-xs" />
@@ -133,7 +133,7 @@ export default function ExportDataPage() {
         {exportModules.map((module) => (
           <Card
             key={module.id}
-            className={`border-slate-200 dark:border-surface-raised hover:shadow-md transition-shadow ${
+            className={`border-border hover:shadow-none transition-shadow ${
               module.sensitive ? "ring-1 ring-red-200 dark:ring-red-900/50" : ""
             }`}
           >
@@ -148,20 +148,20 @@ export default function ExportDataPage() {
               <CardTitle className="text-sm font-bold uppercase tracking-tight flex items-center gap-2">
                 {module.title}
                 {module.sensitive && (
-                  <span className="text-[9px] font-bold uppercase tracking-widest bg-red-100 dark:bg-red-900/30 text-red-600 px-1.5 py-0.5 rounded">
+                  <span className="text-[11px] font-bold uppercase tracking-widest bg-red-100 dark:bg-red-900/30 text-red-600 px-1.5 py-0.5 rounded">
                     Restricted
                   </span>
                 )}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-5 pt-0">
-              <CardDescription className="text-xs font-medium text-slate-500 mb-4 h-10">
+              <CardDescription className="text-xs font-medium text-muted-foreground mb-4 h-10">
                 {module.description}
               </CardDescription>
               <Button
                 id={`export-btn-${module.id}`}
                 onClick={() => requestExport(module.id)}
-                className={`w-full font-bold text-[10px] uppercase tracking-widest h-9 ${
+                className={`w-full font-bold text-[11px] uppercase tracking-widest h-9 ${
                   module.sensitive
                     ? "bg-red-700 hover:bg-red-800 text-white"
                     : "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
@@ -184,7 +184,7 @@ export default function ExportDataPage() {
             </DialogTitle>
             <DialogDescription className="pt-2 space-y-2">
               <span className="block">
-                You are about to export <strong className="text-slate-900 dark:text-white">Case Summaries</strong>, which contains sensitive student safeguarding and protection records.
+                You are about to export <strong className="text-foreground">Case Summaries</strong>, which contains sensitive student safeguarding and protection records.
               </span>
               <span className="block">
                 This action will be permanently recorded in the Audit Log.

@@ -147,18 +147,18 @@ export default function UserEdit() {
   return (
     <div className="space-y-6 max-w-[800px] mx-auto pb-10">
       <div>
-        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/users" />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/users" />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Users
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Edit User Account</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Modify system account details and permissions.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Edit User Account</h1>
+        <p className="text-sm text-muted-foreground mt-1">Modify system account details and permissions.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-6">
+        <div className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-6">
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Account Details</h3>
+            <h3 className="text-lg font-semibold text-foreground">Account Details</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -181,9 +181,9 @@ export default function UserEdit() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-200 dark:border-surface-raised space-y-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <ShieldAlert className="h-5 w-5 text-purple-600" />
+          <div className="pt-4 border-t border-border space-y-4">
+            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 text-accent-purple" />
               Role & Permissions
             </h3>
             
@@ -207,7 +207,7 @@ export default function UserEdit() {
                 </Select>
                 {errors.role && <p className="text-xs text-red-500 font-medium">{errors.role.message}</p>}
                 {watch('role') && (
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {ROLE_DESCRIPTIONS[watch('role')]}
                   </p>
                 )}
@@ -229,9 +229,9 @@ export default function UserEdit() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-200 dark:border-surface-raised space-y-4">
-             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Profile Linking (Optional)</h3>
-             <p className="text-sm text-slate-500 dark:text-slate-300 -mt-2">
+          <div className="pt-4 border-t border-border space-y-4">
+             <h3 className="text-lg font-semibold text-foreground">Profile Linking (Optional)</h3>
+             <p className="text-sm text-muted-foreground -mt-2">
                {watch('role') === 'GUARDIAN' ? 'Select each learner this adult is verified to support. Only school staff can change these links.' : `Connect this account to a ${watch('role') === 'STUDENT' ? 'student' : watch('role') === 'TEACHER' ? 'teacher' : 'student or teacher'} record.`}
              </p>
              {watch('role') === 'TEACHER' ? (
@@ -273,7 +273,7 @@ export default function UserEdit() {
                  </div>
                </fieldset>
              ) : (
-               <p className="text-sm text-slate-400 italic">Profile linking is available for teacher, student, and guardian accounts.</p>
+               <p className="text-sm text-muted-foreground italic">Profile linking is available for teacher, student, and guardian accounts.</p>
              )}
           </div>
         </div>

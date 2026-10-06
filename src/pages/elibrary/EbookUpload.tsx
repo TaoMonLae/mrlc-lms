@@ -436,12 +436,12 @@ export default function EbookUpload() {
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-10">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" render={<Link to="/elibrary" />} nativeButton={false}>
+        <Button aria-label="Back" variant="ghost" size="icon" render={<Link to="/elibrary" />} nativeButton={false}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Upload E-book{isBatch ? 's' : ''}</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-300">Add PDF, EPUB, CBR, or CBZ books to the E-Library.</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Upload E-book{isBatch ? 's' : ''}</h1>
+          <p className="text-sm text-muted-foreground">Add PDF, EPUB, CBR, or CBZ books to the E-Library.</p>
         </div>
       </div>
 
@@ -460,7 +460,7 @@ export default function EbookUpload() {
           role="button"
           tabIndex={0}
           aria-label="Choose PDF, EPUB, CBR, or CBZ files to upload"
-          className="cursor-pointer rounded-lg border-2 border-dashed border-slate-300 dark:border-surface-raised hover:border-primary/60 transition-colors p-8 text-center bg-white dark:bg-surface-indigo focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          className="cursor-pointer rounded-lg border-2 border-dashed border-input hover:border-primary/60 transition-colors p-8 text-center bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
           <input
             ref={fileInputRef}
@@ -470,19 +470,19 @@ export default function EbookUpload() {
             className="hidden"
             onChange={(e) => { pickFiles(e.target.files); e.target.value = ''; }}
           />
-          <UploadCloud className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Click or drag files here</p>
-          <p className="text-xs text-slate-500 mt-1">PDF or EPUB up to 100 MB · CBR or CBZ up to {MAX_CBZ_UPLOAD_MB} MB (compressed from 50 MB)</p>
+          <UploadCloud className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+          <p className="text-sm font-medium text-foreground">Click or drag files here</p>
+          <p className="text-xs text-muted-foreground mt-1">PDF or EPUB up to 100 MB · CBR or CBZ up to {MAX_CBZ_UPLOAD_MB} MB (compressed from 50 MB)</p>
         </div>
 
         {/* Queued files */}
         {queue.length > 0 && (
           <div className="space-y-3">
             {queue.map((q, queueIndex) => (
-              <div key={q.key} className="flex gap-3 rounded-lg border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo p-3">
-                <div className="h-16 w-11 shrink-0 rounded-sm bg-accent-purple/10 border border-slate-100 dark:border-surface-raised flex items-center justify-center overflow-hidden">
+              <div key={q.key} className="flex gap-3 rounded-lg border border-border bg-card p-3">
+                <div className="h-16 w-11 shrink-0 rounded-sm bg-accent-purple/10 border border-border flex items-center justify-center overflow-hidden">
                   {q.extracting ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                   ) : q.coverPreview ? (
                     <img src={q.coverPreview} alt="" className="h-full w-full object-cover" />
                   ) : (
@@ -491,16 +491,16 @@ export default function EbookUpload() {
                 </div>
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                    <p className="text-xs text-slate-500 truncate">{q.file.name} · {(q.file.size / (1024 * 1024)).toFixed(1)} MB</p>
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <p className="text-xs text-muted-foreground truncate">{q.file.name} · {(q.file.size / (1024 * 1024)).toFixed(1)} MB</p>
                     {((q.file.size > COMPRESSION_THRESHOLD_MB * 1024 * 1024 && (isPdf(q.file) || isEpub(q.file)))
                       || (q.file.size >= COMIC_COMPRESSION_THRESHOLD_MB * 1024 * 1024 && (isCbr(q.file) || isCbz(q.file)))) && (
-                      <span className="shrink-0 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                      <span className="shrink-0 text-[11px] font-medium text-amber-600 dark:text-amber-400">
                         {isCbr(q.file) ? 'Will optimize to CBZ' : isCbz(q.file) ? 'Will compress' : 'Will try to compress'}
                       </span>
                     )}
                     {seriesMode && seriesName.trim() && (
-                      <Badge variant="outline" className="shrink-0 text-[10px]">Vol. {Number(seriesStart) + queueIndex}</Badge>
+                      <Badge variant="outline" className="shrink-0 text-[11px]">Vol. {Number(seriesStart) + queueIndex}</Badge>
                     )}
                   </div>
                   <Input
@@ -536,13 +536,13 @@ export default function EbookUpload() {
           </div>
         )}
 
-        <section className={`rounded-xl border p-4 transition-colors ${seriesMode ? 'border-primary/40 bg-primary/[0.04]' : 'border-slate-200 bg-white dark:border-surface-raised dark:bg-surface-indigo'}`} aria-labelledby="series-upload-heading">
+        <section className={`rounded-sm border p-4 transition-colors ${seriesMode ? 'border-primary/40 bg-primary/[0.04]' : 'border-border bg-card'}`} aria-labelledby="series-upload-heading">
           <div className="flex items-center justify-between gap-4">
             <div className="flex min-w-0 items-start gap-3">
               <div className="shrink-0 rounded-lg bg-primary/10 p-2 text-primary"><LibraryBig className="h-5 w-5" /></div>
               <div>
-                <h2 id="series-upload-heading" className="font-semibold text-slate-900 dark:text-white">Upload as a book series</h2>
-                <p className="mt-0.5 text-xs leading-5 text-slate-500 dark:text-slate-300">Group these books in one expandable series card, such as Harry Potter.</p>
+                <h2 id="series-upload-heading" className="font-semibold text-foreground">Upload as a book series</h2>
+                <p className="mt-0.5 text-xs leading-5 text-muted-foreground">Group these books in one expandable series card, such as Harry Potter.</p>
               </div>
             </div>
             <Switch
@@ -569,7 +569,7 @@ export default function EbookUpload() {
                   <datalist id={EBOOK_SERIES_DATALIST_ID}>
                     {knownSeries.map((series) => <option key={series.name} value={series.name} />)}
                   </datalist>
-                  <p className="text-[11px] text-slate-500">Choose an existing name to add volumes to that series, or type a new one.</p>
+                  <p className="text-[11px] text-muted-foreground">Choose an existing name to add volumes to that series, or type a new one.</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="ebook-series-start">{isBatch ? 'Starting volume *' : 'Volume number *'}</Label>
@@ -584,14 +584,14 @@ export default function EbookUpload() {
                     required
                     className="min-h-11 text-base sm:text-sm"
                   />
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-muted-foreground">
                     {isBatch ? 'Files are numbered consecutively from top to bottom.' : 'Each volume number can only be used once in a series.'}
                   </p>
                 </div>
               </div>
 
               {matchingSeries && (
-                <div className="flex flex-wrap items-center gap-2 rounded-lg bg-white px-3 py-2 text-xs text-slate-600 ring-1 ring-primary/15 dark:bg-surface-indigo dark:text-slate-300">
+                <div className="flex flex-wrap items-center gap-2 rounded-lg bg-card px-3 py-2 text-xs text-muted-foreground ring-1 ring-primary/15">
                   <Badge className="bg-primary/10 text-primary hover:bg-primary/10">Existing series</Badge>
                   <span>{matchingSeries.bookCount} {matchingSeries.bookCount === 1 ? 'book' : 'books'} already grouped · next volume is {matchingSeries.nextVolume}</span>
                 </div>
@@ -599,8 +599,8 @@ export default function EbookUpload() {
 
               {queue.length > 0 && seriesName.trim() && Number.isInteger(Number(seriesStart)) && Number(seriesStart) > 0 && (
                 <div className="rounded-lg border border-dashed border-primary/25 bg-white/70 p-3 dark:bg-black/10">
-                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Series preview</p>
-                  <ol className="mt-2 space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+                  <p className="text-xs font-semibold text-foreground">Series preview</p>
+                  <ol className="mt-2 space-y-1.5 text-xs text-muted-foreground">
                     {queue.slice(0, 5).map((entry, index) => (
                       <li key={entry.key} className="flex min-w-0 gap-2">
                         <span className="shrink-0 font-semibold text-primary">Vol. {Number(seriesStart) + index}</span>
@@ -608,7 +608,7 @@ export default function EbookUpload() {
                       </li>
                     ))}
                   </ol>
-                  {queue.length > 5 && <p className="mt-2 text-[11px] text-slate-500">+ {queue.length - 5} more volumes</p>}
+                  {queue.length > 5 && <p className="mt-2 text-[11px] text-muted-foreground">+ {queue.length - 5} more volumes</p>}
                 </div>
               )}
             </div>
@@ -616,7 +616,7 @@ export default function EbookUpload() {
         </section>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <p className="text-xs text-slate-500 sm:col-span-2 -mb-2">
+          <p className="text-xs text-muted-foreground sm:col-span-2 -mb-2">
             {isBatch ? 'These settings apply to all files above.' : 'Book settings.'}
           </p>
           <div className="space-y-2">
@@ -651,14 +651,14 @@ export default function EbookUpload() {
         </div>
 
         {/* Permission */}
-        <div className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-surface-raised p-4 bg-white dark:bg-surface-indigo">
+        <div className="flex items-center justify-between rounded-lg border border-border p-4 bg-card">
           <div className="flex items-start gap-3">
             <div className="p-2 rounded-lg bg-primary/10 text-primary h-fit">
               {downloadAllowed ? <Download className="h-5 w-5" /> : <Lock className="h-5 w-5" />}
             </div>
             <div>
               <Label className="text-base">Allow download</Label>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {downloadAllowed
                   ? 'Readers can download the original file.'
                   : 'Read online only — no download (recommended for licensed material).'}

@@ -447,7 +447,7 @@ export default function HomeworkList() {
             <div className="space-y-2">
               <Label>
                 Max marks{" "}
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-muted-foreground">
                   (leave blank for check-off only)
                 </span>
               </Label>
@@ -489,7 +489,7 @@ export default function HomeworkList() {
                   </Button>
                 ))}
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Starters fill an empty brief; your existing instructions stay
                 untouched.
               </p>
@@ -589,7 +589,7 @@ export default function HomeworkList() {
       {!loading && rows.length > 0 && (
         <div className="hw-toolbar">
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               aria-label="Search assignments"
               className="pl-9"
@@ -642,11 +642,11 @@ export default function HomeworkList() {
       )}
 
       {loading ? (
-        <p className="py-14 text-center text-sm text-slate-500">
+        <p className="py-14 text-center text-sm text-muted-foreground">
           Loading homework…
         </p>
       ) : loadError ? (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-5 py-10 text-center dark:border-rose-900/50 dark:bg-rose-950/20">
+        <div className="rounded-sm border border-rose-200 bg-rose-50 px-5 py-10 text-center dark:border-rose-900/50 dark:bg-rose-950/20">
           <p className="text-sm text-rose-700 dark:text-rose-300">
             {loadError}
           </p>
@@ -655,14 +655,14 @@ export default function HomeworkList() {
           </Button>
         </div>
       ) : rows.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-200 py-16 text-center text-sm text-slate-400 dark:border-surface-raised">
+        <p className="rounded-sm border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
           No homework assigned yet. Use “Assign Homework” to create the first
           one.
         </p>
       ) : (
         <div className="hw-assignment-list">
           {filteredRows.length === 0 && (
-            <div className="rounded-xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-400 dark:border-surface-raised">
+            <div className="rounded-sm border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
               <p>No homework matches these filters.</p>
               <Button
                 className="mt-3"
@@ -707,7 +707,7 @@ export default function HomeworkList() {
                       <Badge className="bg-rose-500 text-white">Past due</Badge>
                     )}
                   </div>
-                  <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                  <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     <span>{r.class.name}</span>
                     {r.subject && <span>· {r.subject.name}</span>}
                     <span className="flex items-center gap-1">

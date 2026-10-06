@@ -96,15 +96,15 @@ export default function SystemSettings() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-8">
       <div>
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">System Configuration</h2>
-        <p className="text-sm text-slate-500 mt-1">Localization, storage, and automated system behaviors.</p>
+        <h2 className="text-xl font-semibold text-foreground">System Configuration</h2>
+        <p className="text-sm text-muted-foreground mt-1">Localization, storage, and automated system behaviors.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         
         {/* Language and currency */}
         <div className="space-y-6">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
              Language & currency
           </h3>
           
@@ -152,7 +152,7 @@ export default function SystemSettings() {
 
         {/* Storage & Maintenance */}
         <div className="space-y-6">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
             Storage & Maintenance
           </h3>
           
@@ -166,17 +166,17 @@ export default function SystemSettings() {
                 max={100}
                 className="max-w-[200px]"
               />
-              <p className="text-xs text-slate-500">Maximum allowed size for student assignments and resources.</p>
+              <p className="text-xs text-muted-foreground">Maximum allowed size for student assignments and resources.</p>
             </div>
 
-            <div className="flex items-center justify-between border border-slate-200 dark:border-surface-raised rounded-xl p-4">
+            <div className="flex items-center justify-between border border-border rounded-sm p-4">
               <div className="flex gap-3">
                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-lg h-fit">
                     <HardDrive className="h-5 w-5" />
                  </div>
                  <div>
                    <Label className="text-base cursor-pointer" htmlFor="backup-toggle">Automated Daily Backups</Label>
-                   <p className="text-xs text-slate-500">Create a database snapshot every night at 2:00 AM.</p>
+                   <p className="text-xs text-muted-foreground">Create a database snapshot every night at 2:00 AM.</p>
                  </div>
               </div>
               <Switch 
@@ -186,7 +186,7 @@ export default function SystemSettings() {
               />
             </div>
 
-            <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-xl p-4 flex gap-3">
+            <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-sm p-4 flex gap-3">
                <Shield className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                <div className="text-sm text-amber-800 dark:text-amber-400/90">
                  <p className="font-semibold mb-1">System Security</p>
@@ -198,12 +198,12 @@ export default function SystemSettings() {
 
       </div>
 
-      <div className="space-y-4 border-t border-slate-200 dark:border-surface-raised pt-8">
+      <div className="space-y-4 border-t border-border pt-8">
         <div>
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
             <MousePointerClick className="h-4 w-4" /> Cursor Effects
           </h3>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Official React Bits effects adapted to follow the pointer across the whole app.
           </p>
         </div>
@@ -224,7 +224,7 @@ export default function SystemSettings() {
               <SelectItem value="TARGET_CURSOR">Target Cursor (reticle)</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             Applies for users who follow the school default. Saving a changed effect also makes your account follow it, so it stays active when you leave this page.
           </p>
         </div>
@@ -262,21 +262,21 @@ export default function SystemSettings() {
         )}
       </div>
 
-      <div className="space-y-6 border-t border-slate-200 dark:border-surface-raised pt-8">
+      <div className="space-y-6 border-t border-border pt-8">
         <div>
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
             <MonitorCheck className="h-4 w-4" /> Lockdown Browser Policy
           </h3>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Controls applied when students open an exam-taking session.
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="flex items-center justify-between border border-slate-200 dark:border-surface-raised rounded-xl p-4">
+          <div className="flex items-center justify-between border border-border rounded-sm p-4">
             <div>
               <Label className="text-base cursor-pointer" htmlFor="lockdown-enabled">Enable Lockdown Policy</Label>
-              <p className="text-xs text-slate-500">Require students to start exams in monitored mode.</p>
+              <p className="text-xs text-muted-foreground">Require students to start exams in monitored mode.</p>
             </div>
             <Switch
               id="lockdown-enabled"
@@ -285,10 +285,10 @@ export default function SystemSettings() {
             />
           </div>
 
-          <div className="flex items-center justify-between border border-slate-200 dark:border-surface-raised rounded-xl p-4">
+          <div className="flex items-center justify-between border border-border rounded-sm p-4">
             <div>
               <Label className="text-base cursor-pointer" htmlFor="lockdown-fullscreen">Require Fullscreen</Label>
-              <p className="text-xs text-slate-500">Record a warning if fullscreen is exited.</p>
+              <p className="text-xs text-muted-foreground">Record a warning if fullscreen is exited.</p>
             </div>
             <Switch
               id="lockdown-fullscreen"
@@ -297,10 +297,10 @@ export default function SystemSettings() {
             />
           </div>
 
-          <div className="flex items-center justify-between border border-slate-200 dark:border-surface-raised rounded-xl p-4">
+          <div className="flex items-center justify-between border border-border rounded-sm p-4">
             <div>
               <Label className="text-base cursor-pointer" htmlFor="lockdown-clipboard">Block Clipboard</Label>
-              <p className="text-xs text-slate-500">Block copy, cut, paste, and drag actions.</p>
+              <p className="text-xs text-muted-foreground">Block copy, cut, paste, and drag actions.</p>
             </div>
             <Switch
               id="lockdown-clipboard"
@@ -309,10 +309,10 @@ export default function SystemSettings() {
             />
           </div>
 
-          <div className="flex items-center justify-between border border-slate-200 dark:border-surface-raised rounded-xl p-4">
+          <div className="flex items-center justify-between border border-border rounded-sm p-4">
             <div>
               <Label className="text-base cursor-pointer" htmlFor="lockdown-context">Block Right Click</Label>
-              <p className="text-xs text-slate-500">Disable the browser context menu during exams.</p>
+              <p className="text-xs text-muted-foreground">Disable the browser context menu during exams.</p>
             </div>
             <Switch
               id="lockdown-context"
@@ -321,10 +321,10 @@ export default function SystemSettings() {
             />
           </div>
 
-          <div className="flex items-center justify-between border border-slate-200 dark:border-surface-raised rounded-xl p-4">
+          <div className="flex items-center justify-between border border-border rounded-sm p-4">
             <div>
               <Label className="text-base cursor-pointer" htmlFor="lockdown-shortcuts">Block Shortcuts</Label>
-              <p className="text-xs text-slate-500">Block print, save, find, view source, and developer shortcuts.</p>
+              <p className="text-xs text-muted-foreground">Block print, save, find, view source, and developer shortcuts.</p>
             </div>
             <Switch
               id="lockdown-shortcuts"
@@ -333,10 +333,10 @@ export default function SystemSettings() {
             />
           </div>
 
-          <div className="flex items-center justify-between border border-slate-200 dark:border-surface-raised rounded-xl p-4">
+          <div className="flex items-center justify-between border border-border rounded-sm p-4">
             <div>
               <Label className="text-base cursor-pointer" htmlFor="lockdown-autosubmit">Auto-submit Violations</Label>
-              <p className="text-xs text-slate-500">Submit the attempt when the warning limit is reached.</p>
+              <p className="text-xs text-muted-foreground">Submit the attempt when the warning limit is reached.</p>
             </div>
             <Switch
               id="lockdown-autosubmit"
@@ -355,7 +355,7 @@ export default function SystemSettings() {
               max={10}
               {...register('lockdownMaxWarnings', { valueAsNumber: true })}
             />
-            <p className="text-xs text-slate-500">Recommended: 3 warnings.</p>
+            <p className="text-xs text-muted-foreground">Recommended: 3 warnings.</p>
           </div>
           <div className="space-y-2">
             <Label>Student Instructions</Label>
@@ -368,7 +368,7 @@ export default function SystemSettings() {
         </div>
       </div>
 
-      <div className="pt-6 border-t border-slate-200 dark:border-surface-raised flex justify-end">
+      <div className="pt-6 border-t border-border flex justify-end">
         <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : (
             <>

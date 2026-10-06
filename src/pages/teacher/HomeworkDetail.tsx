@@ -342,10 +342,10 @@ export default function HomeworkDetail() {
   }, [drafts, reviewStudentId]);
 
   if (loading)
-    return <p role="status" className="py-14 text-center text-sm text-slate-500">Loading homework…</p>;
+    return <p role="status" className="py-14 text-center text-sm text-muted-foreground">Loading homework…</p>;
   if (!data)
     return (
-      <div className="py-14 text-center text-sm text-slate-500">
+      <div className="py-14 text-center text-sm text-muted-foreground">
         <p role="alert">{loadError || "Homework not found."}</p>
         <Link to="/teacher/homework" className="mt-3 inline-block underline">Back to Homework</Link>
         {loadError && (
@@ -415,7 +415,7 @@ export default function HomeworkDetail() {
         <Button
           variant="ghost"
           size="sm"
-          className="-ml-3 mb-2 text-slate-500"
+          className="-ml-3 mb-2 text-muted-foreground"
           role="link"
           render={<Link to={reviewing ? `/teacher/homework/${id}` : "/teacher/homework"} onClick={event => { if (reviewStudentId && drafts[reviewStudentId] && !confirm('Leave without saving feedback changes?')) event.preventDefault(); }} />}
           nativeButton={false}
@@ -423,7 +423,7 @@ export default function HomeworkDetail() {
           <ArrowLeft className="mr-2 h-4 w-4" /> {reviewing ? "Back to assignment" : "All Homework"}
         </Button>
         {editing ? (
-          <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-surface-raised dark:bg-surface-indigo">
+          <div className="space-y-4 rounded-sm border border-border bg-card p-5 shadow-sm">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="edit-homework-title">Title *</Label>
@@ -474,7 +474,7 @@ export default function HomeworkDetail() {
               <div className="space-y-2">
                 <Label htmlFor="edit-homework-marks">
                   Max marks{" "}
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-muted-foreground">
                     (leave blank for check-off only)
                   </span>
                 </Label>
@@ -491,7 +491,7 @@ export default function HomeworkDetail() {
                   placeholder="e.g. 20"
                 />
                 {data.gradeItemId && (
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-muted-foreground">
                     Required because this homework is linked to the gradebook.
                   </p>
                 )}
@@ -535,7 +535,7 @@ export default function HomeworkDetail() {
                     : "Review submitted work and return private feedback to your students."
                 }
               />
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {data.class.name}
                 {data.subject ? ` · ${data.subject.name}` : ""} · due{" "}
                 {formatDateOnly(data.dueDate)}
@@ -694,7 +694,7 @@ export default function HomeworkDetail() {
         >
           <Download className="mr-2 h-4 w-4" /> Export marking sheet
         </Button>
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-muted-foreground">
           Exports saved grades for the full class.
         </span>
       </div>
@@ -714,10 +714,10 @@ export default function HomeworkDetail() {
       {reviewing && !reviewStudent && <section className="hw-review p-8"><h2>Student not found</h2><p className="hw-description">This student is not in the assignment roster.</p><Link to={`/teacher/homework/${id}`}>Back to assignment</Link></section>}
       {reviewing && reviewStudent && (
         <section className="hw-review">
-          <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-5 py-4 dark:border-surface-raised dark:bg-surface-raised/40 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 border-b border-border bg-muted/50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                <h2 className="text-lg font-bold text-foreground">
                   Review:{" "}
                   {`${reviewStudent.user?.firstName ?? ""} ${reviewStudent.user?.lastName ?? ""}`.trim() ||
                     reviewStudent.studentCode}
@@ -734,7 +734,7 @@ export default function HomeworkDetail() {
                   </Badge>
                 )}
               </div>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {reviewStudent.studentCode} · {reviewSubmission ? `Submitted ${new Date(reviewSubmission.submittedAt).toLocaleString()}` : "No online submission · record paper work here"} ·{" "}
                 {reviewFiles.length}{" "}
                 {reviewFiles.length === 1 ? "document" : "documents"}
@@ -751,7 +751,7 @@ export default function HomeworkDetail() {
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="px-1 text-xs text-slate-500">
+              <span className="px-1 text-xs text-muted-foreground">
                 {reviewIndex + 1}/{reviewStudents.length}
               </span>
               <Button
@@ -779,13 +779,13 @@ export default function HomeworkDetail() {
           </div>
 
           <div className="hw-review-layout">
-            <div className="space-y-4 p-5 lg:border-r lg:border-slate-200 lg:dark:border-surface-raised">
+            <div className="space-y-4 p-5 lg:border-r lg:border-border">
               {reviewSubmission?.text && (
                 <div>
-                  <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Student answer
                   </p>
-                  <p className="whitespace-pre-wrap break-words rounded-lg bg-slate-50 p-3 text-sm text-slate-700 dark:bg-surface-raised dark:text-slate-200">
+                  <p className="whitespace-pre-wrap break-words rounded-lg bg-muted/50 p-3 text-sm text-foreground">
                     {reviewSubmission?.text}
                   </p>
                 </div>
@@ -793,7 +793,7 @@ export default function HomeworkDetail() {
 
               {reviewFiles.length > 0 ? (
                 <div className="space-y-3">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Submitted documents
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -805,7 +805,7 @@ export default function HomeworkDetail() {
                         className={`flex max-w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs transition-colors ${
                           reviewFile?.url === file.url
                             ? "border-aubergine-500 bg-aubergine-50 text-aubergine-800 dark:bg-aubergine-950/30 dark:text-aubergine-200"
-                            : "border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-surface-raised dark:text-slate-300 dark:hover:bg-surface-raised"
+                            : "border-border text-muted-foreground hover:bg-muted/50"
                         }`}
                       >
                         <FileText className="h-4 w-4 shrink-0" />
@@ -814,7 +814,7 @@ export default function HomeworkDetail() {
                             {file.originalName}
                           </span>
                           {file.size > 0 && (
-                            <span className="text-[10px] opacity-70">
+                            <span className="text-[11px] opacity-70">
                               {formatHomeworkFileSize(file.size)}
                             </span>
                           )}
@@ -824,9 +824,9 @@ export default function HomeworkDetail() {
                   </div>
 
                   {reviewFile && (
-                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-surface-raised dark:bg-slate-950">
-                      <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2 dark:border-surface-raised dark:bg-surface-indigo">
-                        <p className="min-w-0 truncate text-xs font-medium text-slate-700 dark:text-slate-200">
+                    <div className="overflow-hidden rounded-sm border border-border bg-muted">
+                      <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-3 py-2">
+                        <p className="min-w-0 truncate text-xs font-medium text-foreground">
                           {reviewFile.originalName}
                         </p>
                         <div className="flex shrink-0 gap-1">
@@ -878,8 +878,8 @@ export default function HomeworkDetail() {
                         />
                       ) : (
                         <div className="flex min-h-56 flex-col items-center justify-center gap-3 p-6 text-center">
-                          <FileText className="h-12 w-12 text-slate-400" />
-                          <p className="max-w-sm text-sm text-slate-500">
+                          <FileText className="h-12 w-12 text-muted-foreground" />
+                          <p className="max-w-sm text-sm text-muted-foreground">
                             This document opens in its compatible viewer. Use
                             Open to inspect it or Download to save a copy.
                           </p>
@@ -889,7 +889,7 @@ export default function HomeworkDetail() {
                   )}
                 </div>
               ) : !reviewSubmission?.text ? (
-                <p className="rounded-lg border border-dashed border-slate-200 p-8 text-center text-sm text-slate-400 dark:border-surface-raised">
+                <p className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
                   {reviewSubmission ? "This submission was recorded as handed in on paper." : "No online submission yet. If this student handed in work on paper, enter a score or feedback and mark it reviewed."}
                 </p>
               ) : null}
@@ -897,10 +897,10 @@ export default function HomeworkDetail() {
 
             <div className="hw-feedback-panel space-y-4 p-5">
               <div>
-                <h3 className="font-bold text-slate-900 dark:text-white">
+                <h3 className="font-bold text-foreground">
                   Teacher feedback
                 </h3>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Give clear next steps. Feedback is required when requesting
                   changes.
                 </p>
@@ -944,7 +944,7 @@ export default function HomeworkDetail() {
                   ].map((snippet) => (
                     <button
                       key={snippet}
-                      className="rounded-full border border-slate-300 px-3 py-1.5 text-left text-xs dark:border-slate-600"
+                      className="rounded-full border border-input px-3 py-1.5 text-left text-xs"
                       disabled={busy !== null}
                       onClick={() =>
                         setDrafts((current) => ({
@@ -980,7 +980,7 @@ export default function HomeworkDetail() {
                     }))
                   }
                 />
-                <p className="text-right text-[10px] text-slate-400">
+                <p className="text-right text-[11px] text-muted-foreground">
                   {reviewDraft.feedback.length}/5000
                 </p>
               </div>

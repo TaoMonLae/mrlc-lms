@@ -46,7 +46,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
             <Settings className="w-5 h-5 text-cyan-400" />
             <h2 className="text-lg font-black text-white tracking-wide">ARCADE CONFIGURATION</h2>
           </div>
-          <button
+          <button aria-label="Close"
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer"
           >

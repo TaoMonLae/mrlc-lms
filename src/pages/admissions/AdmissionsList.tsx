@@ -111,20 +111,20 @@ export default function AdmissionsList() {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Admissions & Enrollment</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Submit applications, review documents, schedule interviews, decide, waitlist, and enroll approved students.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Admissions & Enrollment</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Submit applications, review documents, schedule interviews, decide, waitlist, and enroll approved students.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[430px_1fr]">
-        <form onSubmit={submitApplication} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-surface-indigo">
+        <form onSubmit={submitApplication} className="rounded-sm border border-border bg-card p-5 shadow-sm">
           <div className="mb-5">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">New Application</h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">No demo data is used; this creates a real admissions record.</p>
+            <h2 className="text-lg font-semibold text-foreground">New Application</h2>
+            <p className="mt-1 text-sm text-muted-foreground">No demo data is used; this creates a real admissions record.</p>
           </div>
 
           <div className="space-y-5">
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Applicant</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Applicant</h3>
               <Field label="Full name" name="applicantName" value={form.applicantName} onChange={setField} required />
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field label="Preferred name" name="preferredName" value={form.preferredName} onChange={setField} />
@@ -138,7 +138,7 @@ export default function AdmissionsList() {
             </section>
 
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Academic</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Academic</h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field label="Target grade / level" name="targetLevel" value={form.targetLevel} onChange={setField} />
                 <Field label="Previous school" name="previousSchool" value={form.previousSchool} onChange={setField} />
@@ -148,7 +148,7 @@ export default function AdmissionsList() {
             </section>
 
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Guardian & Emergency</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Guardian & Emergency</h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field label="Guardian name" name="guardianName" value={form.guardianName} onChange={setField} />
                 <Field label="Relationship" name="guardianRelationship" value={form.guardianRelationship} onChange={setField} />
@@ -161,7 +161,7 @@ export default function AdmissionsList() {
             </section>
 
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Legal, Boarding & Medical</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Legal, Boarding & Medical</h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <SelectField label="ID type" name="identityType" value={form.identityType} onChange={setField} options={idTypeOptions} />
                 <Field label="ID number" name="identityNumber" value={form.identityNumber} onChange={setField} />
@@ -182,13 +182,13 @@ export default function AdmissionsList() {
         </form>
 
         <section className="space-y-4">
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-surface-indigo">
+          <div className="rounded-sm border border-border bg-card p-4 shadow-sm">
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_180px_180px_auto]">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search name, application no, guardian, ID..." className="pl-9" />
               </div>
-              <select value={status} onChange={(event) => setStatus(event.target.value)} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-white/10 dark:bg-surface-raised dark:text-white">
+              <select value={status} onChange={(event) => setStatus(event.target.value)} className="h-10 rounded-md border border-border bg-white px-3 text-sm dark:bg-surface-raised">
                 {statusOptions.map((option) => <option key={option} value={option}>{option.replaceAll('_', ' ')}</option>)}
               </select>
               <Input value={targetLevel} onChange={(event) => setTargetLevel(event.target.value)} placeholder="Target level" />
@@ -199,22 +199,22 @@ export default function AdmissionsList() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-surface-indigo">
+          <div className="rounded-sm border border-border bg-card shadow-sm">
             {loading ? (
-              <div className="flex h-56 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-slate-400" /></div>
+              <div className="flex h-56 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
             ) : applications.length === 0 ? (
-              <div className="p-10 text-center text-sm text-slate-500">No admission applications found.</div>
+              <div className="p-10 text-center text-sm text-muted-foreground">No admission applications found.</div>
             ) : (
-              <div className="divide-y divide-slate-100 dark:divide-white/10">
+              <div className="divide-y divide-border">
                 {applications.map((application) => (
-                  <Link key={application.id} to={`/admissions/${application.id}`} className="block p-4 transition hover:bg-slate-50 dark:hover:bg-white/5">
+                  <Link key={application.id} to={`/admissions/${application.id}`} className="block p-4 transition hover:bg-muted/50">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="font-semibold text-slate-900 dark:text-white">{application.applicantName}</h3>
-                          <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-white/10 dark:text-slate-200">{application.status.replaceAll('_', ' ')}</span>
+                          <h3 className="font-semibold text-foreground">{application.applicantName}</h3>
+                          <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">{application.status.replaceAll('_', ' ')}</span>
                         </div>
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{application.applicationNo || 'No application number'} - {application.targetLevel || 'No target level'} - {application.guardianName || 'No guardian'}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{application.applicationNo || 'No application number'} - {application.targetLevel || 'No target level'} - {application.guardianName || 'No guardian'}</p>
                       </div>
                       <div className="grid grid-cols-2 gap-3 text-sm lg:min-w-[360px]">
                         <Metric icon={FileCheck2} label="Checklist" value={checklistSummary(application)} />
@@ -254,7 +254,7 @@ function SelectField({ label, name, value, onChange, options }: { label: string;
   return (
     <div className="space-y-2">
       <Label htmlFor={name}>{label}</Label>
-      <select id={name} value={value} onChange={(event) => onChange(name, event.target.value)} className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 dark:border-white/10 dark:bg-surface-raised dark:text-white">
+      <select id={name} value={value} onChange={(event) => onChange(name, event.target.value)} className="h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-foreground dark:bg-surface-raised">
         <option value="">Select</option>
         {options.map((option) => <option key={option} value={option}>{option.replaceAll('_', ' ')}</option>)}
       </select>
@@ -264,12 +264,12 @@ function SelectField({ label, name, value, onChange, options }: { label: string;
 
 function Metric({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 dark:border-white/10 dark:bg-white/5">
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+    <div className="rounded-lg border border-border bg-muted/50 px-3 py-2">
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         <Icon className="h-3.5 w-3.5" />
         {label}
       </div>
-      <div className="mt-1 font-semibold text-slate-900 dark:text-white">{value}</div>
+      <div className="mt-1 font-semibold text-foreground">{value}</div>
     </div>
   );
 }

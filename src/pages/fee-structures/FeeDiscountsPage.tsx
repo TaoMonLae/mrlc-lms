@@ -38,8 +38,8 @@ export default function FeeDiscountsPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Fee Discounts</h1>
-          <p className="text-sm text-slate-500">Manage fee discounts and scholarships</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Fee Discounts</h1>
+          <p className="text-sm text-muted-foreground">Manage fee discounts and scholarships</p>
         </div>
         {hasPermission('manage_fee_structures') && (
           <Button>
@@ -55,25 +55,25 @@ export default function FeeDiscountsPage() {
         <Card>
           <CardContent className="p-0">
             {discounts.length === 0 ? (
-              <div className="text-center py-8 text-slate-500">No discounts configured</div>
+              <div className="text-center py-8 text-muted-foreground">No discounts configured</div>
             ) : (
               <table className="w-full">
-                <thead className="bg-slate-50 dark:bg-slate-800">
+                <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Value</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Validity</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Type</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Value</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Validity</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                <tbody className="divide-y divide-border">
                   {discounts.map(discount => (
-                    <tr key={discount.id} className="hover:bg-slate-50 dark:hover:bg-slate-800">
+                    <tr key={discount.id} className="hover:bg-muted/50">
                       <td className="px-6 py-4">
-                        <div className="font-medium text-slate-900 dark:text-white">{discount.name}</div>
+                        <div className="font-medium text-foreground">{discount.name}</div>
                         {discount.description && (
-                          <div className="text-sm text-slate-500">{discount.description}</div>
+                          <div className="text-sm text-muted-foreground">{discount.description}</div>
                         )}
                       </td>
                       <td className="px-6 py-4">
@@ -86,15 +86,15 @@ export default function FeeDiscountsPage() {
                           <span>{formatMoney(discount.value, currency)}</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-500">
+                      <td className="px-6 py-4 text-sm text-muted-foreground">
                         {new Date(discount.validFrom).toLocaleDateString()} - {discount.validTo ? new Date(discount.validTo).toLocaleDateString() : 'Ongoing'}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm">
+                          <Button aria-label="Edit" variant="ghost" size="sm">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-red-600">
+                          <Button aria-label="Delete" variant="ghost" size="sm" className="text-red-600">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>

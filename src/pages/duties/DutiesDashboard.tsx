@@ -77,7 +77,7 @@ export default function DutiesDashboard() {
       case 'FAILED':
         return 'bg-red-100 text-red-800';
       case 'EXCUSED':
-        return 'bg-slate-100 text-slate-800';
+        return 'bg-muted text-foreground';
       default:
         return 'bg-amber-100 text-amber-800';
     }
@@ -87,8 +87,8 @@ export default function DutiesDashboard() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Student Duties</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Student Duties</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Manage chore rosters, assignments, and performance.
           </p>
         </div>
@@ -107,34 +107,34 @@ export default function DutiesDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Active Rosters</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Active Rosters</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{loading ? '—' : activeRosters.length}</div>
-            <p className="text-xs text-slate-500 mt-1">{draftRosters.length} in draft</p>
+            <p className="text-xs text-muted-foreground mt-1">{draftRosters.length} in draft</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Today's Duties</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Today's Duties</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{loading ? '—' : todayAssignments.length}</div>
-            <p className="text-xs text-slate-500 mt-1">scheduled for today</p>
+            <p className="text-xs text-muted-foreground mt-1">scheduled for today</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Completed Today</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Completed Today</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{loading ? '—' : completedToday}</div>
-            <p className="text-xs text-slate-500 mt-1">{completionRateToday}% completion rate</p>
+            <p className="text-xs text-muted-foreground mt-1">{completionRateToday}% completion rate</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Leaderboard</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Leaderboard</CardTitle>
           </CardHeader>
           <CardContent>
             <Button variant="link" className="p-0 h-auto text-sm" render={<Link to="/duties/performance" />} nativeButton={false}>
@@ -153,18 +153,18 @@ export default function DutiesDashboard() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-8 text-slate-500">Loading...</div>
+              <div className="text-center py-8 text-muted-foreground">Loading...</div>
             ) : todayAssignments.length === 0 ? (
-              <div className="text-center py-8 text-slate-500">No duties scheduled for today.</div>
+              <div className="text-center py-8 text-muted-foreground">No duties scheduled for today.</div>
             ) : (
               <div className="space-y-2">
                 {todayAssignments.map((a) => (
-                  <div key={a.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                  <div key={a.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
                     <div className="flex items-center gap-3">
-                      <ClipboardList className="h-4 w-4 text-slate-400" />
+                      <ClipboardList className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <div className="font-medium text-sm">{a.dutyDefinition.name}</div>
-                        <div className="text-xs text-slate-500">{studentName(a.student)}</div>
+                        <div className="text-xs text-muted-foreground">{studentName(a.student)}</div>
                       </div>
                     </div>
                     <Badge className={getStatusColor(a.status)}>{a.status.replace('_', ' ')}</Badge>
@@ -183,9 +183,9 @@ export default function DutiesDashboard() {
           </CardHeader>
           <CardContent className="space-y-2">
             {loading ? (
-              <div className="text-center py-4 text-slate-500 text-sm">Loading...</div>
+              <div className="text-center py-4 text-muted-foreground text-sm">Loading...</div>
             ) : rosters.length === 0 ? (
-              <div className="text-center py-4 text-slate-500 text-sm">
+              <div className="text-center py-4 text-muted-foreground text-sm">
                 No rosters yet.
                 {hasPermission('manage_duties') && (
                   <div className="mt-2">
@@ -200,7 +200,7 @@ export default function DutiesDashboard() {
                 <Link
                   key={r.id}
                   to={`/duties/rosters/${r.id}`}
-                  className="flex items-center justify-between p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-900 text-sm"
+                  className="flex items-center justify-between p-2 rounded hover:bg-muted/50 text-sm"
                 >
                   <span className="font-medium">{r.name}</span>
                   <Badge variant="outline">{r.status}</Badge>
@@ -215,8 +215,8 @@ export default function DutiesDashboard() {
         <Card>
           <CardContent className="py-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 text-slate-400" />
-              <p className="text-sm text-slate-600 dark:text-slate-300">See your own duty assignments and history.</p>
+              <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">See your own duty assignments and history.</p>
             </div>
             <Button render={<Link to="/student/duties" />} nativeButton={false}>My Duties</Button>
           </CardContent>

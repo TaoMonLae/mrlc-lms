@@ -83,12 +83,12 @@ export default function CampaignNew() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" render={<Link to="/donations/campaigns" />} nativeButton={false}>
+        <Button aria-label="Back" variant="ghost" size="sm" render={<Link to="/donations/campaigns" />} nativeButton={false}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">New Campaign</h1>
-          <p className="text-sm text-slate-500">Launch a new fundraising campaign</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">New Campaign</h1>
+          <p className="text-sm text-muted-foreground">Launch a new fundraising campaign</p>
         </div>
       </div>
 

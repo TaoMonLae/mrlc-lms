@@ -37,14 +37,14 @@ export default function AccommodationManagement() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><Accessibility className="h-6 w-6 text-aubergine-600" /> Accommodations</h1>
+      <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><Accessibility className="h-6 w-6 text-aubergine-600" /> Accommodations</h1>
 
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 space-y-4">
-        <h2 className="font-bold text-sm uppercase tracking-widest text-slate-800 dark:text-white">New accommodation</h2>
+      <div className="bg-card border border-border rounded-sm p-6 space-y-4">
+        <h2 className="font-bold text-sm uppercase tracking-widest text-foreground">New accommodation</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <Label>Student</Label>
-            <select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-3 text-sm" value={form.studentId} onChange={(e) => setForm({ ...form, studentId: e.target.value })}>
+            <select className="w-full h-10 rounded-md border border-border bg-card px-3 text-sm" value={form.studentId} onChange={(e) => setForm({ ...form, studentId: e.target.value })}>
               <option value="">Select…</option>
               {students.map((s) => <option key={s.id} value={s.id}>{studentName(s)}</option>)}
             </select>
@@ -54,7 +54,7 @@ export default function AccommodationManagement() {
         </div>
         <div className="flex flex-wrap gap-3">
           {TOGGLES.map(([k, label]) => (
-            <label key={k} className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300"><input type="checkbox" checked={!!form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.checked })} /> {label}</label>
+            <label key={k} className="flex items-center gap-2 text-sm font-medium text-foreground"><input type="checkbox" checked={!!form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.checked })} /> {label}</label>
           ))}
         </div>
         <Button onClick={create} className="bg-primary text-primary-foreground"><Plus className="h-4 w-4 mr-1" /> Add accommodation</Button>
@@ -62,17 +62,17 @@ export default function AccommodationManagement() {
 
       <div className="space-y-2">
         {rows.map((r) => (
-          <div key={r.id} className="flex items-center justify-between bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4">
+          <div key={r.id} className="flex items-center justify-between bg-card border border-border rounded-sm p-4">
             <div>
-              <p className="font-bold text-slate-900 dark:text-white">{studentName(r.student)}</p>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="font-bold text-foreground">{studentName(r.student)}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {[r.extraTimePercent ? `+${r.extraTimePercent}%` : null, r.extraTimeMinutes ? `+${r.extraTimeMinutes}m` : null, ...TOGGLES.filter(([k]) => r[k]).map(([, l]) => l)].filter(Boolean).join(' · ') || 'No options set'}
               </p>
             </div>
-            <Button variant="ghost" size="icon" className="text-red-500" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4" /></Button>
+            <Button aria-label="Delete" variant="ghost" size="icon" className="text-red-500" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4" /></Button>
           </div>
         ))}
-        {rows.length === 0 && <div className="rounded-xl border border-dashed border-slate-200 dark:border-surface-raised p-8 text-center text-slate-500">No accommodations configured.</div>}
+        {rows.length === 0 && <div className="rounded-sm border border-dashed border-border p-8 text-center text-muted-foreground">No accommodations configured.</div>}
       </div>
     </div>
   );

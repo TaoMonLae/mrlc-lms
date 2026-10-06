@@ -109,7 +109,7 @@ const statusColor = (status: string) => {
   if (['RESOLVED', 'GOOD', 'NEW'].includes(status)) return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300';
   if (['NEEDS_FOLLOW_UP', 'NEEDS_REPAIR'].includes(status)) return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
   if (['LOST', 'RETIRED'].includes(status)) return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300';
-  return 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-200';
+  return 'bg-muted text-muted-foreground';
 };
 
 export default function SchoolOperations() {
@@ -185,8 +185,8 @@ export default function SchoolOperations() {
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">School Operations</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-300">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">School Operations</h1>
+          <p className="text-sm text-muted-foreground">
             Communication logs and inventory — the day-to-day office records.
           </p>
         </div>
@@ -209,7 +209,7 @@ export default function SchoolOperations() {
               className={`rounded-lg border p-4 text-left transition ${
                 active
                   ? 'border-aubergine-500 bg-aubergine-50 text-aubergine-900 shadow-sm dark:bg-aubergine-500/15 dark:text-white'
-                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-white/10 dark:bg-surface-indigo dark:text-slate-200'
+                  : 'border-border bg-card text-foreground hover:border-input'
               }`}
             >
               <div className="flex items-center justify-between">
@@ -224,10 +224,10 @@ export default function SchoolOperations() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[420px_1fr]">
-        <form onSubmit={handleSubmit} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-surface-indigo">
+        <form onSubmit={handleSubmit} className="rounded-sm border border-border bg-card p-5 shadow-sm">
           <div className="mb-5">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Add {activeModule.title} Record</h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{activeModule.description}</p>
+            <h2 className="text-lg font-semibold text-foreground">Add {activeModule.title} Record</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{activeModule.description}</p>
           </div>
 
           <div className="space-y-4">
@@ -249,7 +249,7 @@ export default function SchoolOperations() {
                     value={formValues[field.name] ?? ''}
                     onChange={(event) => updateField(field.name, event.target.value)}
                     required={field.required}
-                    className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-aubergine-500 focus:ring-1 focus:ring-aubergine-500 dark:border-white/10 dark:bg-surface-raised dark:text-white"
+                    className="h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-foreground outline-none focus:border-aubergine-500 focus:ring-1 focus:ring-aubergine-500 dark:bg-surface-raised"
                   >
                     <option value="">Use default</option>
                     {field.options.map((option) => (
@@ -276,32 +276,32 @@ export default function SchoolOperations() {
           </Button>
         </form>
 
-        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-surface-indigo">
+        <section className="rounded-sm border border-border bg-card p-5 shadow-sm">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{activeModule.title}</h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Latest records — update the status inline as things get resolved.</p>
+              <h2 className="text-lg font-semibold text-foreground">{activeModule.title}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Latest records — update the status inline as things get resolved.</p>
             </div>
-            {loading && <Loader2 className="h-5 w-5 animate-spin text-slate-400" />}
+            {loading && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
           </div>
 
           {!loading && records.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-slate-300 p-10 text-center dark:border-white/10">
-              <p className="text-sm font-medium text-slate-900 dark:text-white">No records yet</p>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Create the first {activeModule.title.toLowerCase()} record from the form.</p>
+            <div className="rounded-lg border border-dashed border-input p-10 text-center">
+              <p className="text-sm font-medium text-foreground">No records yet</p>
+              <p className="mt-1 text-sm text-muted-foreground">Create the first {activeModule.title.toLowerCase()} record from the form.</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-white/10">
+            <div className="divide-y divide-border">
               {records.map((record) => (
                 <article key={record.id} className="py-4 first:pt-0 last:pb-0">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
-                      <h3 className="font-semibold text-slate-900 dark:text-white">{formatValue(record[activeModule.titleField])}</h3>
-                      {record.message && <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{record.message}</p>}
+                      <h3 className="font-semibold text-foreground">{formatValue(record[activeModule.titleField])}</h3>
+                      {record.message && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{record.message}</p>}
                       <div className="mt-2 flex flex-wrap gap-2">
                         {activeModule.metaFields.map((field) => (
                           record[field] != null && record[field] !== '' && (
-                            <span key={field} className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-white/10 dark:text-slate-200">
+                            <span key={field} className="rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
                               {formatValue(record[field])}
                             </span>
                           )
@@ -332,19 +332,19 @@ export default function SchoolOperations() {
 
       {/* Pointers to the full modules that replaced the old tabs */}
       <section>
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-widest text-slate-400">Looking for something else?</h2>
+        <h2 className="mb-3 text-sm font-bold uppercase tracking-widest text-muted-foreground">Looking for something else?</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {MOVED.map((m) => {
             const Icon = m.icon;
             return (
               <Link key={m.to} to={m.to}
-                className="group flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-4 transition hover:border-aubergine-300 dark:border-white/10 dark:bg-surface-indigo">
+                className="group flex items-start gap-3 rounded-lg border border-border bg-card p-4 transition hover:border-aubergine-300">
                 <Icon className="mt-0.5 h-5 w-5 shrink-0 text-aubergine-600" />
                 <div>
-                  <p className="flex items-center gap-1 text-sm font-semibold text-slate-900 group-hover:text-aubergine-700 dark:text-white">
+                  <p className="flex items-center gap-1 text-sm font-semibold text-foreground group-hover:text-aubergine-700">
                     {m.title} <ExternalLink className="h-3 w-3 opacity-50" />
                   </p>
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{m.note}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{m.note}</p>
                 </div>
               </Link>
             );

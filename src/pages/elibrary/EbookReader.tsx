@@ -411,7 +411,7 @@ export default function EbookReader() {
       {/* Toolbar */}
       <div className="elibrary-reader-toolbar flex items-center gap-3 shrink-0" data-reader-controls>
         {!isFullscreen && (
-          <Button variant="ghost" size="icon" title="Back to library"
+          <Button aria-label="Back to library" variant="ghost" size="icon" title="Back to library"
             render={<Link to="/elibrary" />} nativeButton={false}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -444,7 +444,7 @@ export default function EbookReader() {
             <ClipboardList className="h-4 w-4 mr-2" /> Assign as Homework
           </Button>
         )}
-        <Button
+        <Button aria-label={isFullscreen ? 'Exit full page view' : 'Full page view'}
           variant="outline"
           size="icon"
           onClick={toggleFullscreen}
@@ -516,7 +516,7 @@ function SelectionBar({ text, onHighlight, onFlashcard, onDefine, onDismiss }: {
       {onFlashcard && (
         <Button size="sm" variant="outline" onClick={onFlashcard}><Sparkles className="h-3.5 w-3.5 mr-1.5" /> Flashcard</Button>
       )}
-      <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={onDismiss}><X className="h-3.5 w-3.5" /></Button>
+      <Button aria-label="Close" size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={onDismiss}><X className="h-3.5 w-3.5" /></Button>
     </div>
   );
 }
@@ -609,7 +609,7 @@ function DefinePopover({ word, onClose }: { word: string; onClose: () => void })
           <DialogTitle className="flex items-center gap-2">
             <BookA className="h-4 w-4 text-accent-purple shrink-0" /> {word}
             {data && data.entries.length > 0 && (
-              <Button variant="ghost" size="icon" className="h-6 w-6" title="Pronounce" onClick={speak}>
+              <Button aria-label="Pronounce" variant="ghost" size="icon" className="h-6 w-6" title="Pronounce" onClick={speak}>
                 <Volume2 className="h-3.5 w-3.5" />
               </Button>
             )}
@@ -693,7 +693,7 @@ function HighlightsDialog({ highlights, onJump, onDelete, onClose }: {
                   {h.page ? <span className="block mb-0.5 text-[10px] font-semibold text-slate-400">Page {h.page}</span> : null}
                   “{h.text}”
                 </button>
-                <Button size="icon" variant="ghost" className="h-7 w-7 text-red-600 shrink-0" onClick={() => onDelete(h)}>
+                <Button aria-label="Delete" size="icon" variant="ghost" className="h-7 w-7 text-red-600 shrink-0" onClick={() => onDelete(h)}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -1077,13 +1077,13 @@ function ComicView({ id, token, format }: { id: string; token: string | null; fo
         ))}
       </div>
       <div data-reader-controls className="elibrary-reader-controls flex shrink-0 flex-wrap items-center justify-center gap-2 border-t border-slate-200 bg-white px-3 py-2 dark:border-surface-raised dark:bg-surface-indigo">
-        <Button variant="outline" size="icon" onClick={() => go(-1)} disabled={page <= 1} title="Previous page"><ChevronLeft className="h-4 w-4" /></Button>
+        <Button aria-label="Previous page" variant="outline" size="icon" onClick={() => go(-1)} disabled={page <= 1} title="Previous page"><ChevronLeft className="h-4 w-4" /></Button>
         <span className="min-w-24 px-1 text-center text-xs font-medium tabular-nums text-slate-600 dark:text-slate-300">
           {pageNumbers.length === 2 ? `Pages ${page}–${page + 1}` : `Page ${page}`} / {pageCount}
         </span>
-        <Button variant="outline" size="icon" onClick={() => go(1)} disabled={page + pageNumbers.length - 1 >= pageCount} title="Next page"><ChevronRight className="h-4 w-4" /></Button>
+        <Button aria-label="Next page" variant="outline" size="icon" onClick={() => go(1)} disabled={page + pageNumbers.length - 1 >= pageCount} title="Next page"><ChevronRight className="h-4 w-4" /></Button>
         <div className="mx-1 h-5 w-px bg-slate-200 dark:bg-surface-raised" />
-        <Button variant="outline" size="icon" onClick={zoomOut} title="Zoom out (-)"><ZoomOut className="h-4 w-4" /></Button>
+        <Button aria-label="Zoom out (-)" variant="outline" size="icon" onClick={zoomOut} title="Zoom out (-)"><ZoomOut className="h-4 w-4" /></Button>
         <button
           type="button"
           onClick={() => setScale(1)}
@@ -1092,7 +1092,7 @@ function ComicView({ id, token, format }: { id: string; token: string | null; fo
         >
           {Math.round(scale * 100)}%
         </button>
-        <Button variant="outline" size="icon" onClick={zoomIn} title="Zoom in (+)"><ZoomIn className="h-4 w-4" /></Button>
+        <Button aria-label="Zoom in (+)" variant="outline" size="icon" onClick={zoomIn} title="Zoom in (+)"><ZoomIn className="h-4 w-4" /></Button>
         <Select value={pageView} onValueChange={(value) => changePageView(value as ReaderPageView)}>
           <SelectTrigger className="h-9 w-[126px]" title="Page view"><SelectValue /></SelectTrigger>
           <SelectContent container={fullscreenPortalContainer()}><SelectItem value="single">Single Page</SelectItem><SelectItem value="two">Two Page</SelectItem></SelectContent>
@@ -1438,9 +1438,9 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
           <ChevronRight className="h-4 w-4" />
         </Button>
         <div className="w-px h-5 bg-slate-200 dark:bg-surface-raised mx-1" />
-        <Button variant="outline" size="icon" onClick={() => setScale((s) => Math.max(0.5, +(s - 0.2).toFixed(2)))} title="Zoom out"><ZoomOut className="h-4 w-4" /></Button>
+        <Button aria-label="Zoom out" variant="outline" size="icon" onClick={() => setScale((s) => Math.max(0.5, +(s - 0.2).toFixed(2)))} title="Zoom out"><ZoomOut className="h-4 w-4" /></Button>
         <span className="text-xs text-slate-500 tabular-nums w-10 text-center">{Math.round(scale * 100)}%</span>
-        <Button variant="outline" size="icon" onClick={() => setScale((s) => Math.min(2.5, +(s + 0.2).toFixed(2)))} title="Zoom in"><ZoomIn className="h-4 w-4" /></Button>
+        <Button aria-label="Zoom in" variant="outline" size="icon" onClick={() => setScale((s) => Math.min(2.5, +(s + 0.2).toFixed(2)))} title="Zoom in"><ZoomIn className="h-4 w-4" /></Button>
         <div className="w-px h-5 bg-slate-200 dark:bg-surface-raised mx-1" />
         <details data-reader-menu className="relative shrink-0">
           <summary className="flex h-9 cursor-pointer list-none items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium text-foreground marker:hidden hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
@@ -1470,8 +1470,8 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
           </div>
         </details>
         <div className="w-px h-5 bg-slate-200 dark:bg-surface-raised mx-1" />
-        <Button variant="outline" size="icon" onClick={() => setShowSearch(true)} title="Search in book" disabled={!numPages}><Search className="h-4 w-4" /></Button>
-        <Button variant="outline" size="icon" onClick={() => setShowHighlights(true)} title="My highlights">
+        <Button aria-label="Search in book" variant="outline" size="icon" onClick={() => setShowSearch(true)} title="Search in book" disabled={!numPages}><Search className="h-4 w-4" /></Button>
+        <Button aria-label="My highlights" variant="outline" size="icon" onClick={() => setShowHighlights(true)} title="My highlights">
           <Highlighter className="h-4 w-4" />
         </Button>
       </div>
@@ -2137,8 +2137,8 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
         )}
         <Button variant="outline" size="icon" onClick={() => rendRef.current?.next()} disabled={!ready || atEnd} aria-label="Next page" className="shrink-0"><ChevronRight className="h-4 w-4" /></Button>
         <div className="w-px h-5 bg-slate-200 dark:bg-surface-raised mx-1 shrink-0" />
-        <Button variant="outline" size="icon" onClick={() => setShowSearch(true)} title="Search in book" disabled={!ready} className="shrink-0"><Search className="h-4 w-4" /></Button>
-        <Button variant="outline" size="icon" onClick={() => setShowHighlights(true)} title="My highlights" className="shrink-0">
+        <Button aria-label="Search in book" variant="outline" size="icon" onClick={() => setShowSearch(true)} title="Search in book" disabled={!ready} className="shrink-0"><Search className="h-4 w-4" /></Button>
+        <Button aria-label="My highlights" variant="outline" size="icon" onClick={() => setShowHighlights(true)} title="My highlights" className="shrink-0">
           <Highlighter className="h-4 w-4" />
         </Button>
         <details data-reader-menu className="relative shrink-0">

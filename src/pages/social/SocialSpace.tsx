@@ -560,7 +560,7 @@ export default function SocialSpace() {
   const needsClass = composerType === 'CLASS_SNAPSHOT' || audience === 'CLASS';
 
   return (
-    <div className="relative isolate -m-4 min-h-[calc(100vh-4rem)] overflow-hidden bg-slate-50 sm:-m-6 lg:-m-8 dark:bg-canvas">
+    <div className="relative isolate -m-4 min-h-[calc(100vh-4rem)] overflow-hidden bg-muted/50 sm:-m-6 lg:-m-8">
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <Lightfall
           className="h-full w-full"
@@ -577,13 +577,13 @@ export default function SocialSpace() {
       </div>
 
       <div ref={feedRef} className="relative z-10 mx-auto max-w-3xl space-y-5 p-4 sm:p-6 lg:p-8">
-        <div className="rounded-xl border border-slate-200/80 bg-white/80 backdrop-blur-sm dark:border-surface-raised/80 dark:bg-surface-indigo/70">
+        <div className="rounded-sm border border-border/80 bg-white/80 backdrop-blur-sm dark:bg-surface-indigo/70">
           <div className="flex items-center justify-between gap-3 p-4">
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-aubergine-100 p-2 text-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-400"><Sparkles className="h-5 w-5" /></div>
               <div>
-                <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Social Space</h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400">School moments, class snapshots, and lessons worth watching.</p>
+                <h1 className="text-xl font-semibold text-foreground">Social Space</h1>
+                <p className="text-sm text-muted-foreground">School moments, class snapshots, and lessons worth watching.</p>
               </div>
             </div>
             {isAdmin && (
@@ -603,17 +603,17 @@ export default function SocialSpace() {
               role="tab"
               aria-selected={activeType === tab.type}
               onClick={() => setActiveType(tab.type)}
-              className={`rounded-xl border px-2 py-3 text-center backdrop-blur-sm transition-colors ${activeType === tab.type
+              className={`rounded-sm border px-2 py-3 text-center backdrop-blur-sm transition-colors ${activeType === tab.type
                 ? 'border-aubergine-400 bg-white/95 text-aubergine-700 shadow-sm dark:border-aubergine-500 dark:bg-surface-indigo dark:text-aubergine-300'
-                : 'border-slate-200/80 bg-white/65 text-slate-500 hover:bg-white/90 dark:border-surface-raised/80 dark:bg-surface-indigo/60 dark:text-slate-400'}`}
+                : 'border-border/80 bg-white/65 text-muted-foreground hover:bg-white/90 dark:bg-surface-indigo/60'}`}
             >
               <span className="block text-xs font-semibold sm:text-sm">{tab.label}</span>
-              <span className="mt-0.5 hidden text-[10px] opacity-70 sm:block">{tab.description}</span>
+              <span className="mt-0.5 hidden text-[11px] opacity-70 sm:block">{tab.description}</span>
             </button>
           ))}
         </div>
 
-        <div className="space-y-4 rounded-xl border border-slate-200/80 bg-white/85 p-4 backdrop-blur-sm dark:border-surface-raised/80 dark:bg-surface-indigo/75">
+        <div className="space-y-4 rounded-sm border border-border/80 bg-white/85 p-4 backdrop-blur-sm dark:bg-surface-indigo/75">
           {canCurate && (
             <div className="grid grid-cols-3 gap-2">
               {POST_TABS.map((item) => (
@@ -652,9 +652,9 @@ export default function SocialSpace() {
               </div>
               <Textarea value={body} onChange={(event) => setBody(event.target.value)} rows={2} maxLength={1000} placeholder="Why should students watch this?" className="resize-none" />
               {selectedVideo && (
-                <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/30">
+                <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/50 p-3">
                   <PlayCircle className="h-8 w-8 shrink-0 text-aubergine-600" />
-                  <div className="min-w-0"><p className="truncate text-sm font-medium">{selectedVideo.title}</p><p className="text-xs text-slate-500">Ready to feature</p></div>
+                  <div className="min-w-0"><p className="truncate text-sm font-medium">{selectedVideo.title}</p><p className="text-xs text-muted-foreground">Ready to feature</p></div>
                 </div>
               )}
             </div>
@@ -663,7 +663,7 @@ export default function SocialSpace() {
           {photos.length > 0 && (
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
               {photos.map((photo, index) => (
-                <div key={photo.id} className="group relative aspect-square overflow-hidden rounded-lg ring-1 ring-slate-200 dark:ring-slate-700">
+                <div key={photo.id} className="group relative aspect-square overflow-hidden rounded-lg ring-1 ring-border">
                   <img src={photo.url} alt={`Selected upload ${index + 1}`} className="h-full w-full object-cover" />
                   <button type="button" onClick={() => removePhoto(photo.id)} aria-label="Remove photo" className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-100 transition-opacity hover:bg-black/80 sm:opacity-0 sm:group-hover:opacity-100"><X className="h-3.5 w-3.5" /></button>
                   {photos.length > 1 && (
@@ -672,11 +672,11 @@ export default function SocialSpace() {
                       <button type="button" onClick={() => movePhoto(photo.id, 1)} disabled={index === photos.length - 1} aria-label="Move right" className="rounded bg-black/60 p-0.5 text-white disabled:opacity-30"><ChevronRight className="h-3 w-3" /></button>
                     </div>
                   )}
-                  <span className="absolute bottom-1 right-1 rounded bg-black/50 px-1 text-[10px] text-white">{index + 1}</span>
+                  <span className="absolute bottom-1 right-1 rounded bg-black/50 px-1 text-[11px] text-white">{index + 1}</span>
                 </div>
               ))}
               {photos.length < MAX_PHOTOS && (
-                <button type="button" onClick={() => fileRef.current?.click()} className="flex aspect-square items-center justify-center rounded-lg border border-dashed border-slate-300 text-slate-400 hover:border-aubergine-400 hover:text-aubergine-500 dark:border-slate-600 dark:hover:border-aubergine-400"><Plus className="h-6 w-6" /></button>
+                <button aria-label="Add" type="button" onClick={() => fileRef.current?.click()} className="flex aspect-square items-center justify-center rounded-lg border border-dashed border-input text-muted-foreground hover:border-aubergine-400 hover:text-aubergine-500 dark:hover:border-aubergine-400"><Plus className="h-6 w-6" /></button>
               )}
             </div>
           )}
@@ -737,25 +737,25 @@ export default function SocialSpace() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-14 text-sm text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading…</div>
+          <div className="flex items-center justify-center py-14 text-sm text-muted-foreground"><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading…</div>
         ) : posts.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white/60 py-16 text-center text-sm text-slate-500 backdrop-blur-sm dark:border-slate-700 dark:bg-surface-indigo/50">
+          <div className="rounded-sm border border-dashed border-input bg-white/60 py-16 text-center text-sm text-muted-foreground backdrop-blur-sm dark:bg-surface-indigo/50">
             {activeType === 'POST' ? 'Nothing here yet. Be the first to post!' : activeType === 'CLASS_SNAPSHOT' ? 'No class snapshots have been published yet.' : 'No video highlights right now.'}
           </div>
         ) : (
           <div className="space-y-4">
             {posts.map((post) => (
-              <article key={post.id} className="overflow-hidden rounded-xl border border-slate-200/80 bg-white/85 backdrop-blur-sm dark:border-surface-raised/80 dark:bg-surface-indigo/75">
+              <article key={post.id} className="overflow-hidden rounded-sm border border-border/80 bg-white/85 backdrop-blur-sm dark:bg-surface-indigo/75">
                 <div className="flex items-start justify-between p-3">
                   <div className="flex min-w-0 items-center gap-2">
                     <div className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-aubergine-100 text-xs font-bold text-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-400">
                       {post.author.photo ? <img src={post.author.photo} alt="" className="h-full w-full object-cover" /> : post.author.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-900 dark:text-white">{post.author.name} <Badge variant="outline" className="ml-1 text-[9px] uppercase dark:border-slate-600 dark:text-slate-300">{roleLabel(post.author.role)}</Badge></p>
-                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-slate-500">
+                      <p className="truncate text-sm font-medium text-foreground">{post.author.name} <Badge variant="outline" className="ml-1 text-[11px] uppercase">{roleLabel(post.author.role)}</Badge></p>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
                         <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {timeLeft(post.expiresAt)}</span>
-                        {post.classInfo && <Badge variant="secondary" className="h-4 px-1.5 text-[9px]"><GraduationCap className="mr-1 h-2.5 w-2.5" />{post.classInfo.name}</Badge>}
+                        {post.classInfo && <Badge variant="secondary" className="h-4 px-1.5 text-[11px]"><GraduationCap className="mr-1 h-2.5 w-2.5" />{post.classInfo.name}</Badge>}
                         {post.audience === 'SCHOOL' && post.type !== 'POST' && <span className="flex items-center gap-1"><School className="h-3 w-3" /> School</span>}
                         {post.audience === 'STAFF' && <span className="flex items-center gap-1"><BriefcaseBusiness className="h-3 w-3" /> Staff</span>}
                         {post.audience === 'CLASS' && <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Class</span>}
@@ -763,9 +763,9 @@ export default function SocialSpace() {
                     </div>
                   </div>
                   <div className="flex items-center gap-0.5">
-                    {!post.mine && <Button variant="ghost" size="icon" className="h-8 w-8" disabled={post.reportedByMe} title={post.reportedByMe ? 'Already reported' : 'Report post'} onClick={() => reportPost(post)}><Flag className={`h-3.5 w-3.5 ${post.reportedByMe ? 'fill-amber-500 text-amber-500' : 'text-slate-400'}`} /></Button>}
-                    {(post.mine || isAdmin) && <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit post" onClick={() => startEditPost(post)}><Pencil className="h-4 w-4 text-slate-400" /></Button>}
-                    {(post.mine || isAdmin) && <Button variant="ghost" size="icon" className="h-8 w-8" title="Delete post" onClick={() => removePost(post.id)}><Trash2 className="h-4 w-4 text-slate-400" /></Button>}
+                    {!post.mine && <Button aria-label={post.reportedByMe ? 'Already reported' : 'Report post'} variant="ghost" size="icon" className="h-8 w-8" disabled={post.reportedByMe} title={post.reportedByMe ? 'Already reported' : 'Report post'} onClick={() => reportPost(post)}><Flag className={`h-3.5 w-3.5 ${post.reportedByMe ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground'}`} /></Button>}
+                    {(post.mine || isAdmin) && <Button aria-label="Edit post" variant="ghost" size="icon" className="h-8 w-8" title="Edit post" onClick={() => startEditPost(post)}><Pencil className="h-4 w-4 text-muted-foreground" /></Button>}
+                    {(post.mine || isAdmin) && <Button aria-label="Delete post" variant="ghost" size="icon" className="h-8 w-8" title="Delete post" onClick={() => removePost(post.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>}
                   </div>
                 </div>
 
@@ -777,7 +777,7 @@ export default function SocialSpace() {
                       <Button type="button" size="sm" onClick={() => saveEditPost(post)}><Check className="mr-1 h-4 w-4" />Save</Button>
                     </div>
                   </div>
-                ) : post.body ? <p className="whitespace-pre-wrap px-3 pb-3 text-sm text-slate-800 dark:text-slate-200">{post.body}</p> : null}
+                ) : post.body ? <p className="whitespace-pre-wrap px-3 pb-3 text-sm text-foreground">{post.body}</p> : null}
                 {post.media.length > 0 ? (
                   <PostMedia
                     post={post}
@@ -792,15 +792,15 @@ export default function SocialSpace() {
                 ) : null}
 
                 {post.type === 'VIDEO_HIGHLIGHT' && post.videoLesson && (
-                  <Link to={`/videos/${post.videoLesson.id}`} className="group/video mx-3 mb-3 flex overflow-hidden rounded-xl border border-slate-200 bg-slate-50 transition hover:border-aubergine-300 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900/30">
-                    <div className="relative grid h-24 w-36 shrink-0 place-items-center overflow-hidden bg-slate-200 dark:bg-slate-800">
+                  <Link to={`/videos/${post.videoLesson.id}`} className="group/video mx-3 mb-3 flex overflow-hidden rounded-sm border border-border bg-muted/50 transition hover:border-aubergine-300 hover:shadow-sm">
+                    <div className="relative grid h-24 w-36 shrink-0 place-items-center overflow-hidden bg-muted">
                       {post.videoLesson.thumbnailUrl && <img src={post.videoLesson.thumbnailUrl} alt="" className="h-full w-full object-cover" />}
                       <PlayCircle className="absolute h-10 w-10 text-white drop-shadow" />
                     </div>
                     <div className="min-w-0 p-3">
-                      <Badge className="mb-1 bg-aubergine-600 text-[9px] text-white">Featured lesson</Badge>
-                      <p className="line-clamp-2 text-sm font-semibold text-slate-900 group-hover/video:text-aubergine-700 dark:text-white">{post.videoLesson.title}</p>
-                      <p className="mt-1 text-xs text-slate-500">Watch video lesson</p>
+                      <Badge className="mb-1 bg-aubergine-600 text-[11px] text-white">Featured lesson</Badge>
+                      <p className="line-clamp-2 text-sm font-semibold text-foreground group-hover/video:text-aubergine-700">{post.videoLesson.title}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Watch video lesson</p>
                     </div>
                   </Link>
                 )}
@@ -813,13 +813,13 @@ export default function SocialSpace() {
                       aria-label={post.likedByMe ? `Change reaction (${post.reactionByMe ?? 'LIKE'})` : 'React to post'}
                       onClick={() => (post.likedByMe ? react(post, post.reactionByMe ?? 'LIKE') : setReactionPicker((current) => current === post.id ? null : post.id))}
                       onPointerEnter={() => setReactionPicker((current) => current ?? post.id)}
-                      className={`flex items-center gap-1 text-sm transition-colors ${post.likedByMe ? REACTION_COLOR[post.reactionByMe ?? 'LIKE'] : 'text-slate-500 hover:text-sky-600'}`}
+                      className={`flex items-center gap-1 text-sm transition-colors ${post.likedByMe ? REACTION_COLOR[post.reactionByMe ?? 'LIKE'] : 'text-muted-foreground hover:text-sky-600'}`}
                     >
                       {post.likedByMe ? <span className="text-lg leading-none">{REACTION_EMOJI[post.reactionByMe ?? 'LIKE']}</span> : <ThumbsUp className="h-5 w-5" />}
                       {post.likeCount > 0 && <span>{post.likeCount}</span>}
                     </button>
                     {reactionPicker === post.id && (
-                      <div data-reaction-picker={post.id} className="absolute bottom-full left-0 z-20 mb-2 flex gap-1 rounded-full border border-slate-200 bg-white p-1.5 shadow-lg dark:border-slate-700 dark:bg-surface-raised">
+                      <div data-reaction-picker={post.id} className="absolute bottom-full left-0 z-20 mb-2 flex gap-1 rounded-full border border-border bg-white p-1.5 shadow-none dark:bg-surface-raised">
                         {REACTIONS.map((r) => (
                           <button key={r.type} type="button" title={r.label} aria-label={r.label} onClick={() => react(post, r.type)} className={`rounded-full p-1 text-xl transition-transform hover:scale-125 ${post.reactionByMe === r.type ? 'ring-2 ring-offset-1 ' + r.color : ''}`}>
                             <span>{r.emoji}</span>
@@ -828,12 +828,12 @@ export default function SocialSpace() {
                       </div>
                     )}
                   </div>
-                  <button type="button" onClick={() => toggleComments(post)} aria-expanded={Boolean(openComments[post.id])} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-200">
+                  <button type="button" onClick={() => toggleComments(post)} aria-expanded={Boolean(openComments[post.id])} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
                     <MessageCircle className="h-5 w-5" /> {post.commentCount > 0 && post.commentCount}
                   </button>
                   {/* Reaction summary chips (hidden when only the default Like is in play) */}
                   {Object.keys(post.reactionCounts).length > 0 && (
-                    <div className="ml-auto flex items-center gap-1 text-xs text-slate-500">
+                    <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
                       {REACTIONS.filter((r) => post.reactionCounts[r.type]).map((r) => (
                         <span key={r.type} title={`${post.reactionCounts[r.type]} ${r.label}`} className="flex items-center">
                           <span className="text-sm">{r.emoji}</span>
@@ -844,23 +844,23 @@ export default function SocialSpace() {
                 </div>
 
                 {openComments[post.id] && (
-                  <div className="space-y-3 border-t border-slate-100 p-3 dark:border-slate-700">
+                  <div className="space-y-3 border-t border-border p-3">
                     {post.commentsLoading && post.comments.length === 0 ? (
-                      <p className="flex items-center justify-center py-3 text-xs text-slate-500"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading comments…</p>
+                      <p className="flex items-center justify-center py-3 text-xs text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading comments…</p>
                     ) : post.comments.map((comment) => (
                       <div key={comment.id} className="group flex items-start justify-between gap-2 text-sm">
                         {editingComment === comment.id ? (
                           <div className="flex flex-1 items-center gap-2">
                             <Input value={editDraft} onChange={(event) => setEditDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') saveEditComment(post.id, comment.id); if (event.key === 'Escape') setEditingComment(null); }} className="h-8" autoFocus />
-                            <Button size="icon" className="h-8 w-8 shrink-0" onClick={() => saveEditComment(post.id, comment.id)}><Check className="h-4 w-4" /></Button>
+                            <Button aria-label="Confirm" size="icon" className="h-8 w-8 shrink-0" onClick={() => saveEditComment(post.id, comment.id)}><Check className="h-4 w-4" /></Button>
                           </div>
                         ) : (
                           <>
-                            <p className="min-w-0 break-words"><span className="font-medium text-slate-800 dark:text-slate-200">{comment.user.name}</span>{' '}<span className="text-slate-600 dark:text-slate-400">{comment.body}</span>{' '}{comment.editedAt && <span className="text-[10px] text-slate-400">(edited)</span>}</p>
+                            <p className="min-w-0 break-words"><span className="font-medium text-foreground">{comment.user.name}</span>{' '}<span className="text-muted-foreground">{comment.body}</span>{' '}{comment.editedAt && <span className="text-[11px] text-muted-foreground">(edited)</span>}</p>
                             <div className="flex shrink-0 items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
-                              {comment.mine && <button type="button" onClick={() => startEditComment(comment)} title="Edit comment" aria-label="Edit comment"><Pencil className="h-4 w-4 text-slate-400" /></button>}
-                              {!comment.mine && <button type="button" onClick={() => reportComment(post.id, comment)} disabled={comment.reportedByMe} title={comment.reportedByMe ? 'Already reported' : 'Report comment'} aria-label="Report comment"><Flag className={`h-4 w-4 ${comment.reportedByMe ? 'fill-amber-500 text-amber-500' : 'text-slate-400'}`} /></button>}
-                              {(comment.mine || isAdmin) && <button type="button" onClick={() => removeComment(post.id, comment.id)} title="Delete comment" aria-label="Delete comment"><Trash2 className="h-4 w-4 text-slate-400" /></button>}
+                              {comment.mine && <button type="button" onClick={() => startEditComment(comment)} title="Edit comment" aria-label="Edit comment"><Pencil className="h-4 w-4 text-muted-foreground" /></button>}
+                              {!comment.mine && <button type="button" onClick={() => reportComment(post.id, comment)} disabled={comment.reportedByMe} title={comment.reportedByMe ? 'Already reported' : 'Report comment'} aria-label="Report comment"><Flag className={`h-4 w-4 ${comment.reportedByMe ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground'}`} /></button>}
+                              {(comment.mine || isAdmin) && <button type="button" onClick={() => removeComment(post.id, comment.id)} title="Delete comment" aria-label="Delete comment"><Trash2 className="h-4 w-4 text-muted-foreground" /></button>}
                             </div>
                           </>
                         )}
@@ -877,7 +877,7 @@ export default function SocialSpace() {
                         placeholder="Add a comment… (Enter to send, Shift+Enter for a new line)"
                         className="min-h-[2.25rem] resize-none"
                       />
-                      <Button size="icon" className="h-9 w-9 shrink-0" onClick={() => addComment(post)} disabled={commentBusy[post.id] || !(commentDraft[post.id] || '').trim()}>{commentBusy[post.id] ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</Button>
+                      <Button aria-label="Post comment" size="icon" className="h-9 w-9 shrink-0" onClick={() => addComment(post)} disabled={commentBusy[post.id] || !(commentDraft[post.id] || '').trim()}>{commentBusy[post.id] ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</Button>
                     </div>
                   </div>
                 )}
@@ -895,12 +895,12 @@ export default function SocialSpace() {
           <DialogContent className="sm:max-w-lg">
             <DialogHeader><DialogTitle>Reported content</DialogTitle></DialogHeader>
             <div className="max-h-[60vh] space-y-3 overflow-y-auto">
-              {reports.length === 0 ? <p className="py-8 text-center text-sm text-slate-400">Nothing reported right now.</p> : reports.map((report) => (
-                <div key={report.id} className="rounded-lg border border-slate-200 p-3 dark:border-surface-raised">
-                  <p className="text-xs text-slate-400">{report.type === 'POST' ? 'Post' : 'Comment'} by {report.content.author} · reported by {report.reportedBy}</p>
-                  {report.content.body && <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200">{report.content.body}</p>}
+              {reports.length === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">Nothing reported right now.</p> : reports.map((report) => (
+                <div key={report.id} className="rounded-lg border border-border p-3">
+                  <p className="text-xs text-muted-foreground">{report.type === 'POST' ? 'Post' : 'Comment'} by {report.content.author} · reported by {report.reportedBy}</p>
+                  {report.content.body && <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{report.content.body}</p>}
                   {report.content.imageUrl && <img src={report.content.imageUrl} alt="Reported content" className="mt-2 max-h-40 rounded-md" />}
-                  {report.reason && <p className="mt-1 text-xs italic text-slate-500">Reason: {report.reason}</p>}
+                  {report.reason && <p className="mt-1 text-xs italic text-muted-foreground">Reason: {report.reason}</p>}
                   <div className="mt-2 flex gap-2"><Button size="sm" variant="destructive" onClick={() => resolveReport(report.id, 'ACTIONED')}>Remove content</Button><Button size="sm" variant="outline" onClick={() => resolveReport(report.id, 'DISMISSED')}>Dismiss</Button></div>
                 </div>
               ))}
@@ -956,7 +956,7 @@ function PostMedia({ post, index, onIndex, onOpen }: { post: Post; index: number
           <button key={idx} type="button" aria-label={`Photo ${idx + 1}`} onClick={() => onIndex(idx)} className={`h-1.5 rounded-full transition-all ${idx === i ? 'w-4 bg-white' : 'w-1.5 bg-white/50'}`} />
         ))}
       </div>
-      <span className="absolute right-2 top-2 rounded-full bg-black/50 px-2 py-0.5 text-[10px] text-white">{i + 1}/{assets.length}</span>
+      <span className="absolute right-2 top-2 rounded-full bg-black/50 px-2 py-0.5 text-[11px] text-white">{i + 1}/{assets.length}</span>
     </div>
   );
 }

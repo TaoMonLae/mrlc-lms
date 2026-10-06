@@ -121,15 +121,15 @@ export function AppSidebar() {
       <SidebarHeader className="school-sidebar-header flex h-[72px] items-center border-b border-white/15 px-5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
         <div className="flex items-center gap-3 font-semibold group-data-[collapsible=icon]:gap-0">
           {brandingSettings.logoUrl ? (
-            <img src={brandingSettings.logoUrl} alt={schoolProfile.shortName} className="size-10 shrink-0 bg-white object-contain p-0.5" />
+            <img src={brandingSettings.logoUrl} alt={schoolProfile.shortName} className="size-10 shrink-0 bg-card object-contain p-0.5" />
           ) : (
-            <div className="flex size-10 shrink-0 items-center justify-center border border-white/30 bg-white text-base font-bold text-academic-navy-deep">
+            <div className="flex size-10 shrink-0 items-center justify-center border border-white/30 bg-card text-base font-bold text-academic-navy-deep">
               {schoolProfile.name.charAt(0)}
             </div>
           )}
           <div className="flex flex-col gap-1 overflow-hidden leading-tight transition-all duration-200 group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0">
             <span className="line-clamp-2 max-w-[155px] text-[11px] font-semibold uppercase leading-[1.12] tracking-[0.035em] text-white">{schoolProfile.name}</span>
-            <span className="text-[10px] font-medium uppercase leading-none tracking-[0.1em] text-academic-gold">{schoolProfile.shortName}</span>
+            <span className="text-[11px] font-medium uppercase leading-none tracking-[0.1em] text-academic-gold">{schoolProfile.shortName}</span>
           </div>
         </div>
       </SidebarHeader>
@@ -154,7 +154,7 @@ export function AppSidebar() {
                           <entry.icon className="size-4 opacity-75" />
                           <span className="text-[13px] font-medium">{entry.title}</span>
                           {navBadgeCount(entry.url) > 0 && (
-                            <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                            <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[11px] font-bold text-white">
                               {navBadgeCount(entry.url) > 99 ? '99+' : navBadgeCount(entry.url)}
                             </span>
                           )}
@@ -214,7 +214,7 @@ export function AppSidebar() {
                                 <item.icon className="h-3.5 w-3.5" />
                                 <span className="text-[13px] font-medium">{item.title}</span>
                                 {navBadgeCount(item.url) > 0 && (
-                                  <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                                  <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[11px] font-bold text-white">
                                     {navBadgeCount(item.url) > 99 ? '99+' : navBadgeCount(item.url)}
                                   </span>
                                 )}
@@ -243,7 +243,7 @@ export function AppSidebar() {
                       <item.icon className="size-4 opacity-75" />
                       <span className="text-[13px] font-medium">{item.title}</span>
                       {navBadgeCount(item.url) > 0 && (
-                        <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white group-data-[collapsible=icon]:hidden">
+                        <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[11px] font-bold text-white group-data-[collapsible=icon]:hidden">
                           {navBadgeCount(item.url) > 99 ? '99+' : navBadgeCount(item.url)}
                         </span>
                       )}

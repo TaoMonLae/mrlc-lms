@@ -81,13 +81,13 @@ export function SessionManagement() {
   };
 
   return (
-    <section className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4" aria-labelledby="signed-in-devices-title">
+    <section className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-4" aria-labelledby="signed-in-devices-title">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 id="signed-in-devices-title" className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+          <h2 id="signed-in-devices-title" className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
             <ShieldCheck className="h-4 w-4" aria-hidden="true" /> Signed-in devices
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-300 mt-1">Review active sessions and sign out devices you do not recognize.</p>
+          <p className="text-sm text-muted-foreground mt-1">Review active sessions and sign out devices you do not recognize.</p>
         </div>
         {sessions.some((session) => !session.current) && (
           <Button variant="outline" size="sm" onClick={revokeOthers} disabled={busyId !== null}>
@@ -98,26 +98,26 @@ export function SessionManagement() {
       </div>
 
       {loading ? (
-        <div className="flex items-center gap-2 text-sm text-slate-500" role="status">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground" role="status">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Loading devices…
         </div>
       ) : sessions.length === 0 ? (
-        <p className="text-sm text-slate-500">No managed sessions found. Your current session may predate this security update.</p>
+        <p className="text-sm text-muted-foreground">No managed sessions found. Your current session may predate this security update.</p>
       ) : (
-        <ul className="divide-y divide-slate-200 dark:divide-surface-raised">
+        <ul className="divide-y divide-border">
           {sessions.map((session) => {
             const mobile = /iPhone|iPad|Android/.test(session.userAgent || '');
             const DeviceIcon = mobile ? Smartphone : Laptop;
             return (
               <li key={session.id} className="py-3 flex items-center gap-3">
-                <div className="h-10 w-10 shrink-0 rounded-lg bg-slate-100 dark:bg-surface-raised flex items-center justify-center">
-                  <DeviceIcon className="h-5 w-5 text-slate-600 dark:text-slate-300" aria-hidden="true" />
+                <div className="h-10 w-10 shrink-0 rounded-lg bg-muted flex items-center justify-center">
+                  <DeviceIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="font-medium text-sm text-slate-900 dark:text-white">
+                  <div className="font-medium text-sm text-foreground">
                     {deviceName(session.userAgent)} {session.current && <span className="ml-1 text-xs text-emerald-700 dark:text-emerald-400">Current device</span>}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                  <div className="text-xs text-muted-foreground">
                     Active {formatDistanceToNow(new Date(session.lastSeenAt), { addSuffix: true })}
                     {session.ipAddress ? ` · ${session.ipAddress}` : ''}
                   </div>

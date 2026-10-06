@@ -94,12 +94,12 @@ export default function VendorNew() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" render={<Link to="/vendors" />} nativeButton={false}>
+        <Button aria-label="Back" variant="ghost" size="sm" render={<Link to="/vendors" />} nativeButton={false}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">New Vendor</h1>
-          <p className="text-sm text-slate-500">Add a new supplier or service provider</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">New Vendor</h1>
+          <p className="text-sm text-muted-foreground">Add a new supplier or service provider</p>
         </div>
       </div>
 

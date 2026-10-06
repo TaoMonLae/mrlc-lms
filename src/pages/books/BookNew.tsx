@@ -40,15 +40,15 @@ export default function BookNew() {
         <Button
           variant="ghost"
           size="sm"
-          className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white"
+          className="-ml-3 mb-2 text-muted-foreground hover:text-foreground"
           render={<Link to="/books" />}
           nativeButton={false}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Book Catalog
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Add Book</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Add Book</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Enter the details of a physical book to add it to the library catalog.
         </p>
       </div>

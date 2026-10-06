@@ -81,11 +81,11 @@ export default function AttendanceReport() {
     <div className="space-y-6 max-w-6xl mx-auto pb-10">
       <div className="print:hidden flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
-          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/reports" />} nativeButton={false}>
+          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/reports" />} nativeButton={false}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Reports
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Attendance Report</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Attendance Report</h1>
         </div>
 
         <div className="flex items-center gap-2">
@@ -96,9 +96,9 @@ export default function AttendanceReport() {
       </div>
 
       {/* Filter Panel */}
-      <div className="print:hidden bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-wrap gap-4 items-end shadow-sm">
+      <div className="print:hidden bg-card border border-border rounded-sm p-4 flex flex-wrap gap-4 items-end shadow-sm">
          <div className="space-y-1.5 flex-1 min-w-[200px]">
-           <label className="text-xs font-semibold text-slate-500 uppercase">Class</label>
+           <label className="text-xs font-semibold text-muted-foreground uppercase">Class</label>
            <Select value={classFilter} onValueChange={setClassFilter}>
               <SelectTrigger><SelectValue placeholder="Select Class" /></SelectTrigger>
               <SelectContent>
@@ -108,7 +108,7 @@ export default function AttendanceReport() {
             </Select>
          </div>
          <div className="space-y-1.5 flex-1 min-w-[200px]">
-           <label className="text-xs font-semibold text-slate-500 uppercase">Month</label>
+           <label className="text-xs font-semibold text-muted-foreground uppercase">Month</label>
            <Select value={monthFilter} onValueChange={setMonthFilter}>
               <SelectTrigger><SelectValue placeholder="Select Month" /></SelectTrigger>
               <SelectContent>
@@ -122,39 +122,39 @@ export default function AttendanceReport() {
       </div>
 
       {/* Screen Preview */}
-      <div className="print:hidden bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm overflow-x-auto">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Preview</h3>
+      <div className="print:hidden bg-card border border-border rounded-sm p-6 shadow-sm overflow-x-auto">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Preview</h3>
         {filtersChanged && <p role="status" className="print:hidden text-sm text-muted-foreground">Filters changed. Apply filters to update the report below.</p>}
 
       {isLoading ? (
-          <div className="flex items-center justify-center py-12 text-slate-500"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…</div>
+          <div className="flex items-center justify-center py-12 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…</div>
         ) : error ? (
           <div className="py-12 text-center text-sm text-red-600">{error}</div>
         ) : rows.length === 0 ? (
-          <div className="py-12 text-center text-sm text-slate-500">No attendance records for this class and month.</div>
+          <div className="py-12 text-center text-sm text-muted-foreground">No attendance records for this class and month.</div>
         ) : (
           <table className="w-full text-sm text-left border-collapse">
-            <thead className="bg-slate-50 dark:bg-surface-raised">
+            <thead className="bg-muted/50">
               <tr>
-                <th className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-semibold">Student Name</th>
-                <th className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-semibold">ID</th>
-                <th className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-semibold text-center">Total Days</th>
-                <th className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-semibold text-center">Present</th>
-                <th className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-semibold text-center">Absent</th>
-                <th className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-semibold text-center">Late</th>
-                <th className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-semibold text-center">Rate</th>
+                <th className="px-4 py-3 border border-border font-semibold">Student Name</th>
+                <th className="px-4 py-3 border border-border font-semibold">ID</th>
+                <th className="px-4 py-3 border border-border font-semibold text-center">Total Days</th>
+                <th className="px-4 py-3 border border-border font-semibold text-center">Present</th>
+                <th className="px-4 py-3 border border-border font-semibold text-center">Absent</th>
+                <th className="px-4 py-3 border border-border font-semibold text-center">Late</th>
+                <th className="px-4 py-3 border border-border font-semibold text-center">Rate</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => (
                 <tr key={r.studentId}>
-                  <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-medium">{r.name}</td>
-                  <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised">{r.code}</td>
-                  <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">{r.total}</td>
-                  <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">{r.present}</td>
-                  <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">{r.absent}</td>
-                  <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">{r.late}</td>
-                  <td className={`px-4 py-3 border border-slate-200 dark:border-surface-raised text-center font-semibold ${r.rate < 80 ? 'text-red-600' : 'text-emerald-600'}`}>{r.rate}%</td>
+                  <td className="px-4 py-3 border border-border font-medium">{r.name}</td>
+                  <td className="px-4 py-3 border border-border">{r.code}</td>
+                  <td className="px-4 py-3 border border-border text-center">{r.total}</td>
+                  <td className="px-4 py-3 border border-border text-center">{r.present}</td>
+                  <td className="px-4 py-3 border border-border text-center">{r.absent}</td>
+                  <td className="px-4 py-3 border border-border text-center">{r.late}</td>
+                  <td className={`px-4 py-3 border border-border text-center font-semibold ${r.rate < 80 ? 'text-red-600' : 'text-emerald-600'}`}>{r.rate}%</td>
                 </tr>
               ))}
             </tbody>
@@ -198,17 +198,17 @@ export default function AttendanceReport() {
         </table>
 
         <div className="mt-8 grid grid-cols-3 gap-6">
-           <div className="border border-slate-300 p-4 rounded text-center">
-             <p className="text-xs text-slate-500 uppercase font-bold">Class Average</p>
-             <p className="text-2xl font-bold text-slate-900 mt-1">{data?.classAverage ?? 0}%</p>
+           <div className="border border-input p-4 rounded text-center">
+             <p className="text-xs text-muted-foreground uppercase font-bold">Class Average</p>
+             <p className="text-2xl font-bold text-foreground mt-1">{data?.classAverage ?? 0}%</p>
            </div>
-           <div className="border border-slate-300 p-4 rounded text-center">
-             <p className="text-xs text-slate-500 uppercase font-bold">Perfect Attendance</p>
-             <p className="text-2xl font-bold text-slate-900 mt-1">{data?.perfectCount ?? 0}</p>
+           <div className="border border-input p-4 rounded text-center">
+             <p className="text-xs text-muted-foreground uppercase font-bold">Perfect Attendance</p>
+             <p className="text-2xl font-bold text-foreground mt-1">{data?.perfectCount ?? 0}</p>
            </div>
-           <div className="border border-slate-300 p-4 rounded text-center">
-             <p className="text-xs text-slate-500 uppercase font-bold">At Risk (&lt;80%)</p>
-             <p className="text-2xl font-bold text-slate-900 mt-1">{data?.atRiskCount ?? 0}</p>
+           <div className="border border-input p-4 rounded text-center">
+             <p className="text-xs text-muted-foreground uppercase font-bold">At Risk (&lt;80%)</p>
+             <p className="text-2xl font-bold text-foreground mt-1">{data?.atRiskCount ?? 0}</p>
            </div>
         </div>
       </PrintLayout>

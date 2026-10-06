@@ -54,11 +54,11 @@ export default function StudentAttendance() {
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <CalendarCheck className="h-6 w-6 text-aubergine-600" />
             My Attendance
           </h1>
-          <p className="text-sm text-slate-500 mt-1">Track your daily presence and punctuality.</p>
+          <p className="text-sm text-muted-foreground mt-1">Track your daily presence and punctuality.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm">
@@ -76,8 +76,8 @@ export default function StudentAttendance() {
       </div>
 
       {/* Main List */}
-      <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-surface-raised/50 pb-4">
+      <Card className="border-border shadow-sm overflow-hidden">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
           <div>
             <CardTitle className="text-lg">Attendance History</CardTitle>
             <CardDescription>View detailed records for the selected period</CardDescription>
@@ -98,7 +98,7 @@ export default function StudentAttendance() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 font-bold text-[10px] uppercase tracking-widest border-b border-slate-100 dark:border-surface-raised">
+              <thead className="bg-muted/50 text-muted-foreground font-bold text-[11px] uppercase tracking-widest border-b border-border">
                 <tr>
                   <th className="px-6 py-4">Date & Time</th>
                   <th className="px-6 py-4">Subject</th>
@@ -106,22 +106,22 @@ export default function StudentAttendance() {
                   <th className="px-6 py-4">Remarks</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+              <tbody className="divide-y divide-border">
                 {attendanceData.map((record, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors group">
+                  <tr key={idx} className="hover:bg-muted/50 transition-colors group">
                     <td className="px-6 py-4">
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">{new Date(record.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                      <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1 mt-0.5 uppercase tracking-tighter">
+                      <p className="text-sm font-bold text-foreground">{new Date(record.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                      <p className="text-[11px] text-muted-foreground font-medium flex items-center gap-1 mt-0.5 uppercase tracking-tighter">
                         <Clock className="h-3 w-3" /> {record.time}
                       </p>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{record.subject}</span>
+                      <span className="text-sm font-semibold text-foreground">{record.subject}</span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex justify-center">
                         <Badge className={`
-                          h-6 px-2 text-[10px] font-bold uppercase tracking-widest border-none
+                          h-6 px-2 text-[11px] font-bold uppercase tracking-widest border-none
                           ${record.status === 'PRESENT' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 
                             record.status === 'ABSENT' ? 'bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' : 
                             'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}
@@ -131,7 +131,7 @@ export default function StudentAttendance() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-xs text-slate-500 italic max-w-[200px] truncate">
+                      <p className="text-xs text-muted-foreground italic max-w-[200px] truncate">
                         {record.remarks || record.reason || record.delay || '-'}
                       </p>
                     </td>
@@ -144,10 +144,10 @@ export default function StudentAttendance() {
       </Card>
 
       {/* Info Warning */}
-      <div className="bg-aubergine-50 dark:bg-aubergine-900/10 p-4 rounded-xl border border-aubergine-100 dark:border-aubergine-900/30 flex gap-4">
+      <div className="bg-aubergine-50 dark:bg-aubergine-900/10 p-4 rounded-sm border border-aubergine-100 dark:border-aubergine-900/30 flex gap-4">
         <AlertCircle className="h-5 w-5 text-aubergine-600 shrink-0 mt-0.5" />
         <div className="text-xs text-aubergine-800 dark:text-aubergine-400 leading-relaxed">
-          <p className="font-bold uppercase tracking-widest mb-1 text-[10px]">Attendance Policy</p>
+          <p className="font-bold uppercase tracking-widest mb-1 text-[11px]">Attendance Policy</p>
           <p>Maintenance of 75% attendance is mandatory to appear for end-of-year examinations. If you have been absent due to medical reasons, please submit your medical certificate to the school office within 3 days.</p>
         </div>
       </div>
@@ -164,18 +164,18 @@ function StatCard({ title, value, total, label, color, icon }: any) {
   };
 
   return (
-    <Card className="border-none shadow-sm dark:bg-surface-indigo">
+    <Card className="border-none shadow-sm">
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className={`p-2 rounded-lg ${colors[color]}`}>
             {icon}
           </div>
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{title}</span>
+          <span className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest">{title}</span>
         </div>
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1 uppercase tracking-tight">{value}</p>
-            <p className="text-[10px] text-slate-400 mt-1 font-bold uppercase tracking-tighter">
+            <p className="text-2xl font-bold text-foreground mt-1 uppercase tracking-tight">{value}</p>
+            <p className="text-[11px] text-muted-foreground mt-1 font-bold uppercase tracking-tighter">
               {total ? `Out of ${total} days` : label}
             </p>
           </div>

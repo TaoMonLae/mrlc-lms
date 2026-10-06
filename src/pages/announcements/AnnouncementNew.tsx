@@ -36,20 +36,20 @@ export default function AnnouncementNew() {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button 
+          <Button aria-label="Back" 
             variant="ghost" 
             size="icon" 
             render={<Link to="/announcements" />}
-            className="rounded-full hover:bg-slate-100 dark:hover:bg-surface-raised"
+            className="rounded-full hover:bg-muted"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
             <div className="flex items-center gap-2">
               <Megaphone className="h-5 w-5 text-aubergine-600" />
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Create Announcement</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">Create Announcement</h1>
             </div>
-            <p className="text-sm text-slate-500">Draft and publish a new broadcast to the school community.</p>
+            <p className="text-sm text-muted-foreground">Draft and publish a new broadcast to the school community.</p>
           </div>
         </div>
       </div>

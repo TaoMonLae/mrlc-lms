@@ -58,11 +58,11 @@ export default function StudentProfileReport() {
     <div className="space-y-6 max-w-6xl mx-auto pb-10">
       <div className="print:hidden flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
-          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/reports" />} nativeButton={false}>
+          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/reports" />} nativeButton={false}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Reports
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Student Profile Report</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Student Profile Report</h1>
         </div>
 
         <div className="flex items-center gap-2">
@@ -73,9 +73,9 @@ export default function StudentProfileReport() {
       </div>
 
       {/* Filter Panel */}
-      <div className="print:hidden bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-wrap gap-4 items-end shadow-sm">
+      <div className="print:hidden bg-card border border-border rounded-sm p-4 flex flex-wrap gap-4 items-end shadow-sm">
          <div className="space-y-1.5 flex-1 min-w-[200px]">
-           <label className="text-xs font-semibold text-slate-500 uppercase">Class</label>
+           <label className="text-xs font-semibold text-muted-foreground uppercase">Class</label>
            <Select value={classFilter} onValueChange={setClassFilter}>
               <SelectTrigger><SelectValue placeholder="Select Class" /></SelectTrigger>
               <SelectContent>
@@ -92,7 +92,7 @@ export default function StudentProfileReport() {
       {filtersChanged && <p role="status" className="print:hidden text-sm text-muted-foreground">Filters changed. Apply filters to update the report below.</p>}
 
       {isLoading ? (
-        <div className="print:hidden flex items-center justify-center py-12 text-slate-500"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…</div>
+        <div className="print:hidden flex items-center justify-center py-12 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…</div>
       ) : error ? (
         <div className="print:hidden py-12 text-center text-sm text-red-600">{error}</div>
       ) : (
@@ -102,7 +102,7 @@ export default function StudentProfileReport() {
         filters={{ Class: classLabel, Students: String(rows.length) }}
       >
         {rows.length === 0 ? (
-          <p className="text-sm text-slate-500 py-6 text-center">No students found for this class.</p>
+          <p className="text-sm text-muted-foreground py-6 text-center">No students found for this class.</p>
         ) : (
         <table className="w-full text-sm text-left border-collapse mt-4">
             <thead>
@@ -119,13 +119,13 @@ export default function StudentProfileReport() {
             <tbody>
               {rows.map((r) => (
                 <tr key={r.code}>
-                  <td className="px-4 py-3 border text-slate-700">{r.code}</td>
-                  <td className="px-4 py-3 border font-medium text-slate-900">{r.name}</td>
-                  <td className="px-4 py-3 border text-slate-700">{r.className}</td>
-                  <td className="px-4 py-3 border text-slate-700">{r.gender}</td>
-                  <td className="px-4 py-3 border text-slate-700">{r.dob}</td>
-                  <td className="px-4 py-3 border text-slate-700">{r.guardianName}</td>
-                  <td className="px-4 py-3 border text-slate-700">{r.guardianPhone}</td>
+                  <td className="px-4 py-3 border text-foreground">{r.code}</td>
+                  <td className="px-4 py-3 border font-medium text-foreground">{r.name}</td>
+                  <td className="px-4 py-3 border text-foreground">{r.className}</td>
+                  <td className="px-4 py-3 border text-foreground">{r.gender}</td>
+                  <td className="px-4 py-3 border text-foreground">{r.dob}</td>
+                  <td className="px-4 py-3 border text-foreground">{r.guardianName}</td>
+                  <td className="px-4 py-3 border text-foreground">{r.guardianPhone}</td>
                 </tr>
               ))}
             </tbody>

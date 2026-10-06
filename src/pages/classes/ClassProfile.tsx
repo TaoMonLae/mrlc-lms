@@ -15,6 +15,7 @@ import {
   X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -347,7 +348,7 @@ export default function ClassProfile() {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <span className="ml-3 text-slate-500">Loading class...</span>
+        <span className="ml-3 text-muted-foreground">Loading class...</span>
       </div>
     );
   }
@@ -355,11 +356,11 @@ export default function ClassProfile() {
   if (!klass) {
     return (
       <div className="space-y-6 max-w-[1200px] mx-auto pb-20">
-        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/classes" />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/classes" />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Classes
         </Button>
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-8 text-center text-slate-500">
+        <div className="bg-card border border-border rounded-sm p-8 text-center text-muted-foreground">
           Class not found.
         </div>
       </div>
@@ -372,14 +373,14 @@ export default function ClassProfile() {
     <div className="space-y-6 max-w-[1200px] mx-auto pb-20">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/classes" />} nativeButton={false}>
+          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/classes" />} nativeButton={false}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Classes
           </Button>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{klass.name}</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">{klass.name}</h1>
           </div>
-          <p className="text-sm text-slate-500 flex items-center gap-2 mt-2 font-medium">
+          <p className="text-sm text-muted-foreground flex items-center gap-2 mt-2 font-medium">
             <span>{klass.level}</span>
             <span className="text-slate-300">•</span>
             <span>{klass.academicYear}</span>
@@ -407,51 +408,51 @@ export default function ClassProfile() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-surface-indigo p-5 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
+        <div className="bg-card p-5 rounded-sm border border-border shadow-sm flex items-center gap-4">
           <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
             <Users className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{klass.students.length}</p>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Students</p>
+            <p className="text-2xl font-bold text-foreground">{klass.students.length}</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1">Students</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-surface-indigo p-5 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
+        <div className="bg-card p-5 rounded-sm border border-border shadow-sm flex items-center gap-4">
           <div className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
             <CheckCircle2 className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{klass.capacity ?? '—'}</p>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Capacity</p>
+            <p className="text-2xl font-bold text-foreground">{klass.capacity ?? '—'}</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1">Capacity</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-surface-indigo p-5 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
+        <div className="bg-card p-5 rounded-sm border border-border shadow-sm flex items-center gap-4">
           <div className="h-12 w-12 rounded-full bg-aubergine-100 dark:bg-aubergine-900/30 flex items-center justify-center text-aubergine-600">
             <BookOpen className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{klass.exams.length}</p>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Exams</p>
+            <p className="text-2xl font-bold text-foreground">{klass.exams.length}</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1">Exams</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-surface-indigo p-5 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600">
+        <div className="bg-card p-5 rounded-sm border border-border shadow-sm flex items-center gap-4">
+          <div className="h-12 w-12 rounded-full bg-lavender flex items-center justify-center text-accent-purple">
             <GraduationCap className="h-6 w-6" />
           </div>
           <div>
             {mainTeacher ? (
-              <Link to={`/teachers/${mainTeacher.id}`} className="text-sm font-bold text-slate-900 dark:text-white hover:underline truncate inline-block max-w-[100px]">{mainTeacher.name}</Link>
+              <Link to={`/teachers/${mainTeacher.id}`} className="text-sm font-bold text-foreground hover:underline truncate inline-block max-w-[100px]">{mainTeacher.name}</Link>
             ) : (
-              <p className="text-sm font-bold text-slate-400">Unassigned</p>
+              <p className="text-sm font-bold text-muted-foreground">Unassigned</p>
             )}
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Main Teacher</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1">Main Teacher</p>
           </div>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-card border border-border rounded-sm shadow-sm">
         <div className="px-6 pt-4 overflow-x-auto">
-          <TabsList className="bg-transparent border-b border-slate-100 dark:border-surface-raised w-full justify-start rounded-none h-12 gap-6 min-w-[600px]">
+          <TabsList className="bg-transparent border-b border-border w-full justify-start rounded-none h-12 gap-6 min-w-[600px]">
             <TabsTrigger value="overview" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Overview</TabsTrigger>
             <TabsTrigger value="students" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Students</TabsTrigger>
             <TabsTrigger value="teachers" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Teachers</TabsTrigger>
@@ -465,42 +466,42 @@ export default function ClassProfile() {
         <TabsContent value="overview" className="p-6 space-y-8 animate-in fade-in slide-in-from-bottom-2">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Level</p>
-              <p className="text-slate-900 dark:text-white font-medium mt-1">{klass.level}</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Level</p>
+              <p className="text-foreground font-medium mt-1">{klass.level}</p>
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Academic Year</p>
-              <p className="text-slate-900 dark:text-white font-medium mt-1">{klass.academicYear}</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Academic Year</p>
+              <p className="text-foreground font-medium mt-1">{klass.academicYear}</p>
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Room</p>
-              <p className="text-slate-900 dark:text-white font-medium mt-1">{klass.room || '—'}</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Room</p>
+              <p className="text-foreground font-medium mt-1">{klass.room || '—'}</p>
             </div>
           </div>
         </TabsContent>
 
         <TabsContent value="students" className="p-0 animate-in fade-in slide-in-from-bottom-2">
           {canManageClass && (
-            <div className="p-4 border-b border-slate-200 dark:border-surface-raised flex justify-end">
+            <div className="p-4 border-b border-border flex justify-end">
               <Button size="sm" onClick={openStudentsDialog}><Users className="w-4 h-4 mr-2" /> Assign Students</Button>
             </div>
           )}
           <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
+            <thead className="bg-muted/50 text-muted-foreground uppercase tracking-wider font-semibold text-[11px]">
               <tr>
                 <th className="px-6 py-4">Student</th>
                 <th className="px-6 py-4">Student ID</th>
                 {canManageClass && <th className="px-6 py-4 text-right">Action</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-border">
               {klass.students.map(student => (
-                <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                  <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                <tr key={student.id} className="hover:bg-muted/50">
+                  <td className="px-6 py-4 font-medium text-foreground">
                     <Link to={`/students/${student.id}`} className="hover:underline hover:text-aubergine-600">{student.name}</Link>
                   </td>
-                  <td className="px-6 py-4 text-slate-500 font-mono">{student.studentCode}</td>
+                  <td className="px-6 py-4 text-muted-foreground font-mono">{student.studentCode}</td>
                   {canManageClass && (
                     <td className="px-6 py-4 text-right">
                       <Button variant="ghost" size="sm" className="text-destructive" onClick={() => removeStudent(student.id)}>Remove</Button>
@@ -510,7 +511,7 @@ export default function ClassProfile() {
               ))}
               {klass.students.length === 0 && (
                 <tr>
-                  <td colSpan={canManageClass ? 3 : 2} className="py-8 text-center text-slate-500">No students assigned.</td>
+                  <td colSpan={canManageClass ? 3 : 2} className="py-8 text-center text-muted-foreground">No students assigned.</td>
                 </tr>
               )}
             </tbody>
@@ -518,41 +519,40 @@ export default function ClassProfile() {
           </div>
 
           {/* Assign students dialog */}
-          {studentsOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => !assigningStudents && setStudentsOpen(false)}>
-              <div className="w-full max-w-lg bg-white dark:bg-surface-indigo rounded-xl shadow-2xl p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Assign Students</h3>
+          <Dialog open={studentsOpen} onOpenChange={(open) => { if (!open && !assigningStudents) setStudentsOpen(false); }}>
+                <DialogContent className="sm:max-w-lg space-y-4">
+                <DialogHeader><DialogTitle>Assign Students</DialogTitle></DialogHeader>
                 <Input
                   placeholder="Search by name or student ID..."
                   value={studentSearch}
                   onChange={(e) => setStudentSearch(e.target.value)}
                 />
-                <div className="max-h-64 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 rounded-lg border border-slate-200 dark:border-surface-raised">
+                <div className="max-h-64 overflow-y-auto divide-y divide-border rounded-lg border border-border">
                   {candidateStudents
                     .filter((s) =>
                       s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
                       s.studentCode.toLowerCase().includes(studentSearch.toLowerCase()))
                     .map((s) => (
-                      <label key={s.id} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-surface-raised/50">
+                      <label key={s.id} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted/50">
                         <input
                           type="checkbox"
                           checked={selectedStudentIds.includes(s.id)}
                           onChange={(e) => setSelectedStudentIds((prev) =>
                             e.target.checked ? [...prev, s.id] : prev.filter((x) => x !== s.id))}
                         />
-                        <span className="flex-1 text-sm font-medium text-slate-900 dark:text-white">{s.name}</span>
-                        <span className="text-xs font-mono text-slate-400">{s.studentCode}</span>
-                        {s.className && <Badge variant="outline" className="text-[10px]">{s.className}</Badge>}
+                        <span className="flex-1 text-sm font-medium text-foreground">{s.name}</span>
+                        <span className="text-xs font-mono text-muted-foreground">{s.studentCode}</span>
+                        {s.className && <Badge variant="outline" className="text-[11px]">{s.className}</Badge>}
                       </label>
                     ))}
                   {candidateStudents.length === 0 && (
-                    <p className="px-3 py-6 text-center text-sm text-slate-400">
+                    <p className="px-3 py-6 text-center text-sm text-muted-foreground">
                       No unassigned students available. <Link to="/students/new" className="underline text-aubergine-600">Add a student</Link> first.
                     </p>
                   )}
                 </div>
                 {selectedStudentIds.length > 0 && (
-                  <p className="text-xs text-slate-500">{selectedStudentIds.length} selected. Students already in another class will be moved to this one.</p>
+                  <p className="text-xs text-muted-foreground">{selectedStudentIds.length} selected. Students already in another class will be moved to this one.</p>
                 )}
                 <div className="flex justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setStudentsOpen(false)} disabled={assigningStudents}>Cancel</Button>
@@ -560,29 +560,28 @@ export default function ClassProfile() {
                     {assigningStudents ? 'Assigning…' : `Assign${selectedStudentIds.length ? ` (${selectedStudentIds.length})` : ''}`}
                   </Button>
                 </div>
-              </div>
-            </div>
-          )}
+              </DialogContent>
+            </Dialog>
         </TabsContent>
 
         <TabsContent value="teachers" className="p-0 animate-in fade-in slide-in-from-bottom-2">
           {canManageClass && (
-            <div className="p-4 border-b border-slate-200 dark:border-surface-raised flex justify-end">
+            <div className="p-4 border-b border-border flex justify-end">
               <Button size="sm" onClick={() => setAssignOpen(true)}><Plus className="w-4 h-4 mr-2" /> Assign Teacher</Button>
             </div>
           )}
           <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
+            <thead className="bg-muted/50 text-muted-foreground uppercase tracking-wider font-semibold text-[11px]">
               <tr>
                 <th className="px-6 py-4">Teacher</th>
                 {canManageClass && <th className="px-6 py-4 text-right">Action</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-border">
               {klass.teachers.map(teacher => (
-                <tr key={teacher.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                  <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                <tr key={teacher.id} className="hover:bg-muted/50">
+                  <td className="px-6 py-4 font-medium text-foreground">
                     <Link to={`/teachers/${teacher.id}`} className="hover:underline hover:text-aubergine-600">{teacher.name}</Link>
                   </td>
                   {canManageClass && (
@@ -594,7 +593,7 @@ export default function ClassProfile() {
               ))}
               {klass.teachers.length === 0 && (
                 <tr>
-                  <td colSpan={2} className="py-8 text-center text-slate-500">No teachers assigned.</td>
+                  <td colSpan={2} className="py-8 text-center text-muted-foreground">No teachers assigned.</td>
                 </tr>
               )}
             </tbody>
@@ -602,12 +601,11 @@ export default function ClassProfile() {
           </div>
 
           {/* Assign teacher dialog */}
-          {assignOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => !assigning && setAssignOpen(false)}>
-              <div className="w-full max-w-md bg-white dark:bg-surface-indigo rounded-xl shadow-2xl p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Assign Teacher</h3>
+          <Dialog open={assignOpen} onOpenChange={(open) => { if (!open && !assigning) setAssignOpen(false); }}>
+                <DialogContent className="sm:max-w-md space-y-4">
+                <DialogHeader><DialogTitle>Assign Teacher</DialogTitle></DialogHeader>
                 <div className="space-y-1.5">
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Teacher</span>
+                  <span className="text-sm font-medium text-foreground">Teacher</span>
                   <Select value={assignTeacherId} onValueChange={setAssignTeacherId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a teacher">
@@ -621,11 +619,11 @@ export default function ClassProfile() {
                     </SelectContent>
                   </Select>
                   {allTeachers.length === 0 ? (
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-muted-foreground">
                       No teachers found. <Link to="/teachers/new" className="underline text-aubergine-600">Add a teacher</Link> first, then assign them here.
                     </p>
                   ) : allTeachers.filter((t) => !klass.teachers.some((kt) => kt.id === t.id)).length === 0 && (
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-muted-foreground">
                       All {allTeachers.length} teacher{allTeachers.length > 1 ? 's are' : ' is'} already assigned to this class.{' '}
                       <Link to="/teachers/new" className="underline text-aubergine-600">Add another teacher</Link> to assign more.
                     </p>
@@ -637,28 +635,27 @@ export default function ClassProfile() {
                     {assigning ? 'Assigning…' : 'Assign'}
                   </Button>
                 </div>
-              </div>
-            </div>
-          )}
+              </DialogContent>
+            </Dialog>
         </TabsContent>
 
         <TabsContent value="subjects" className="p-6 animate-in fade-in slide-in-from-bottom-2">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-slate-900 dark:text-white">Subjects</h3>
+            <h3 className="font-semibold text-foreground">Subjects</h3>
             {canManageClass && (
               <Button size="sm" variant="outline" onClick={() => setSubjectOpen(true)}><Plus className="w-4 h-4 mr-2" /> Add Subject</Button>
             )}
           </div>
           <div className="flex flex-wrap gap-2">
             {klass.subjects.map(s => (
-              <Badge key={s.id} variant="outline" className="px-3 py-1.5 text-sm font-medium border-slate-200 gap-1.5" title={s.assigned ? undefined : 'Linked via an exam'}>
+              <Badge key={s.id} variant="outline" className="px-3 py-1.5 text-sm font-medium border-border gap-1.5" title={s.assigned ? undefined : 'Linked via an exam'}>
                 {s.name}
-                {!s.assigned && <span className="text-[10px] text-slate-400">(exam)</span>}
+                {!s.assigned && <span className="text-[11px] text-muted-foreground">(exam)</span>}
                 {s.assigned && canManageClass && (
                   <button
                     type="button"
                     onClick={() => removeSubject(s.id)}
-                    className="rounded-full hover:bg-slate-200/70 dark:hover:bg-surface-raised p-0.5"
+                    className="rounded-full hover:bg-muted/70 p-0.5"
                     aria-label={`Remove ${s.name}`}
                   >
                     <X className="h-3 w-3" />
@@ -667,17 +664,16 @@ export default function ClassProfile() {
               </Badge>
             ))}
             {klass.subjects.length === 0 && (
-              <p className="text-sm text-slate-500">No subjects associated with this class yet.</p>
+              <p className="text-sm text-muted-foreground">No subjects associated with this class yet.</p>
             )}
           </div>
 
           {/* Add subject dialog */}
-          {subjectOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => !addingSubject && setSubjectOpen(false)}>
-              <div className="w-full max-w-md bg-white dark:bg-surface-indigo rounded-xl shadow-2xl p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Add Subject</h3>
+          <Dialog open={subjectOpen} onOpenChange={(open) => { if (!open && !addingSubject) setSubjectOpen(false); }}>
+                <DialogContent className="sm:max-w-md space-y-4">
+                <DialogHeader><DialogTitle>Add Subject</DialogTitle></DialogHeader>
                 <div className="space-y-1.5">
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Subject</span>
+                  <span className="text-sm font-medium text-foreground">Subject</span>
                   <Select value={addSubjectId} onValueChange={setAddSubjectId}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a subject" />
@@ -689,11 +685,11 @@ export default function ClassProfile() {
                     </SelectContent>
                   </Select>
                   {allSubjects.length === 0 ? (
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-muted-foreground">
                       No subjects found. <Link to="/subjects/new" className="underline text-aubergine-600">Create a subject</Link> first, then add it here.
                     </p>
                   ) : allSubjects.filter((s) => !klass.subjects.some((ks) => ks.assigned && ks.id === s.id)).length === 0 && (
-                    <p className="text-xs text-slate-400">All subjects are already added to this class.</p>
+                    <p className="text-xs text-muted-foreground">All subjects are already added to this class.</p>
                   )}
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
@@ -702,16 +698,15 @@ export default function ClassProfile() {
                     {addingSubject ? 'Adding…' : 'Add'}
                   </Button>
                 </div>
-              </div>
-            </div>
-          )}
+              </DialogContent>
+            </Dialog>
         </TabsContent>
 
         <TabsContent value="attendance" className="p-6 animate-in fade-in slide-in-from-bottom-2">
           <div className="text-center py-10">
             <Calendar className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-            <p className="text-lg font-medium text-slate-900 dark:text-white">Attendance Records</p>
-            <p className="text-slate-500 text-sm mb-6">View and manage daily attendance for this class.</p>
+            <p className="text-lg font-medium text-foreground">Attendance Records</p>
+            <p className="text-muted-foreground text-sm mb-6">View and manage daily attendance for this class.</p>
             <Button render={<Link to="/attendance" />} nativeButton={false}>Go to Attendance Module</Button>
           </div>
         </TabsContent>
@@ -719,20 +714,20 @@ export default function ClassProfile() {
         <TabsContent value="exams" className="p-0 animate-in fade-in slide-in-from-bottom-2">
           <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
+            <thead className="bg-muted/50 text-muted-foreground uppercase tracking-wider font-semibold text-[11px]">
               <tr>
                 <th className="px-6 py-4">Exam</th>
                 <th className="px-6 py-4">Subject</th>
                 <th className="px-6 py-4 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-border">
               {klass.exams.map(exam => (
-                <tr key={exam.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                  <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                <tr key={exam.id} className="hover:bg-muted/50">
+                  <td className="px-6 py-4 font-medium text-foreground">
                     <Link to={`/exam2/${exam.id}/analytics`} className="hover:underline hover:text-aubergine-600">{exam.title}</Link>
                   </td>
-                  <td className="px-6 py-4 text-slate-500">{exam.subjectName}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{exam.subjectName}</td>
                   <td className="px-6 py-4 text-right">
                     <Button variant="ghost" size="sm" render={<Link to={`/exam2/${exam.id}/analytics`} />} nativeButton={false}>View</Button>
                   </td>
@@ -740,7 +735,7 @@ export default function ClassProfile() {
               ))}
               {klass.exams.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="py-8 text-center text-slate-500">No exams for this class.</td>
+                  <td colSpan={3} className="py-8 text-center text-muted-foreground">No exams for this class.</td>
                 </tr>
               )}
             </tbody>
@@ -750,7 +745,7 @@ export default function ClassProfile() {
 
         <TabsContent value="timetable" className="p-6 animate-in fade-in slide-in-from-bottom-2">
           <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-            <h3 className="font-semibold text-slate-900 dark:text-white">Weekly Schedule</h3>
+            <h3 className="font-semibold text-foreground">Weekly Schedule</h3>
             <div className="flex items-center gap-2">
               <Button size="sm" variant="outline" render={<Link to="/timetable" />} nativeButton={false}>
                 View Full Timetable
@@ -766,13 +761,13 @@ export default function ClassProfile() {
           {timetableLoading ? (
             <div className="flex items-center justify-center py-10">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-              <span className="ml-3 text-slate-500 text-sm">Loading timetable…</span>
+              <span className="ml-3 text-muted-foreground text-sm">Loading timetable…</span>
             </div>
           ) : timetable.length === 0 ? (
             <div className="text-center py-10">
               <Clock className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-              <p className="text-lg font-medium text-slate-900 dark:text-white">No schedule yet</p>
-              <p className="text-slate-500 text-sm">
+              <p className="text-lg font-medium text-foreground">No schedule yet</p>
+              <p className="text-muted-foreground text-sm">
                 {canManageClass ? 'Add the first slot to build this class\'s weekly timetable.' : 'This class has no timetable slots yet.'}
               </p>
             </div>
@@ -780,7 +775,7 @@ export default function ClassProfile() {
             <div className="space-y-5">
               {DAY_ORDER.filter((day) => timetable.some((t) => t.dayOfWeek === day)).map((day) => (
                 <div key={day}>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">{day}</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">{day}</p>
                   <div className="space-y-2">
                     {timetable
                       .filter((t) => t.dayOfWeek === day)
@@ -790,23 +785,23 @@ export default function ClassProfile() {
                           key={t.id}
                           className={`flex items-center gap-4 p-3 rounded-lg border ${
                             t.status === 'CANCELLED'
-                              ? 'border-slate-200 dark:border-surface-raised bg-slate-50 dark:bg-surface-raised/30 opacity-60'
-                              : 'border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo'
+                              ? 'border-border bg-muted/50 opacity-60'
+                              : 'border-border bg-card'
                           }`}
                         >
-                          <div className="w-24 shrink-0 text-sm font-mono text-slate-500">{t.startTime}–{t.endTime}</div>
+                          <div className="w-24 shrink-0 text-sm font-mono text-muted-foreground">{t.startTime}–{t.endTime}</div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-slate-900 dark:text-white truncate">
+                            <p className="font-medium text-foreground truncate">
                               {t.scheduleType === 'HOLIDAY' ? (t.notes || 'School Holiday') : t.scheduleType === 'SPECIAL_EVENT' ? (t.notes || 'Special Event') : (t.subjectName || 'Scheduled Period')}
                             </p>
-                            <p className="text-xs text-slate-500 truncate">
+                            <p className="text-xs text-muted-foreground truncate">
                               {t.teacherName || '—'}
                               {t.substituteTeacherName ? ` (sub: ${t.substituteTeacherName})` : ''}
                               {t.room ? ` · Room ${t.room}` : ''}
                             </p>
                           </div>
                           {t.status && t.status !== 'ACTIVE' && (
-                            <Badge variant="outline" className="text-[10px] shrink-0">{t.status}</Badge>
+                            <Badge variant="outline" className="text-[11px] shrink-0">{t.status}</Badge>
                           )}
                           {canManageClass && (
                             <Button size="sm" variant="ghost" className="shrink-0" render={<Link to={`/timetable/${t.id}/edit`} />} nativeButton={false}>

@@ -281,17 +281,17 @@ export default function ExamPlayer() {
     void handleSubmit(true);
   }, [remaining, loading, loadError, blocked, submitting, timerTick]);
 
-  if (loading) return <div className="flex items-center justify-center py-32 text-slate-500"><Loader2 className="h-6 w-6 animate-spin mr-2" /> Loading exam…</div>;
+  if (loading) return <div className="flex items-center justify-center py-32 text-muted-foreground"><Loader2 className="h-6 w-6 animate-spin mr-2" /> Loading exam…</div>;
   if (loadError) return <div role="alert" className="max-w-xl mx-auto space-y-4 border border-border bg-card p-6"><p>{loadError}</p><Button onClick={() => void loadState()}>Retry</Button></div>;
   if (blocked) return (
-    <div className="max-w-xl mx-auto mt-20 p-8 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-900/10 text-center space-y-3">
+    <div className="max-w-xl mx-auto mt-20 p-8 rounded-sm border border-amber-200 bg-amber-50 dark:bg-amber-900/10 text-center space-y-3">
       <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto" />
-      <h2 className="text-lg font-bold text-slate-900 dark:text-white">Session locked</h2>
-      <p className="text-sm text-slate-600 dark:text-slate-300">{blocked}</p>
+      <h2 className="text-lg font-bold text-foreground">Session locked</h2>
+      <p className="text-sm text-muted-foreground">{blocked}</p>
       <Button onClick={() => navigate('/exam2/resume')}>Back to my exams</Button>
     </div>
   );
-  if (!questions.length) return <div className="mx-auto mt-20 max-w-xl rounded-xl border border-amber-200 bg-amber-50 p-8 text-center text-amber-900 dark:bg-amber-900/10 dark:text-amber-100"><AlertTriangle className="mx-auto mb-3 h-9 w-9" /><h2 className="font-bold">No questions are available</h2><p className="mt-1 text-sm">Ask your teacher to review this exam before you continue.</p></div>;
+  if (!questions.length) return <div className="mx-auto mt-20 max-w-xl rounded-sm border border-amber-200 bg-amber-50 p-8 text-center text-amber-900 dark:bg-amber-900/10 dark:text-amber-100"><AlertTriangle className="mx-auto mb-3 h-9 w-9" /><h2 className="font-bold">No questions are available</h2><p className="mt-1 text-sm">Ask your teacher to review this exam before you continue.</p></div>;
 
   const q = questions[idx];
 
@@ -338,8 +338,8 @@ export default function ExamPlayer() {
     const chipColor = (key: string) => CHIP_COLORS[Math.max(0, bank.findIndex((c) => c.key === key)) % CHIP_COLORS.length];
     return (
       <div key={q.id} className="animate-in fade-in slide-in-from-bottom-2 space-y-5 duration-300">
-        <p className="text-sm text-slate-500 dark:text-slate-300">Drag a word into each blank, or tap a word then tap a blank.</p>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 text-lg leading-loose dark:border-surface-raised dark:bg-canvas">
+        <p className="text-sm text-muted-foreground">Drag a word into each blank, or tap a word then tap a blank.</p>
+        <div className="rounded-sm border border-border bg-card p-5 text-lg leading-loose">
           {segments.map((seg, i) => {
             if (seg.kind === 'text') return <span key={i}>{seg.text}</span>;
             const key = matches[seg.blankId];
@@ -354,15 +354,15 @@ export default function ExamPlayer() {
                     ? 'border-solid shadow-sm'
                     : selectedDragItem
                     ? 'border-dashed border-aubergine-400 bg-aubergine-50/70 dark:bg-aubergine-900/10'
-                    : 'border-dashed border-slate-300 bg-slate-50 dark:border-surface-raised dark:bg-surface-raised/40'
+                    : 'border-dashed border-input bg-muted/50'
                 }`}>
                 {chip ? <span key={key} className={`animate-in zoom-in-75 -mx-1 rounded px-1 duration-200 ${chipColor(key)}`}>{chip.label}</span> : ' '}
               </button>
             );
           })}
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-surface-raised dark:bg-surface-raised/30">
-          <p className="mb-2.5 text-xs font-bold uppercase tracking-widest text-slate-400">Word bank — drag from here</p>
+        <div className="rounded-sm border border-border bg-muted/36 p-4">
+          <p className="mb-2.5 text-xs font-bold uppercase tracking-widest text-muted-foreground">Word bank — drag from here</p>
           {allPlaced ? (
             <p className="animate-in zoom-in-95 flex items-center gap-1.5 text-sm font-bold text-emerald-600 duration-300">✓ All blanks filled — you can tap a blank to change it.</p>
           ) : (
@@ -392,7 +392,7 @@ export default function ExamPlayer() {
           aria-label="Your answer"
           value={answers[q.id]?.answerText ?? ''}
           onChange={(e) => setAnswer(q.id, { answerText: e.target.value })}
-          className="w-full max-w-md rounded-lg border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-4 py-3 text-sm">
+          className="w-full max-w-md rounded-lg border border-border bg-card px-4 py-3 text-sm">
           <option value="">Select an answer…</option>
           {(q.options as any[]).map((opt, i) => {
             const val = String(typeof opt === 'object' ? opt.value ?? opt.text ?? i : opt);
@@ -415,9 +415,9 @@ export default function ExamPlayer() {
                 onClick={() => multi
                   ? setAnswer(q.id, { selectedOptions: selected ? selectedChoices(q.id).filter((v) => v !== val) : [...selectedChoices(q.id), val] })
                   : setAnswer(q.id, { answerText: val })}
-                className={`flex min-h-11 w-full items-center gap-3 text-left px-4 py-3 rounded-lg border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${selected ? 'border-aubergine-500 bg-aubergine-50 dark:bg-aubergine-900/20' : 'border-slate-200 dark:border-surface-raised hover:border-slate-300'}`}>
+                className={`flex min-h-11 w-full items-center gap-3 text-left px-4 py-3 rounded-lg border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${selected ? 'border-aubergine-500 bg-aubergine-50 dark:bg-aubergine-900/20' : 'border-border hover:border-input'}`}>
                 <span aria-hidden="true" className={`flex size-6 shrink-0 items-center justify-center rounded border text-xs font-semibold ${selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground'}`}>{selected ? '✓' : String.fromCharCode(65 + i)}</span>
-                <MathText className="text-sm font-medium text-slate-800 dark:text-slate-200">{String(typeof opt === 'object' ? opt.text ?? opt.value : opt)}</MathText>
+                <MathText className="text-sm font-medium text-foreground">{String(typeof opt === 'object' ? opt.text ?? opt.value : opt)}</MathText>
               </button>
             );
           })}
@@ -428,7 +428,7 @@ export default function ExamPlayer() {
     return (
       <textarea
         aria-label="Your answer"
-        className="w-full min-h-[140px] rounded-lg border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas p-3 text-sm"
+        className="w-full min-h-[140px] rounded-lg border border-border bg-card p-3 text-sm"
         placeholder="Type your answer…"
         value={answers[q?.id]?.answerText || ''}
         onChange={(e) => setAnswer(q.id, { answerText: e.target.value })}
@@ -448,7 +448,7 @@ export default function ExamPlayer() {
     notices={<>
       {saveError && <div role="alert" className="mb-4 rounded-lg border border-destructive/40 bg-card p-4 text-sm"><p>{saveError}</p><p className="mt-1 text-muted-foreground">Keep this page open so you can retry without losing your answers.</p><Button variant="outline" className="mt-3" disabled={saving || submitting} onClick={() => timerArmed.current && remaining === 0 ? void handleSubmit(true) : void save('AUTOSAVE')}>Retry</Button></div>}
       {examSettings.lockdownBrowser && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
           <div><span className="font-bold">Integrity monitoring active.</span> Focus, fullscreen, clipboard, print, and restricted shortcut events may be recorded. {securityWarnings > 0 && <span className="ml-1 font-bold">Warnings: {securityWarnings}</span>}</div>
           {examSettings.antiCheat?.requireFullscreen && !document.fullscreenElement && <Button size="sm" variant="outline" onClick={enterFullscreen}>Enter fullscreen</Button>}
         </div>

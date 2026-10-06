@@ -25,7 +25,7 @@ export default function MyProfile() {
   return (
     <div className="flex items-center justify-center py-20">
       <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-      <span className="ml-3 text-slate-500">Loading your profile...</span>
+      <span className="ml-3 text-muted-foreground">Loading your profile...</span>
     </div>
   );
 }

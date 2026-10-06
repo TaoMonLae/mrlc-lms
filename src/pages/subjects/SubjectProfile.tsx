@@ -10,6 +10,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -191,7 +192,7 @@ export default function SubjectProfile() {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <span className="ml-3 text-slate-500">Loading subject...</span>
+        <span className="ml-3 text-muted-foreground">Loading subject...</span>
       </div>
     );
   }
@@ -199,11 +200,11 @@ export default function SubjectProfile() {
   if (!subject) {
     return (
       <div className="space-y-6 max-w-[1200px] mx-auto pb-20">
-        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/subjects" />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/subjects" />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Subjects
         </Button>
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-8 text-center text-slate-500">
+        <div className="bg-card border border-border rounded-sm p-8 text-center text-muted-foreground">
           Subject not found.
         </div>
       </div>
@@ -214,14 +215,14 @@ export default function SubjectProfile() {
     <div className="space-y-6 max-w-[1200px] mx-auto pb-20">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/subjects" />} nativeButton={false}>
+          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/subjects" />} nativeButton={false}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Subjects
           </Button>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{subject.name}</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">{subject.name}</h1>
           </div>
-          <p className="text-sm text-slate-500 flex items-center gap-2 mt-2 font-medium">
+          <p className="text-sm text-muted-foreground flex items-center gap-2 mt-2 font-medium">
             <span className="font-mono">{subject.code}</span>
           </p>
         </div>
@@ -238,38 +239,38 @@ export default function SubjectProfile() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-surface-indigo p-5 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
+        <div className="bg-card p-5 rounded-sm border border-border shadow-sm flex items-center gap-4">
           <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
             <BookOpen className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{subject.classes.length}</p>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Classes</p>
+            <p className="text-2xl font-bold text-foreground">{subject.classes.length}</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1">Classes</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-surface-indigo p-5 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
+        <div className="bg-card p-5 rounded-sm border border-border shadow-sm flex items-center gap-4">
           <div className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
             <GraduationCap className="h-6 w-6" />
           </div>
           <div>
-             <p className="text-2xl font-bold text-slate-900 dark:text-white">{subject.teachers.length}</p>
-             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Assigned Teachers</p>
+             <p className="text-2xl font-bold text-foreground">{subject.teachers.length}</p>
+             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1">Assigned Teachers</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-surface-indigo p-5 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
+        <div className="bg-card p-5 rounded-sm border border-border shadow-sm flex items-center gap-4">
           <div className="h-12 w-12 rounded-full bg-aubergine-100 dark:bg-aubergine-900/30 flex items-center justify-center text-aubergine-600">
             <Book className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{subject.exams.length}</p>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Related Exams</p>
+            <p className="text-2xl font-bold text-foreground">{subject.exams.length}</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1">Related Exams</p>
           </div>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-card border border-border rounded-sm shadow-sm">
         <div className="px-6 pt-4 overflow-x-auto">
-          <TabsList className="bg-transparent border-b border-slate-100 dark:border-surface-raised w-full justify-start rounded-none h-12 gap-6 min-w-[500px]">
+          <TabsList className="bg-transparent border-b border-border w-full justify-start rounded-none h-12 gap-6 min-w-[500px]">
             <TabsTrigger value="overview" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Overview</TabsTrigger>
             <TabsTrigger value="classes" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Classes</TabsTrigger>
             <TabsTrigger value="teachers" className="border-b-2 border-transparent data-active:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Teachers</TabsTrigger>
@@ -280,27 +281,27 @@ export default function SubjectProfile() {
         <TabsContent value="overview" className="p-6 space-y-8 animate-in fade-in slide-in-from-bottom-2">
           <div className="prose dark:prose-invert max-w-none">
              <h3>Syllabus / Description</h3>
-             <p className="text-slate-600 dark:text-slate-300">{subject.description || 'No description available.'}</p>
+             <p className="text-muted-foreground">{subject.description || 'No description available.'}</p>
           </div>
         </TabsContent>
 
         <TabsContent value="classes" className="p-0 animate-in fade-in slide-in-from-bottom-2">
            <div className="overflow-x-auto">
            <table className="w-full text-left text-sm">
-             <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
+             <thead className="bg-muted/50 text-muted-foreground uppercase tracking-wider font-semibold text-[11px]">
                 <tr>
                   <th className="px-6 py-4">Class Name</th>
                   <th className="px-6 py-4">Academic Year</th>
                   <th className="px-6 py-4 text-right">Action</th>
                 </tr>
              </thead>
-             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+             <tbody className="divide-y divide-border">
                {subject.classes.map(cls => (
-                 <tr key={cls.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                    <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                 <tr key={cls.id} className="hover:bg-muted/50">
+                    <td className="px-6 py-4 font-medium text-foreground">
                       <Link to={`/classes/${cls.id}`} className="hover:underline hover:text-aubergine-600">{cls.name}</Link>
                     </td>
-                    <td className="px-6 py-4 text-slate-500">{cls.academicYear}</td>
+                    <td className="px-6 py-4 text-muted-foreground">{cls.academicYear}</td>
                     <td className="px-6 py-4 text-right">
                        <Button variant="ghost" size="sm" render={<Link to={`/classes/${cls.id}`} />} nativeButton={false}>View</Button>
                     </td>
@@ -308,7 +309,7 @@ export default function SubjectProfile() {
                ))}
                {subject.classes.length === 0 && (
                  <tr>
-                   <td colSpan={3} className="py-8 text-center text-slate-500">No classes associated with this subject.</td>
+                   <td colSpan={3} className="py-8 text-center text-muted-foreground">No classes associated with this subject.</td>
                  </tr>
                )}
              </tbody>
@@ -318,26 +319,26 @@ export default function SubjectProfile() {
 
         <TabsContent value="teachers" className="p-0 animate-in fade-in slide-in-from-bottom-2">
            {canManage && (
-             <div className="p-4 border-b border-slate-200 dark:border-surface-raised flex justify-end">
+             <div className="p-4 border-b border-border flex justify-end">
                <Button size="sm" onClick={() => { setAssignTeacherId(''); setAssignOpen(true); }}><Plus className="w-4 h-4 mr-2" /> Assign Teacher</Button>
              </div>
            )}
            <div className="overflow-x-auto">
            <table className="w-full text-left text-sm">
-             <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
+             <thead className="bg-muted/50 text-muted-foreground uppercase tracking-wider font-semibold text-[11px]">
                 <tr>
                   <th className="px-6 py-4">Teacher</th>
                   <th className="px-6 py-4">Specialization</th>
                   {canManage && <th className="px-6 py-4 text-right">Action</th>}
                 </tr>
              </thead>
-             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+             <tbody className="divide-y divide-border">
                {subject.teachers.map(teacher => (
-                 <tr key={teacher.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                    <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                 <tr key={teacher.id} className="hover:bg-muted/50">
+                    <td className="px-6 py-4 font-medium text-foreground">
                       <Link to={`/teachers/${teacher.id}`} className="hover:underline hover:text-aubergine-600">{teacher.name}</Link>
                     </td>
-                    <td className="px-6 py-4 text-slate-500">{teacher.specialization}</td>
+                    <td className="px-6 py-4 text-muted-foreground">{teacher.specialization}</td>
                     {canManage && (
                       <td className="px-6 py-4 text-right">
                          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => removeTeacher(teacher.id)}>Remove</Button>
@@ -347,7 +348,7 @@ export default function SubjectProfile() {
                ))}
                {subject.teachers.length === 0 && (
                  <tr>
-                   <td colSpan={canManage ? 3 : 2} className="py-8 text-center text-slate-500">No teachers assigned to teach this subject.</td>
+                   <td colSpan={canManage ? 3 : 2} className="py-8 text-center text-muted-foreground">No teachers assigned to teach this subject.</td>
                  </tr>
                )}
              </tbody>
@@ -358,7 +359,7 @@ export default function SubjectProfile() {
         <TabsContent value="exams" className="p-0 animate-in fade-in slide-in-from-bottom-2">
            <div className="overflow-x-auto">
            <table className="w-full text-left text-sm">
-             <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
+             <thead className="bg-muted/50 text-muted-foreground uppercase tracking-wider font-semibold text-[11px]">
                 <tr>
                   <th className="px-6 py-4">Exam Title</th>
                   <th className="px-6 py-4">Date</th>
@@ -366,13 +367,13 @@ export default function SubjectProfile() {
                   <th className="px-6 py-4 text-right">Action</th>
                 </tr>
              </thead>
-             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+             <tbody className="divide-y divide-border">
                {subject.exams.map(exam => (
-                 <tr key={exam.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                    <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                 <tr key={exam.id} className="hover:bg-muted/50">
+                    <td className="px-6 py-4 font-medium text-foreground">
                       <Link to={`/exam2/${exam.id}/analytics`} className="hover:underline hover:text-aubergine-600">{exam.title}</Link>
                     </td>
-                    <td className="px-6 py-4 text-slate-500">{exam.date ? new Date(exam.date).toLocaleDateString() : '—'}</td>
+                    <td className="px-6 py-4 text-muted-foreground">{exam.date ? new Date(exam.date).toLocaleDateString() : '—'}</td>
                     <td className="px-6 py-4">
                       <Badge variant={exam.status === 'COMPLETED' ? 'default' : 'outline'} className={exam.status === 'COMPLETED' ? 'bg-emerald-500' : ''}>
                         {exam.status}
@@ -385,7 +386,7 @@ export default function SubjectProfile() {
                ))}
                {subject.exams.length === 0 && (
                  <tr>
-                   <td colSpan={4} className="py-8 text-center text-slate-500">No exams created for this subject yet.</td>
+                   <td colSpan={4} className="py-8 text-center text-muted-foreground">No exams created for this subject yet.</td>
                  </tr>
                )}
              </tbody>
@@ -395,16 +396,15 @@ export default function SubjectProfile() {
       </Tabs>
 
       {/* Assign teacher dialog */}
-      {assignOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => !assigning && setAssignOpen(false)}>
-          <div className="w-full max-w-md bg-white dark:bg-surface-indigo rounded-xl shadow-2xl p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Assign Teacher</h3>
+      <Dialog open={assignOpen} onOpenChange={(open) => { if (!open && !assigning) setAssignOpen(false); }}>
+            <DialogContent className="sm:max-w-md space-y-4">
+            <DialogHeader><DialogTitle>Assign Teacher</DialogTitle></DialogHeader>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Teacher</label>
+              <label className="text-sm font-medium text-foreground">Teacher</label>
               <select
                 value={assignTeacherId}
                 onChange={(e) => setAssignTeacherId(e.target.value)}
-                className="w-full rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-raised px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-aubergine-500"
+                className="w-full rounded-md border border-border bg-white dark:bg-surface-raised px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-aubergine-500"
               >
                 <option value="">Select a teacher</option>
                 {allTeachers
@@ -412,7 +412,7 @@ export default function SubjectProfile() {
                   .map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
               {allTeachers.filter((t) => !subject.teachers.some((st) => st.id === t.id)).length === 0 && (
-                <p className="text-xs text-slate-400">All teachers are already assigned to this subject.</p>
+                <p className="text-xs text-muted-foreground">All teachers are already assigned to this subject.</p>
               )}
             </div>
             <div className="flex justify-end gap-2 pt-2">
@@ -421,9 +421,8 @@ export default function SubjectProfile() {
                 {assigning ? 'Assigning…' : 'Assign'}
               </Button>
             </div>
-          </div>
-        </div>
-      )}
+          </DialogContent>
+        </Dialog>
     </div>
   );
 }

@@ -330,12 +330,12 @@ export default function StudentHomework() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="font-bold text-slate-900 dark:text-white">
+              <h3 className="font-bold text-foreground">
                 {item.title}
               </h3>
               {stateBadge(item)}
             </div>
-            <p className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-slate-500">
+            <p className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-muted-foreground">
               {item.subjectName && <span>{item.subjectName}</span>}
               {item.teacherName && <span>· {item.teacherName}</span>}
               <span className="flex items-center gap-1">
@@ -346,7 +346,7 @@ export default function StudentHomework() {
             {item.instructions && (
               <details open={focusedAssignment === item.id ? true : undefined}>
                 <summary>Assignment brief</summary>
-                <p className="mt-3 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">
+                <p className="mt-3 whitespace-pre-wrap text-sm text-muted-foreground">
                   {item.instructions}
                 </p>
               </details>
@@ -374,7 +374,7 @@ export default function StudentHomework() {
               </HomeworkFileLink>
             )}
             {item.mySubmission?.feedback && (
-              <p className="mt-2 rounded-lg bg-slate-50 p-2 text-xs text-slate-600 dark:bg-surface-raised dark:text-slate-300">
+              <p className="mt-2 rounded-lg bg-muted/50 p-2 text-xs text-muted-foreground">
                 <span className="font-semibold">Teacher feedback:</span>{" "}
                 {item.mySubmission.feedback}
               </p>
@@ -387,7 +387,7 @@ export default function StudentHomework() {
                     href={file.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex max-w-full items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs text-aubergine-700 hover:underline dark:bg-surface-raised dark:text-aubergine-300"
+                    className="inline-flex max-w-full items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-aubergine-700 hover:underline dark:text-aubergine-300"
                   >
                     <Paperclip className="h-3 w-3 shrink-0" />
                     <span className="truncate">{file.originalName}</span>
@@ -396,7 +396,7 @@ export default function StudentHomework() {
               </div>
             )}
             {item.mySubmission && (
-              <p className="mt-2 text-[11px] text-slate-400">
+              <p className="mt-2 text-[11px] text-muted-foreground">
                 Submitted{" "}
                 {new Date(item.mySubmission.submittedAt).toLocaleString()}
               </p>
@@ -419,7 +419,7 @@ export default function StudentHomework() {
           <AnimatedContent className="hw-answer mt-5 space-y-3">
             <div className="flex flex-wrap justify-between gap-2">
               <h4 className="font-semibold">Your submission</h4>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-muted-foreground">
                 {text.trim() ? text.trim().split(/\s+/).length : 0} words ·{" "}
                 {text.length}/20,000
               </span>
@@ -450,7 +450,7 @@ export default function StudentHomework() {
               }}
               placeholder="Type your answer, or add a note about your attached work…"
             />
-            <p className="text-xs text-slate-500" role="status">
+            <p className="text-xs text-muted-foreground" role="status">
               {draftSaved
                 ? "Text draft saved in this tab."
                 : "Text drafts stay in this tab when storage is available."}{" "}
@@ -462,7 +462,7 @@ export default function StudentHomework() {
                   uploading ||
                   attachments.length >= HOMEWORK_SUBMISSION_FILE_LIMIT
                     ? "cursor-not-allowed opacity-60"
-                    : "cursor-pointer hover:bg-slate-50 dark:hover:bg-surface-raised"
+                    : "cursor-pointer hover:bg-muted/50"
                 }`}
               >
                 <Paperclip className="h-5 w-5" />
@@ -488,7 +488,7 @@ export default function StudentHomework() {
                 />
               </label>
               {uploadError && <p role="alert" className="text-sm text-rose-600 dark:text-rose-300">{uploadError}</p>}
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-muted-foreground">
                 Up to 5 files, 10 MB each. Images, PDF, Word, PowerPoint, Excel,
                 text and OpenDocument are accepted.
               </p>
@@ -497,20 +497,20 @@ export default function StudentHomework() {
                   {attachments.map((file) => (
                     <div
                       key={file.url}
-                      className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 dark:border-surface-raised"
+                      className="flex min-w-0 items-center gap-2 rounded-lg border border-border px-3 py-2"
                     >
                       <Paperclip className="h-4 w-4 shrink-0 text-aubergine-600" />
                       <HomeworkFileLink
                         href={file.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="min-w-0 flex-1 text-xs text-slate-700 hover:underline dark:text-slate-200"
+                        className="min-w-0 flex-1 text-xs text-foreground hover:underline"
                       >
                         <span className="block truncate font-medium">
                           {file.originalName}
                         </span>
                         {file.size > 0 && (
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[11px] text-muted-foreground">
                             {formatHomeworkFileSize(file.size)}
                           </span>
                         )}
@@ -654,15 +654,15 @@ export default function StudentHomework() {
         </select>
       </div>
       {openId && (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           Close your workspace to browse other assignments.
         </p>
       )}
 
       {loading ? (
-        <p className="py-14 text-center text-sm text-slate-500">Loading…</p>
+        <p className="py-14 text-center text-sm text-muted-foreground">Loading…</p>
       ) : loadError ? (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-5 py-10 text-center dark:border-rose-900/50 dark:bg-rose-950/20">
+        <div className="rounded-sm border border-rose-200 bg-rose-50 px-5 py-10 text-center dark:border-rose-900/50 dark:bg-rose-950/20">
           <p className="text-sm text-rose-700 dark:text-rose-300">
             {loadError}
           </p>
@@ -671,7 +671,7 @@ export default function StudentHomework() {
           </Button>
         </div>
       ) : items.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-200 py-16 text-center text-sm text-slate-400 dark:border-surface-raised">
+        <p className="rounded-sm border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
           No homework yet. Enjoy the free time!
         </p>
       ) : (
@@ -681,7 +681,7 @@ export default function StudentHomework() {
               {tabs.find((tab) => tab.key === view)?.label} / {visible.length}{" "}
               {visible.length === 1 ? "assignment" : "assignments"}
             </h2>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-muted-foreground">
               Earliest deadline first
             </span>
           </div>

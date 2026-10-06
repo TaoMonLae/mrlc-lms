@@ -21,7 +21,7 @@ export function LanguageSwitcher() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-raised rounded-full transition-colors"
+            className="h-10 w-10 text-muted-foreground hover:bg-muted rounded-full transition-colors"
             aria-label="Change language"
           />
         }

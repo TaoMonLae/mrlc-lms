@@ -214,27 +214,27 @@ export default function TeacherAttendance() {
       {rosterLoading && <p role="status" className="text-sm text-muted-foreground">Loading students…</p>}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight dark:text-white uppercase">Take Attendance</h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">Record attendance for your assigned classes and sessions.</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight uppercase">Take Attendance</h1>
+          <p className="text-sm text-muted-foreground mt-1 font-medium">Record attendance for your assigned classes and sessions.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={markAllPresent} className="h-10 px-4 font-bold text-[11px] uppercase tracking-widest border-slate-200 dark:border-surface-raised">
+          <Button variant="outline" size="sm" onClick={markAllPresent} className="h-10 px-4 font-bold text-[11px] uppercase tracking-widest border-border">
             Mark All Present
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={saving || rosterLoading || !students.length || Boolean(rosterError || (mode === 'session' ? sessionError : classError))} className="h-10 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-[11px] uppercase tracking-widest shadow-lg">
+          <Button size="sm" onClick={handleSave} disabled={saving || rosterLoading || !students.length || Boolean(rosterError || (mode === 'session' ? sessionError : classError))} className="h-10 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-[11px] uppercase tracking-widest shadow-none">
             <Save className="h-3.5 w-3.5 mr-2" /> Save Attendance
           </Button>
         </div>
       </div>
 
-      <Card className="border-slate-200 dark:border-surface-raised overflow-hidden bg-white dark:bg-surface-indigo shadow-sm">
-        <div className="p-4 border-b border-slate-100 dark:border-surface-raised flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50/50 dark:bg-surface-raised/30">
+      <Card className="border-border overflow-hidden bg-card shadow-sm">
+        <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-4 items-center justify-between bg-muted/30">
           <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto">
             {/* Mode Selector */}
             <div className="flex flex-col gap-1.5 min-w-[140px]">
-              <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Mode</span>
+              <span className="text-[11px] font-black uppercase text-muted-foreground tracking-widest px-1">Mode</span>
               <Select value={mode} onValueChange={(v) => setMode(v as AttendanceMode)}>
-                <SelectTrigger className="h-10 border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo">
+                <SelectTrigger className="h-10 border-border bg-card">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -247,9 +247,9 @@ export default function TeacherAttendance() {
             {/* Daily Mode: Class Selector */}
             {mode === 'daily' && (
               <div className="flex flex-col gap-1.5 min-w-[200px]">
-                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Class</span>
+                <span className="text-[11px] font-black uppercase text-muted-foreground tracking-widest px-1">Class</span>
                 <Select value={selectedClass} onValueChange={setSelectedClass}>
-                  <SelectTrigger className="h-10 border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo">
+                  <SelectTrigger className="h-10 border-border bg-card">
                     <SelectValue placeholder="Select Class">
                       {classOptions.find(o => o.value === selectedClass)?.label ?? 'Select Class'}
                     </SelectValue>
@@ -267,24 +267,24 @@ export default function TeacherAttendance() {
             {mode === 'session' && (
               <>
                 <div className="flex flex-col gap-1.5 min-w-[160px]">
-                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Date</span>
+                  <span className="text-[11px] font-black uppercase text-muted-foreground tracking-widest px-1">Date</span>
                   <Input
                     type="date"
                     value={sessionDate}
                     onChange={(e) => setSessionDate(e.target.value)}
-                    className="h-10 border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo"
+                    className="h-10 border-border bg-card"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5 min-w-[280px]">
-                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Session</span>
+                  <span className="text-[11px] font-black uppercase text-muted-foreground tracking-widest px-1">Session</span>
                   <Select value={selectedSession} onValueChange={setSelectedSession} disabled={sessions.length === 0}>
-                    <SelectTrigger className="h-10 border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo">
+                    <SelectTrigger className="h-10 border-border bg-card">
                       <SelectValue placeholder="Select Session">
                         {selectedSessionData ? (
                           <div className="flex items-center gap-2">
                             <Badge className={`h-5 w-5 rounded-full p-0 border-2 border-white shadow-sm ${selectedSessionData.subjectColor?.replace('bg-', 'bg-') || 'bg-blue-500'}`} />
                             <span className="font-bold text-xs">{selectedSessionData.subjectName}</span>
-                            <span className="text-slate-400 text-xs">{selectedSessionData.startTime} - {selectedSessionData.endTime}</span>
+                            <span className="text-muted-foreground text-xs">{selectedSessionData.startTime} - {selectedSessionData.endTime}</span>
                           </div>
                         ) : 'Select Session'}
                       </SelectValue>
@@ -296,7 +296,7 @@ export default function TeacherAttendance() {
                             <Badge className={`h-4 w-4 rounded-full p-0 ${s.subjectColor?.replace('bg-', 'bg-') || 'bg-blue-500'}`} />
                             <div className="flex flex-col">
                               <span className="font-bold text-xs">{s.subjectName}</span>
-                              <span className="text-[10px] text-slate-500">{s.className} · {s.startTime} - {s.endTime} {s.room && `· ${s.room}`}</span>
+                              <span className="text-[11px] text-muted-foreground">{s.className} · {s.startTime} - {s.endTime} {s.room && `· ${s.room}`}</span>
                             </div>
                           </div>
                         </SelectItem>
@@ -309,10 +309,10 @@ export default function TeacherAttendance() {
           </div>
 
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Find student..."
-              className="pl-10 h-10 bg-white dark:bg-surface-indigo border-slate-200 dark:border-surface-raised"
+              className="pl-10 h-10 bg-card border-border"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -321,22 +321,22 @@ export default function TeacherAttendance() {
 
         {/* Session Info Banner */}
         {mode === 'session' && selectedSessionData && (
-          <div className="bg-slate-50 dark:bg-surface-raised/20 border-b border-slate-100 dark:border-surface-raised px-6 py-3">
+          <div className="bg-muted/50 border-b border-border px-6 py-3">
             <div className="flex items-center gap-6 text-xs">
               <div className="flex items-center gap-2">
                 <Badge className={`h-2 w-2 rounded-full p-0 ${selectedSessionData.subjectColor?.replace('bg-', 'bg-') || 'bg-blue-500'}`} />
-                <span className="font-bold text-slate-700 dark:text-slate-300">{selectedSessionData.subjectName}</span>
+                <span className="font-bold text-foreground">{selectedSessionData.subjectName}</span>
               </div>
-              <div className="flex items-center gap-1 text-slate-500">
+              <div className="flex items-center gap-1 text-muted-foreground">
                 <BookOpen className="h-3 w-3" />
                 <span>{selectedSessionData.className}</span>
               </div>
-              <div className="flex items-center gap-1 text-slate-500">
+              <div className="flex items-center gap-1 text-muted-foreground">
                 <ClockIcon className="h-3 w-3" />
                 <span>{selectedSessionData.startTime} - {selectedSessionData.endTime}</span>
               </div>
               {selectedSessionData.room && (
-                <div className="flex items-center gap-1 text-slate-500">
+                <div className="flex items-center gap-1 text-muted-foreground">
                   <MapPin className="h-3 w-3" />
                   <span>{selectedSessionData.room}</span>
                 </div>
@@ -346,29 +346,29 @@ export default function TeacherAttendance() {
         )}
 
         <div className="p-0">
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          <div className="divide-y divide-border">
             {filteredStudents.map((student) => (
-              <div key={student.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 px-6 hover:bg-slate-50/50 dark:hover:bg-surface-raised/20 transition-colors gap-4">
+              <div key={student.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 px-6 hover:bg-muted/30 transition-colors gap-4">
                 <div className="flex items-center gap-4">
-                  <Avatar className="h-10 w-10 border border-slate-200 dark:border-surface-raised">
+                  <Avatar className="h-10 w-10 border border-border">
                     <AvatarImage src={student.photo} />
                     <AvatarFallback>{student.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">{student.name}</h4>
-                    <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">{student.studentId}</p>
+                    <h4 className="text-sm font-bold text-foreground uppercase tracking-tight">{student.name}</h4>
+                    <p className="text-[11px] font-bold text-muted-foreground tracking-widest uppercase">{student.studentId}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 bg-slate-100 dark:bg-surface-raised p-1 rounded-lg w-fit">
+                <div className="flex items-center gap-1 bg-muted p-1 rounded-lg w-fit">
                   <Button
                     variant={attendance[student.id] === 'present' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => handleStatusChange(student.id, 'present')}
-                    className={`h-9 px-3 font-bold text-[10px] uppercase tracking-wider rounded-md ${
+                    className={`h-9 px-3 font-bold text-[11px] uppercase tracking-wider rounded-md ${
                       attendance[student.id] === 'present'
                       ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
-                      : 'text-slate-500 hover:text-emerald-600'
+                      : 'text-muted-foreground hover:text-emerald-600'
                     }`}
                   >
                     P
@@ -377,10 +377,10 @@ export default function TeacherAttendance() {
                     variant={attendance[student.id] === 'late' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => handleStatusChange(student.id, 'late')}
-                    className={`h-9 px-3 font-bold text-[10px] uppercase tracking-wider rounded-md ${
+                    className={`h-9 px-3 font-bold text-[11px] uppercase tracking-wider rounded-md ${
                       attendance[student.id] === 'late'
                       ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-sm'
-                      : 'text-slate-500 hover:text-amber-500'
+                      : 'text-muted-foreground hover:text-amber-500'
                     }`}
                   >
                     L
@@ -389,10 +389,10 @@ export default function TeacherAttendance() {
                     variant={attendance[student.id] === 'absent' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => handleStatusChange(student.id, 'absent')}
-                    className={`h-9 px-3 font-bold text-[10px] uppercase tracking-wider rounded-md ${
+                    className={`h-9 px-3 font-bold text-[11px] uppercase tracking-wider rounded-md ${
                       attendance[student.id] === 'absent'
                       ? 'bg-red-500 hover:bg-red-600 text-white shadow-sm'
-                      : 'text-slate-500 hover:text-red-500'
+                      : 'text-muted-foreground hover:text-red-500'
                     }`}
                   >
                     A
@@ -401,10 +401,10 @@ export default function TeacherAttendance() {
                     variant={attendance[student.id] === 'excused' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => handleStatusChange(student.id, 'excused')}
-                    className={`h-9 px-3 font-bold text-[10px] uppercase tracking-wider rounded-md ${
+                    className={`h-9 px-3 font-bold text-[11px] uppercase tracking-wider rounded-md ${
                       attendance[student.id] === 'excused'
                       ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-sm'
-                      : 'text-slate-500 hover:text-blue-500'
+                      : 'text-muted-foreground hover:text-blue-500'
                     }`}
                   >
                     E
@@ -415,16 +415,16 @@ export default function TeacherAttendance() {
           </div>
         </div>
 
-        <div className="p-6 bg-slate-50/50 dark:bg-surface-raised/30 border-t border-slate-100 dark:border-surface-raised">
+        <div className="p-6 bg-muted/30 border-t border-border">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="flex gap-6 text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+            <div className="flex gap-6 text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
               <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-emerald-500" /> Present: {Object.values(attendance).filter(v => v === 'present').length}</div>
               <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-amber-500" /> Late: {Object.values(attendance).filter(v => v === 'late').length}</div>
               <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-red-500" /> Absent: {Object.values(attendance).filter(v => v === 'absent').length}</div>
             </div>
             <div className="flex items-center gap-3">
-              <p className="text-[10px] text-slate-400 font-medium italic">All records are logged with server timestamp.</p>
-              <Button onClick={handleSave} disabled={saving || rosterLoading || !students.length || Boolean(rosterError || (mode === 'session' ? sessionError : classError))} className="bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[11px] uppercase tracking-widest px-6 h-10 shadow-lg">
+              <p className="text-[11px] text-muted-foreground font-medium italic">All records are logged with server timestamp.</p>
+              <Button onClick={handleSave} disabled={saving || rosterLoading || !students.length || Boolean(rosterError || (mode === 'session' ? sessionError : classError))} className="bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[11px] uppercase tracking-widest px-6 h-10 shadow-none">
                 {saving ? 'Saving…' : 'Finalize & Submit'}
               </Button>
             </div>

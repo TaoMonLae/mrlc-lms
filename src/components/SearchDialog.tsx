@@ -111,7 +111,7 @@ export function SearchDialog({ open, onOpenChange }: { open: boolean; onOpenChan
       <DialogContent className="p-0 gap-0 max-w-lg sm:max-w-lg top-[20%] translate-y-0">
         <DialogHeader className="px-4 pt-4 pb-2 border-b">
           <div className="flex items-center gap-2">
-            <Search className="h-5 w-5 text-slate-400" />
+            <Search className="h-5 w-5 text-muted-foreground" />
             <DialogTitle className="text-lg font-semibold">Search</DialogTitle>
           </div>
         </DialogHeader>
@@ -129,7 +129,7 @@ export function SearchDialog({ open, onOpenChange }: { open: boolean; onOpenChan
               autoComplete="off"
             />
             {searchTerm && (
-              <Button
+              <Button aria-label="Close"
                 variant="ghost"
                 size="icon"
                 className="absolute right-0 top-0 h-full w-10 rounded-none"
@@ -144,8 +144,8 @@ export function SearchDialog({ open, onOpenChange }: { open: boolean; onOpenChan
         <div className="max-h-80 overflow-y-auto px-2">
           {isSearching ? (
             <div className="flex items-center justify-center py-8">
-              <div className="flex items-center gap-2 text-slate-500">
-                <span className="animate-spin rounded-full h-4 w-4 border-2 border-slate-300 border-t-transparent" />
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span className="animate-spin rounded-full h-4 w-4 border-2 border-input border-t-transparent" />
                 <span className="text-sm">Searching...</span>
               </div>
             </div>
@@ -155,7 +155,7 @@ export function SearchDialog({ open, onOpenChange }: { open: boolean; onOpenChan
                 const Meta = TYPE_META[group.type];
                 return (
                   <div key={group.type}>
-                    <p className="px-3 pt-1 pb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">{Meta.label}</p>
+                    <p className="px-3 pt-1 pb-1 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{Meta.label}</p>
                     {group.items.map((result) => {
                       const idx = results.indexOf(result);
                       const Icon = Meta.icon;
@@ -165,15 +165,15 @@ export function SearchDialog({ open, onOpenChange }: { open: boolean; onOpenChan
                           onClick={() => openResult(result)}
                           onMouseEnter={() => setHighlighted(idx)}
                           className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-colors ${
-                            idx === highlighted ? "bg-slate-100 dark:bg-slate-800" : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                            idx === highlighted ? "bg-muted" : "hover:bg-muted"
                           }`}
                         >
-                          <div className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-                            <Icon className="h-4.5 w-4.5 text-slate-600 dark:text-slate-400" />
+                          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
+                            <Icon className="h-4.5 w-4.5 text-muted-foreground" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="font-medium text-sm truncate">{result.title}</div>
-                            <div className="text-xs text-slate-500 truncate">{result.subtitle}</div>
+                            <div className="text-xs text-muted-foreground truncate">{result.subtitle}</div>
                           </div>
                         </button>
                       );
@@ -185,23 +185,23 @@ export function SearchDialog({ open, onOpenChange }: { open: boolean; onOpenChan
           ) : searchTerm.length >= 2 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <Search className="h-12 w-12 text-slate-300 mb-2" />
-              <p className="text-sm text-slate-500">No results found</p>
-              <p className="text-xs text-slate-400 mt-1">Try a name, student ID, teacher code, or class name</p>
+              <p className="text-sm text-muted-foreground">No results found</p>
+              <p className="text-xs text-muted-foreground mt-1">Try a name, student ID, teacher code, or class name</p>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <Search className="h-12 w-12 text-slate-300 mb-2" />
-              <p className="text-sm text-slate-500">Type to search</p>
-              <p className="text-xs text-slate-400 mt-1">Students, teachers, and classes</p>
+              <p className="text-sm text-muted-foreground">Type to search</p>
+              <p className="text-xs text-muted-foreground mt-1">Students, teachers, and classes</p>
             </div>
           )}
         </div>
 
-        <div className="px-4 py-3 border-t bg-slate-50 dark:bg-slate-900/50">
-          <p className="text-xs text-slate-500 text-center">
-            <kbd className="px-1 py-0.5 bg-white dark:bg-slate-800 rounded border">↑↓</kbd> navigate ·{" "}
-            <kbd className="px-1 py-0.5 bg-white dark:bg-slate-800 rounded border">Enter</kbd> open ·{" "}
-            <kbd className="px-1 py-0.5 bg-white dark:bg-slate-800 rounded border">Esc</kbd> close
+        <div className="px-4 py-3 border-t bg-muted/50">
+          <p className="text-xs text-muted-foreground text-center">
+            <kbd className="px-1 py-0.5 bg-card rounded border">↑↓</kbd> navigate ·{" "}
+            <kbd className="px-1 py-0.5 bg-card rounded border">Enter</kbd> open ·{" "}
+            <kbd className="px-1 py-0.5 bg-card rounded border">Esc</kbd> close
           </p>
         </div>
       </DialogContent>

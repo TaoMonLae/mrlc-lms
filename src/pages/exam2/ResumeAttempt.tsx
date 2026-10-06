@@ -95,7 +95,7 @@ export default function ResumeAttempt() {
   };
 
   if (loading)
-    return <div className="py-20 text-center text-slate-500">Loading…</div>;
+    return <div className="py-20 text-center text-muted-foreground">Loading…</div>;
   const visibleExams = selectedExam
     ? exams.filter((e) => e.id === selectedExam)
     : exams;
@@ -104,10 +104,10 @@ export default function ResumeAttempt() {
     <div className="max-w-3xl mx-auto space-y-5">
       <Button variant="ghost" render={<Link to="/student/exams" />} nativeButton={false}>Back to examinations</Button>
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+        <h1 className="text-2xl font-bold text-foreground">
           My Exams
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           Review your exam details before starting. The timer begins when you select Start exam.
         </p>
       </div>
@@ -125,7 +125,7 @@ export default function ResumeAttempt() {
         </div>
       ) : (
         visibleExams.length === 0 && (
-          <div className="rounded-xl border border-dashed border-slate-200 dark:border-surface-raised p-10 text-center text-slate-500">
+          <div className="rounded-sm border border-dashed border-border p-10 text-center text-muted-foreground">
             {selectedExam
               ? "This exam is no longer available to start or resume."
               : "No exams available right now."}
@@ -140,7 +140,7 @@ export default function ResumeAttempt() {
             <form key={e.id} onSubmit={event => { event.preventDefault(); if (e.openNow && !exhausted) void start(e); }} className="flex flex-col gap-4 border border-border bg-card rounded-lg p-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h3 className="font-bold text-slate-900 dark:text-white">
+                <h3 className="font-bold text-foreground">
                   {e.title}
                 </h3>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mt-2">

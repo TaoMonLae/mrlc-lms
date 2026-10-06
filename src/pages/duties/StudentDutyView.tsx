@@ -88,7 +88,7 @@ export default function StudentDutyView() {
       case 'FAILED':
         return 'bg-red-100 text-red-800';
       case 'EXCUSED':
-        return 'bg-slate-100 text-slate-800';
+        return 'bg-muted text-foreground';
       default:
         return 'bg-amber-100 text-amber-800';
     }
@@ -104,15 +104,15 @@ export default function StudentDutyView() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">My Duties</h1>
-        <p className="text-sm text-slate-500">Your assigned chores and duty history</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">My Duties</h1>
+        <p className="text-sm text-muted-foreground">Your assigned chores and duty history</p>
       </div>
 
       {statistics && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-500">Completion Rate</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Completion Rate</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{Math.round(statistics.completionRate)}%</div>
@@ -120,7 +120,7 @@ export default function StudentDutyView() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-500">Completed</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Completed</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">{statistics.totalCompleted}</div>
@@ -128,7 +128,7 @@ export default function StudentDutyView() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-500">Avg Rating</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Avg Rating</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -138,7 +138,7 @@ export default function StudentDutyView() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-1">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
                 <Trophy className="h-3 w-3" /> Points
               </CardTitle>
             </CardHeader>
@@ -157,13 +157,13 @@ export default function StudentDutyView() {
         </CardHeader>
         <CardContent className="space-y-2">
           {upcoming.length === 0 ? (
-            <p className="text-sm text-slate-500 text-center py-4">No upcoming duties.</p>
+            <p className="text-sm text-muted-foreground text-center py-4">No upcoming duties.</p>
           ) : (
             upcoming.map((a) => (
-              <div key={a.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+              <div key={a.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
                 <div>
                   <div className="font-medium text-sm">{a.dutyDefinition.name}</div>
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-muted-foreground">
                     {new Date(a.scheduledDate).toLocaleDateString()} · {a.roster.name}
                     {a.dutyDefinition.durationMinutes ? ` · ~${a.dutyDefinition.durationMinutes} min` : ''}
                   </div>
@@ -195,13 +195,13 @@ export default function StudentDutyView() {
         </CardHeader>
         <CardContent className="space-y-2">
           {history.length === 0 ? (
-            <p className="text-sm text-slate-500 text-center py-4">No duty history yet.</p>
+            <p className="text-sm text-muted-foreground text-center py-4">No duty history yet.</p>
           ) : (
             history.map((a) => (
-              <div key={a.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+              <div key={a.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
                 <div>
                   <div className="font-medium text-sm">{a.dutyDefinition.name}</div>
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-muted-foreground">
                     {new Date(a.scheduledDate).toLocaleDateString()} · {a.roster.name}
                   </div>
                 </div>

@@ -172,7 +172,7 @@ export default function VideoEdit() {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <span className="ml-3 text-slate-500">Loading video...</span>
+        <span className="ml-3 text-muted-foreground">Loading video...</span>
       </div>
     );
   }
@@ -180,7 +180,7 @@ export default function VideoEdit() {
   if (!video) {
     return (
       <div className="text-center py-20">
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Video not found</h2>
+        <h2 className="text-xl font-semibold text-foreground">Video not found</h2>
         <Button variant="link" onClick={() => navigate('/videos')} className="mt-2">Back to Video Lessons</Button>
       </div>
     );
@@ -227,19 +227,19 @@ export default function VideoEdit() {
         <Button
           variant="ghost"
           size="sm"
-          className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white"
+          className="-ml-3 mb-2 text-muted-foreground hover:text-foreground"
           render={<Link to={`/videos/${id}`} />}
           nativeButton={false}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Edit Video Lesson</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Update the details of this video lesson.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Edit Video Lesson</h1>
+        <p className="text-sm text-muted-foreground mt-1">Update the details of this video lesson.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit, () => toast.error('Please check the highlighted fields before saving.'))} className="space-y-6">
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-6">
+        <div className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-6">
 
           {/* Upload Method Selector */}
           <div className="space-y-3">
@@ -254,7 +254,7 @@ export default function VideoEdit() {
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 text-sm font-medium transition-colors ${
                   uploadMethod === 'url'
                     ? 'border-aubergine-600 bg-aubergine-50 text-aubergine-700 dark:bg-aubergine-900/20 dark:text-aubergine-300'
-                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-surface-raised dark:bg-surface-indigo dark:text-slate-300 dark:hover:bg-surface-raised'
+                    : 'border-border bg-card text-muted-foreground hover:bg-muted/50'
                 }`}
               >
                 <Film className="h-4 w-4" />
@@ -266,7 +266,7 @@ export default function VideoEdit() {
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 text-sm font-medium transition-colors ${
                   uploadMethod === 'file'
                     ? 'border-aubergine-600 bg-aubergine-50 text-aubergine-700 dark:bg-aubergine-900/20 dark:text-aubergine-300'
-                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-surface-raised dark:bg-surface-indigo dark:text-slate-300 dark:hover:bg-surface-raised'
+                    : 'border-border bg-card text-muted-foreground hover:bg-muted/50'
                 }`}
               >
                 <Upload className="h-4 w-4" />
@@ -313,7 +313,7 @@ export default function VideoEdit() {
                       <Upload className="mr-2 h-4 w-4" />
                       {uploadingVideo ? `Uploading ${videoUploadProgress}%…` : 'Choose Video File'}
                     </Button>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Supports {ALLOWED_VIDEO_EXTENSIONS.map((e) => e.replace('.', '').toUpperCase()).join(', ')} files up to {MAX_VIDEO_FILE_SIZE_DISPLAY}.
                       Files over 250MB are automatically compressed — large files may take a few minutes.
                     </p>
@@ -326,7 +326,7 @@ export default function VideoEdit() {
                         {videoFile?.name || 'Video uploaded successfully'}
                       </span>
                     </div>
-                    <Button
+                    <Button aria-label="Close"
                       type="button"
                       variant="ghost"
                       size="sm"
@@ -427,13 +427,13 @@ export default function VideoEdit() {
                 <Input id="captionsUrl" {...register('captionsUrl')} placeholder="https://... .vtt  — or upload a file →" />
                 <CaptionUploadButton onUploaded={(url) => setValue('captionsUrl', url)} />
               </div>
-              <p className="text-xs text-slate-400">Paste a WebVTT URL or upload a .vtt/.srt file. Shown as a CC toggle for uploaded videos.</p>
+              <p className="text-xs text-muted-foreground">Paste a WebVTT URL or upload a .vtt/.srt file. Shown as a CC toggle for uploaded videos.</p>
             </div>
 
-            <div className="space-y-2 sm:col-span-2 rounded-lg border border-slate-200 dark:border-surface-raised p-3">
+            <div className="space-y-2 sm:col-span-2 rounded-lg border border-border p-3">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="h-4 w-4 rounded border-slate-300" {...register('isRequired')} />
-                <span className="text-sm font-medium text-slate-900 dark:text-white">Required viewing for the assigned class</span>
+                <input type="checkbox" className="h-4 w-4 rounded border-input" {...register('isRequired')} />
+                <span className="text-sm font-medium text-foreground">Required viewing for the assigned class</span>
               </label>
               {watch('isRequired') && (
                 <div className="pt-2">

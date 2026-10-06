@@ -36,19 +36,19 @@ export default function PermissionMatrix({ showAllPermissions = false, className
 
   return (
     <div className={`min-w-0 space-y-4 ${className}`}>
-      <div className="text-sm text-slate-600 dark:text-slate-400">
+      <div className="text-sm text-muted-foreground">
         <p>Overview of role permissions across the system. Green checkmarks indicate access.</p>
       </div>
 
       <div className="max-w-full overflow-x-auto overscroll-x-contain">
         <table className="min-w-[900px] w-full border-collapse">
           <thead>
-            <tr className="border-b border-slate-200 dark:border-slate-700">
-              <th className="text-left p-3 text-sm font-semibold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800">
+            <tr className="border-b border-border">
+              <th className="text-left p-3 text-sm font-semibold text-foreground bg-muted/50">
                 Role
               </th>
               {permissionsToShow.map(permission => (
-                <th key={permission} className="text-center p-2 text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800" title={PERMISSION_LABELS[permission]}>
+                <th key={permission} className="text-center p-2 text-xs font-medium text-muted-foreground bg-muted/50" title={PERMISSION_LABELS[permission]}>
                   <div className="w-full max-w-[100px] truncate">
                     {PERMISSION_LABELS[permission]}
                   </div>
@@ -60,8 +60,8 @@ export default function PermissionMatrix({ showAllPermissions = false, className
             {Object.entries(ROLE_LABELS).map(([roleKey, roleLabel]) => {
               const role = roleKey as UserRole;
               return (
-                <tr key={role} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900/20">
-                  <td className="p-3 font-medium text-sm text-slate-900 dark:text-white">
+                <tr key={role} className="border-b border-border hover:bg-muted/50">
+                  <td className="p-3 font-medium text-sm text-foreground">
                     <div className="flex items-center gap-2">
                       <span>{roleLabel}</span>
                     </div>
@@ -93,7 +93,7 @@ export default function PermissionMatrix({ showAllPermissions = false, className
         <Badge variant="outline" className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-900">
           <Check className="h-3 w-3 mr-1" /> Has Permission
         </Badge>
-        <Badge variant="outline" className="bg-slate-50 dark:bg-slate-900/20 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-900">
+        <Badge variant="outline" className="bg-muted/50 text-foreground border-border">
           <X className="h-3 w-3 mr-1" /> No Permission
         </Badge>
       </div>

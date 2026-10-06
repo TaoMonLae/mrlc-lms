@@ -14,7 +14,7 @@ type Activity = { id: string; title: string; status: string; href: string };
 type Learning = VideoLearningConfig & { quiz: Activity | null; homework: Activity | null; learningComplete: boolean };
 type ReportRow = { studentId: string; name: string; watched: boolean; quiz: string; homework: string; learningComplete: boolean };
 const empty: VideoLearningConfig = { examId: null, homeworkId: null, requireQuiz: false, chapters: [] };
-const panel = 'rounded-xl border border-border bg-card p-4 text-card-foreground sm:p-5';
+const panel = 'rounded-sm border border-border bg-card p-4 text-card-foreground sm:p-5';
 const selectClass = 'video-learning-select w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-ring';
 const statusText = (value: string) => value.replaceAll('_', ' ').toLowerCase();
 const formatDuration = (seconds: number) => formatPositiveDuration(seconds) || '0:00';

@@ -294,44 +294,44 @@ export default function ChatPage() {
   return (
     <div className="flex h-[calc(100vh-9rem)] gap-4">
       {/* Conversation list */}
-      <div className={`${activeId ? 'hidden md:flex' : 'flex'} w-full md:w-80 shrink-0 flex-col rounded-xl border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo`}>
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-surface-raised p-3">
-          <h1 className="flex items-center gap-2 font-semibold text-slate-900 dark:text-white"><MessageSquare className="h-5 w-5 text-aubergine-600" /> Chat</h1>
+      <div className={`${activeId ? 'hidden md:flex' : 'flex'} w-full md:w-80 shrink-0 flex-col rounded-sm border border-border bg-white dark:bg-surface-indigo`}>
+        <div className="flex items-center justify-between border-b border-border p-3">
+          <h1 className="flex items-center gap-2 font-semibold text-foreground"><MessageSquare className="h-5 w-5 text-aubergine-600" /> Chat</h1>
           <div className="flex items-center gap-1">
           {isAdmin && (
-            <Button size="sm" variant="ghost" title="Sticker packs" render={<Link to="/chat/stickers" />}><Sticker className="h-4 w-4 text-aubergine-600" /></Button>
+            <Button aria-label="Sticker packs" size="sm" variant="ghost" title="Sticker packs" render={<Link to="/chat/stickers" />}><Sticker className="h-4 w-4 text-aubergine-600" /></Button>
           )}
           {isAdmin && (
-            <Button size="sm" variant="ghost" title="Moderation" render={<Link to="/chat/moderation" />}><ShieldAlert className="h-4 w-4 text-amber-600" /></Button>
+            <Button aria-label="Moderation" size="sm" variant="ghost" title="Moderation" render={<Link to="/chat/moderation" />}><ShieldAlert className="h-4 w-4 text-amber-600" /></Button>
           )}
           <Dialog open={newOpen} onOpenChange={(o) => (o ? openNew() : setNewOpen(false))}>
             <DialogTrigger render={<Button size="sm"><Plus className="mr-1 h-4 w-4" /> New</Button>} />
             <DialogContent>
               <DialogHeader><DialogTitle>New conversation</DialogTitle></DialogHeader>
               <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input className="pl-8" placeholder="Search people…" value={contactSearch} onChange={(e) => setContactSearch(e.target.value)} />
               </div>
               {Object.keys(picked).length > 1 && (
                 <div className="space-y-1"><Label>Group name (optional)</Label><Input value={groupTitle} onChange={(e) => setGroupTitle(e.target.value)} placeholder="e.g. Grade 10 project" /></div>
               )}
               <div className="max-h-80 space-y-3 overflow-y-auto">
-                {totalContacts === 0 ? <p className="py-6 text-center text-sm text-slate-400">No people available to message</p> :
-                  filteredGroups.length === 0 ? <p className="py-6 text-center text-sm text-slate-400">No matches</p> :
+                {totalContacts === 0 ? <p className="py-6 text-center text-sm text-muted-foreground">No people available to message</p> :
+                  filteredGroups.length === 0 ? <p className="py-6 text-center text-sm text-muted-foreground">No matches</p> :
                   filteredGroups.map((g) => (
                     <div key={g.key} className="space-y-1">
-                      <p className="px-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">{g.label} · {g.contacts.length}</p>
+                      <p className="px-1 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{g.label} · {g.contacts.length}</p>
                       {g.contacts.map((c) => {
                         const on = !!picked[c.id];
                         return (
                           <button key={c.id} type="button"
                             onClick={() => setPicked((p) => { const n = { ...p }; if (n[c.id]) delete n[c.id]; else n[c.id] = c; return n; })}
-                            className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm ${on ? 'border-aubergine-300 bg-aubergine-50 dark:bg-aubergine-900/20' : 'border-slate-200 dark:border-surface-raised hover:bg-slate-50 dark:hover:bg-surface-raised/40'}`}>
+                            className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm ${on ? 'border-aubergine-300 bg-aubergine-50 dark:bg-aubergine-900/20' : 'border-border hover:bg-muted/50'}`}>
                             <span className="flex min-w-0 items-center gap-2">
                               <UserAvatar name={c.name} src={c.profilePhotoUrl} className="h-7 w-7 text-[11px]" />
-                              <span className="truncate font-medium text-slate-800 dark:text-slate-200">{c.name}</span>
+                              <span className="truncate font-medium text-foreground">{c.name}</span>
                             </span>
-                            <Badge variant="outline" className="shrink-0 text-[10px] uppercase">{roleLabel(c.role)}</Badge>
+                            <Badge variant="outline" className="shrink-0 text-[11px] uppercase">{roleLabel(c.role)}</Badge>
                           </button>
                         );
                       })}
@@ -346,16 +346,16 @@ export default function ChatPage() {
           </Dialog>
           </div>
         </div>
-        <div className="border-b border-slate-100 px-3 py-2 dark:border-surface-raised">
+        <div className="border-b border-border px-3 py-2">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input value={conversationSearch} onChange={(e) => setConversationSearch(e.target.value)} placeholder="Search conversations" className="h-8 pl-8 text-xs" />
           </div>
         </div>
         <div className="flex-1 overflow-y-auto">
-          {loadingList ? <p className="p-4 text-sm text-slate-400">Loading…</p> :
-            conversations.length === 0 ? <p className="p-6 text-center text-sm text-slate-400">No conversations yet. Tap “New” to start one.</p> :
-            visibleConversations.length === 0 ? <p className="p-6 text-center text-sm text-slate-400">No matching conversations.</p> :
+          {loadingList ? <p className="p-4 text-sm text-muted-foreground">Loading…</p> :
+            conversations.length === 0 ? <p className="p-6 text-center text-sm text-muted-foreground">No conversations yet. Tap “New” to start one.</p> :
+            visibleConversations.length === 0 ? <p className="p-6 text-center text-sm text-muted-foreground">No matching conversations.</p> :
             visibleConversations.map((c) => {
               const others = c.participants?.filter((p) => p.id !== myId) ?? [];
               // For a 1:1 chat, show the other person's real photo; a
@@ -364,7 +364,7 @@ export default function ChatPage() {
               const avatarSrc = c.type === 'DIRECT' ? others[0]?.profilePhotoUrl : null;
               return (
               <button key={c.id} onClick={() => openConversation(c.id)}
-                className={`flex w-full items-start gap-3 border-b border-slate-50 dark:border-surface-raised/50 p-3 text-left hover:bg-slate-50 dark:hover:bg-surface-raised/40 ${activeId === c.id ? 'bg-slate-50 dark:bg-surface-raised/40' : ''}`}>
+                className={`flex w-full items-start gap-3 border-b border-border p-3 text-left hover:bg-muted/50 ${activeId === c.id ? 'bg-muted/50' : ''}`}>
                 <div className="relative shrink-0">
                   <UserAvatar name={c.title} src={avatarSrc} className="h-10 w-10 font-bold" />
                   {others.some((p) => onlineUserIds.has(p.id)) && (
@@ -373,12 +373,12 @@ export default function ChatPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="truncate font-medium text-slate-900 dark:text-white">{c.title}</span>
-                    <span className="shrink-0 text-[10px] text-slate-400">{timeLabel(c.lastMessageAt)}</span>
+                    <span className="truncate font-medium text-foreground">{c.title}</span>
+                    <span className="shrink-0 text-[11px] text-muted-foreground">{timeLabel(c.lastMessageAt)}</span>
                   </div>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-xs text-slate-500">{c.lastMessage ? `${c.lastMessage.body}` : 'No messages yet'}</span>
-                    {c.unread > 0 && <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-aubergine-600 px-1 text-[10px] font-bold text-white">{c.unread}</span>}
+                    <span className="truncate text-xs text-muted-foreground">{c.lastMessage ? `${c.lastMessage.body}` : 'No messages yet'}</span>
+                    {c.unread > 0 && <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-aubergine-600 px-1 text-[11px] font-bold text-white">{c.unread}</span>}
                   </div>
                 </div>
               </button>
@@ -388,21 +388,21 @@ export default function ChatPage() {
       </div>
 
       {/* Thread */}
-      <div className={`${activeId ? 'flex' : 'hidden md:flex'} min-w-0 flex-1 flex-col rounded-xl border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo`}>
+      <div className={`${activeId ? 'flex' : 'hidden md:flex'} min-w-0 flex-1 flex-col rounded-sm border border-border bg-white dark:bg-surface-indigo`}>
         {!detail ? (
-          <div className="grid flex-1 place-items-center text-sm text-slate-400">Select a conversation</div>
+          <div className="grid flex-1 place-items-center text-sm text-muted-foreground">Select a conversation</div>
         ) : (
           <>
-            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-surface-raised p-3">
-              <Button variant="ghost" size="sm" className="md:hidden -ml-2" onClick={() => { setActiveId(null); setDetail(null); }}><ArrowLeft className="h-4 w-4" /></Button>
+            <div className="flex items-center gap-2 border-b border-border p-3">
+              <Button aria-label="Back" variant="ghost" size="sm" className="md:hidden -ml-2" onClick={() => { setActiveId(null); setDetail(null); }}><ArrowLeft className="h-4 w-4" /></Button>
               <div className="min-w-0">
-                <p className="truncate font-semibold text-slate-900 dark:text-white">{detail.title || detail.participants.filter((p) => p.id !== myId).map((p) => p.name).join(', ')}</p>
+                <p className="truncate font-semibold text-foreground">{detail.title || detail.participants.filter((p) => p.id !== myId).map((p) => p.name).join(', ')}</p>
                 {(() => {
                   const others = detail.participants.filter((p) => p.id !== myId);
                   const anyOnline = others.some((o) => onlineUserIds.has(o.id));
                   return (
-                    <p className="flex items-center gap-1.5 truncate text-xs text-slate-400">
-                      <span className={`inline-block h-2 w-2 rounded-full ${anyOnline ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                    <p className="flex items-center gap-1.5 truncate text-xs text-muted-foreground">
+                      <span className={`inline-block h-2 w-2 rounded-full ${anyOnline ? 'bg-emerald-500' : 'bg-input'}`} />
                       {anyOnline ? 'Active now' : 'Offline'}
                     </p>
                   );
@@ -410,7 +410,7 @@ export default function ChatPage() {
               </div>
               {detail.oversight && <Badge className="ml-auto bg-amber-100 text-amber-700"><ShieldAlert className="mr-1 h-3 w-3" /> Oversight</Badge>}
               {canDeleteConv && (
-                <Button variant="ghost" size="icon" className={`h-8 w-8 ${detail.oversight ? '' : 'ml-auto'}`} title="Delete conversation" onClick={deleteConversation}>
+                <Button aria-label="Delete conversation" variant="ghost" size="icon" className={`h-8 w-8 ${detail.oversight ? '' : 'ml-auto'}`} title="Delete conversation" onClick={deleteConversation}>
                   <Trash2 className="h-4 w-4 text-rose-500" />
                 </Button>
               )}
@@ -424,25 +424,25 @@ export default function ChatPage() {
               }}
               className="flex-1 space-y-3 overflow-y-auto p-4"
             >
-              {detail.messages.length === 0 ? <p className="py-10 text-center text-sm text-slate-400">No messages yet. Say hello.</p> :
+              {detail.messages.length === 0 ? <p className="py-10 text-center text-sm text-muted-foreground">No messages yet. Say hello.</p> :
                 detail.messages.map((m) => {
                   const sticker = isStickerUrl(m.attachmentUrl) && !m.body;
                   return (
                   <div key={m.id} className={`group flex ${m.mine ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[78%] text-sm ${sticker ? '' : `rounded-2xl px-3 py-2 ${m.mine ? 'bg-aubergine-600 text-white' : 'bg-slate-100 dark:bg-surface-raised text-slate-800 dark:text-slate-200'}`}`}>
-                      {!m.mine && <p className={`mb-0.5 text-[10px] font-bold uppercase tracking-wide ${sticker ? 'text-slate-500 dark:text-slate-400' : 'opacity-70'}`}>{m.sender.name}</p>}
+                    <div className={`max-w-[78%] text-sm ${sticker ? '' : `rounded-sm px-3 py-2 ${m.mine ? 'bg-aubergine-600 text-white' : 'bg-muted text-foreground'}`}`}>
+                      {!m.mine && <p className={`mb-0.5 text-[11px] font-bold uppercase tracking-wide ${sticker ? 'text-muted-foreground' : 'opacity-70'}`}>{m.sender.name}</p>}
                       {m.attachmentUrl && <img src={m.attachmentUrl} alt={sticker ? 'sticker' : 'attachment'} className={sticker ? 'h-28 w-28' : 'mb-1 max-h-60 rounded-lg'} />}
                       {m.expiresAt && (
-                        <div className={`mb-1 flex items-center gap-2 text-[10px] ${m.mine ? 'text-white/80' : 'text-slate-500'}`}>
+                        <div className={`mb-1 flex items-center gap-2 text-[11px] ${m.mine ? 'text-white/80' : 'text-muted-foreground'}`}>
                           <Clock className="h-3 w-3" /> Disappears in {timeLeftShort(m.expiresAt)}
                           {canSave && m.attachmentUrl && <a href={m.attachmentUrl} download className="inline-flex items-center gap-0.5 underline"><Download className="h-3 w-3" /> Save</a>}
                         </div>
                       )}
                       {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
-                      <div className={`mt-0.5 flex items-center gap-2 text-[10px] ${sticker ? 'text-slate-400' : m.mine ? 'text-white/70' : 'text-slate-400'} ${m.mine ? 'justify-end' : ''}`}>
+                      <div className={`mt-0.5 flex items-center gap-2 text-[11px] ${sticker ? 'text-muted-foreground' : m.mine ? 'text-white/70' : 'text-muted-foreground'} ${m.mine ? 'justify-end' : ''}`}>
                         <span>{timeLabel(m.createdAt)}</span>
                         {m.mine && <button type="button" onClick={() => deleteMessage(m.id)} className="opacity-70 hover:opacity-100" title="Delete message" aria-label="Delete message"><Trash2 className="h-3 w-3" /></button>}
-                        {!m.mine && <button onClick={() => report(m.id)} className="opacity-0 group-hover:opacity-100" title="Report"><Flag className="h-3 w-3" /></button>}
+                        {!m.mine && <button aria-label="Report" onClick={() => report(m.id)} className="opacity-0 group-hover:opacity-100" title="Report"><Flag className="h-3 w-3" /></button>}
                       </div>
                     </div>
                   </div>
@@ -453,7 +453,7 @@ export default function ChatPage() {
                 if (!last?.mine) return null;
                 const others = detail.participants.filter((p) => p.id !== myId);
                 const seen = others.some((o) => o.lastReadAt && new Date(o.lastReadAt) >= new Date(last.createdAt));
-                return <p className="pr-1 text-right text-[11px] text-slate-400">{seen ? 'Seen' : 'Sent'}</p>;
+                return <p className="pr-1 text-right text-[11px] text-muted-foreground">{seen ? 'Seen' : 'Sent'}</p>;
               })()}
               {(() => {
                 const names = activeId ? typingNames(activeId) : [];
@@ -464,13 +464,13 @@ export default function ChatPage() {
                   : `${names.length} people are typing`;
                 return (
                   <div className="flex justify-start" aria-live="polite">
-                    <div className="flex items-center gap-2 rounded-2xl bg-slate-100 dark:bg-surface-raised px-3 py-2">
+                    <div className="flex items-center gap-2 rounded-sm bg-muted px-3 py-2">
                       <span className="flex gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:-0.3s]" />
-                        <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:-0.15s]" />
-                        <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.3s]" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.15s]" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce" />
                       </span>
-                      <span className="text-[11px] text-slate-500">{label}…</span>
+                      <span className="text-[11px] text-muted-foreground">{label}…</span>
                     </div>
                   </div>
                 );
@@ -478,24 +478,24 @@ export default function ChatPage() {
             </div>
 
             {detail.oversight ? (
-              <div className="border-t border-slate-100 dark:border-surface-raised p-3 text-center text-xs text-slate-400">Admin oversight — read only</div>
+              <div className="border-t border-border p-3 text-center text-xs text-muted-foreground">Admin oversight — read only</div>
             ) : (
-              <div className="border-t border-slate-100 dark:border-surface-raised p-3">
+              <div className="border-t border-border p-3">
                 {attachment && (
                   <div className="relative mb-2 inline-block">
-                    <img src={attachment} alt="attachment preview" className="max-h-24 rounded-lg border border-slate-200 dark:border-surface-raised" />
-                    <button type="button" onClick={() => setAttachment(null)} className="absolute -top-2 -right-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-surface-raised p-0.5 shadow-sm">
+                    <img src={attachment} alt="attachment preview" className="max-h-24 rounded-lg border border-border" />
+                    <button aria-label="Close" type="button" onClick={() => setAttachment(null)} className="absolute -top-2 -right-2 rounded-full bg-card border border-border p-0.5 shadow-sm">
                       <X className="h-3.5 w-3.5 text-rose-500" />
                     </button>
                   </div>
                 )}
                 <div className="flex items-center gap-2">
                   <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAttachment(f); }} />
-                  <Button variant="ghost" size="icon" className="shrink-0" title="Attach image" onClick={() => fileRef.current?.click()} disabled={uploading || sending}>
-                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4 text-slate-500" />}
+                  <Button aria-label="Attach image" variant="ghost" size="icon" className="shrink-0" title="Attach image" onClick={() => fileRef.current?.click()} disabled={uploading || sending}>
+                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4 text-muted-foreground" />}
                   </Button>
-                  <Button variant="ghost" size="icon" className="shrink-0" title="Camera (disappears in 24h)" onClick={() => setCamera(true)} disabled={sending}>
-                    <Camera className="h-4 w-4 text-slate-500" />
+                  <Button aria-label="Camera (disappears in 24h)" variant="ghost" size="icon" className="shrink-0" title="Camera (disappears in 24h)" onClick={() => setCamera(true)} disabled={sending}>
+                    <Camera className="h-4 w-4 text-muted-foreground" />
                   </Button>
                   <StickerPicker onSelect={sendSticker} />
                   <Input value={draft} maxLength={5000} onChange={(e) => { setDraft(e.target.value); if (e.target.value.trim() && activeId) sendTyping(activeId); }} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Type a message…" disabled={sending} />

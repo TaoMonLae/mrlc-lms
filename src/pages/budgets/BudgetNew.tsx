@@ -96,12 +96,12 @@ export default function BudgetNew() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" render={<Link to="/budgets" />} nativeButton={false}>
+        <Button aria-label="Back" variant="ghost" size="sm" render={<Link to="/budgets" />} nativeButton={false}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">New Budget</h1>
-          <p className="text-sm text-slate-500">Create a new budget allocation</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">New Budget</h1>
+          <p className="text-sm text-muted-foreground">Create a new budget allocation</p>
         </div>
       </div>
 
@@ -242,7 +242,7 @@ export default function BudgetNew() {
                   onChange={(e) => setFormData({ ...formData, alertThreshold: Number(e.target.value) })}
                   placeholder="0.8"
                 />
-                <p className="text-xs text-slate-500">Alert when budget usage exceeds this percentage</p>
+                <p className="text-xs text-muted-foreground">Alert when budget usage exceeds this percentage</p>
               </div>
             </div>
             <div className="flex items-center gap-2">

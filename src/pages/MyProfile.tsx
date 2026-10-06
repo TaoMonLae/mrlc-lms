@@ -77,11 +77,11 @@ export default function MyProfile() {
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-10">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">My Profile</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage your personal account and preferences.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">My Profile</h1>
+        <p className="text-sm text-muted-foreground mt-1">Manage your personal account and preferences.</p>
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-6">
+      <div className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-6">
         <div className="flex items-center gap-4">
           <ProfilePhotoUploader
             currentUrl={user?.profilePhotoUrl}
@@ -91,11 +91,11 @@ export default function MyProfile() {
             buttonLabel="Change Picture"
           />
           <div>
-            <div className="font-semibold text-lg text-slate-900 dark:text-white">{user?.name}</div>
-            <div className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+            <div className="font-semibold text-lg text-foreground">{user?.name}</div>
+            <div className="text-sm text-muted-foreground flex items-center gap-1.5">
               <Mail className="h-3.5 w-3.5" /> {user?.email}
             </div>
-            <div className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+            <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
               <ShieldCheck className="h-3.5 w-3.5" /> {user?.role}
             </div>
             {studentCouncilRoleLabel(user?.studentCouncilRole) && (
@@ -106,19 +106,19 @@ export default function MyProfile() {
           </div>
         </div>
 
-        <div className="pt-4 border-t border-slate-200 dark:border-surface-raised">
+        <div className="pt-4 border-t border-border">
           <Button variant="outline" size="sm" render={<Link to="/change-password" />} nativeButton={false}>
             <KeyRound className="mr-2 h-4 w-4" /> Change Password
           </Button>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
+      <div className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-4">
         <div>
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
             <MousePointerClick className="h-4 w-4" /> Cursor Effect
           </h3>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Pick your own decorative mouse-cursor effect, overriding the school-wide default just for your account.
           </p>
         </div>
@@ -135,7 +135,7 @@ export default function MyProfile() {
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             Your selection previews across this screen before you save it.
           </p>
         </div>

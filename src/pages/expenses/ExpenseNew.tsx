@@ -126,12 +126,12 @@ export default function ExpenseNew() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" render={<Link to="/expenses" />} nativeButton={false}>
+        <Button aria-label="Back" variant="ghost" size="sm" render={<Link to="/expenses" />} nativeButton={false}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">New Expense</h1>
-          <p className="text-sm text-slate-500">Create a new expense record</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">New Expense</h1>
+          <p className="text-sm text-muted-foreground">Create a new expense record</p>
         </div>
       </div>
 
@@ -214,7 +214,7 @@ export default function ExpenseNew() {
               </div>
               <div className="space-y-2">
                 <Label>Total Amount</Label>
-                <div className="h-10 px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-md font-semibold text-lg flex items-center">
+                <div className="h-10 px-3 py-2 bg-muted rounded-md font-semibold text-lg flex items-center">
                   {currency} {totalAmount.toFixed(2)}
                 </div>
               </div>

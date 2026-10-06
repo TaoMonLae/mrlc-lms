@@ -38,7 +38,7 @@ export function MetricCard({
       case "info":
         return "border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800";
       default:
-        return "border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700";
+        return "border-border bg-card";
     }
   };
 
@@ -56,7 +56,7 @@ export function MetricCard({
   };
 
   const getTrendColor = () => {
-    if (!trend) return "text-gray-500";
+    if (!trend) return "text-muted-foreground";
 
     switch (trend.direction) {
       case "up":
@@ -64,7 +64,7 @@ export function MetricCard({
       case "down":
         return "text-red-600";
       case "neutral":
-        return "text-gray-500";
+        return "text-muted-foreground";
     }
   };
 
@@ -74,9 +74,9 @@ export function MetricCard({
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {icon && <div className="text-gray-500">{icon}</div>}
+              {icon && <div className="text-muted-foreground">{icon}</div>}
               <div>
-                <p className="text-xs text-gray-500">{title}</p>
+                <p className="text-xs text-muted-foreground">{title}</p>
                 <p className="text-lg font-bold">{value}</p>
               </div>
             </div>
@@ -99,7 +99,7 @@ export function MetricCard({
           <CardTitle className={cn("text-sm font-medium", size === "default" ? "" : "text-xs")}>
             {title}
           </CardTitle>
-          {icon && <div className="text-gray-500">{icon}</div>}
+          {icon && <div className="text-muted-foreground">{icon}</div>}
         </div>
       </CardHeader>
       <CardContent>
@@ -110,7 +110,7 @@ export function MetricCard({
         {(description || trend) && (
           <div className="mt-2 flex items-center justify-between">
             {description && (
-              <p className="text-xs text-gray-500">{description}</p>
+              <p className="text-xs text-muted-foreground">{description}</p>
             )}
             {trend && (
               <div className={cn("flex items-center gap-1 text-xs", getTrendColor())}>

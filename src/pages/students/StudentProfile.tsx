@@ -126,14 +126,14 @@ export default function StudentProfile() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <span className="animate-spin rounded-full h-6 w-6 border-2 border-aubergine-600 border-t-transparent mr-2"></span>
-        <span className="text-slate-500">Loading student profile...</span>
+        <span className="text-muted-foreground">Loading student profile...</span>
       </div>
     );
   }
 
   if (!student) {
     return (
-      <div className="text-center py-12 text-slate-500">
+      <div className="text-center py-12 text-muted-foreground">
         <p>Student profile not found.</p>
         <Button variant="outline" className="mt-4" render={<Link to="/students" />} nativeButton={false}>
           Back to Students
@@ -213,7 +213,7 @@ export default function StudentProfile() {
       {/* Header & Actions — name/status/id now live on the holographic
           profile card below instead of duplicating them here as text. */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <Button variant="ghost" size="sm" className="-ml-3 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/students" />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 text-muted-foreground hover:text-foreground" render={<Link to="/students" />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Students
         </Button>
@@ -282,138 +282,138 @@ export default function StudentProfile() {
 
         {/* Left Sidebar Info Card */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised p-6 shadow-sm">
-            <h3 className="font-bold text-slate-900 dark:text-white mb-4">Quick Facts</h3>
+          <div className="bg-card rounded-sm border border-border p-6 shadow-sm">
+            <h3 className="font-bold text-foreground mb-4">Quick Facts</h3>
             <div className="space-y-4">
               <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-500">Enrolled</span>
-                <span className="font-medium text-slate-900 dark:text-slate-300">{new Date(s.enrollmentDate).toLocaleDateString()}</span>
+                <span className="text-muted-foreground">Enrolled</span>
+                <span className="font-medium text-foreground">{new Date(s.enrollmentDate).toLocaleDateString()}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-500">Gender</span>
-                <span className="font-medium capitalize text-slate-900 dark:text-slate-300">{s.gender.toLowerCase()}</span>
+                <span className="text-muted-foreground">Gender</span>
+                <span className="font-medium capitalize text-foreground">{s.gender.toLowerCase()}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-500">DOB</span>
-                <span className="font-medium text-slate-900 dark:text-slate-300">{new Date(s.dateOfBirth).toLocaleDateString()}</span>
+                <span className="text-muted-foreground">DOB</span>
+                <span className="font-medium text-foreground">{new Date(s.dateOfBirth).toLocaleDateString()}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-500">Country</span>
-                <span className="font-medium text-slate-900 dark:text-slate-300">{s.country}</span>
+                <span className="text-muted-foreground">Country</span>
+                <span className="font-medium text-foreground">{s.country}</span>
               </div>
               <div className="flex justify-between items-center gap-4 text-sm">
-                <span className="text-slate-500">Residence</span>
-                <span className="font-medium text-right text-slate-900 dark:text-slate-300">{s.boardingType === 'BOARDING' ? 'Boarding' : 'Day student'}</span>
+                <span className="text-muted-foreground">Residence</span>
+                <span className="font-medium text-right text-foreground">{s.boardingType === 'BOARDING' ? 'Boarding' : 'Day student'}</span>
               </div>
               {s.studentCouncilRole && (
                 <div className="flex justify-between items-center gap-4 text-sm">
-                  <span className="text-slate-500">Student Council</span>
+                  <span className="text-muted-foreground">Student Council</span>
                   <Badge variant="outline" className="border-academic-teal/30 bg-academic-teal/10 text-right text-academic-teal">{s.studentCouncilRole}</Badge>
                 </div>
               )}
               <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-500">{s.identityType ? s.identityType.replace('_', ' ') : 'ID Number'}</span>
-                <span className="font-medium text-slate-900 dark:text-slate-300">{s.identityNumber}</span>
+                <span className="text-muted-foreground">{s.identityType ? s.identityType.replace('_', ' ') : 'ID Number'}</span>
+                <span className="font-medium text-foreground">{s.identityNumber}</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised p-6 shadow-sm">
-            <h3 className="font-bold text-slate-900 dark:text-white mb-4">Contact Information</h3>
+          <div className="bg-card rounded-sm border border-border p-6 shadow-sm">
+            <h3 className="font-bold text-foreground mb-4">Contact Information</h3>
             <div className="space-y-4 text-sm">
               <div className="flex gap-3">
-                <User className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+                <User className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-slate-900 dark:text-slate-300">{s.guardianName}</p>
-                  <p className="text-slate-500 text-xs">Parent/Guardian</p>
+                  <p className="font-medium text-foreground">{s.guardianName}</p>
+                  <p className="text-muted-foreground text-xs">Parent/Guardian</p>
                 </div>
               </div>
               <div className="flex gap-3">
-                <Phone className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+                <Phone className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-slate-700 dark:text-slate-300">{s.contactNumber}</p>
-                  <p className="text-slate-500 text-xs">Student Contact</p>
+                  <p className="text-foreground">{s.contactNumber}</p>
+                  <p className="text-muted-foreground text-xs">Student Contact</p>
                 </div>
               </div>
               <div className="flex gap-3">
-                <Phone className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+                <Phone className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-slate-700 dark:text-slate-300">{s.guardianPhone}</p>
-                  <p className="text-slate-500 text-xs">Guardian Phone</p>
+                  <p className="text-foreground">{s.guardianPhone}</p>
+                  <p className="text-muted-foreground text-xs">Guardian Phone</p>
                 </div>
               </div>
               <div className="flex gap-3">
-                <AlertTriangle className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+                <AlertTriangle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-slate-700 dark:text-slate-300">{s.emergencyContact}</p>
-                  <p className="text-slate-500 text-xs">Emergency</p>
+                  <p className="text-foreground">{s.emergencyContact}</p>
+                  <p className="text-muted-foreground text-xs">Emergency</p>
                 </div>
               </div>
               <div className="flex gap-3">
-                <MapPin className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
-                <span className="text-slate-700 dark:text-slate-300">{s.address}</span>
+                <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                <span className="text-foreground">{s.address}</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Right Main Content Tabs */}
-        <div className="min-w-0 bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
+        <div className="min-w-0 bg-card rounded-sm border border-border shadow-sm overflow-hidden">
           <Tabs defaultValue="overview" className="min-w-0 w-full gap-0">
             <StudentProfileTabsList canViewFees={canViewFees} canViewCases={canViewCases} />
             
             {/* Overview Tab Content */}
             <TabsContent value="overview" className="p-6 m-0 border-none space-y-8 focus-visible:outline-none focus-visible:ring-0">
               <div>
-                <h3 className="font-bold text-slate-900 dark:text-white mb-2">Remarks & Notes</h3>
-                <div className="bg-slate-50 dark:bg-surface-raised/50 p-4 rounded-lg text-sm text-slate-700 dark:text-slate-300 leading-relaxed border border-slate-100 dark:border-surface-raised">
+                <h3 className="font-bold text-foreground mb-2">Remarks & Notes</h3>
+                <div className="bg-muted/50 p-4 rounded-lg text-sm text-foreground leading-relaxed border border-border">
                   {s.notes}
                 </div>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="p-4 border border-slate-200 dark:border-surface-raised rounded-lg flex items-start gap-4">
+                <div className="p-4 border border-border rounded-lg flex items-start gap-4">
                   <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
                     <CheckCircle2 className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-xl font-bold text-slate-900 dark:text-white">
+                    <p className="text-xl font-bold text-foreground">
                       {attendanceData ? `${attendanceData.rate}%` : 'N/A'}
                     </p>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Attendance Rate</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Attendance Rate</p>
                     {attendanceData && (
-                      <p className="text-[10px] text-slate-400 mt-1">{attendanceData.present} of {attendanceData.total} days</p>
+                      <p className="text-[11px] text-muted-foreground mt-1">{attendanceData.present} of {attendanceData.total} days</p>
                     )}
                   </div>
                 </div>
 
-                <div className="p-4 border border-slate-200 dark:border-surface-raised rounded-lg flex items-start gap-4">
+                <div className="p-4 border border-border rounded-lg flex items-start gap-4">
                   <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
                     <FileText className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-xl font-bold text-slate-900 dark:text-white">
+                    <p className="text-xl font-bold text-foreground">
                       {latestGrade || (examAverage != null ? `${examAverage}%` : 'N/A')}
                     </p>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Current Grade</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Grade</p>
                     {examAverage != null && (
-                      <p className="text-[10px] text-slate-400 mt-1">{examAverage}% average</p>
+                      <p className="text-[11px] text-muted-foreground mt-1">{examAverage}% average</p>
                     )}
                   </div>
                 </div>
 
                 {canViewFees && (
-                  <div className="p-4 border border-slate-200 dark:border-surface-raised rounded-lg flex items-start gap-4">
+                  <div className="p-4 border border-border rounded-lg flex items-start gap-4">
                     <div className="h-10 w-10 rounded-full bg-aubergine-100 flex items-center justify-center text-aubergine-600 shrink-0">
                       <CreditCard className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-xl font-bold text-slate-900 dark:text-white">
+                      <p className="text-xl font-bold text-foreground">
                         {feesData ? formatCurrency(feesData.totalPaid, feeCurrency) : 'N/A'}
                       </p>
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Paid</p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Paid</p>
                       {feesData && (
-                        <p className="text-[10px] text-slate-400 mt-1">{feesData.paymentCount} payment(s)</p>
+                        <p className="text-[11px] text-muted-foreground mt-1">{feesData.paymentCount} payment(s)</p>
                       )}
                     </div>
                   </div>
@@ -432,16 +432,16 @@ export default function StudentProfile() {
                       { label: 'Late', value: attendanceData.late },
                       { label: 'Absent', value: attendanceData.absent },
                     ].map((item) => (
-                      <div key={item.label} className="rounded-lg border border-slate-200 dark:border-surface-raised p-4">
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{item.value}</p>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{item.label}</p>
+                      <div key={item.label} className="rounded-lg border border-border p-4">
+                        <p className="text-2xl font-bold text-foreground">{item.value}</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{item.label}</p>
                       </div>
                     ))}
                   </div>
-                  <p className="text-sm text-slate-500">Attendance summary is calculated from saved attendance records.</p>
+                  <p className="text-sm text-muted-foreground">Attendance summary is calculated from saved attendance records.</p>
                 </div>
               ) : (
-                <div className="min-h-[240px] flex items-center justify-center text-center text-slate-500">
+                <div className="min-h-[240px] flex items-center justify-center text-center text-muted-foreground">
                   <div>
                     <CalendarDays className="h-10 w-10 mx-auto text-slate-300 mb-2" />
                     <p>No attendance records found for this student.</p>
@@ -454,26 +454,26 @@ export default function StudentProfile() {
               {examData && (examData.results?.length > 0 || examData.available?.length > 0) ? (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="rounded-lg border border-slate-200 dark:border-surface-raised p-4">
-                      <p className="text-2xl font-bold text-slate-900 dark:text-white">{examData.average ?? 'N/A'}{examData.average != null ? '%' : ''}</p>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Average</p>
+                    <div className="rounded-lg border border-border p-4">
+                      <p className="text-2xl font-bold text-foreground">{examData.average ?? 'N/A'}{examData.average != null ? '%' : ''}</p>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Average</p>
                     </div>
-                    <div className="rounded-lg border border-slate-200 dark:border-surface-raised p-4">
-                      <p className="text-2xl font-bold text-slate-900 dark:text-white">{examData.results?.length || 0}</p>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Graded Exams</p>
+                    <div className="rounded-lg border border-border p-4">
+                      <p className="text-2xl font-bold text-foreground">{examData.results?.length || 0}</p>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Graded Exams</p>
                     </div>
-                    <div className="rounded-lg border border-slate-200 dark:border-surface-raised p-4">
-                      <p className="text-2xl font-bold text-slate-900 dark:text-white">{examData.available?.length || 0}</p>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Pending Exams</p>
+                    <div className="rounded-lg border border-border p-4">
+                      <p className="text-2xl font-bold text-foreground">{examData.available?.length || 0}</p>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pending Exams</p>
                     </div>
                   </div>
 
                   {examData.results?.length > 0 && (
                     <div>
-                      <h3 className="font-bold text-slate-900 dark:text-white mb-3">Exam Results</h3>
-                      <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-surface-raised">
+                      <h3 className="font-bold text-foreground mb-3">Exam Results</h3>
+                      <div className="overflow-x-auto rounded-lg border border-border">
                         <table className="w-full text-left text-sm">
-                          <thead className="bg-slate-50 dark:bg-surface-raised/50 text-xs uppercase tracking-wider text-slate-500">
+                          <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
                             <tr>
                               <th className="px-4 py-3">Exam</th>
                               <th className="px-4 py-3">Subject</th>
@@ -482,14 +482,14 @@ export default function StudentProfile() {
                               <th className="px-4 py-3">Date</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                          <tbody className="divide-y divide-border">
                             {examData.results.map((result: any) => (
                               <tr key={result.id}>
-                                <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{result.title}</td>
-                                <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{result.subject}</td>
-                                <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{result.score}/{result.total} ({result.percentage}%)</td>
+                                <td className="px-4 py-3 font-semibold text-foreground">{result.title}</td>
+                                <td className="px-4 py-3 text-muted-foreground">{result.subject}</td>
+                                <td className="px-4 py-3 text-muted-foreground">{result.score}/{result.total} ({result.percentage}%)</td>
                                 <td className="px-4 py-3"><Badge variant="outline">{result.grade}</Badge></td>
-                                <td className="px-4 py-3 text-slate-500">{result.date}</td>
+                                <td className="px-4 py-3 text-muted-foreground">{result.date}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -500,18 +500,18 @@ export default function StudentProfile() {
 
                   {examData.available?.length > 0 && (
                     <div>
-                      <h3 className="font-bold text-slate-900 dark:text-white mb-3">Pending Exams</h3>
+                      <h3 className="font-bold text-foreground mb-3">Pending Exams</h3>
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         {examData.available.map((exam: any) => (
-                          <div key={exam.id} className="rounded-lg border border-slate-200 dark:border-surface-raised p-4">
+                          <div key={exam.id} className="rounded-lg border border-border p-4">
                             <div className="flex items-start justify-between gap-3">
                               <div>
-                                <p className="font-semibold text-slate-900 dark:text-white">{exam.title}</p>
-                                <p className="text-sm text-slate-500">{exam.subject} • {exam.type}</p>
+                                <p className="font-semibold text-foreground">{exam.title}</p>
+                                <p className="text-sm text-muted-foreground">{exam.subject} • {exam.type}</p>
                               </div>
                               <Badge variant="secondary">{exam.date}</Badge>
                             </div>
-                            <p className="text-xs text-slate-500 mt-3">{exam.questions} questions • {exam.totalMarks || 'N/A'} marks • {exam.durationMinutes ? `${exam.durationMinutes} min` : 'No time limit'}</p>
+                            <p className="text-xs text-muted-foreground mt-3">{exam.questions} questions • {exam.totalMarks || 'N/A'} marks • {exam.durationMinutes ? `${exam.durationMinutes} min` : 'No time limit'}</p>
                           </div>
                         ))}
                       </div>
@@ -519,7 +519,7 @@ export default function StudentProfile() {
                   )}
                 </div>
               ) : (
-                <div className="min-h-[240px] flex items-center justify-center text-center text-slate-500">
+                <div className="min-h-[240px] flex items-center justify-center text-center text-muted-foreground">
                   <div>
                     <FileText className="h-10 w-10 mx-auto text-slate-300 mb-2" />
                     <p>No exam results or pending exams found for this student.</p>
@@ -532,23 +532,23 @@ export default function StudentProfile() {
               {feesData && feesData.rows?.length > 0 ? (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="rounded-lg border border-slate-200 dark:border-surface-raised p-4">
-                      <p className="text-2xl font-bold text-slate-900 dark:text-white">{formatCurrency(feesData.totalExpected, feeCurrency)}</p>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Fees</p>
+                    <div className="rounded-lg border border-border p-4">
+                      <p className="text-2xl font-bold text-foreground">{formatCurrency(feesData.totalExpected, feeCurrency)}</p>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Fees</p>
                     </div>
-                    <div className="rounded-lg border border-slate-200 dark:border-surface-raised p-4">
+                    <div className="rounded-lg border border-border p-4">
                       <p className="text-2xl font-bold text-emerald-600">{formatCurrency(feesData.totalPaid, feeCurrency)}</p>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Paid</p>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Paid</p>
                     </div>
-                    <div className="rounded-lg border border-slate-200 dark:border-surface-raised p-4">
+                    <div className="rounded-lg border border-border p-4">
                       <p className="text-2xl font-bold text-red-600">{formatCurrency(feesData.balance, feeCurrency)}</p>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Balance</p>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Balance</p>
                     </div>
                   </div>
 
-                  <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-surface-raised">
+                  <div className="overflow-x-auto rounded-lg border border-border">
                     <table className="w-full text-left text-sm">
-                      <thead className="bg-slate-50 dark:bg-surface-raised/50 text-xs uppercase tracking-wider text-slate-500">
+                      <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
                         <tr>
                           <th className="px-4 py-3">Receipt</th>
                           <th className="px-4 py-3">Description</th>
@@ -557,16 +557,16 @@ export default function StudentProfile() {
                           <th className="px-4 py-3">Date</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      <tbody className="divide-y divide-border">
                         {feesData.rows.map((fee: any) => (
                           <tr key={fee.id}>
-                            <td className="px-4 py-3 font-mono text-slate-600 dark:text-slate-300">{fee.receiptNumber || '—'}</td>
-                            <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{fee.description || fee.paymentType || 'Fee Payment'}</td>
-                            <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{formatCurrency(fee.amount, fee.currency || feeCurrency)}</td>
+                            <td className="px-4 py-3 font-mono text-muted-foreground">{fee.receiptNumber || '—'}</td>
+                            <td className="px-4 py-3 font-semibold text-foreground">{fee.description || fee.paymentType || 'Fee Payment'}</td>
+                            <td className="px-4 py-3 text-muted-foreground">{formatCurrency(fee.amount, fee.currency || feeCurrency)}</td>
                             <td className="px-4 py-3">
                               <Badge variant={fee.status === 'PAID' ? 'default' : 'secondary'} className={fee.status === 'PAID' ? 'bg-emerald-500' : ''}>{fee.status}</Badge>
                             </td>
-                            <td className="px-4 py-3 text-slate-500">{fee.paymentDate ? new Date(fee.paymentDate).toLocaleDateString() : '—'}</td>
+                            <td className="px-4 py-3 text-muted-foreground">{fee.paymentDate ? new Date(fee.paymentDate).toLocaleDateString() : '—'}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -574,7 +574,7 @@ export default function StudentProfile() {
                   </div>
                 </div>
               ) : (
-                <div className="min-h-[240px] flex items-center justify-center text-center text-slate-500">
+                <div className="min-h-[240px] flex items-center justify-center text-center text-muted-foreground">
                   <div>
                     <CreditCard className="h-10 w-10 mx-auto text-slate-300 mb-2" />
                     <p>No fee payment records found for this student.</p>
@@ -586,7 +586,7 @@ export default function StudentProfile() {
             <TabsContent value="documents" className="p-6 m-0 border-none focus-visible:outline-none focus-visible:ring-0">
               <div className="space-y-6">
                 <OfficialStudentCard studentId={id || undefined} />
-                <div className="border-t border-slate-200 pt-6 dark:border-surface-raised">
+                <div className="border-t border-border pt-6">
                   <StudentDocuments studentId={id || ''} />
                 </div>
               </div>
@@ -595,13 +595,13 @@ export default function StudentProfile() {
             {canViewCases && (
               <TabsContent value="cases" className="p-6 m-0 border-none min-h-[300px] focus-visible:outline-none focus-visible:ring-0">
                 {casesData === null ? (
-                  <div className="flex items-center justify-center min-h-[240px] text-slate-400">
+                  <div className="flex items-center justify-center min-h-[240px] text-muted-foreground">
                     <span className="animate-spin rounded-full h-5 w-5 border-2 border-aubergine-600 border-t-transparent mr-2"></span>
                     Loading case records…
                   </div>
                 ) : casesData.length === 0 ? (
                   <div className="flex items-center justify-center min-h-[240px]">
-                    <div className="text-center text-slate-500">
+                    <div className="text-center text-muted-foreground">
                       <AlertTriangle className="h-10 w-10 mx-auto text-slate-300 mb-2" />
                       <p>No case records for this student.</p>
                     </div>
@@ -612,22 +612,22 @@ export default function StudentProfile() {
                       <Link
                         key={c.id}
                         to={`/cases/${c.id}`}
-                        className="block rounded-lg border border-slate-200 dark:border-surface-raised p-4 hover:border-aubergine-300 hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors"
+                        className="block rounded-lg border border-border p-4 hover:border-aubergine-300 hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex items-center justify-between gap-3">
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">{c.title}</span>
+                          <span className="font-semibold text-foreground">{c.title}</span>
                           <div className="flex items-center gap-2 shrink-0">
                             <Badge className={
                               c.status === 'RESOLVED' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-0' :
                               c.status === 'FOLLOW_UP' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-0' :
-                              c.status === 'CLOSED' ? 'bg-slate-100 text-slate-500 dark:bg-surface-raised dark:text-slate-400 border-0' :
+                              c.status === 'CLOSED' ? 'bg-muted text-muted-foreground border-0' :
                               'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-0'
                             }>{(c.status || 'OPEN').replace('_', ' ')}</Badge>
-                            <Badge variant={c.priority === 'URGENT' ? 'destructive' : 'outline'} className="uppercase text-[10px]">{c.priority}</Badge>
+                            <Badge variant={c.priority === 'URGENT' ? 'destructive' : 'outline'} className="uppercase text-[11px]">{c.priority}</Badge>
                           </div>
                         </div>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{c.description}</p>
-                        <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{c.description}</p>
+                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                           {c.category && <span>{c.category}</span>}
                           <span>Opened {new Date(c.createdAt).toLocaleDateString()}</span>
                           {c.notes?.length > 0 && <span>{c.notes.length} note{c.notes.length === 1 ? '' : 's'}</span>}

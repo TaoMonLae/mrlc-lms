@@ -69,10 +69,10 @@ export default function SystemHealth() {
     <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
             <Activity className="h-5 w-5" /> System Health
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-300 mt-1">Live checks for the database, storage, backup utilities, media tools, and comic support.</p>
+          <p className="text-sm text-muted-foreground mt-1">Live checks for the database, storage, backup utilities, media tools, and comic support.</p>
         </div>
         <Button variant="outline" onClick={() => void loadHealth()} disabled={loading}>
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} /> Refresh
@@ -80,7 +80,7 @@ export default function SystemHealth() {
       </div>
 
       {health && (
-        <div className={`rounded-xl border p-4 flex items-start gap-3 ${statusStyle[health.status]}`}>
+        <div className={`rounded-sm border p-4 flex items-start gap-3 ${statusStyle[health.status]}`}>
           <StatusIcon status={health.status} />
           <div>
             <p className="font-semibold">{statusLabel}</p>
@@ -92,31 +92,31 @@ export default function SystemHealth() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-lg border border-slate-200 dark:border-surface-raised p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Checks passed</p>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{health?.checks.filter((check) => check.status === 'ok').length ?? '—'}</p>
+        <div className="rounded-lg border border-border p-4">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Checks passed</p>
+          <p className="text-2xl font-bold text-foreground mt-1">{health?.checks.filter((check) => check.status === 'ok').length ?? '—'}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 dark:border-surface-raised p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Backup artifacts</p>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{health?.backups.total ?? '—'}</p>
+        <div className="rounded-lg border border-border p-4">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Backup artifacts</p>
+          <p className="text-2xl font-bold text-foreground mt-1">{health?.backups.total ?? '—'}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 dark:border-surface-raised p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Off-site copy</p>
-          <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">{health?.backups.offsiteConfigured ? 'Configured' : 'Not configured'}</p>
+        <div className="rounded-lg border border-border p-4">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Off-site copy</p>
+          <p className="text-lg font-bold text-foreground mt-1">{health?.backups.offsiteConfigured ? 'Configured' : 'Not configured'}</p>
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 dark:border-surface-raised divide-y divide-slate-100 dark:divide-surface-raised overflow-hidden">
-        {loading && !health && <div className="p-8 text-center text-sm text-slate-500">Running system checks…</div>}
+      <div className="rounded-sm border border-border divide-y divide-border overflow-hidden">
+        {loading && !health && <div className="p-8 text-center text-sm text-muted-foreground">Running system checks…</div>}
         {health?.checks.map((check) => (
-          <div key={check.id} className="p-4 flex items-start gap-3 bg-white dark:bg-surface-indigo">
+          <div key={check.id} className="p-4 flex items-start gap-3 bg-card">
             <StatusIcon status={check.status} />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <p className="font-medium text-slate-900 dark:text-white">{check.label}</p>
-                {!check.required && <span className="text-[10px] uppercase tracking-wide text-slate-400">Optional</span>}
+                <p className="font-medium text-foreground">{check.label}</p>
+                {!check.required && <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Optional</span>}
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-300 mt-1 break-all">{check.detail}</p>
+              <p className="text-xs text-muted-foreground mt-1 break-all">{check.detail}</p>
             </div>
           </div>
         ))}

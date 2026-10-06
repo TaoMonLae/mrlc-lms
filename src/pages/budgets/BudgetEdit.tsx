@@ -159,12 +159,12 @@ export default function BudgetEdit() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" render={<Link to="/budgets" />} nativeButton={false}>
+        <Button aria-label="Back" variant="ghost" size="sm" render={<Link to="/budgets" />} nativeButton={false}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Edit Budget</h1>
-          <p className="text-sm text-slate-500">Update budget allocation</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Edit Budget</h1>
+          <p className="text-sm text-muted-foreground">Update budget allocation</p>
         </div>
       </div>
 
@@ -214,7 +214,7 @@ export default function BudgetEdit() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-slate-500">Exhausted and exceeded states are calculated from approved expense totals.</p>
+                  <p className="text-xs text-muted-foreground">Exhausted and exceeded states are calculated from approved expense totals.</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="code">Budget Code</Label>

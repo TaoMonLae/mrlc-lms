@@ -212,7 +212,7 @@ export default function VideoDetail() {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <span className="ml-3 text-slate-500">Loading video...</span>
+        <span className="ml-3 text-muted-foreground">Loading video...</span>
       </div>
     );
   }
@@ -220,7 +220,7 @@ export default function VideoDetail() {
   if (!video) {
     return (
       <div className="text-center py-20">
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Video not found</h2>
+        <h2 className="text-xl font-semibold text-foreground">Video not found</h2>
         <Button variant="link" onClick={() => navigate('/videos')} className="mt-2">Back to Video Lessons</Button>
       </div>
     );
@@ -230,8 +230,8 @@ export default function VideoDetail() {
   if (!isAdmin && !isTeacher && video.visibility === 'TEACHERS_ONLY') {
     return (
       <div className="text-center py-20">
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Access Denied</h2>
-        <p className="text-slate-500 mt-1 text-sm">This video is only available to teachers.</p>
+        <h2 className="text-xl font-semibold text-foreground">Access Denied</h2>
+        <p className="text-muted-foreground mt-1 text-sm">This video is only available to teachers.</p>
         <Button variant="link" onClick={() => navigate('/videos')} className="mt-2">Back to Video Lessons</Button>
       </div>
     );
@@ -264,7 +264,7 @@ export default function VideoDetail() {
         <Button
           variant="ghost"
           size="sm"
-          className="-ml-3 text-slate-500 hover:text-slate-900 dark:hover:text-white"
+          className="-ml-3 text-muted-foreground hover:text-foreground"
           render={<Link to={backPath} />}
           nativeButton={false}
         >
@@ -291,7 +291,7 @@ export default function VideoDetail() {
       <div className="video-lesson-grid min-w-0">
       <div className="min-w-0 space-y-5">
       {/* Video Player */}
-      <div ref={playerFrameRef} className="video-lesson-player-frame relative aspect-video min-h-[200px] w-full scroll-mt-24 overflow-hidden rounded-xl border border-border bg-black group" aria-label="Lesson video player">
+      <div ref={playerFrameRef} className="video-lesson-player-frame relative aspect-video min-h-[200px] w-full scroll-mt-24 overflow-hidden rounded-sm border border-border bg-black group" aria-label="Lesson video player">
         {isYouTube && shouldTrackProgress && progressLoading ? <p className="flex h-full items-center justify-center text-sm text-white">Loading saved position…</p> : isYouTube ? <YouTubeLessonPlayer
           key={`${video.id}-${playbackRevision}`} ref={youtubeRef} source={video.videoUrl} title={video.title}
           track={shouldTrackProgress} startPosition={startPosition} onProgress={saveProgress} onFlush={saveProgressImmediate}
@@ -374,7 +374,7 @@ export default function VideoDetail() {
             )}
           </>
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-slate-400">
+          <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
             <p className="text-sm">Preview not available for this URL.</p>
             {safeOriginalUrl && <a
               href={safeOriginalUrl}
@@ -409,16 +409,16 @@ export default function VideoDetail() {
       <VideoLearningWorkspace key={video.id} video={video} canManage={canManage} watched={isCompleted} seek={seekToLesson} />
       <VideoPlaylists currentVideoId={video.id} />
       {canManage && analytics && (
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
+        <div className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <h2 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <h2 className="font-semibold text-foreground flex items-center gap-2">
               <Users className="h-4 w-4" /> Watch analytics
-              <span className="text-xs font-normal text-slate-400">
+              <span className="text-xs font-normal text-muted-foreground">
                 ({analytics.scope === 'class' ? 'assigned class' : 'all students'})
               </span>
             </h2>
             {analytics.total > 0 && (
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+              <span className="text-sm font-medium text-muted-foreground">
                 {analytics.completed}/{analytics.total} completed ({Math.round((analytics.completed / analytics.total) * 100)}%)
               </span>
             )}
@@ -428,20 +428,20 @@ export default function VideoDetail() {
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 p-3 text-center">
               <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{analytics.completed}</p>
-              <p className="text-xs font-medium text-slate-500 mt-0.5">Completed</p>
+              <p className="text-xs font-medium text-muted-foreground mt-0.5">Completed</p>
             </div>
             <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 p-3 text-center">
               <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{analytics.inProgress}</p>
-              <p className="text-xs font-medium text-slate-500 mt-0.5">In progress</p>
+              <p className="text-xs font-medium text-muted-foreground mt-0.5">In progress</p>
             </div>
-            <div className="rounded-lg bg-slate-50 dark:bg-surface-raised/40 p-3 text-center">
-              <p className="text-2xl font-bold text-slate-500 dark:text-slate-300">{analytics.notStarted}</p>
-              <p className="text-xs font-medium text-slate-500 mt-0.5">Not started</p>
+            <div className="rounded-lg bg-muted/50 p-3 text-center">
+              <p className="text-2xl font-bold text-muted-foreground">{analytics.notStarted}</p>
+              <p className="text-xs font-medium text-muted-foreground mt-0.5">Not started</p>
             </div>
           </div>
 
           {analytics.isRequired && analytics.dueDate && (
-            <p className={`text-xs font-medium ${analytics.overdue ? 'text-rose-600' : 'text-slate-500'}`}>
+            <p className={`text-xs font-medium ${analytics.overdue ? 'text-rose-600' : 'text-muted-foreground'}`}>
               {analytics.overdue ? 'Past due' : 'Due'} {format(new Date(analytics.dueDate), 'dd MMM yyyy')}
               {analytics.overdue && analytics.notStarted + analytics.inProgress > 0 &&
                 ` · ${analytics.notStarted + analytics.inProgress} student(s) have not finished`}
@@ -450,31 +450,31 @@ export default function VideoDetail() {
 
           {/* Roster */}
           {analytics.total === 0 ? (
-            <p className="text-sm text-slate-400">No students in this audience yet.</p>
+            <p className="text-sm text-muted-foreground">No students in this audience yet.</p>
           ) : (
-            <div className="overflow-x-auto border border-slate-100 dark:border-surface-raised rounded-lg">
+            <div className="overflow-x-auto border border-border rounded-lg">
               <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 uppercase tracking-wider font-semibold text-[11px]">
+                <thead className="bg-muted/50 text-muted-foreground uppercase tracking-wider font-semibold text-[11px]">
                   <tr>
                     <th className="px-4 py-2.5">Student</th>
                     <th className="px-4 py-2.5">Progress</th>
                     <th className="px-4 py-2.5">Last watched</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                <tbody className="divide-y divide-border">
                   {analytics.roster.map((r) => (
-                    <tr key={r.studentId} className="hover:bg-slate-50 dark:hover:bg-surface-raised/40">
-                      <td className="px-4 py-2.5 font-medium text-slate-900 dark:text-white">{r.name}</td>
+                    <tr key={r.studentId} className="hover:bg-muted/50">
+                      <td className="px-4 py-2.5 font-medium text-foreground">{r.name}</td>
                       <td className="px-4 py-2.5">
                         {r.status === 'completed' ? (
                           <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-semibold"><CheckCircle2 className="h-3.5 w-3.5" /> Completed</span>
                         ) : r.status === 'in_progress' ? (
                           <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 text-xs font-semibold"><PlayCircle className="h-3.5 w-3.5" /> {r.percent}%</span>
                         ) : (
-                          <span className="text-xs text-slate-400">Not started</span>
+                          <span className="text-xs text-muted-foreground">Not started</span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 text-slate-500 text-xs">
+                      <td className="px-4 py-2.5 text-muted-foreground text-xs">
                         {r.lastWatchedAt ? format(new Date(r.lastWatchedAt), 'dd MMM, HH:mm') : '—'}
                       </td>
                     </tr>

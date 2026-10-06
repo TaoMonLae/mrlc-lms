@@ -67,11 +67,11 @@ export default function MonthlySummaryReport() {
     <div className="space-y-6 max-w-6xl mx-auto pb-10">
       <div className="print:hidden flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
-          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/reports" />} nativeButton={false}>
+          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/reports" />} nativeButton={false}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Reports
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Monthly School Summary</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Monthly School Summary</h1>
         </div>
 
         <div className="flex items-center gap-2">
@@ -81,9 +81,9 @@ export default function MonthlySummaryReport() {
         </div>
       </div>
 
-      <div className="print:hidden bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-wrap gap-4 items-end shadow-sm">
+      <div className="print:hidden bg-card border border-border rounded-sm p-4 flex flex-wrap gap-4 items-end shadow-sm">
          <div className="space-y-1.5 flex-1 min-w-[200px]">
-           <label className="text-xs font-semibold text-slate-500 uppercase">Month</label>
+           <label className="text-xs font-semibold text-muted-foreground uppercase">Month</label>
            <Select value={monthFilter} onValueChange={setMonthFilter}>
               <SelectTrigger><SelectValue placeholder="Select Month" /></SelectTrigger>
               <SelectContent>
@@ -99,7 +99,7 @@ export default function MonthlySummaryReport() {
       {filtersChanged && <p role="status" className="print:hidden text-sm text-muted-foreground">Filters changed. Apply filters to update the report below.</p>}
 
       {isLoading ? (
-        <div className="print:hidden flex items-center justify-center py-12 text-slate-500"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…</div>
+        <div className="print:hidden flex items-center justify-center py-12 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…</div>
       ) : error ? (
         <div className="print:hidden py-12 text-center text-sm text-red-600">{error}</div>
       ) : (
@@ -110,28 +110,28 @@ export default function MonthlySummaryReport() {
       >
         <div className="space-y-8 mt-4">
            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="border border-slate-300 p-4 rounded text-center">
-                 <p className="text-xs text-slate-500 uppercase font-bold">Active Students</p>
-                 <p className="text-2xl font-bold text-slate-900 mt-1">{data?.activeStudents ?? 0}</p>
+              <div className="border border-input p-4 rounded text-center">
+                 <p className="text-xs text-muted-foreground uppercase font-bold">Active Students</p>
+                 <p className="text-2xl font-bold text-foreground mt-1">{data?.activeStudents ?? 0}</p>
               </div>
-              <div className="border border-slate-300 p-4 rounded text-center">
-                 <p className="text-xs text-slate-500 uppercase font-bold">Avg Attendance</p>
-                 <p className="text-2xl font-bold text-slate-900 mt-1">{data?.avgAttendance ?? 0}%</p>
+              <div className="border border-input p-4 rounded text-center">
+                 <p className="text-xs text-muted-foreground uppercase font-bold">Avg Attendance</p>
+                 <p className="text-2xl font-bold text-foreground mt-1">{data?.avgAttendance ?? 0}%</p>
               </div>
-              <div className="border border-slate-300 p-4 rounded text-center">
-                 <p className="text-xs text-slate-500 uppercase font-bold">Open Cases</p>
-                 <p className="text-2xl font-bold text-slate-900 mt-1 text-amber-600">{data?.openCases ?? 0}</p>
+              <div className="border border-input p-4 rounded text-center">
+                 <p className="text-xs text-muted-foreground uppercase font-bold">Open Cases</p>
+                 <p className="text-2xl font-bold text-foreground mt-1 text-amber-600">{data?.openCases ?? 0}</p>
               </div>
-              <div className="border border-slate-300 p-4 rounded text-center bg-slate-50">
-                 <p className="text-xs text-slate-500 uppercase font-bold">Fee Collection</p>
-                 <p className="text-2xl font-bold text-slate-900 mt-1">{formatMoney(data?.feeCollection ?? 0, cur, { decimals: false })}</p>
+              <div className="border border-input p-4 rounded text-center bg-muted/50">
+                 <p className="text-xs text-muted-foreground uppercase font-bold">Fee Collection</p>
+                 <p className="text-2xl font-bold text-foreground mt-1">{formatMoney(data?.feeCollection ?? 0, cur, { decimals: false })}</p>
               </div>
            </div>
 
            <div>
-              <h3 className="text-sm font-bold uppercase text-slate-800 border-b-2 border-slate-300 pb-2 mb-4">Case Management (Incidents)</h3>
+              <h3 className="text-sm font-bold uppercase text-foreground border-b-2 border-input pb-2 mb-4">Case Management (Incidents)</h3>
               {cats.length === 0 ? (
-                <p className="text-sm text-slate-500">No cases recorded.</p>
+                <p className="text-sm text-muted-foreground">No cases recorded.</p>
               ) : (
               <table className="w-full text-sm text-left border-collapse">
                  <thead>
@@ -157,8 +157,8 @@ export default function MonthlySummaryReport() {
            </div>
 
            <div>
-              <h3 className="text-sm font-bold uppercase text-slate-800 border-b-2 border-slate-300 pb-2 mb-4">Staff Summary</h3>
-              <p className="text-sm text-slate-700 mb-2">Active Teaching Staff: {data?.activeTeachers ?? 0}</p>
+              <h3 className="text-sm font-bold uppercase text-foreground border-b-2 border-input pb-2 mb-4">Staff Summary</h3>
+              <p className="text-sm text-foreground mb-2">Active Teaching Staff: {data?.activeTeachers ?? 0}</p>
            </div>
         </div>
       </PrintLayout>

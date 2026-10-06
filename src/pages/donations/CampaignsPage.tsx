@@ -28,7 +28,7 @@ export default function CampaignsPage() {
       case 'COMPLETED': return 'bg-blue-100 text-blue-800';
       case 'PAUSED': return 'bg-amber-100 text-amber-800';
       case 'CANCELLED': return 'bg-red-100 text-red-800';
-      default: return 'bg-slate-100 text-slate-800';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -45,8 +45,8 @@ export default function CampaignsPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Fundraising Campaigns</h1>
-          <p className="text-sm text-slate-500">Manage donation campaigns and track progress</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Fundraising Campaigns</h1>
+          <p className="text-sm text-muted-foreground">Manage donation campaigns and track progress</p>
         </div>
         {hasPermission('manage_campaigns') && (
           <Button render={<Link to="/donations/campaigns/new" />} nativeButton={false}>
@@ -60,7 +60,7 @@ export default function CampaignsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Total Campaigns</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Campaigns</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
@@ -68,7 +68,7 @@ export default function CampaignsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Active</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Active</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{stats.active}</div>
@@ -76,7 +76,7 @@ export default function CampaignsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Total Goal</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Goal</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatMoney(stats.totalGoal, currency)}</div>
@@ -84,7 +84,7 @@ export default function CampaignsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Total Raised</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Raised</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{formatMoney(stats.totalRaised, currency)}</div>
@@ -101,16 +101,16 @@ export default function CampaignsPage() {
           {loading ? (
             <div className="flex justify-center items-center h-32">Loading...</div>
           ) : campaigns.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">No campaigns found</div>
+            <div className="text-center py-8 text-muted-foreground">No campaigns found</div>
           ) : (
             <div className="space-y-4">
               {campaigns.map((campaign: any) => (
-                <div key={campaign.id} className="border border-slate-200 dark:border-slate-700 rounded-lg p-6">
+                <div key={campaign.id} className="border border-border rounded-lg p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{campaign.name}</h3>
+                      <h3 className="text-lg font-semibold text-foreground">{campaign.name}</h3>
                       {campaign.description && (
-                        <p className="text-sm text-slate-500 mt-1">{campaign.description}</p>
+                        <p className="text-sm text-muted-foreground mt-1">{campaign.description}</p>
                       )}
                       <div className="flex items-center gap-2 mt-2">
                         <Badge className={getStatusColor(campaign.status)} variant="outline">{campaign.status}</Badge>
@@ -121,11 +121,11 @@ export default function CampaignsPage() {
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold">{formatMoney(campaign.raisedAmount, currency)}</div>
-                      <div className="text-sm text-slate-500">of {formatMoney(campaign.goalAmount, currency)}</div>
+                      <div className="text-sm text-muted-foreground">of {formatMoney(campaign.goalAmount, currency)}</div>
                     </div>
                   </div>
                   <Progress value={Math.min(100, (campaign.raisedAmount / campaign.goalAmount) * 100)} className="h-2 mb-2" />
-                  <div className="flex justify-between items-center text-sm text-slate-500">
+                  <div className="flex justify-between items-center text-sm text-muted-foreground">
                     <div className="flex items-center gap-4">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />

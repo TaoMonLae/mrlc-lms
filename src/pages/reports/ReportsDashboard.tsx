@@ -29,7 +29,7 @@ export default function ReportsDashboard() {
   }, []);
 
   const metric = (value: number | string | null | undefined) => {
-    if (isLoadingSummary) return <Loader2 className="h-4 w-4 animate-spin text-slate-400" />;
+    if (isLoadingSummary) return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
     return value ?? '—';
   };
 
@@ -60,9 +60,9 @@ export default function ReportsDashboard() {
       id: 'exams',
       title: 'Exam Results',
       description: 'Academic performance, term grades, and subject-level analysis.',
-      icon: <GraduationCap className="h-6 w-6 text-purple-500" />,
+      icon: <GraduationCap className="h-6 w-6 text-accent-purple" />,
       path: '/reports/exams',
-      color: 'bg-purple-50 dark:bg-purple-900/20',
+      color: 'bg-lavender',
       allowed: true,
       metricLabel: 'Exams',
       metricValue: summary?.exams,
@@ -118,28 +118,28 @@ export default function ReportsDashboard() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Reports & Export</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Generate, print, and export data insights for your school.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Reports & Export</h1>
+        <p className="text-sm text-muted-foreground mt-1">Generate, print, and export data insights for your school.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {visibleReports.map((report) => (
           <Link key={report.id} to={report.path} className="group block">
-            <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm hover:shadow-md transition-all h-full flex flex-col">
-              <div className={`p-4 rounded-xl w-14 h-14 flex items-center justify-center mb-4 ${report.color}`}>
+            <div className="bg-card border border-border rounded-sm p-6 shadow-sm hover:shadow-none transition-all h-full flex flex-col">
+              <div className={`p-4 rounded-sm w-14 h-14 flex items-center justify-center mb-4 ${report.color}`}>
                 {report.icon}
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              <h3 className="text-lg font-semibold text-foreground mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                 {report.title}
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-300 flex-1">
+              <p className="text-sm text-muted-foreground flex-1">
                 {report.description}
               </p>
-              <div className="mt-5 rounded-md border border-slate-100 dark:border-surface-raised bg-slate-50 dark:bg-surface-raised/40 px-3 py-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{report.metricLabel}</p>
-                <div className="mt-1 text-lg font-bold text-slate-900 dark:text-white">{metric(report.metricValue)}</div>
+              <div className="mt-5 rounded-md border border-border bg-muted/50 px-3 py-2">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{report.metricLabel}</p>
+                <div className="mt-1 text-lg font-bold text-foreground">{metric(report.metricValue)}</div>
               </div>
-              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-surface-raised text-sm font-medium text-slate-900 dark:text-white flex items-center">
+              <div className="mt-6 pt-4 border-t border-border text-sm font-medium text-foreground flex items-center">
                 Generate Report &rarr;
               </div>
             </div>

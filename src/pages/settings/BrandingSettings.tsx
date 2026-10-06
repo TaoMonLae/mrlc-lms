@@ -155,19 +155,19 @@ export default function BrandingSettings() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-8">
       <div>
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Branding & Output</h2>
-        <p className="text-sm text-slate-500 mt-1">Configure how the LMS and generated documents look.</p>
+        <h2 className="text-xl font-semibold text-foreground">Branding & Output</h2>
+        <p className="text-sm text-muted-foreground mt-1">Configure how the LMS and generated documents look.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         
         {/* Logos & Assets */}
         <div className="space-y-6">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider">Logos & Assets</h3>
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Logos & Assets</h3>
           
           <div className="space-y-3">
             <Label>School Logo (Display & PDF)</Label>
-            <div className="border-2 border-dashed border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-col items-center justify-center text-center max-w-sm">
+            <div className="border-2 border-dashed border-border rounded-sm p-4 flex flex-col items-center justify-center text-center max-w-sm">
               {logoPreview ? (
                 <div className="relative group">
                   <img src={logoPreview} alt="Logo preview" className="h-20 object-contain" />
@@ -177,12 +177,12 @@ export default function BrandingSettings() {
                 </div>
               ) : (
                 <>
-                  <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-surface-raised flex items-center justify-center mb-3">
-                    <ImageIcon className="h-6 w-6 text-slate-400" />
+                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                    <ImageIcon className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">PNG, JPG, WEBP, GIF, or SVG max 5MB.</p>
+                  <p className="text-sm text-muted-foreground mb-4">PNG, JPG, WEBP, GIF, or SVG max 5MB.</p>
                   <Label htmlFor="logo-upload" className="cursor-pointer">
-                    <div className="bg-white dark:bg-canvas border border-slate-200 dark:border-surface-raised px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-50 dark:hover:bg-surface-indigo transition-colors flex items-center">
+                    <div className="bg-card border border-border px-4 py-2 rounded-md text-sm font-medium hover:bg-muted/50 transition-colors flex items-center">
                       <UploadCloud className="h-4 w-4 mr-2" /> {uploadingAsset === 'logo' ? 'Uploading...' : 'Browse File'}
                     </div>
                   </Label>
@@ -194,7 +194,7 @@ export default function BrandingSettings() {
 
           <div className="space-y-3">
             <Label>Official Stamp / Signature (For Reports)</Label>
-            <div className="border-2 border-dashed border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-col items-center justify-center text-center max-w-sm bg-slate-50 dark:bg-surface-indigo/50">
+            <div className="border-2 border-dashed border-border rounded-sm p-4 flex flex-col items-center justify-center text-center max-w-sm bg-muted/50">
               {signaturePreview ? (
                 <div className="relative group">
                   <img src={signaturePreview} alt="Signature preview" className="h-16 object-contain" />
@@ -204,7 +204,7 @@ export default function BrandingSettings() {
                 </div>
               ) : (
                 <>
-                  <Label htmlFor="sig-upload" className="cursor-pointer inline-flex items-center text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                  <Label htmlFor="sig-upload" className="cursor-pointer inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                     <UploadCloud className="h-4 w-4 mr-2" /> {uploadingAsset === 'signature' ? 'Uploading...' : 'Upload transparent PNG signature'}
                   </Label>
                   <input
@@ -215,7 +215,7 @@ export default function BrandingSettings() {
                     onChange={(e) => handleFileUpload(e, setSignaturePreview, 'signature')}
                     disabled={uploadingAsset !== null}
                   />
-                  <p className="text-xs text-slate-500 mt-2">PNG format required for transparency support</p>
+                  <p className="text-xs text-muted-foreground mt-2">PNG format required for transparency support</p>
                 </>
               )}
             </div>
@@ -223,7 +223,7 @@ export default function BrandingSettings() {
 
           <div className="space-y-3">
             <Label>Login Page Background</Label>
-            <div className="border-2 border-dashed border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-col items-center justify-center text-center max-w-sm">
+            <div className="border-2 border-dashed border-border rounded-sm p-4 flex flex-col items-center justify-center text-center max-w-sm">
               {heroPreview ? (
                 <div className="relative group w-full">
                   <img src={heroPreview} alt="Login background preview" className="h-28 w-full object-cover rounded-lg" />
@@ -233,13 +233,13 @@ export default function BrandingSettings() {
                 </div>
               ) : (
                 <>
-                  <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-surface-raised flex items-center justify-center mb-3">
-                    <ImageIcon className="h-6 w-6 text-slate-400" />
+                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                    <ImageIcon className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-1">Shown behind the login screen.</p>
-                  <p className="text-xs text-slate-500 mb-4">Use a wide photo (e.g. 1600×900). PNG, JPG or WEBP, max 5MB.</p>
+                  <p className="text-sm text-muted-foreground mb-1">Shown behind the login screen.</p>
+                  <p className="text-xs text-muted-foreground mb-4">Use a wide photo (e.g. 1600×900). PNG, JPG or WEBP, max 5MB.</p>
                   <Label htmlFor="hero-upload" className="cursor-pointer">
-                    <div className="bg-white dark:bg-canvas border border-slate-200 dark:border-surface-raised px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-50 dark:hover:bg-surface-indigo transition-colors flex items-center">
+                    <div className="bg-card border border-border px-4 py-2 rounded-md text-sm font-medium hover:bg-muted/50 transition-colors flex items-center">
                       <UploadCloud className="h-4 w-4 mr-2" /> {uploadingAsset === 'hero' ? 'Uploading...' : 'Browse File'}
                     </div>
                   </Label>
@@ -252,7 +252,7 @@ export default function BrandingSettings() {
 
         {/* Colors & Styling */}
         <div className="space-y-6">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider">Colors & Appearance</h3>
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Colors & Appearance</h3>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -261,9 +261,9 @@ export default function BrandingSettings() {
                 <input 
                   type="color" 
                   {...register('primaryColor')}
-                  className="h-10 w-10 p-1 rounded border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas cursor-pointer"
+                  className="h-10 w-10 p-1 rounded border border-border bg-card cursor-pointer"
                 />
-                <code className="text-xs text-slate-500 uppercase">{currentPrimaryColor}</code>
+                <code className="text-xs text-muted-foreground uppercase">{currentPrimaryColor}</code>
               </div>
             </div>
             <div className="space-y-2">
@@ -272,9 +272,9 @@ export default function BrandingSettings() {
                 <input 
                   type="color" 
                   {...register('accentColor')}
-                  className="h-10 w-10 p-1 rounded border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas cursor-pointer"
+                  className="h-10 w-10 p-1 rounded border border-border bg-card cursor-pointer"
                 />
-                <code className="text-xs text-slate-500 uppercase">{watch('accentColor')}</code>
+                <code className="text-xs text-muted-foreground uppercase">{watch('accentColor')}</code>
               </div>
             </div>
           </div>
@@ -294,10 +294,10 @@ export default function BrandingSettings() {
           </div>
 
           <div className="pt-2">
-            <div className="flex items-center justify-between border border-slate-200 dark:border-surface-raised rounded-xl p-4">
+            <div className="flex items-center justify-between border border-border rounded-sm p-4">
               <div>
                 <Label className="text-base">Dark Mode Default</Label>
-                <p className="text-xs text-slate-500 mt-0.5">Enable dark mode by default for new users</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Enable dark mode by default for new users</p>
               </div>
               <Switch 
                 checked={watch('darkModeDefault')} 
@@ -310,9 +310,9 @@ export default function BrandingSettings() {
       </div>
 
       {/* Preview Card */}
-      <div className="pt-6 border-t border-slate-200 dark:border-surface-raised">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider mb-4">Header Preview</h3>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 overflow-hidden max-w-2xl">
+      <div className="pt-6 border-t border-border">
+        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Header Preview</h3>
+        <div className="bg-card rounded-sm border border-border shadow-sm p-8 overflow-hidden max-w-2xl">
            <div className={`flex ${
              watch('reportHeaderStyle') === 'standard' ? 'flex-row items-center gap-6' : 
              watch('reportHeaderStyle') === 'minimal' ? 'flex-col items-center text-center gap-4' : 
@@ -321,20 +321,20 @@ export default function BrandingSettings() {
               {logoPreview ? (
                 <img src={logoPreview} alt="Logo" className="h-16 object-contain" />
               ) : (
-                <div className="h-16 w-16 bg-slate-100 rounded-md flex items-center justify-center">
+                <div className="h-16 w-16 bg-muted rounded-md flex items-center justify-center">
                    <ImageIcon className="h-6 w-6 text-slate-300" />
                 </div>
               )}
               <div className={`${watch('reportHeaderStyle') !== 'standard' ? 'items-center' : ''}`}>
                  <h4 className="text-xl font-bold font-serif" style={{ color: currentPrimaryColor }}>{schoolProfile.name}</h4>
-                 <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-medium">{schoolProfile.description || schoolProfile.shortName}</p>
+                 <p className="text-xs text-muted-foreground mt-1 uppercase tracking-widest font-medium">{schoolProfile.description || schoolProfile.shortName}</p>
               </div>
            </div>
            <div className="mt-6 border-t-2 opacity-20" style={{ borderColor: currentPrimaryColor }}></div>
         </div>
       </div>
 
-      <div className="pt-6 border-t border-slate-200 dark:border-surface-raised flex justify-end">
+      <div className="pt-6 border-t border-border flex justify-end">
         <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : (
             <>
