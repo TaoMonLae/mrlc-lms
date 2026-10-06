@@ -1,116 +1,103 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router';
-import { ArrowLeft, SpellCheck, Volume2, CheckCircle2, XCircle, RotateCw, Brain, Grid3x3 } from 'lucide-react';
+import { Link, useParams } from 'react-router';
+import { Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { apiGet, apiSend } from '../../lib/api';
 import { MathText } from '@/src/components/MathText';
+import {
+  DeckGate, DeckShell, ModeIntro, ProgressRule, ResultSummary, StatePanel,
+  normalizeAnswer, percent, shuffle, useDeck, useDeckRoutes,
+  type DeckDetail, type FlashCard,
+} from './shared';
 
-interface CardT { id: string; term: string; definition: string; imageUrl?: string | null }
-interface DeckDetail { id: string; title: string; cards: CardT[] }
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-// Loose-but-meaningful equality: ignores case, surrounding whitespace, and
-// collapses repeated internal spaces, so "  Photo Synthesis" still matches
-// "Photo synthesis" without accepting genuinely different words.
-function normalize(s: string): string {
-  return s.trim().toLowerCase().replace(/\s+/g, ' ');
-}
+const speechSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
 function speak(text: string) {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-    toast.error("This browser can't read words aloud");
-    return;
-  }
+  if (!speechSupported) return;
   window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.rate = 0.85;
-  window.speechSynthesis.speak(utter);
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'en-US';
+  utterance.rate = 0.85;
+  window.speechSynthesis.speak(utterance);
 }
 
 export default function FlashcardSpelling() {
   const { id } = useParams<{ id: string }>();
-  const location = useLocation();
-  const isStudentRoute = location.pathname.startsWith('/student/');
-  const listUrl = isStudentRoute ? '/student/flashcards' : '/flashcards';
-  const studyUrl = isStudentRoute ? `/student/flashcards/${id}` : `/flashcards/${id}/study`;
-  const quizUrl = isStudentRoute ? `/student/flashcards/${id}/quiz` : `/flashcards/${id}/quiz`;
-  const matchUrl = isStudentRoute ? `/student/flashcards/${id}/match` : `/flashcards/${id}/match`;
+  const routes = useDeckRoutes(id);
+  const { deck, status, reload } = useDeck(id);
+  return (
+    <DeckGate status={status} deck={deck} reload={reload} listUrl={routes.list}>
+      {(loaded) => (
+        <DeckShell deck={loaded} routes={routes}>
+          {loaded.cards.length < 1
+            ? <StatePanel title="This deck has no words to spell yet" />
+            : <Spelling key={loaded.id} deck={loaded} routes={routes} />}
+        </DeckShell>
+      )}
+    </DeckGate>
+  );
+}
 
-  const [deck, setDeck] = useState<DeckDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [order, setOrder] = useState<CardT[]>([]);
+function Spelling({ deck, routes }: { deck: DeckDetail; routes: ReturnType<typeof useDeckRoutes> }) {
+  const [started, setStarted] = useState(false);
+  const [readAloud, setReadAloud] = useState(speechSupported);
+  const [order, setOrder] = useState<FlashCard[]>([]);
   const [index, setIndex] = useState(0);
   const [input, setInput] = useState('');
   const [checked, setChecked] = useState<{ correct: boolean } | null>(null);
   const [answers, setAnswers] = useState<{ term: string; typed: string; correct: boolean }[]>([]);
   const [finished, setFinished] = useState(false);
-  const [bestScore, setBestScore] = useState<{ score: number; total: number } | null>(null);
+  const [best, setBest] = useState<{ score: number; total: number } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const nextRef = useRef<HTMLButtonElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
   const startedAtRef = useRef<number | null>(null);
-  const speechSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
-
-  useEffect(() => {
-    if (!id) return;
-    setLoading(true);
-    setDeck(null);
-    setOrder([]);
-    setIndex(0);
-    setAnswers([]);
-    setFinished(false);
-    setBestScore(null);
-    apiGet<DeckDetail>(`/api/flashcards/decks/${id}`)
-      .then((d) => { setDeck(d); setOrder(shuffle(d.cards || [])); startedAtRef.current = Date.now(); })
-      .catch((e: any) => toast.error(e?.message || 'Failed to load deck'))
-      .finally(() => setLoading(false));
-    if (isStudentRoute) loadBest();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, isStudentRoute]);
 
   const loadBest = () => {
-    if (!id) return;
-    apiGet<{ bestByMode: Record<string, { score: number; total: number }> }>(`/api/flashcards/decks/${id}/attempts`)
-      .then((r) => setBestScore(r?.bestByMode?.SPELL ? { score: r.bestByMode.SPELL.score, total: r.bestByMode.SPELL.total } : null))
+    apiGet<{ bestByMode: Record<string, { score: number; total: number }> }>(`/api/flashcards/decks/${deck.id}/attempts`)
+      .then((r) => setBest(r?.bestByMode?.SPELL ? { score: r.bestByMode.SPELL.score, total: r.bestByMode.SPELL.total } : null))
       .catch(() => {});
   };
+  useEffect(() => { if (routes.isStudentRoute) loadBest(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [deck.id]);
+  useEffect(() => () => { if (speechSupported) window.speechSynthesis.cancel(); }, []);
 
   const current = order[index];
 
-  // Read the term aloud automatically each time a new card comes up -- the
-  // whole point of spelling mode is hearing it before you see it.
+  // A new word is read aloud once (when enabled) and the field takes focus.
   useEffect(() => {
-    if (current && !checked && speechSupported) speak(current.term);
+    if (!started || finished || !current) return;
+    if (readAloud) speak(current.term);
     inputRef.current?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, order.length, speechSupported]);
+  }, [started, index, order]);
 
   const score = useMemo(() => answers.filter((a) => a.correct).length, [answers]);
 
+  const start = () => {
+    setOrder(shuffle(deck.cards));
+    setIndex(0); setInput(''); setChecked(null); setAnswers([]); setFinished(false);
+    setStarted(true);
+    startedAtRef.current = Date.now();
+  };
+
   const submit = () => {
-    if (!current || checked) return;
-    const correct = normalize(input) === normalize(current.term);
+    if (!current || checked || !input.trim()) return;
+    const correct = normalizeAnswer(input) === normalizeAnswer(current.term);
     setChecked({ correct });
     setAnswers((prev) => [...prev, { term: current.term, typed: input, correct }]);
+    requestAnimationFrame(() => nextRef.current?.focus());
   };
 
   const next = () => {
-    setInput('');
-    setChecked(null);
+    setInput(''); setChecked(null);
     if (index + 1 >= order.length) {
-      const finalScore = answers.filter((a) => a.correct).length;
       setFinished(true);
-      if (isStudentRoute && id) {
+      requestAnimationFrame(() => resultRef.current?.querySelector<HTMLElement>('#result-heading')?.focus());
+      if (routes.isStudentRoute) {
         const durationMs = startedAtRef.current ? Date.now() - startedAtRef.current : null;
-        apiSend(`/api/flashcards/decks/${id}/attempts`, 'POST', { mode: 'SPELL', score: finalScore, total: order.length, durationMs })
+        apiSend(`/api/flashcards/decks/${deck.id}/attempts`, 'POST', { mode: 'SPELL', score: answers.filter((a) => a.correct).length, total: order.length, durationMs })
           .then(loadBest)
           .catch(() => toast.error('Your spelling result could not be saved'));
       }
@@ -119,137 +106,93 @@ export default function FlashcardSpelling() {
     setIndex((i) => i + 1);
   };
 
-  const restart = () => {
-    if (!deck) return;
-    setOrder(shuffle(deck.cards));
-    setIndex(0); setInput(''); setChecked(null); setAnswers([]); setFinished(false);
-    startedAtRef.current = Date.now();
-  };
-
-  if (loading) {
+  if (!started) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <span className="animate-spin rounded-full h-6 w-6 border-2 border-aubergine-600 border-t-transparent mr-2"></span>
-        <span className="text-muted-foreground">Loading spelling quiz…</span>
+      <ModeIntro title="Spell each term" action={<Button size="lg" onClick={start} className="w-full sm:w-auto">Start · {deck.cards.length} words</Button>}>
+        <p className="text-sm text-muted-foreground">You'll see each definition{speechSupported ? ' and hear the word' : ''}. Type the term exactly; capital letters and extra spaces don't count against you.</p>
+        {speechSupported ? (
+          <label className="flex min-h-10 cursor-pointer items-center gap-2 text-sm text-foreground">
+            <input type="checkbox" className="h-4 w-4 accent-[var(--color-academic-teal)]" checked={readAloud} onChange={(e) => setReadAloud(e.target.checked)} />
+            Read each word aloud when it appears
+          </label>
+        ) : (
+          <p className="text-sm text-muted-foreground">This browser can't read words aloud, so the definition is your clue.</p>
+        )}
+        {best && <p className="text-sm text-muted-foreground">Your best: <span className="font-semibold tabular-nums text-foreground">{best.score} / {best.total}</span> ({percent(best.score, best.total)}%)</p>}
+      </ModeIntro>
+    );
+  }
+
+  if (finished) {
+    return (
+      <div ref={resultRef}>
+        <ResultSummary
+          heading={score === answers.length ? 'Every word spelled right.' : `${score} of ${answers.length} spelled right.`}
+          stats={[
+            { label: 'Score', value: `${percent(score, answers.length)}%`, strong: true },
+            { label: 'Correct', value: String(score) },
+            { label: 'To practise', value: String(answers.length - score) },
+            { label: 'Your best', value: best ? `${percent(best.score, best.total)}%` : '—' },
+          ]}
+          missed={answers.filter((a) => !a.correct).map((a) => ({ term: a.term, given: a.typed, correct: a.term }))}
+          missedTitle="Words to practise"
+          actions={<>
+            <Button onClick={start}>Spell them again</Button>
+            <Button variant="ghost" render={<Link to={routes.study} />} nativeButton={false}>Back to the cards</Button>
+          </>}
+        />
       </div>
     );
   }
 
-  if (!deck) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        <p>Deck not found, or it isn't assigned to your class.</p>
-        <Button variant="outline" className="mt-4" render={<Link to={listUrl} />}>Back to Flashcards</Button>
-      </div>
-    );
-  }
-
-  if (deck.cards.length < 1) {
-    return (
-      <div className="max-w-xl mx-auto text-center py-12 text-muted-foreground space-y-4">
-        <SpellCheck className="h-10 w-10 mx-auto text-slate-300" />
-        <p>This deck has no cards to spell yet.</p>
-        <Button variant="outline" render={<Link to={listUrl} />}><ArrowLeft className="mr-2 h-4 w-4" /> Back to Flashcards</Button>
-      </div>
-    );
-  }
-
+  if (!current) return null;
   return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-10">
-      <div className="flex items-center gap-3 flex-wrap">
-        <Button aria-label="Back" variant="ghost" size="icon" render={<Link to={listUrl} />}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1 min-w-[160px]">
-          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <SpellCheck className="h-5 w-5 text-aubergine-600" /> {deck.title} — Spelling
-          </h1>
+    <section aria-label={`Word ${index + 1} of ${order.length}`}>
+      <div className="flex items-center justify-between pb-2 text-sm">
+        <span className="font-semibold tabular-nums text-foreground">Word {index + 1} of {order.length}</span>
+        <span className="tabular-nums text-muted-foreground">{score} right so far</span>
+      </div>
+      <ProgressRule value={index} max={order.length} label="Spelling progress" />
+      <div className="mt-4 border border-border bg-card">
+        <div className="flex flex-col gap-4 border-b border-border px-5 py-6 sm:flex-row sm:items-start sm:px-8">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium text-muted-foreground">Definition</p>
+            {current.imageUrl && <img src={current.imageUrl} alt="" className="mt-3 max-h-28 w-auto object-contain" />}
+            <p className="mt-2 text-lg leading-relaxed text-foreground [overflow-wrap:anywhere]"><MathText>{current.definition}</MathText></p>
+          </div>
+          {speechSupported && (
+            <Button variant="outline" onClick={() => speak(current.term)} className="shrink-0 self-start">
+              <Volume2 className="h-4 w-4" aria-hidden="true" /> Hear the word
+            </Button>
+          )}
         </div>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" render={<Link to={studyUrl} />}>Study</Button>
-          <Button size="sm" variant="outline" render={<Link to={quizUrl} />}><Brain className="mr-1.5 h-3.5 w-3.5" /> Quiz</Button>
-          <Button size="sm" variant="outline" render={<Link to={matchUrl} />}><Grid3x3 className="mr-1.5 h-3.5 w-3.5" /> Match</Button>
+        <form className="px-5 py-5 sm:px-8" onSubmit={(e) => { e.preventDefault(); if (checked) next(); else submit(); }}>
+          <label htmlFor="spell-answer" className="text-sm font-medium text-foreground">Spelling</label>
+          <Input
+            id="spell-answer"
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            readOnly={!!checked}
+            aria-readonly={!!checked}
+            autoComplete="off"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            className={`mt-1.5 h-12 text-lg tracking-wide ${checked ? (checked.correct ? 'border-academic-teal bg-accent/40' : 'border-destructive bg-destructive/5') : ''}`}
+          />
+          <p className="mt-3 min-h-5 text-sm font-medium" aria-live="assertive">
+            {checked && (checked.correct
+              ? <span className="text-accent-foreground">Correct.</span>
+              : <span className="text-destructive">Not quite. It's spelled “{current.term}”.</span>)}
+          </p>
+        </form>
+        <div className="flex justify-end border-t border-border px-5 py-3 sm:px-8">
+          {checked
+            ? <Button ref={nextRef} onClick={next}>{index + 1 >= order.length ? 'See results' : 'Next word'}</Button>
+            : <Button onClick={submit} disabled={!input.trim()}>Check spelling</Button>}
         </div>
       </div>
-
-      {finished ? (
-        <div className="bg-card border border-border rounded-sm shadow-sm p-8 text-center space-y-4">
-          <p className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">Spelling Quiz Complete</p>
-          <p className="text-4xl font-bold text-aubergine-600">{score} / {answers.length}</p>
-          <p className="text-sm text-muted-foreground">{Math.round((score / answers.length) * 100)}% spelled correctly</p>
-          {isStudentRoute && bestScore && (
-            <p className="text-xs text-muted-foreground">Personal best: {bestScore.score} / {bestScore.total} ({Math.round((bestScore.score / bestScore.total) * 100)}%)</p>
-          )}
-
-          {answers.some((a) => !a.correct) && (
-            <div className="text-left mt-6 space-y-2">
-              <p className="text-sm font-semibold text-foreground">Words to practice</p>
-              {answers.filter((a) => !a.correct).map((a, i) => (
-                <div key={i} className="rounded-lg border border-rose-200 dark:border-rose-900/30 bg-rose-50 dark:bg-rose-900/10 p-3 text-sm">
-                  <p className="text-rose-600">You typed: {a.typed || '(nothing)'}</p>
-                  <p className="text-emerald-600">Correct: {a.term}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="flex justify-center gap-3 pt-2">
-            <Button variant="outline" onClick={restart}><RotateCw className="mr-2 h-4 w-4" /> Retake</Button>
-            <Button render={<Link to={listUrl} />}>Back to Flashcards</Button>
-          </div>
-        </div>
-      ) : current ? (
-        <>
-          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-            <div className="h-full bg-aubergine-500 rounded-full transition-all" style={{ width: `${Math.round((index / order.length) * 100)}%` }} />
-          </div>
-          <p className="text-center text-sm text-muted-foreground">Word {index + 1} of {order.length}</p>
-
-          <div className="bg-card border border-border rounded-sm shadow-sm p-8 space-y-6">
-            <div className="text-center space-y-3">
-              <Button variant="outline" size="lg" onClick={() => speak(current.term)} disabled={!speechSupported}>
-                <Volume2 className="mr-2 h-5 w-5" /> Hear the word again
-              </Button>
-              {current.imageUrl && (
-                <img src={current.imageUrl} alt="" className="max-h-28 mx-auto rounded-lg object-contain" />
-              )}
-              <p className="text-muted-foreground"><MathText>{current.definition}</MathText></p>
-              {!speechSupported && (
-                <p className="text-xs text-amber-600">Your browser can't read words aloud, so the definition is your only clue.</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Input
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { checked ? next() : submit(); } }}
-                placeholder="Type the spelling…"
-                disabled={!!checked}
-                className={`text-center text-lg ${checked ? (checked.correct ? 'border-emerald-400' : 'border-rose-400') : ''}`}
-                autoComplete="off"
-                autoCapitalize="off"
-                spellCheck={false}
-              />
-              {checked && (
-                <p className={`text-center text-sm font-medium flex items-center justify-center gap-1.5 ${checked.correct ? 'text-emerald-600' : 'text-rose-600'}`}>
-                  {checked.correct ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                  {checked.correct ? 'Correct!' : `Correct spelling: ${current.term}`}
-                </p>
-              )}
-            </div>
-
-            <div className="flex justify-center">
-              {checked ? (
-                <Button onClick={next}>{index + 1 >= order.length ? 'Finish' : 'Next Word'}</Button>
-              ) : (
-                <Button onClick={submit} disabled={!input.trim()}>Check Spelling</Button>
-              )}
-            </div>
-          </div>
-        </>
-      ) : null}
-    </div>
+    </section>
   );
 }

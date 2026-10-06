@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Layers, Plus, Pencil, Trash2, BookOpen, Download, Brain, Grid3x3, SpellCheck, BarChart3, Users, Copy, Share2 } from 'lucide-react';
+import { Copy, Download, MoreHorizontal, Plus, Search, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { apiGet, apiSend } from '../../lib/api';
 import { cardsToCsv, downloadCsv } from '../../lib/flashcardCsv';
+import { RetryButton, StatePanel } from './shared';
 
 interface DeckRow {
   id: string;
@@ -17,203 +19,244 @@ interface DeckRow {
   teacherName: string;
   authorName?: string;
   cardCount: number;
-  classes: { id: string; name: string }[];
-  shared: boolean;
+  classes?: { id: string; name: string }[];
+  shared?: boolean;
 }
 
-interface CommunityDeckRow {
-  id: string;
-  title: string;
-  description: string | null;
-  updatedAt: string;
-  subject: { id: string; name: string } | null;
-  teacherName: string;
-  authorName?: string;
-  cardCount: number;
-}
+type Tab = 'mine' | 'community';
+type LoadState<T> = { status: 'idle' | 'loading' | 'ready' | 'error'; rows: T[] };
+
+const dateFormat = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 
 export default function FlashcardDecks() {
   const navigate = useNavigate();
-  const [decks, setDecks] = useState<DeckRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [community, setCommunity] = useState<CommunityDeckRow[] | null>(null);
-  const [loadingCommunity, setLoadingCommunity] = useState(false);
+  const [tab, setTab] = useState<Tab>('mine');
+  const [mine, setMine] = useState<LoadState<DeckRow>>({ status: 'loading', rows: [] });
+  const [community, setCommunity] = useState<LoadState<DeckRow>>({ status: 'idle', rows: [] });
+  const [query, setQuery] = useState('');
   const [cloningId, setCloningId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<DeckRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  const load = () => {
+  const loadMine = () => {
+    setMine((s) => ({ ...s, status: 'loading' }));
     apiGet<DeckRow[]>('/api/flashcards/decks')
-      .then((d) => setDecks(Array.isArray(d) ? d : []))
-      .catch((e: any) => toast.error(e?.message || 'Failed to load flashcard decks'))
-      .finally(() => setLoading(false));
+      .then((rows) => setMine({ status: 'ready', rows: Array.isArray(rows) ? rows : [] }))
+      .catch(() => setMine({ status: 'error', rows: [] }));
   };
-  useEffect(load, []);
-
   const loadCommunity = () => {
-    if (community !== null || loadingCommunity) return;
-    setLoadingCommunity(true);
-    apiGet<CommunityDeckRow[]>('/api/flashcards/community')
-      .then((d) => setCommunity(Array.isArray(d) ? d : []))
-      .catch((e: any) => toast.error(e?.message || 'Failed to load community decks'))
-      .finally(() => setLoadingCommunity(false));
+    setCommunity((s) => ({ ...s, status: 'loading' }));
+    apiGet<DeckRow[]>('/api/flashcards/community')
+      .then((rows) => setCommunity({ status: 'ready', rows: Array.isArray(rows) ? rows : [] }))
+      .catch(() => setCommunity({ status: 'error', rows: [] }));
   };
+  useEffect(loadMine, []);
+  useEffect(() => { if (tab === 'community' && community.status === 'idle') loadCommunity(); }, [tab, community.status]);
 
-  const remove = async (deck: DeckRow) => {
-    if (!window.confirm(`Delete the deck "${deck.title}"? This cannot be undone.`)) return;
+  const current = tab === 'mine' ? mine : community;
+  const rows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return current.rows;
+    return current.rows.filter((d) => [d.title, d.description, d.subject?.name, d.authorName, d.teacherName].some((v) => v?.toLowerCase().includes(q)));
+  }, [current.rows, query]);
+  const unassigned = mine.rows.filter((d) => (d.classes?.length ?? 0) === 0).length;
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
     try {
-      await apiSend(`/api/flashcards/decks/${deck.id}`, 'DELETE');
-      toast.success('Deck deleted');
-      setDecks((prev) => prev.filter((d) => d.id !== deck.id));
+      await apiSend(`/api/flashcards/decks/${pendingDelete.id}`, 'DELETE');
+      setMine((s) => ({ ...s, rows: s.rows.filter((d) => d.id !== pendingDelete.id) }));
+      toast.success(`Deleted “${pendingDelete.title}”`);
+      setPendingDelete(null);
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to delete deck');
+      toast.error(e?.message || 'The deck could not be deleted');
+    } finally {
+      setDeleting(false);
     }
   };
 
-  const exportDeck = async (deckId: string, title: string) => {
+  const exportDeck = async (deck: DeckRow) => {
     try {
-      const full = await apiGet<{ cards: { term: string; definition: string }[] }>(`/api/flashcards/decks/${deckId}`);
-      const cards = full.cards || [];
-      if (cards.length === 0) { toast.error('This deck has no cards to export'); return; }
-      downloadCsv(`${title.replace(/[^\w\- ]+/g, '') || 'flashcards'}.csv`, cardsToCsv(cards));
+      const full = await apiGet<{ cards: { term: string; definition: string }[] }>(`/api/flashcards/decks/${deck.id}`);
+      if (!full.cards?.length) { toast.error('This deck has no cards to export'); return; }
+      downloadCsv(`${deck.title.replace(/[^\w\- ]+/g, '') || 'flashcards'}.csv`, cardsToCsv(full.cards));
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to export deck');
+      toast.error(e?.message || 'The deck could not be exported');
     }
   };
 
-  const cloneDeck = async (deck: CommunityDeckRow) => {
+  const cloneDeck = async (deck: DeckRow) => {
     setCloningId(deck.id);
     try {
       const res = await apiSend<{ id: string }>(`/api/flashcards/decks/${deck.id}/clone`, 'POST', {});
-      toast.success(`Cloned "${deck.title}" into your decks`);
+      toast.success(`Copied “${deck.title}” to your decks`);
       navigate(`/flashcards/${res.id}/edit`);
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to clone deck');
+      toast.error(e?.message || 'The deck could not be copied');
     } finally {
       setCloningId(null);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+    <div className="mx-auto w-full max-w-5xl space-y-6 pb-16 md:pb-0">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Layers className="h-6 w-6 text-aubergine-600" />
-            Flashcards
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Build study decks and assign them to your classes.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Flashcards</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Build study decks, assign them to classes and see who is keeping up.</p>
         </div>
-        <Button render={<Link to="/flashcards/new" />}>
-          <Plus className="mr-2 h-4 w-4" /> New Deck
+        <Button render={<Link to="/flashcards/new" />} nativeButton={false}>
+          <Plus className="h-4 w-4" aria-hidden="true" /> New deck
         </Button>
       </div>
 
-      <Tabs defaultValue="mine" onValueChange={(v) => { if (v === 'community') loadCommunity(); }}>
-        <TabsList>
-          <TabsTrigger value="mine">My Decks</TabsTrigger>
-          <TabsTrigger value="community"><Users className="mr-1.5 h-3.5 w-3.5" /> Community</TabsTrigger>
-        </TabsList>
+      <section className="border border-border bg-card" aria-label="Decks">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-foreground px-4 pt-2 sm:px-5">
+          <div role="tablist" aria-label="Deck library" className="-mb-px flex">
+            {([['mine', `My decks${mine.status === 'ready' ? ` ${mine.rows.length}` : ''}`], ['community', 'Shared by teachers']] as const).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                aria-selected={tab === value}
+                onClick={() => setTab(value)}
+                className={`min-h-11 border-b-2 px-3 text-sm font-semibold tabular-nums ${tab === value ? 'border-academic-teal text-accent-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="relative mb-2 w-full sm:w-64">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search decks" aria-label="Search decks" className="pl-9" />
+          </div>
+        </div>
 
-        <TabsContent value="mine" className="pt-4">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <span className="ml-3 text-muted-foreground">Loading…</span>
-            </div>
-          ) : decks.length === 0 ? (
-            <div className="bg-card border border-border rounded-sm p-12 text-center">
-              <Layers className="h-12 w-12 mx-auto text-slate-200 mb-3" />
-              <p className="text-lg font-medium text-foreground">No flashcard decks yet</p>
-              <p className="text-sm text-muted-foreground mb-4">Create your first deck to help students study key terms, or clone one from Community.</p>
-              <Button render={<Link to="/flashcards/new" />}>
-                <Plus className="mr-2 h-4 w-4" /> New Deck
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {decks.map((d) => (
-                <div key={d.id} className="bg-card border border-border rounded-sm shadow-sm p-5 flex flex-col">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold text-foreground flex items-center gap-1.5">
-                      {d.title}
-                      {d.shared && <Share2 className="h-3.5 w-3.5 text-aubergine-500 shrink-0" aria-label="Shared with other teachers" />}
-                    </h3>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button aria-label="Student progress" size="icon" variant="ghost" className="h-7 w-7" title="Student progress" render={<Link to={`/flashcards/${d.id}/progress`} />}>
-                        <BarChart3 className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button aria-label="Edit" size="icon" variant="ghost" className="h-7 w-7" render={<Link to={`/flashcards/${d.id}/edit`} />}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button aria-label="Delete" size="icon" variant="ghost" className="h-7 w-7 text-rose-500 hover:text-rose-600" onClick={() => remove(d)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                  {d.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{d.description}</p>}
-                  <div className="flex items-center gap-2 flex-wrap mt-3">
-                    <Badge variant="outline" className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> {d.cardCount} card{d.cardCount === 1 ? '' : 's'}</Badge>
-                    {d.subject && <Badge variant="outline">{d.subject.name}</Badge>}
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                    {d.classes.length === 0 ? (
-                      <span className="text-xs text-amber-600">Not assigned to any class yet</span>
-                    ) : (
-                      d.classes.map((c) => (
-                        <Badge key={c.id} className="bg-aubergine-100 text-aubergine-800 dark:bg-aubergine-900/30 dark:text-aubergine-400 border-0 text-[11px]">{c.name}</Badge>
-                      ))
+        {tab === 'mine' && mine.status === 'ready' && unassigned > 0 && (
+          <p className="border-b border-border bg-academic-coral/10 px-4 py-2.5 text-sm text-foreground sm:px-5">
+            {unassigned} deck{unassigned === 1 ? ' isn’t' : 's aren’t'} assigned to a class yet, so students can’t see {unassigned === 1 ? 'it' : 'them'}.
+          </p>
+        )}
+
+        {current.status === 'loading' || current.status === 'idle' ? (
+          <div className="divide-y divide-border" aria-busy="true">
+            <span className="sr-only">Loading decks…</span>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex items-center gap-4 px-5 py-4">
+                <div className="h-4 w-1/3 bg-muted motion-safe:animate-pulse" />
+                <div className="ml-auto h-4 w-20 bg-muted motion-safe:animate-pulse" />
+              </div>
+            ))}
+          </div>
+        ) : current.status === 'error' ? (
+          <div className="p-4"><StatePanel tone="error" title="Decks couldn't be loaded" body="Check your connection and try again." action={<RetryButton onClick={tab === 'mine' ? loadMine : loadCommunity} />} /></div>
+        ) : current.rows.length === 0 ? (
+          <div className="p-4">
+            {tab === 'mine' ? (
+              <StatePanel
+                title="No decks yet"
+                body="A deck is a list of terms and definitions. Make one from scratch, import a CSV, or copy one another teacher has shared."
+                action={<>
+                  <Button render={<Link to="/flashcards/new" />} nativeButton={false}><Plus className="h-4 w-4" aria-hidden="true" /> New deck</Button>
+                  <Button variant="outline" onClick={() => setTab('community')}>Browse shared decks</Button>
+                </>}
+              />
+            ) : (
+              <StatePanel title="No shared decks yet" body="When a teacher shares a deck, it appears here for you to copy and adapt." />
+            )}
+          </div>
+        ) : rows.length === 0 ? (
+          <p className="px-5 py-8 text-sm text-muted-foreground">No decks match “{query}”.</p>
+        ) : (
+          <table className="w-full text-left text-sm">
+            <thead className="hidden border-b border-border text-xs font-medium text-muted-foreground md:table-header-group">
+              <tr>
+                <th scope="col" className="px-5 py-2.5 font-medium">Deck</th>
+                <th scope="col" className="px-3 py-2.5 text-right font-medium">Cards</th>
+                <th scope="col" className="px-3 py-2.5 font-medium">{tab === 'mine' ? 'Classes' : 'Shared by'}</th>
+                <th scope="col" className="px-3 py-2.5 font-medium">Updated</th>
+                <th scope="col" className="px-5 py-2.5"><span className="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {rows.map((deck) => (
+                <tr key={deck.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 px-4 py-3 align-top hover:bg-muted/30 md:table-row md:px-0 md:py-0">
+                  <td className="md:px-5 md:py-3.5">
+                    <Link to={tab === 'mine' ? `/flashcards/${deck.id}/edit` : `/flashcards/${deck.id}/study`} className="font-semibold text-foreground hover:text-accent-foreground hover:underline [overflow-wrap:anywhere]">
+                      {deck.title}
+                    </Link>
+                    {deck.shared && tab === 'mine' && (
+                      <span className="ml-2 inline-flex items-center gap-1 align-middle text-xs text-muted-foreground"><Share2 className="h-3 w-3" aria-hidden="true" /> Shared</span>
                     )}
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-wrap mt-3 pt-3 border-t border-border">
-                    <Button size="sm" variant="outline" className="h-7 px-2 text-xs" render={<Link to={`/flashcards/${d.id}/study`} />}>Preview</Button>
-                    <Button size="sm" variant="outline" className="h-7 px-2 text-xs" render={<Link to={`/flashcards/${d.id}/quiz`} />}><Brain className="mr-1 h-3 w-3" /> Quiz</Button>
-                    <Button size="sm" variant="outline" className="h-7 px-2 text-xs" render={<Link to={`/flashcards/${d.id}/match`} />}><Grid3x3 className="mr-1 h-3 w-3" /> Match</Button>
-                    <Button size="sm" variant="outline" className="h-7 px-2 text-xs" render={<Link to={`/flashcards/${d.id}/spell`} />}><SpellCheck className="mr-1 h-3 w-3" /> Spell</Button>
-                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs ml-auto" onClick={() => exportDeck(d.id, d.title)}><Download className="mr-1 h-3 w-3" /> CSV</Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">Updated {new Date(d.updatedAt).toLocaleDateString()}</p>
-                </div>
+                    <p className="mt-0.5 line-clamp-1 text-muted-foreground">
+                      {[deck.subject?.name, deck.description].filter(Boolean).join(' · ') || 'No description'}
+                    </p>
+                  </td>
+                  <td className="col-start-1 text-xs text-muted-foreground md:px-3 md:py-3.5 md:text-right md:text-sm md:text-foreground md:tabular-nums">
+                    <span className="md:hidden">{deck.cardCount} card{deck.cardCount === 1 ? '' : 's'}</span><span className="hidden md:inline">{deck.cardCount}</span>
+                  </td>
+                  <td className="col-start-1 md:px-3 md:py-3.5">
+                    {tab === 'mine' ? (
+                      deck.classes && deck.classes.length > 0
+                        ? <span className="text-foreground">{deck.classes.map((c) => c.name).join(', ')}</span>
+                        : <span className="inline-flex bg-academic-coral/20 px-1.5 py-0.5 text-xs font-semibold text-foreground">Not assigned</span>
+                    ) : (
+                      <span className="text-foreground">{deck.authorName || deck.teacherName || 'A teacher'}</span>
+                    )}
+                  </td>
+                  <td className="col-start-1 whitespace-nowrap text-xs text-muted-foreground md:px-3 md:py-3.5 md:text-sm md:tabular-nums">
+                    <span className="md:hidden">Updated </span>{dateFormat.format(new Date(deck.updatedAt))}
+                  </td>
+                  <td className="col-start-2 row-span-4 row-start-1 flex items-start justify-end gap-1 md:table-cell md:px-5 md:py-2.5 md:text-right">
+                    {tab === 'mine' ? (
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="outline" size="sm" render={<Link to={`/flashcards/${deck.id}/study`} />} nativeButton={false} className="hidden sm:inline-flex">Preview</Button>
+                        <Button variant="outline" size="sm" render={<Link to={`/flashcards/${deck.id}/progress`} />} nativeButton={false} className="hidden lg:inline-flex">Progress</Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={`More actions for ${deck.title}`} />}>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem render={<Link to={`/flashcards/${deck.id}/edit`} />}>Edit deck</DropdownMenuItem>
+                            <DropdownMenuItem render={<Link to={`/flashcards/${deck.id}/study`} />}>Preview as student</DropdownMenuItem>
+                            <DropdownMenuItem render={<Link to={`/flashcards/${deck.id}/progress`} />}>Student progress</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => exportDeck(deck)}><Download className="h-4 w-4" aria-hidden="true" /> Export CSV</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem variant="destructive" onClick={() => setPendingDelete(deck)}>Delete deck…</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="outline" size="sm" render={<Link to={`/flashcards/${deck.id}/study`} />} nativeButton={false} className="hidden sm:inline-flex">Preview</Button>
+                        <Button variant="outline" size="sm" onClick={() => cloneDeck(deck)} disabled={cloningId === deck.id}>
+                          <Copy className="h-3.5 w-3.5" aria-hidden="true" /> {cloningId === deck.id ? 'Copying…' : 'Copy to my decks'}
+                        </Button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
               ))}
-            </div>
-          )}
-        </TabsContent>
+            </tbody>
+          </table>
+        )}
+      </section>
 
-        <TabsContent value="community" className="pt-4">
-          {loadingCommunity ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <span className="ml-3 text-muted-foreground">Loading…</span>
-            </div>
-          ) : !community || community.length === 0 ? (
-            <div className="bg-card border border-border rounded-sm p-12 text-center">
-              <Users className="h-12 w-12 mx-auto text-slate-200 mb-3" />
-              <p className="text-lg font-medium text-foreground">No shared decks yet</p>
-              <p className="text-sm text-muted-foreground">When other teachers share a deck, it'll show up here for you to clone.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {community.map((d) => (
-                <div key={d.id} className="bg-card border border-border rounded-sm shadow-sm p-5 flex flex-col">
-                  <h3 className="font-semibold text-foreground">{d.title}</h3>
-                  {d.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{d.description}</p>}
-                  <div className="flex items-center gap-2 flex-wrap mt-3">
-                    <Badge variant="outline" className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> {d.cardCount} card{d.cardCount === 1 ? '' : 's'}</Badge>
-                    {d.subject && <Badge variant="outline">{d.subject.name}</Badge>}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">By {d.authorName || d.teacherName || 'Teacher'}</p>
-                  <div className="flex items-center gap-1.5 flex-wrap mt-3 pt-3 border-t border-border">
-                    <Button size="sm" variant="outline" className="h-7 px-2 text-xs" render={<Link to={`/flashcards/${d.id}/study`} />}>Preview</Button>
-                    <Button size="sm" className="h-7 px-2 text-xs ml-auto" onClick={() => cloneDeck(d)} disabled={cloningId === d.id}>
-                      <Copy className="mr-1 h-3 w-3" /> {cloningId === d.id ? 'Cloning…' : 'Clone'}
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+      <Dialog open={!!pendingDelete} onOpenChange={(open) => { if (!open && !deleting) setPendingDelete(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete “{pendingDelete?.title}”?</DialogTitle>
+            <DialogDescription>
+              Its {pendingDelete?.cardCount} cards and every student’s progress on them will be removed. This can’t be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingDelete(null)} disabled={deleting}>Keep deck</Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={deleting}>{deleting ? 'Deleting…' : 'Delete deck'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

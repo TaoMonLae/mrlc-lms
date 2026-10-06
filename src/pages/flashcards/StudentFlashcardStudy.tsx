@@ -1,282 +1,328 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router';
-import { ArrowLeft, Shuffle, RotateCw, ChevronLeft, ChevronRight, Layers, Brain, Grid3x3, SpellCheck, CheckCircle2, Circle } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useParams } from 'react-router';
+import { ChevronLeft, ChevronRight, RotateCcw, Shuffle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { apiGet, apiSend } from '../../lib/api';
 import { useAuth } from '../../providers/AuthProvider';
 import { MathText } from '@/src/components/MathText';
-import ElectricBorder from '@/components/ElectricBorder';
+import {
+  DeckGate, DeckShell, ProgressRule, StatePanel, TallyMarks,
+  masteryCounts, pad2, shuffle, useDeck, useDeckRoutes, useReducedMotion,
+  type DeckDetail, type FlashCard, type MasteryMap,
+} from './shared';
 
-interface Card { id: string; term: string; definition: string; imageUrl?: string | null }
-interface DeckDetail {
-  id: string; title: string; description: string | null;
-  teacherName: string; authorName?: string; subject: { id: string; name: string } | null;
-  cards: Card[];
-}
-
-function shuffleArray<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
+type RegisterFilter = 'ALL' | 'LEARNING' | 'KNOWN';
 
 export default function StudentFlashcardStudy() {
   const { id } = useParams<{ id: string }>();
-  const location = useLocation();
-  // This page is mounted at both /flashcards/:id/study (teacher/admin
-  // preview) and /student/flashcards/:id (a student's own assigned deck) --
-  // work out where "back" and the other study-mode links should point from
-  // the current URL rather than hard-coding one role's paths.
-  const isStudentRoute = location.pathname.startsWith('/student/');
-  const listUrl = isStudentRoute ? '/student/flashcards' : '/flashcards';
-  const quizUrl = isStudentRoute ? `/student/flashcards/${id}/quiz` : `/flashcards/${id}/quiz`;
-  const matchUrl = isStudentRoute ? `/student/flashcards/${id}/match` : `/flashcards/${id}/match`;
-  const spellUrl = isStudentRoute ? `/student/flashcards/${id}/spell` : `/flashcards/${id}/spell`;
+  const routes = useDeckRoutes(id);
+  const { deck, status, reload } = useDeck(id);
+  return (
+    <DeckGate status={status} deck={deck} reload={reload} listUrl={routes.list}>
+      {(loaded) => <StudyRegister key={loaded.id} deck={loaded} routes={routes} />}
+    </DeckGate>
+  );
+}
+
+function StudyRegister({ deck, routes }: { deck: DeckDetail; routes: ReturnType<typeof useDeckRoutes> }) {
   const { user } = useAuth();
-  // Mastery is a per-student concept -- only fetch/show it when an actual
-  // student is signed in (not a teacher/admin previewing their own deck,
-  // who has no Student record to attach it to).
+  // Mastery belongs to a student; a teacher previewing their own deck has none.
   const isStudent = user?.role === 'STUDENT';
-  const [deck, setDeck] = useState<DeckDetail | null>(null);
-  const [order, setOrder] = useState<Card[]>([]);
+  const reducedMotion = useReducedMotion();
+  const [order, setOrder] = useState<FlashCard[]>(deck.cards);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [mastery, setMastery] = useState<Record<string, string>>({});
+  const [mastery, setMastery] = useState<MasteryMap>({});
   const [onlyLearning, setOnlyLearning] = useState(false);
   const [savingMastery, setSavingMastery] = useState(false);
+  const [filter, setFilter] = useState<RegisterFilter>('ALL');
+  const stageRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (!id) return;
-    setLoading(true);
-    setDeck(null);
-    setOrder([]);
-    setIndex(0);
-    setFlipped(false);
-    setMastery({});
-    setOnlyLearning(false);
-    apiGet<DeckDetail>(`/api/flashcards/decks/${id}`)
-      .then((d) => { setDeck(d); setOrder(d.cards || []); })
-      .catch((e: any) => toast.error(e?.message || 'Failed to load deck'))
-      .finally(() => setLoading(false));
-    if (isStudent) {
-      apiGet<Record<string, string>>(`/api/flashcards/decks/${id}/mastery`)
-        .then((m) => setMastery(m || {}))
-        .catch(() => {});
-    }
-  }, [id, isStudent]);
+    if (!isStudent) return;
+    apiGet<MasteryMap>(`/api/flashcards/decks/${deck.id}/mastery`)
+      .then((m) => setMastery(m || {}))
+      .catch(() => toast.error('Your saved progress could not be loaded'));
+  }, [deck.id, isStudent]);
 
   const current = order[index];
-  const progress = useMemo(() => (order.length ? Math.round(((index + 1) / order.length) * 100) : 0), [index, order.length]);
-  const knownCount = useMemo(() => Object.values(mastery).filter((s) => s === 'KNOWN').length, [mastery]);
+  const counts = useMemo(() => masteryCounts(deck.cards, mastery), [deck.cards, mastery]);
+  const deckNumber = useMemo(() => new Map(deck.cards.map((card, i) => [card.id, i + 1])), [deck.cards]);
 
-  const goNext = () => { setFlipped(false); setIndex((i) => Math.min(i + 1, order.length - 1)); };
-  const goPrev = () => { setFlipped(false); setIndex((i) => Math.max(i - 1, 0)); };
-  const reshuffle = () => { setFlipped(false); setIndex(0); setOrder((prev) => shuffleArray(prev)); };
-  const restartInOrder = () => { setFlipped(false); setIndex(0); setOrder(applyFilter(onlyLearning)); };
-
-  function applyFilter(learningOnly: boolean): Card[] {
-    if (!deck) return [];
-    return learningOnly ? deck.cards.filter((c) => mastery[c.id] !== 'KNOWN') : deck.cards;
-  }
-
+  const move = (delta: number) => {
+    setFlipped(false);
+    setIndex((i) => Math.min(Math.max(i + delta, 0), Math.max(order.length - 1, 0)));
+  };
+  const cardsFor = (learningOnly: boolean) => (learningOnly ? deck.cards.filter((c) => mastery[c.id] !== 'KNOWN') : deck.cards);
+  const reshuffle = () => { setFlipped(false); setIndex(0); setOrder((prev) => shuffle(prev)); };
+  const restartInOrder = () => { setFlipped(false); setIndex(0); setOrder(cardsFor(onlyLearning)); };
   const toggleOnlyLearning = () => {
     const next = !onlyLearning;
     setOnlyLearning(next);
     setFlipped(false);
     setIndex(0);
-    setOrder(shuffleArray(applyFilter(next)));
+    setOrder(cardsFor(next));
+  };
+  const jumpTo = (cardId: string) => {
+    let position = order.findIndex((c) => c.id === cardId);
+    if (position < 0) {
+      setOnlyLearning(false);
+      setOrder(deck.cards);
+      position = deck.cards.findIndex((c) => c.id === cardId);
+    }
+    setFlipped(false);
+    setIndex(Math.max(position, 0));
+    stageRef.current?.focus({ preventScroll: true });
+    stageRef.current?.scrollIntoView({ block: 'center', behavior: reducedMotion ? 'auto' : 'smooth' });
   };
 
-  const markMastery = async (status: 'KNOWN' | 'LEARNING') => {
+  const markMastery = async (state: 'KNOWN' | 'LEARNING') => {
     if (!current || savingMastery) return;
     const cardId = current.id;
-    const previousStatus = mastery[cardId];
+    const previous = mastery[cardId];
     setSavingMastery(true);
-    setMastery((prev) => ({ ...prev, [current.id]: status }));
+    setMastery((prev) => ({ ...prev, [cardId]: state }));
     try {
-      await apiSend(`/api/flashcards/cards/${cardId}/mastery`, 'PUT', { status });
+      await apiSend(`/api/flashcards/cards/${cardId}/mastery`, 'PUT', { status: state });
     } catch {
       setMastery((prev) => {
         const next = { ...prev };
-        if (previousStatus) next[cardId] = previousStatus;
-        else delete next[cardId];
+        if (previous) next[cardId] = previous; else delete next[cardId];
         return next;
       });
-      toast.error('Could not save your progress');
+      toast.error('Your mark could not be saved. Check your connection and try again.');
       return;
     } finally {
       setSavingMastery(false);
     }
-    if (onlyLearning && status === 'KNOWN') {
+    if (onlyLearning && state === 'KNOWN') {
       setFlipped(false);
       setOrder((prev) => {
         const next = prev.filter((card) => card.id !== cardId);
-        setIndex((currentIndex) => Math.min(currentIndex, Math.max(0, next.length - 1)));
+        setIndex((i) => Math.min(i, Math.max(0, next.length - 1)));
         return next;
       });
-    } else {
-      goNext();
+    } else if (index < order.length - 1) {
+      move(1);
     }
   };
 
+  // Space/Enter flips, arrows move. Typing in a field or using a control is left alone.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (!order.length || event.metaKey || event.ctrlKey || event.altKey) return;
       const target = event.target as HTMLElement | null;
-      if (target?.closest('button, a, input, textarea, select, [contenteditable="true"]')) return;
-      if (event.key === ' ' || event.key === 'Enter') {
-        event.preventDefault();
-        setFlipped((value) => !value);
-      } else if (event.key === 'ArrowRight') {
-        setFlipped(false);
-        setIndex((value) => Math.min(value + 1, order.length - 1));
-      } else if (event.key === 'ArrowLeft') {
-        setFlipped(false);
-        setIndex((value) => Math.max(value - 1, 0));
-      }
+      const onStage = target === stageRef.current;
+      if (!onStage && target?.closest('button, a, input, textarea, select, [role="tab"], [contenteditable="true"]')) return;
+      if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); setFlipped((v) => !v); }
+      else if (event.key === 'ArrowRight') { event.preventDefault(); move(1); }
+      else if (event.key === 'ArrowLeft') { event.preventDefault(); move(-1); }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order.length]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <span className="animate-spin rounded-full h-6 w-6 border-2 border-aubergine-600 border-t-transparent mr-2"></span>
-        <span className="text-muted-foreground">Loading deck…</span>
-      </div>
-    );
-  }
+  const registerRows = deck.cards.filter((card) => {
+    if (filter === 'ALL') return true;
+    if (filter === 'KNOWN') return mastery[card.id] === 'KNOWN';
+    return mastery[card.id] !== 'KNOWN';
+  });
 
-  if (!deck) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        <p>Deck not found, or it isn't assigned to your class.</p>
-        <Button variant="outline" className="mt-4" render={<Link to={listUrl} />}>Back to Flashcards</Button>
-      </div>
-    );
-  }
+  const masteryAside = isStudent && deck.cards.length > 0 ? (
+    <div className="w-full max-w-[17rem] sm:w-auto">
+      <TallyMarks total={deck.cards.length} known={counts.known} learning={counts.learning} />
+      <p className="mt-1.5 text-xs text-muted-foreground tabular-nums">
+        <span className="font-semibold text-foreground">{counts.known}</span> known · {counts.learning} still learning · {counts.fresh} new
+      </p>
+    </div>
+  ) : undefined;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-10">
-      <div className="flex items-center gap-3 flex-wrap">
-        <Button aria-label="Back" variant="ghost" size="icon" render={<Link to={listUrl} />}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1 min-w-[160px]">
-          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Layers className="h-5 w-5 text-aubergine-600" /> {deck.title}
-          </h1>
-          <p className="text-xs text-muted-foreground">By {deck.authorName || deck.teacherName || 'Teacher'}{deck.subject ? ` · ${deck.subject.name}` : ''}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" render={<Link to={quizUrl} />}><Brain className="mr-1.5 h-3.5 w-3.5" /> Quiz</Button>
-          <Button size="sm" variant="outline" render={<Link to={matchUrl} />}><Grid3x3 className="mr-1.5 h-3.5 w-3.5" /> Match</Button>
-          <Button size="sm" variant="outline" render={<Link to={spellUrl} />}><SpellCheck className="mr-1.5 h-3.5 w-3.5" /> Spell</Button>
-        </div>
-      </div>
-
-      {isStudent && deck.cards.length > 0 && (
-        <div className="flex items-center justify-between gap-3 text-sm">
-          <span className="text-muted-foreground">{knownCount} of {deck.cards.length} cards known</span>
-          <Button size="sm" variant="outline" onClick={toggleOnlyLearning}>
-            {onlyLearning ? 'Study all cards' : 'Study still learning'}
-          </Button>
-        </div>
-      )}
-
-      {order.length === 0 ? (
-        <div className="bg-card border border-border rounded-sm p-12 text-center text-muted-foreground">
-          {onlyLearning ? (
-            <>
-              <CheckCircle2 className="h-10 w-10 mx-auto text-emerald-400 mb-2" />
-              <p>You know every card in this deck. Nice work!</p>
-              <Button variant="outline" size="sm" className="mt-3" onClick={toggleOnlyLearning}>Study all cards anyway</Button>
-            </>
-          ) : (
-            'This deck has no cards yet.'
-          )}
-        </div>
+    <DeckShell deck={deck} routes={routes} aside={masteryAside}>
+      {deck.cards.length === 0 ? (
+        <StatePanel title="This deck has no cards yet" body="When your teacher adds cards, they'll appear here." />
+      ) : order.length === 0 ? (
+        <StatePanel
+          title="You know every card in this deck"
+          body="Take the quiz to check, or study the whole deck again."
+          action={<Button variant="outline" onClick={toggleOnlyLearning}>Study all cards</Button>}
+        />
       ) : (
-        <>
-          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-            <div className="h-full bg-aubergine-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
-          </div>
-          <p className="text-center text-sm text-muted-foreground">Card {index + 1} of {order.length}</p>
-
-          {/* Flip card, wrapped in an animated electric border for a bit of flair */}
-          <ElectricBorder color="#7a3dff" speed={1} chaos={0.08} borderRadius={16} className="w-full" style={{}}>
+        <section aria-label="Study cards">
+          {/* The stage: an index card with its number in the ledger margin. */}
+          <div className="grid grid-cols-[3rem_minmax(0,1fr)] border border-border bg-card sm:grid-cols-[4.5rem_minmax(0,1fr)]">
+            <div className="flex flex-col items-center border-r border-academic-coral/60 py-5" aria-hidden="true">
+              <span className="text-xl font-semibold tabular-nums tracking-tight text-foreground sm:text-2xl">{pad2(deckNumber.get(current.id) ?? index + 1)}</span>
+              {isStudent && mastery[current.id] && (
+                <span className={`mt-2 block h-4 w-[3px] ${mastery[current.id] === 'KNOWN' ? 'bg-academic-teal' : 'bg-academic-coral'}`} />
+              )}
+            </div>
             <button
+              ref={stageRef}
               type="button"
               onClick={() => setFlipped((f) => !f)}
-              className="w-full [perspective:1200px] group block"
-              aria-label="Flip card"
+              aria-describedby="stage-hint"
+              className="group relative min-h-[18rem] w-full text-left outline-none [perspective:1400px] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50 sm:min-h-[20rem]"
             >
+              <span className="sr-only">{flipped ? 'Showing the definition. Press to show the term.' : 'Showing the term. Press to show the definition.'}</span>
               <div
-                className="relative w-full min-h-[260px] transition-transform duration-500 [transform-style:preserve-3d]"
-                style={{ transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+                className={`relative h-full min-h-[inherit] w-full [transform-style:preserve-3d] ${reducedMotion ? '' : 'transition-transform duration-300 ease-out'}`}
+                style={{ transform: flipped && !reducedMotion ? 'rotateY(180deg)' : undefined }}
               >
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8 rounded-sm border border-border bg-card shadow-sm [backface-visibility:hidden]">
-                  {current?.imageUrl && (
-                    <img src={current.imageUrl} alt="" className="max-h-32 rounded-lg object-contain" />
-                  )}
-                  <p className="text-xl font-semibold text-foreground text-center"><MathText>{current?.term}</MathText></p>
-                </div>
-                <div
-                  className="absolute inset-0 flex items-center justify-center p-8 rounded-sm border border-aubergine-200 dark:border-aubergine-900/40 bg-aubergine-50 dark:bg-aubergine-900/10 shadow-sm [backface-visibility:hidden]"
-                  style={{ transform: 'rotateY(180deg)' }}
-                >
-                  <p className="text-lg text-foreground text-center"><MathText>{current?.definition}</MathText></p>
-                </div>
+                <Face side="Term" hidden={flipped} reducedMotion={reducedMotion}>
+                  {current.imageUrl && <img src={current.imageUrl} alt="" className="max-h-36 w-auto object-contain" />}
+                  <p className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl [overflow-wrap:anywhere]"><MathText>{current.term}</MathText></p>
+                </Face>
+                <Face side="Definition" hidden={!flipped} back reducedMotion={reducedMotion}>
+                  <p className="max-w-[60ch] text-lg leading-relaxed text-foreground sm:text-xl [overflow-wrap:anywhere]"><MathText>{current.definition}</MathText></p>
+                </Face>
               </div>
             </button>
-          </ElectricBorder>
-          <p className="text-center text-xs text-muted-foreground">Tap the card or press Space to flip · Arrow keys move between cards</p>
-
-          <div className="flex items-center justify-between gap-3">
-            <Button variant="outline" onClick={goPrev} disabled={index === 0}>
-              <ChevronLeft className="mr-1 h-4 w-4" /> Prev
-            </Button>
-            <div className="flex items-center gap-2">
-              <Button aria-label="Shuffle" variant="ghost" size="icon" onClick={reshuffle} title="Shuffle">
-                <Shuffle className="h-4 w-4" />
-              </Button>
-              <Button aria-label="Restart in order" variant="ghost" size="icon" onClick={restartInOrder} title="Restart in order">
-                <RotateCw className="h-4 w-4" />
-              </Button>
-            </div>
-            <Button variant="outline" onClick={goNext} disabled={index === order.length - 1}>
-              Next <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
           </div>
 
-          {isStudent && current && (
-            <div className="flex items-center justify-center gap-3">
-              <Button
-                variant="outline"
-                className={mastery[current.id] === 'LEARNING' ? 'border-amber-400 text-amber-700' : ''}
-                onClick={() => markMastery('LEARNING')}
-                disabled={savingMastery}
-              >
-                <Circle className="mr-2 h-4 w-4" /> Still learning
+          {/* One control bar: navigation, order, and the student's tally. */}
+          <div className="flex flex-wrap items-center gap-2 border-x border-b border-border bg-card px-2 py-2 sm:px-3">
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" aria-label="Previous card" onClick={() => move(-1)} disabled={index === 0}>
+                <ChevronLeft className="h-5 w-5" />
               </Button>
-              <Button
-                variant="outline"
-                className={mastery[current.id] === 'KNOWN' ? 'border-emerald-400 text-emerald-700' : ''}
-                onClick={() => markMastery('KNOWN')}
-                disabled={savingMastery}
-              >
-                <CheckCircle2 className="mr-2 h-4 w-4" /> Know it
+              <span className="min-w-[4.5rem] text-center text-sm font-semibold tabular-nums text-foreground" aria-live="polite">
+                {index + 1} / {order.length}
+              </span>
+              <Button variant="ghost" size="icon" aria-label="Next card" onClick={() => move(1)} disabled={index === order.length - 1}>
+                <ChevronRight className="h-5 w-5" />
               </Button>
             </div>
+            <div className="flex items-center gap-1 border-l border-border pl-2">
+              <Button variant="ghost" size="icon" aria-label="Shuffle cards" title="Shuffle cards" onClick={reshuffle}>
+                <Shuffle className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" aria-label="Restart in deck order" title="Restart in deck order" onClick={restartInOrder}>
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </div>
+            {isStudent && (
+              <div className="ml-auto flex w-full gap-2 sm:w-auto">
+                <TallyButton tone="learning" pressed={mastery[current.id] === 'LEARNING'} count={counts.learning} disabled={savingMastery} onClick={() => markMastery('LEARNING')}>
+                  Still learning
+                </TallyButton>
+                <TallyButton tone="known" pressed={mastery[current.id] === 'KNOWN'} count={counts.known} disabled={savingMastery} onClick={() => markMastery('KNOWN')}>
+                  Know it
+                </TallyButton>
+              </div>
+            )}
+          </div>
+          <ProgressRule value={index + 1} max={order.length} label="Cards studied this round" />
+          <p id="stage-hint" className="mt-2 text-xs text-muted-foreground">
+            Tap the card or press Space to flip. Use the arrow keys to move between cards.
+          </p>
+          {isStudent && counts.known > 0 && (
+            <label className="mt-3 inline-flex min-h-10 cursor-pointer items-center gap-2 text-sm text-foreground">
+              <input type="checkbox" className="h-4 w-4 accent-[var(--color-academic-teal)]" checked={onlyLearning} onChange={toggleOnlyLearning} />
+              Skip cards I know
+            </label>
           )}
-        </>
+        </section>
       )}
+
+      {deck.cards.length > 0 && (
+        <section className="mt-10" aria-labelledby="register-heading">
+          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-foreground pb-2">
+            <h2 id="register-heading" className="text-lg font-semibold tracking-tight text-foreground">All cards</h2>
+            {isStudent && (
+              <div role="radiogroup" aria-label="Show cards" className="flex border border-border bg-card">
+                {([['ALL', `All ${deck.cards.length}`], ['LEARNING', `Not known ${deck.cards.length - counts.known}`], ['KNOWN', `Known ${counts.known}`]] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={filter === value}
+                    onClick={() => setFilter(value)}
+                    className={`min-h-9 border-r border-border px-3 text-sm font-medium tabular-nums last:border-r-0 ${filter === value ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {registerRows.length === 0 ? (
+            <p className="py-6 text-sm text-muted-foreground">{filter === 'KNOWN' ? 'No cards marked as known yet.' : 'Nothing left to learn here.'}</p>
+          ) : (
+            <ol className="divide-y divide-border border-b border-border bg-card">
+              {registerRows.map((card) => {
+                const state = mastery[card.id];
+                const isCurrent = card.id === current?.id;
+                return (
+                  <li key={card.id}>
+                    <button
+                      type="button"
+                      onClick={() => jumpTo(card.id)}
+                      aria-current={isCurrent ? 'true' : undefined}
+                      className={`grid w-full grid-cols-[3rem_minmax(0,1fr)] gap-y-1 py-3 pr-4 text-left transition-colors hover:bg-accent/40 sm:grid-cols-[4.5rem_minmax(0,14rem)_minmax(0,1fr)_6.5rem] sm:items-baseline ${isCurrent ? 'bg-accent/50' : ''}`}
+                    >
+                      <span className="row-span-2 flex items-start justify-center gap-1.5 pt-0.5 text-sm font-semibold tabular-nums text-muted-foreground sm:row-span-1">
+                        {pad2(deckNumber.get(card.id) ?? 0)}
+                      </span>
+                      <span className="font-semibold text-foreground [overflow-wrap:anywhere]"><MathText>{card.term}</MathText></span>
+                      <span className="text-sm text-muted-foreground [overflow-wrap:anywhere] sm:pl-4"><MathText>{card.definition}</MathText></span>
+                      {isStudent && (
+                        <span className="col-start-2 flex items-center gap-1.5 text-xs font-medium sm:col-start-auto sm:justify-end">
+                          <span aria-hidden="true" className={`block h-3.5 w-[3px] ${state === 'KNOWN' ? 'bg-academic-teal' : state === 'LEARNING' ? 'bg-academic-coral' : 'bg-border'}`} />
+                          <span className={state === 'KNOWN' ? 'text-accent-foreground' : state === 'LEARNING' ? 'text-foreground' : 'text-muted-foreground'}>
+                            {state === 'KNOWN' ? 'Known' : state === 'LEARNING' ? 'Still learning' : 'New'}
+                          </span>
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </section>
+      )}
+    </DeckShell>
+  );
+}
+
+function Face({
+  side, hidden, back = false, reducedMotion, children,
+}: { side: string; hidden: boolean; back?: boolean; reducedMotion: boolean; children: React.ReactNode }) {
+  // With reduced motion the faces swap in place; otherwise they turn.
+  if (reducedMotion && hidden) return null;
+  return (
+    <div
+      aria-hidden={hidden}
+      className={`flex min-h-[inherit] w-full flex-col items-center justify-center gap-4 px-6 py-10 text-center sm:px-10 ${reducedMotion ? '' : 'absolute inset-0 overflow-y-auto [backface-visibility:hidden]'}`}
+      style={!reducedMotion && back ? { transform: 'rotateY(180deg)' } : undefined}
+    >
+      <span className="absolute left-4 top-3 text-xs font-medium text-muted-foreground">{side}</span>
+      {children}
     </div>
+  );
+}
+
+function TallyButton({
+  tone, pressed, count, disabled, onClick, children,
+}: { tone: 'known' | 'learning'; pressed: boolean; count: number; disabled: boolean; onClick: () => void; children: React.ReactNode }) {
+  const mark = tone === 'known' ? 'bg-academic-teal' : 'bg-academic-coral';
+  const pressedStyle = tone === 'known'
+    ? 'border-academic-teal bg-accent text-accent-foreground'
+    : 'border-academic-coral bg-academic-coral/12 text-foreground';
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-pressed={pressed}
+      className={`inline-flex min-h-11 flex-1 items-center justify-center gap-2 border px-3.5 text-sm font-semibold transition-colors disabled:opacity-60 sm:flex-none ${pressed ? pressedStyle : 'border-input bg-card text-foreground hover:bg-muted'}`}
+    >
+      <span aria-hidden="true" className={`block h-4 w-[3px] ${mark}`} />
+      {children}
+      <span className="tabular-nums text-muted-foreground" aria-label={`${count} cards`}>{count}</span>
+    </button>
   );
 }

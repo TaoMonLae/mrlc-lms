@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { Layers, BookOpen, Brain, Grid3x3, SpellCheck, CheckCircle2, RefreshCw } from 'lucide-react';
-import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 import { apiGet } from '../../lib/api';
+import { RetryButton, StatePanel, TallyMarks } from './shared';
 
 interface DeckRow {
   id: string;
@@ -20,81 +18,81 @@ interface DeckRow {
 
 export default function StudentFlashcardDecks() {
   const [decks, setDecks] = useState<DeckRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
 
   const load = () => {
-    setLoading(true);
-    setError(false);
+    setStatus('loading');
     apiGet<DeckRow[]>('/api/flashcards/my-decks')
-      .then((d) => setDecks(Array.isArray(d) ? d : []))
-      .catch((e: any) => { setError(true); toast.error(e?.message || 'Failed to load flashcard decks'); })
-      .finally(() => setLoading(false));
+      .then((d) => { setDecks(Array.isArray(d) ? d : []); setStatus('ready'); })
+      .catch(() => setStatus('error'));
   };
   useEffect(load, []);
 
+  const totalCards = decks.reduce((sum, d) => sum + d.cardCount, 0);
+  const totalKnown = decks.reduce((sum, d) => sum + Math.min(d.knownCount, d.cardCount), 0);
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-          <Layers className="h-6 w-6 text-aubergine-600" />
-          Flashcards
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Study decks your teachers have assigned to your class.
-        </p>
+    <div className="mx-auto w-full max-w-4xl space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Flashcards</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Decks your teachers assigned to your class.</p>
+        </div>
+        {status === 'ready' && totalCards > 0 && (
+          <p className="text-sm text-muted-foreground tabular-nums">
+            <span className="text-lg font-semibold text-foreground">{totalKnown}</span> of {totalCards} cards known
+          </p>
+        )}
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="ml-3 text-muted-foreground">Loading…</span>
-        </div>
-      ) : error ? (
-        <div className="bg-card border border-border rounded-sm p-12 text-center">
-          <p className="text-muted-foreground">Couldn't load your assigned decks.</p>
-          <Button variant="outline" className="mt-4" onClick={load}><RefreshCw className="mr-2 h-4 w-4" /> Try Again</Button>
-        </div>
-      ) : decks.length === 0 ? (
-        <div className="bg-card border border-border rounded-sm p-12 text-center">
-          <Layers className="h-12 w-12 mx-auto text-slate-200 mb-3" />
-          <p className="text-lg font-medium text-foreground">No decks assigned yet</p>
-          <p className="text-sm text-muted-foreground">Check back once your teacher assigns a flashcard deck to your class.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {decks.map((d) => (
-            <div
-              key={d.id}
-              className="bg-card border border-border rounded-sm shadow-sm p-5"
-            >
-              <h3 className="font-semibold text-foreground">{d.title}</h3>
-              {d.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{d.description}</p>}
-              <div className="flex items-center gap-2 flex-wrap mt-3">
-                <Badge variant="outline" className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> {d.cardCount} card{d.cardCount === 1 ? '' : 's'}</Badge>
-                {d.subject && <Badge variant="outline">{d.subject.name}</Badge>}
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">By {d.authorName || d.teacherName || 'Teacher'}</p>
-              {d.cardCount > 0 && (
-                <div className="mt-3 space-y-1.5">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Mastery</span>
-                    <span>{d.knownCount} / {d.cardCount} ({Math.round((d.knownCount / d.cardCount) * 100)}%)</span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(100, Math.round((d.knownCount / d.cardCount) * 100))}%` }} />
-                  </div>
-                </div>
-              )}
-              <div className="flex items-center gap-1.5 flex-wrap mt-3 pt-3 border-t border-border">
-                <Button size="sm" variant="outline" className="h-7 px-2 text-xs" render={<Link to={`/student/flashcards/${d.id}`} />}>Study</Button>
-                <Button size="sm" variant="outline" className="h-7 px-2 text-xs" render={<Link to={`/student/flashcards/${d.id}/quiz`} />}><Brain className="mr-1 h-3 w-3" /> Quiz</Button>
-                <Button size="sm" variant="outline" className="h-7 px-2 text-xs" render={<Link to={`/student/flashcards/${d.id}/match`} />}><Grid3x3 className="mr-1 h-3 w-3" /> Match</Button>
-                <Button size="sm" variant="outline" className="h-7 px-2 text-xs" render={<Link to={`/student/flashcards/${d.id}/spell`} />}><SpellCheck className="mr-1 h-3 w-3" /> Spell</Button>
-              </div>
+      {status === 'loading' ? (
+        <div className="divide-y divide-border border border-border bg-card" aria-busy="true">
+          <span className="sr-only">Loading your decks…</span>
+          {[0, 1].map((i) => (
+            <div key={i} className="space-y-2 px-5 py-5">
+              <div className="h-5 w-1/2 bg-muted motion-safe:animate-pulse" />
+              <div className="h-3 w-1/3 bg-muted motion-safe:animate-pulse" />
             </div>
           ))}
         </div>
+      ) : status === 'error' ? (
+        <StatePanel tone="error" title="Your decks couldn't be loaded" body="Check your connection and try again." action={<RetryButton onClick={load} />} />
+      ) : decks.length === 0 ? (
+        <StatePanel title="No decks assigned yet" body="When a teacher assigns a flashcard deck to your class, it will appear here." />
+      ) : (
+        <ol className="divide-y divide-border border-y border-foreground bg-card">
+          {decks.map((d) => {
+            const known = Math.min(d.knownCount, d.cardCount);
+            const toLearn = d.cardCount - known;
+            return (
+              <li key={d.id} className="grid gap-3 px-4 py-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,15rem)] sm:gap-6 sm:px-5">
+                <div className="min-w-0">
+                  <Link to={`/student/flashcards/${d.id}`} className="group inline-flex items-baseline gap-2 text-lg font-semibold tracking-tight text-foreground hover:text-accent-foreground">
+                    <span className="[overflow-wrap:anywhere] group-hover:underline">{d.title}</span>
+                    <ArrowRight className="h-4 w-4 shrink-0 translate-y-0.5 text-muted-foreground group-hover:text-accent-foreground" aria-hidden="true" />
+                  </Link>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    {[d.subject?.name, `${d.cardCount} card${d.cardCount === 1 ? '' : 's'}`, `by ${d.authorName || d.teacherName || 'your teacher'}`].filter(Boolean).join(' · ')}
+                  </p>
+                  {d.description && <p className="mt-2 line-clamp-2 text-sm text-foreground">{d.description}</p>}
+                  <nav aria-label={`Practise ${d.title}`} className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+                    <Link className="inline-flex min-h-9 items-center text-accent-foreground hover:text-foreground" to={`/student/flashcards/${d.id}/quiz`}>Quiz</Link>
+                    <Link className="inline-flex min-h-9 items-center text-accent-foreground hover:text-foreground" to={`/student/flashcards/${d.id}/match`}>Match</Link>
+                    <Link className="inline-flex min-h-9 items-center text-accent-foreground hover:text-foreground" to={`/student/flashcards/${d.id}/spell`}>Spell</Link>
+                  </nav>
+                </div>
+                {d.cardCount > 0 && (
+                  <div className="sm:pt-1.5">
+                    <TallyMarks total={d.cardCount} known={known} learning={0} label={`${known} of ${d.cardCount} cards known`} />
+                    <p className="mt-1.5 text-sm tabular-nums text-muted-foreground">
+                      {toLearn === 0 ? <span className="font-semibold text-accent-foreground">All {d.cardCount} known</span> : <><span className="font-semibold text-foreground">{known}</span> known · {toLearn} to learn</>}
+                    </p>
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ol>
       )}
     </div>
   );

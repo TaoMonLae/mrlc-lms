@@ -14892,8 +14892,7 @@ async function startServer() {
       // default SPA handler would respond before the fallback below runs.
       appType: "custom",
     });
-    app.use(vite.middlewares);
-    app.get("*", async (req, res, next) => {
+    const serveDevHtml = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
       const url = req.originalUrl;
       if (url.startsWith("/api/")) {
         res.status(404).json({ error: "Not found" });
@@ -14912,7 +14911,25 @@ async function startServer() {
         vite.ssrFixStacktrace(e as Error);
         next(e);
       }
+    };
+    // A browser navigation to an app route (e.g. /flashcards) must get the SPA
+    // shell. Without this, Vite resolves the URL to a same-named root module
+    // (flashcards.ts) and returns server source instead of the page.
+    app.use((req, res, next) => {
+      const accept = String(req.headers.accept || "");
+      if (
+        req.method === "GET" &&
+        accept.includes("text/html") &&
+        !path.extname(req.path) &&
+        !/^\/(@|src\/|node_modules\/)/.test(req.path)
+      ) {
+        void serveDevHtml(req, res, next);
+        return;
+      }
+      next();
     });
+    app.use(vite.middlewares);
+    app.get("*", serveDevHtml);
   } else {
     const distPath = path.join(process.cwd(), "dist");
     const distAssetsPath = path.join(distPath, "assets");
