@@ -1,546 +1,297 @@
 ---
-version: alpha
-name: Discord Analysis
-description: An analysis of Discord's design language — a loud, playful gaming-native system built on a deep-indigo canvas lit by Blurple, electric green, and vibrant magenta gradients. Heavy ABC Ginto Nord display type shouts in all-caps over generously rounded media, gradient feature panels, and full-bleed Blurple bands; the mood is arcade-energetic, never corporate.
-
+name: MRLC LMS
+description: School Operations Fieldbook. A flat, ruled school ledger with a navy spine, gold for action and teal for selection, built for daily staff work in English, Burmese and Mon.
 colors:
-  primary: "#5865f2"
-  on-primary: "#ffffff"
-  green: "#35ed7e"
-  magenta: "#ec48bd"
-  link: "#00b0f4"
-  canvas: "#0a0d3a"
-  surface-indigo: "#1e2353"
-  surface-onyx: "#23272a"
-  surface-black: "#000000"
-  ink: "#ffffff"
-  ink-dark: "#000000"
-  muted: "#333333"
-  hairline: "#23272a"
-
+  fieldbook-paper: "#f0f1ec"
+  fieldbook-sheet: "#ffffff"
+  fieldbook-ink: "#101b27"
+  card-ink: "#172033"
+  fieldbook-rule: "#cfd5d2"
+  input-rule: "#c4cbc8"
+  sage-wash: "#e5e8e3"
+  slate-caption: "#5d6a72"
+  academic-gold: "#f2b84b"
+  academic-navy-deep: "#0c2538"
+  academic-navy: "#19324d"
+  academic-teal: "#168c83"
+  teal-wash: "#dcefeb"
+  teal-ink: "#126a65"
+  academic-coral: "#e97961"
+  academic-sky: "#4e91bd"
+  link-blue: "#347da7"
+  signal-red: "#d65445"
+  spine-navy: "#102b3b"
+  spine-active: "#244b56"
+  spine-active-line: "#83d8c1"
+  spine-text: "#bdcdd7"
+  dark-canvas: "#101720"
+  dark-sheet: "#18232f"
+  dark-raised: "#22313f"
+  dark-rule: "#304252"
+  dark-ink: "#f4f7fa"
+  dark-caption: "#a9b7c6"
+  dark-gold: "#f4c86e"
+  dark-teal: "#55b7ae"
 typography:
-  display-xl:
-    fontFamily: ABC Ginto Nord
-    fontSize: 82px
-    fontWeight: 800
-    lineHeight: 1.0
-    letterSpacing: 0
-  display-lg:
-    fontFamily: ABC Ginto Nord
-    fontSize: 62px
-    fontWeight: 800
-    lineHeight: 1.05
-    letterSpacing: 0
-  display-md:
-    fontFamily: ABC Ginto Nord
-    fontSize: 56px
-    fontWeight: 700
-    lineHeight: 1.05
-    letterSpacing: 0
-  heading-lg:
-    fontFamily: ABC Ginto Nord
-    fontSize: 48px
-    fontWeight: 700
-    lineHeight: 1.1
-    letterSpacing: 0
-  heading-sm:
-    fontFamily: ABC Ginto Nord
-    fontSize: 22px
+  display:
+    fontFamily: "'IBM Plex Sans Variable', 'Geist Variable', system-ui, sans-serif"
+    fontSize: "3rem"
+    fontWeight: 600
+    lineHeight: 0.98
+    letterSpacing: "-0.04em"
+  headline:
+    fontFamily: "'IBM Plex Sans Variable', 'Geist Variable', system-ui, sans-serif"
+    fontSize: "1.5rem"
     fontWeight: 700
     lineHeight: 1.2
-    letterSpacing: 0
-  body-lg:
-    fontFamily: ABC Ginto
-    fontSize: 20px
-    fontWeight: 500
-    lineHeight: 1.4
-    letterSpacing: 0
-  link-lg:
-    fontFamily: ABC Ginto
-    fontSize: 18px
-    fontWeight: 500
-    lineHeight: 1.4
-    letterSpacing: 0
+    letterSpacing: "-0.025em"
+  title:
+    fontFamily: "'IBM Plex Sans Variable', 'Geist Variable', system-ui, sans-serif"
+    fontSize: "1.125rem"
+    fontWeight: 600
+    lineHeight: 1.3
+    letterSpacing: "-0.02em"
   body:
-    fontFamily: ggsans
-    fontSize: 16px
+    fontFamily: "'IBM Plex Sans Variable', 'Geist Variable', system-ui, sans-serif"
+    fontSize: "0.875rem"
     fontWeight: 400
     lineHeight: 1.5
-    letterSpacing: 0
-  link:
-    fontFamily: ABC Ginto
-    fontSize: 16px
-    fontWeight: 500
-    lineHeight: 1.4
-    letterSpacing: 0
-  link-sm:
-    fontFamily: ABC Ginto
-    fontSize: 14px
-    fontWeight: 500
-    lineHeight: 1.4
-    letterSpacing: 0
-
+    fontFeature: "'cv02', 'cv03', 'cv04', 'cv11', 'tnum'"
+  label:
+    fontFamily: "'IBM Plex Sans Variable', 'Geist Variable', system-ui, sans-serif"
+    fontSize: "0.6875rem"
+    fontWeight: 600
+    lineHeight: 1.2
+    letterSpacing: "0.14em"
+  myanmar-body:
+    fontFamily: "'Padauk', 'Noto Sans Myanmar', 'Myanmar Text', 'Inter', system-ui, sans-serif"
+    lineHeight: 1.9
+  myanmar-display:
+    fontFamily: "'Khit Haungg', 'Noto Sans Myanmar', system-ui, sans-serif"
+    fontWeight: 700
+    lineHeight: 1.6
 rounded:
-  xs: 6px
-  sm: 12px
-  md: 14px
-  lg: 16px
-  xl: 40px
-  pill: 50px
-  jumbo: 120px
-  full: 9999px
-
+  none: "0px"
+  sm: "4px"
+  md: "6px"
+  lg: "8px"
 spacing:
-  xxs: 4px
-  xs: 8px
-  sm: 12px
-  md: 16px
-  lg: 20px
-  xl: 24px
-  xxl: 32px
-  section: 40px
-
+  xs: "4px"
+  sm: "8px"
+  md: "16px"
+  lg: "24px"
+  xl: "32px"
 components:
-  nav-bar:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink}"
-    typography: "{typography.link}"
-    padding: "{spacing.md} {spacing.xl}"
   button-primary:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.on-primary}"
-    typography: "{typography.link-lg}"
+    backgroundColor: "{colors.academic-gold}"
+    textColor: "{colors.academic-navy-deep}"
     rounded: "{rounded.sm}"
-    padding: "{spacing.lg} {spacing.xl}"
-  button-green:
-    backgroundColor: "{colors.green}"
-    textColor: "{colors.ink-dark}"
-    typography: "{typography.link-lg}"
+    padding: "0 14px"
+    height: "40px"
+  button-primary-hover:
+    backgroundColor: "{colors.academic-coral}"
+    textColor: "{colors.academic-navy-deep}"
+  button-outline:
+    backgroundColor: "{colors.fieldbook-sheet}"
+    textColor: "{colors.fieldbook-ink}"
     rounded: "{rounded.sm}"
-    padding: "{spacing.sm} {spacing.xl}"
-  button-white:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.ink-dark}"
-    typography: "{typography.link}"
-    rounded: "{rounded.lg}"
-    padding: "{spacing.xs} {spacing.md}"
-  button-ghost:
-    backgroundColor: "{colors.surface-indigo}"
-    textColor: "{colors.ink}"
-    typography: "{typography.link}"
-    rounded: "{rounded.lg}"
-    padding: "{spacing.md}"
-  button-ghost-sm:
-    backgroundColor: "{colors.surface-indigo}"
-    textColor: "{colors.ink}"
-    typography: "{typography.link-sm}"
-    rounded: "{rounded.xs}"
-    padding: "{spacing.sm} {spacing.xxl}"
-  hero:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink}"
-    typography: "{typography.display-xl}"
-    padding: "{spacing.section}"
-  feature-card-gradient:
-    backgroundColor: "{colors.magenta}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.xl}"
-    padding: "{spacing.section}"
-  feature-card-dark:
-    backgroundColor: "{colors.surface-indigo}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.xl}"
-    padding: "{spacing.xxl}"
-  showcase-band-black:
-    backgroundColor: "{colors.surface-black}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.xl}"
-    padding: "{spacing.section}"
-  stat-card:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.ink}"
-    typography: "{typography.display-md}"
-    rounded: "{rounded.xl}"
-    padding: "{spacing.xxl}"
-  step-card:
-    backgroundColor: "{colors.magenta}"
-    textColor: "{colors.ink}"
-    typography: "{typography.heading-sm}"
-    rounded: "{rounded.lg}"
-    padding: "{spacing.xl}"
-  cta-band:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.ink}"
-    typography: "{typography.display-md}"
-    rounded: "{rounded.xl}"
-    padding: "{spacing.section}"
-  marquee-band:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.ink}"
-    typography: "{typography.display-lg}"
-    padding: "{spacing.lg}"
-  pricing-table:
-    backgroundColor: "{colors.surface-indigo}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body}"
-    rounded: "{rounded.lg}"
-    padding: "{spacing.xl}"
-  game-rank-feature:
-    backgroundColor: "{colors.surface-indigo}"
-    textColor: "{colors.ink}"
-    typography: "{typography.heading-sm}"
-    rounded: "{rounded.lg}"
-    padding: "{spacing.md}"
-  game-rank-row:
-    backgroundColor: "{colors.surface-indigo}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body}"
-    rounded: "{rounded.md}"
-    padding: "{spacing.sm} {spacing.md}"
-  faq-accordion:
-    backgroundColor: "{colors.surface-indigo}"
-    textColor: "{colors.ink}"
-    typography: "{typography.link-lg}"
-    rounded: "{rounded.lg}"
-    padding: "{spacing.xl}"
+    padding: "0 14px"
+    height: "40px"
+  button-outline-hover:
+    backgroundColor: "{colors.fieldbook-ink}"
+    textColor: "{colors.fieldbook-paper}"
+  button-ghost-hover:
+    backgroundColor: "{colors.sage-wash}"
+    textColor: "{colors.fieldbook-ink}"
+  input:
+    backgroundColor: "{colors.fieldbook-sheet}"
+    textColor: "{colors.fieldbook-ink}"
+    rounded: "{rounded.sm}"
+    padding: "4px 12px"
+    height: "40px"
+  card:
+    backgroundColor: "{colors.fieldbook-sheet}"
+    textColor: "{colors.card-ink}"
+    rounded: "{rounded.sm}"
+    padding: "16px"
   badge:
-    backgroundColor: "{colors.magenta}"
-    textColor: "{colors.ink}"
-    typography: "{typography.link-sm}"
-    rounded: "{rounded.lg}"
-    padding: "{spacing.xxs} {spacing.sm}"
-  footer:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink}"
-    typography: "{typography.link}"
-    padding: "{spacing.section}"
-
-  # ─── Examples (illustrative) — auto-derived; resolve any TO_FILL markers below ───
-  ex-pricing-tier:
-    description: "Default Pricing tier card. Re-uses feature-card chrome with brand canvas-soft surface."
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink}"
-    borderColor: "{colors.hairline}"
-    rounded: "{rounded.lg}"
-    padding: "{spacing.xl}"
-  ex-pricing-tier-featured:
-    description: "Featured/highlighted tier — polarity-flipped surface (dark fill + light text in light mode, light fill + dark text in dark mode)."
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.on-primary}"
-    rounded: "{rounded.lg}"
-    padding: "{spacing.xl}"
-  ex-product-selector:
-    description: "What's Included summary card — re-purposed for SaaS / B2B verticals (NOT a literal product gallery)."
-    backgroundColor: "{colors.canvas}"
-    rounded: "{rounded.lg}"
-    padding: "{spacing.xl}"
-  ex-cart-drawer:
-    description: "Subscription summary — re-purposed for SaaS / B2B (line items per add-on, not literal cart)."
-    backgroundColor: "{colors.canvas}"
-    rounded: "{rounded.lg}"
-    padding: "{spacing.xl}"
-    item-divider: "{colors.hairline}"
-  ex-app-shell-row:
-    description: "Sidebar nav row inside the App Shell example. Active state uses brand primary as the indicator."
-    backgroundColor: "{colors.canvas}"
-    activeIndicator: "{colors.primary}"
+    rounded: "{rounded.sm}"
+    padding: "2px 8px"
+    height: "20px"
+  nav-row:
+    backgroundColor: "{colors.spine-navy}"
+    textColor: "{colors.spine-text}"
     rounded: "{rounded.md}"
-    padding: "{spacing.sm} {spacing.md}"
-  ex-data-table-cell:
-    description: "Default data-table th + td chrome. Header uses small link-caps typography; body uses body."
-    headerBackground: "{colors.surface-indigo}"
-    headerTypography: "{typography.link-sm}"
-    bodyTypography: "{typography.body}"
-    cellPadding: "{spacing.sm} {spacing.md}"
-    rowBorder: "{colors.hairline}"
-  ex-auth-form-card:
-    description: "Sign-in / sign-up card. Re-uses feature-card chrome with text-input primitives inside."
-    backgroundColor: "{colors.canvas}"
-    rounded: "{rounded.lg}"
-    padding: "{spacing.xl}"
-  ex-modal-card:
-    description: "Modal dialog surface — same chrome as feature-card with elevated shadow."
-    backgroundColor: "{colors.canvas}"
-    rounded: "{rounded.lg}"
-    padding: "{spacing.xl}"
-  ex-empty-state-card:
-    description: "Empty-state illustration frame."
-    backgroundColor: "{colors.canvas}"
-    rounded: "{rounded.lg}"
-    padding: "{spacing.section}"
-    captionTypography: "{typography.body}"
-  ex-toast:
-    description: "Toast notification surface — feature-card shape + medium shadow."
-    backgroundColor: "{colors.canvas}"
-    rounded: "{rounded.lg}"
-    padding: "{spacing.sm} {spacing.md}"
-    typography: "{typography.body}"
-
+    padding: "0 10px"
+    height: "36px"
+  nav-row-active:
+    backgroundColor: "{colors.spine-active}"
+    textColor: "#d6fff4"
+  top-bar:
+    backgroundColor: "{colors.fieldbook-sheet}"
+    height: "72px"
+    padding: "0 32px"
 ---
 
+# Design System: MRLC LMS
 
 ## Overview
 
-Discord's marketing design is loud on purpose. The pages live on a deep-indigo canvas (`{colors.canvas}` — #0a0d3a) that is rarely still: it is washed by an animated mesh of Blurple, violet, and vibrant magenta, then punctuated by full-bleed gradient bands and oversized rounded media. Where most product sites whisper in restrained neutrals, Discord shouts in heavy all-caps ABC Ginto Nord, stacks playful 3D character art, and lets a single electric green CTA (`{colors.green}`) pop against the cool indigo. The whole system reads like an arcade cabinet: energetic, saturated, unmistakably gaming-native.
+**Creative North Star: "School Operations Fieldbook"**
 
-The brand anchor is **Blurple** (`{colors.primary}` — #5865f2) — Discord's signature indigo-violet. It owns the primary CTA, the marquee and CTA bands, stat cards, and the brand mark. Around it orbit two supporting accents: the electric **green** (`{colors.green}`) used for the highest-intent "get started" actions, and a vibrant **magenta** (`{colors.magenta}` — #ec48bd) that fills the gradient feature panels and step cards. Surfaces stack in cool darks — the indigo canvas, a raised indigo panel (`{colors.surface-indigo}`), an onyx UI card (`{colors.surface-onyx}`), and pure black (`{colors.surface-black}`) showcase bands.
+MRLC LMS is a working school's record book. Each screen should read like a well-kept ledger page: pale paper, white sheets laid on it, hairline rules where a ledger would rule, and one dark navy spine down the side. Depth comes from rules and hierarchy, not from floating cards, glows or gradients. The system was locked on 31 August 2026 ([docs/ui/REFERO-UI-AUDIT.md](docs/ui/REFERO-UI-AUDIT.md)). It replaced a generic grid of rounded, shadowed cards with purple gradients, and that look is the confirmed anti-reference.
 
-Geometry is soft and generous. Everyday controls round at `{rounded.sm}` (12px) and `{rounded.lg}` (16px); media tiles and feature panels bow out at `{rounded.xl}` (40px) and beyond; the most expressive shapes reach `{rounded.jumbo}` (120px) and pill caps. Nothing is sharp. The result is friendly, toy-like, and built to make software feel like play.
+The density is operational. Staff move through attendance, exams, fees and cases all day, so controls are 40px tall, text is compact, and pages are connected strips and tables, not tiles of equal weight. Personality comes from precise details: tight display type with negative tracking, uppercase micro-labels in teal, a coral block that marks what needs attention today, and the gold button that means "do this".
+
+Burmese and Mon text uses the same system. The ledger structure stays the same, but line heights open up so stacked Myanmar-script glyphs never clip.
 
 **Key Characteristics:**
-- Deep-indigo canvas (`{colors.canvas}`) lit by an animated Blurple-to-magenta gradient mesh — never a flat or neutral background.
-- One iconic brand colour: Blurple (`{colors.primary}`) owns CTAs, bands, and the brand mark; electric green (`{colors.green}`) is reserved for highest-intent actions.
-- Vibrant magenta (`{colors.magenta}`) gradient feature panels and step cards carry the playful, saturated energy.
-- Heavy all-caps display type in `{typography.display-xl}` (ABC Ginto Nord 800) shouting over generously rounded media.
-- Soft, toy-like geometry: 12–16px on controls, 40px+ on media, up to `{rounded.jumbo}` on signature shapes.
-- Page rhythm: dark-indigo hero → gradient + dark feature cards → black showcase band → Blurple marquee/CTA band → giant wordmark footer.
+- Flat paper and sheet surfaces, with 1px rules instead of shadows
+- Low, square corners (4px by default, 0 on ruled forms)
+- Every color has one job: gold for the primary action, teal for selection and links, coral for priority, navy for structure
+- IBM Plex Sans throughout, with tabular numerals
+- A navy spine that stays fixed in light and dark themes
+- Light theme by default, with a layered blue-grey dark theme (never pure black)
 
 ## Colors
 
-> Source pages analyzed: home, ads/quests, nitro, trending-games. Blurple, green, magenta, white display type, and the deep-indigo canvas recur on every page; nitro adds the pricing table, trending-games adds the ranked game list.
+A muted paper-and-ink ground with three hard-working accents, each with one job.
 
-### Brand & Accent
-- **Blurple** (`{colors.primary}` — #5865f2): The iconic brand colour. Primary CTA fill, marquee and CTA bands, stat cards, brand mark. The single most-used action colour.
-- **Electric Green** (`{colors.green}` — #35ed7e): Reserved for the highest-intent CTA ("get started" / "download"), always paired with `{colors.ink-dark}` text.
-- **Vibrant Magenta** (`{colors.magenta}` — #ec48bd): The saturated pink that fills gradient feature panels, step cards, and badges — the playful counterweight to the cool indigo.
-- **Link Cyan** (`{colors.link}` — #00b0f4): Inline text-link colour on dark surfaces.
+### Primary
+- **Ledger Gold** (academic-gold): The primary action and nothing else. Default buttons, the skip link, the sidebar focus outline and unread dots. In dark mode it lifts to Lamplight Gold (dark-gold).
+- **Fieldbook Teal** (academic-teal): Selection, navigation, links and focus rings. Micro-labels above section titles, link buttons, active filters and chart series 1. Teal Wash (teal-wash) with Deep Teal Ink (teal-ink) form the selected-row and accent surface. In dark mode it lifts to Lagoon Teal (dark-teal).
 
-### Surface
-- **Indigo Canvas** (`{colors.canvas}` — #0a0d3a): The deep-indigo page base, washed by the animated brand-gradient mesh.
-- **Raised Indigo** (`{colors.surface-indigo}` — #1e2353): One step up from canvas — dark feature cards, pricing table, game-rank rows, ghost buttons.
-- **Onyx** (`{colors.surface-onyx}` — #23272a): Discord's classic dark-UI surface; product-chrome cards and dividers.
-- **Black** (`{colors.surface-black}` — #000000): Full-black showcase bands framing product media.
+### Secondary
+- **Harbour Navy** (academic-navy-deep, academic-navy): Structure. The strong border around the dashboard field note, text on gold, and the dark ground of the app's identity. The sidebar uses Spine Navy (spine-navy), with Spine Teal (spine-active) and Mint Line (spine-active-line) for the active row.
 
-### Text
-- **White** (`{colors.ink}` — #ffffff): All display and body text on the dark canvas. The dominant text colour.
-- **Ink** (`{colors.ink-dark}` — #000000): Text on light fills — the white button and green CTA.
-- **Muted Ink** (`{colors.muted}` — #333333): Secondary text on the occasional light surface (white product-mockup cards).
+### Tertiary
+- **Priority Coral** (academic-coral): What needs attention today. The dashboard's priority block, case-queue labels and the primary button's hover. It means priority, never error.
+- **Survey Sky** (academic-sky) and **Record Blue** (link-blue): Informational and chart secondary series only.
 
-### Brand Gradient
-The hero and feature panels ride an animated mesh that sweeps from `{colors.primary}` (Blurple) through a deep violet into the vibrant `{colors.magenta}`, resolving back into the `{colors.canvas}` indigo at the edges. It is the brand's defining atmospheric signature — always in motion, never a flat fill.
+### Neutral
+- **Fieldbook Paper** (fieldbook-paper): App background, ruled every 48px on the workspace canvas.
+- **Sheet White** (fieldbook-sheet): Cards, tables, inputs, popovers and the top bar.
+- **Fieldbook Ink** (fieldbook-ink) / **Card Ink** (card-ink): Body text on paper and on sheets.
+- **Field Rule** (fieldbook-rule) / **Input Rule** (input-rule): Borders, dividers and input strokes.
+- **Sage Wash** (sage-wash): Secondary and muted surfaces, and ghost-button hover.
+- **Slate Caption** (slate-caption): Supporting text and metadata.
+- **Signal Red** (signal-red): Destructive actions and validation errors, usually as a 10% tint with red text.
+- Dark theme: Night Canvas (dark-canvas), Night Sheet (dark-sheet), Night Raised (dark-raised), Night Rule (dark-rule), Night Ink (dark-ink), Night Caption (dark-caption).
+
+### Named Rules
+**The One Job Rule.** Gold is for the primary action only, teal marks selection and navigation, coral marks priority, navy carries structure. Never swap them, and never use gold as decoration.
+
+**The No-Purple Rule.** Purple and indigo gradients were deliberately removed from the school app. The legacy `aubergine-*` utility names now resolve to teal; don't reintroduce violet.
 
 ## Typography
 
-### Font Family
-- **ABC Ginto Nord** — the heavy display face. All marketing headlines, set in 700–800 weight, frequently all-caps. Wide, confident, slightly condensed character that reads as "gaming."
-- **ABC Ginto** — the lighter companion for lead paragraphs, links, and buttons (weight 500).
-- **ggsans** — Discord's in-product UI sans, used for dense body copy (16px / 400).
+**Display Font:** IBM Plex Sans Variable (with Geist Variable, system-ui)
+**Body Font:** IBM Plex Sans Variable
+**Myanmar/Mon Body:** Padauk (with Noto Sans Myanmar), applied when `lang` is `my` or `mnw`
+**Myanmar/Mon Display:** Khit Haungg, used only for News headlines
 
-**Note on font substitutes:** ABC Ginto Nord and ggsans are proprietary. For an open-source rebuild, pair a heavy geometric grotesque — **Hanken Grotesk** or **Space Grotesk** at 700–800 — for display, with **Inter** or **Plus Jakarta Sans** for body and UI. Keep headlines bold and tracked tight; the loud, confident display weight is the brand's voice.
+**Character:** An institutional sans with real character. It is set tight and heavy for headlines and small and tracked for labels, so pages read like a printed register. Numbers use tabular figures everywhere, so columns of marks and fees line up.
 
 ### Hierarchy
+- **Display** (600, 3rem rising to 3.75rem on large screens, line-height 0.98, -0.04em): The dashboard field-note headline and hero metrics. Big counts go up to 4.5rem at -0.07em.
+- **Headline** (700, 1.5rem, tight tracking): Page titles (h1), sitting at the top of each workspace page.
+- **Title** (600, 1.125rem, -0.02em): Section headers inside ledgers, which sit on a dark bottom rule.
+- **Body** (400, 0.875rem, 1.5): Most UI text, table cells and form text. Inputs are 1rem on mobile to prevent zoom.
+- **Label** (600, 10 to 11px, 0.1 to 0.16em, uppercase): Teal micro-labels above titles, column headers, badges and meta lines.
 
-| Token | Size | Weight | Line Height | Letter Spacing | Use |
-|---|---|---|---|---|---|
-| `{typography.display-xl}` | 82px | 800 | 1.0 | 0 | Hero headline (all-caps) |
-| `{typography.display-lg}` | 62px | 800 | 1.05 | 0 | Marquee band, major headline |
-| `{typography.display-md}` | 56px | 700 | 1.05 | 0 | Section headline, CTA band |
-| `{typography.heading-lg}` | 48px | 700 | 1.1 | 0 | Sub-section heading |
-| `{typography.heading-sm}` | 22px | 700 | 1.2 | 0 | Card heading, step label |
-| `{typography.body-lg}` | 20px | 500 | 1.4 | 0 | Lead paragraph |
-| `{typography.link-lg}` | 18px | 500 | 1.4 | 0 | Large button label, prominent link |
-| `{typography.body}` | 16px | 400 | 1.5 | 0 | Default body copy (ggsans) |
-| `{typography.link}` | 16px | 500 | 1.4 | 0 | Nav link, button label |
-| `{typography.link-sm}` | 14px | 500 | 1.4 | 0 | Small link, badge, fine print |
+### Named Rules
+**The Tracked Label Rule.** Uppercase with letter-spacing is reserved for labels of 11px or less. Headlines are never uppercase, and body text is never tracked.
 
-### Principles
-- Headlines are short, declarative, and frequently ALL-CAPS in ABC Ginto Nord 800 — the loudest element on every page.
-- Body copy drops to the lighter ABC Ginto / ggsans 400–500 so the display type stays the hero.
-- The display-to-body weight jump (800 → 400/500) is dramatic on purpose; there is no timid mid-weight in between.
+**The Script Room Rule.** When Burmese or Mon is active, headings go to line-height 1.6, running text to 1.9 and controls to 1.7, and tracking resets to normal. Never apply Latin tight leading to Myanmar script.
 
 ## Layout
 
-### Spacing System
-- **Base unit**: 8px.
-- **Tokens**: `{spacing.xxs}` 4px · `{spacing.xs}` 8px · `{spacing.sm}` 12px · `{spacing.md}` 16px · `{spacing.lg}` 20px · `{spacing.xl}` 24px · `{spacing.xxl}` 32px · `{spacing.section}` 40px.
-- Card interiors run `{spacing.xl}`–`{spacing.section}`; buttons pad `{spacing.sm}`–`{spacing.lg}` vertical by `{spacing.xl}` horizontal.
+Each page has the navy sidebar on the left, a 72px white top bar, and a ruled paper workspace. Content is capped at 1680px and padded 16px on mobile, 24px from `sm` and 32px from `xl`. Sections are spaced 24px apart (`space-y-6`).
 
-### Grid & Container
-- Centered max-width content column (~1200px) on the full-bleed indigo canvas.
-- Feature sections alternate a two-column split (text + media) with stacked full-width gradient/dark cards.
-- Marquee, CTA, and showcase bands are full-bleed colour fields with their own rounded inner containers.
+Pages are built from **connected strips**, not floating tiles. A metric strip is one bordered sheet split into 2 or 4 columns by internal rules. Notice boards are grids whose cells share borders, using a border on the right and top of each cell inside an outer border on the bottom and left. Two-column work areas use roughly a 1.7 : 0.7 split, with the main ledger on the left and a narrow queue on the right.
 
-### Whitespace Philosophy
-Sections breathe through large vertical gaps of indigo, then collide with saturated colour bands for rhythm. Inside cards, generous padding lets oversized 3D art and product mockups float with air.
-
-### Responsive Strategy
-
-#### Breakpoints
-| Name | Width | Key Changes |
-|---|---|---|
-| Mobile | < 768px | Single column; nav collapses to logo + hamburger; CTAs stack full-width |
-| Tablet | 768–1023px | Two-column splits begin stacking; gradient cards go full-width |
-| Laptop | 1024–1279px | Container narrows; multi-column grids retained |
-| Desktop | ≥ 1280px | Full multi-column grids; centered ~1200px column |
-
-(Discord ships an unusually dense breakpoint ladder — dozens of stops between 240px and ~2000px — to keep the oversized display type and 3D art balanced at every width.)
-
-#### Touch Targets
-`{components.button-primary}` and `{components.button-green}` clear ≥44px tap height via their vertical padding. Nav links and game-rank rows meet the same minimum on mobile.
-
-#### Collapsing Strategy
-The dark top nav (logo · links · Login · Download CTA) collapses to logo + hamburger below 768px. Two-column feature rows stack media-over-text; gradient and dark cards span full width. The nitro pricing table becomes horizontally scrollable; the trending-games ranked list keeps its row layout but drops secondary columns.
-
-#### Image Behavior
-Product mockups and 3D character art sit inside rounded media frames (`{rounded.lg}`–`{rounded.xl}`) or bleed past card edges as decorative props. Media scales fluidly within its container and keeps its corner radius at every width.
+Breakpoints are the Tailwind defaults (640, 768, 1024, 1280 and 1536px). Below 768px the sidebar becomes a sheet, nav rows grow to 42px and touch targets are at least 44px.
 
 ## Elevation & Depth
 
-| Level | Treatment | Use |
-|---|---|---|
-| 0 — Flat | No shadow; separation by colour field + large radius | Most cards, colour bands |
-| 1 — Soft float | `0 3px 68px rgba(69,42,124,0.1)` — wide, violet-tinted, very diffuse | Floating media cards, elevated mockups |
+The system is flat by doctrine. App-wide CSS removes `shadow-*` utilities and card shadows inside `.mrlc-app-shell`, and flattens `rounded-xl` and larger back to the base radius. Depth comes from three things: paper versus sheet (pale ground, white surface), 1px rules (Field Rule in general and Fieldbook Ink under section headers), and the dark navy spine. The workspace canvas has a faint horizontal rule every 48px, like ledger paper. In dark mode, depth comes from stepping the surfaces (Night Canvas, then Night Sheet, then Night Raised), never from shadow.
 
-Discord leans on **colour, gradient, and radius** for depth far more than on shadow. The one extracted shadow is a wide, violet-tinted diffuse glow that lifts product media off the indigo canvas without a hard edge.
-
-### Decorative Depth
-- The animated Blurple-to-magenta gradient mesh creates depth by motion and hue rather than shadow.
-- 3D character art and product props overlap card edges to build foreground/background layering.
-- Full-bleed colour bands (Blurple, black) push depth by contrast against the indigo scroll.
+### Named Rules
+**The Ruled Not Raised Rule.** Separate things with a rule or a surface change, never a shadow. A shadow on a school-app surface is a defect, apart from popovers that must float over content.
 
 ## Shapes
 
-### Border Radius Scale
-
-| Token | Value | Use |
-|---|---|---|
-| `{rounded.xs}` | 6px | Small ghost buttons, compact chips |
-| `{rounded.sm}` | 12px | Primary / green CTA buttons, links, table cells |
-| `{rounded.md}` | 14px | Game-rank rows, mid controls |
-| `{rounded.lg}` | 16px | White / ghost buttons, cards, media frames |
-| `{rounded.xl}` | 40px | Gradient feature panels, large media tiles |
-| `{rounded.pill}` | 50px | Pill caps, badges, avatar chips |
-| `{rounded.jumbo}` | 120px | Signature oversized rounded shape cards |
-| `{rounded.full}` | 9999px | Circular avatars and icon buttons |
-
-### Photography Geometry
-Media is presented at soft-cornered rectangles (`{rounded.lg}`–`{rounded.xl}`), never hard-edged. The hero media block uses a directional bottom-only radius (88px bottom corners) for a swooping base. Avatars and circular icon controls are fully round.
+The corners are square-ish. The base radius is 4px, used on buttons, inputs, cards and badges. Navigation rows use 6px and sidebar flyouts 5 to 7px. The dashboard's field note and ledger strips have square corners (0). Ruled record forms, such as the timetable form, also set inputs and selects to 0. Pills appear only for avatars, status dots and the scrollbar thumb.
 
 ## Components
 
-> No hover states documented. Component specs cover Default and Active/Pressed only; variants are separate `components:` entries.
-
 ### Buttons
+Decisive and rectangular. The primary button is a gold block you can't miss.
+- **Shape:** Gently squared corners (4px), 40px tall (32px small, 44px large), 600 weight, 14px text.
+- **Primary:** Ledger Gold fill and border with Harbour Navy text. Use one per view, for the main action (for example "New registration").
+- **Hover / Focus:** Primary hover turns the whole button Priority Coral. Focus shows a 2px teal ring at 35%. On press, the button nudges down 1px.
+- **Outline:** Sheet White with a 25% ink border. On hover it inverts fully to ink with paper text.
+- **Ghost / Secondary:** Sage Wash on hover, or Sage Wash as the resting fill.
+- **Link:** Teal text with an underline on hover.
+- **Destructive:** A 10% red tint with Signal Red text, never a solid red block.
 
-**`button-primary`** — the Blurple pill CTA
-- Background `{colors.primary}`, text `{colors.on-primary}`, type `{typography.link-lg}`, rounded `{rounded.sm}`, padding `{spacing.lg} {spacing.xl}`. The everyday action button across hero and feature sections.
+### Chips / Badges
+- **Style:** 20px tall, 4px corners, 10px uppercase text tracked 0.07em, weight 600. Status reads as a tinted fill with matching text.
 
-**`button-green`** — the electric-green high-intent CTA ("Get Started" / "Download")
-- Background `{colors.green}`, text `{colors.ink-dark}`, type `{typography.link-lg}`, rounded `{rounded.sm}`, padding `{spacing.sm} {spacing.xl}`. The highest-visibility action; black label for contrast.
+### Cards / Containers
+- **Corner Style:** 4px (the `rounded-sm` default), or square for ledger strips.
+- **Background:** Sheet White on Fieldbook Paper.
+- **Shadow Strategy:** None (see Elevation).
+- **Border:** 1px Field Rule. Key panels use a Harbour Navy border.
+- **Internal Padding:** 16px (12px small). Ledger headers are 16 to 20px with a dark bottom rule.
 
-**`button-white`** — white solid button
-- Background `{colors.ink}`, text `{colors.ink-dark}`, type `{typography.link}`, rounded `{rounded.lg}`, padding `{spacing.xs} {spacing.md}`.
-
-**`button-ghost`** — translucent indigo button on dark surfaces
-- Background `{colors.surface-indigo}`, text `{colors.ink}`, type `{typography.link}`, rounded `{rounded.lg}`, padding `{spacing.md}`.
-
-**`button-ghost-sm`** — compact ghost button (quests CTA row)
-- Background `{colors.surface-indigo}`, text `{colors.ink}`, type `{typography.link-sm}`, rounded `{rounded.xs}`, padding `{spacing.sm} {spacing.xxl}`.
-
-### Cards & Containers
-
-**`hero`** — dark-indigo hero
-- Indigo `{colors.canvas}` field with the animated gradient mesh, white `{colors.ink}` all-caps headline at `{typography.display-xl}`, lead paragraph, and a CTA pair. The hero media block carries a swooping bottom-only radius.
-
-**`feature-card-gradient`** — vibrant magenta gradient feature panel
-- Background `{colors.magenta}` gradient, white text, `{rounded.xl}` (40px), padding `{spacing.section}`. Frames a product mockup or 3D prop.
-
-**`feature-card-dark`** — raised dark feature card
-- Background `{colors.surface-indigo}`, white text, `{rounded.xl}`, padding `{spacing.xxl}`. Holds product screenshots / chat mockups.
-
-**`showcase-band-black`** — full-black product showcase band
-- Background `{colors.surface-black}`, white text, `{rounded.xl}`, padding `{spacing.section}`. Frames a hero product demo.
-
-**`stat-card`** — big-number stat card (quests)
-- Background `{colors.primary}` (Blurple), white text, headline at `{typography.display-md}`, `{rounded.xl}`, padding `{spacing.xxl}`.
-
-**`step-card`** — numbered step panel (1/2/3 process)
-- Background `{colors.magenta}` gradient, white text, label at `{typography.heading-sm}`, `{rounded.lg}`, padding `{spacing.xl}`.
-
-**`cta-band`** — full-bleed Blurple CTA band
-- Background `{colors.primary}`, white headline at `{typography.display-md}`, `{rounded.xl}`, padding `{spacing.section}`, with a `button-white` or `button-green` CTA.
-
-**`marquee-band`** — scrolling all-caps marquee ("PLAY · CHAT · HANG OUT")
-- Background `{colors.primary}`, white display text at `{typography.display-lg}`, padding `{spacing.lg}`.
-
-**`faq-accordion`** — collapsible FAQ row (nitro)
-- Background `{colors.surface-indigo}`, white text, question at `{typography.link-lg}`, `{rounded.lg}`, padding `{spacing.xl}`.
-
-### Inputs & Forms
-
-> Discord's marketing pages surface no standalone text inputs; forms route to the app. The kit-mirror `ex-*` form surfaces below model inputs against the brand's `{rounded.lg}` surfaces and `{colors.surface-indigo}` fills.
+### Inputs / Fields
+- **Style:** 40px tall, Sheet White fill, 1px Input Rule stroke, 4px corners, no shadow.
+- **Focus:** The border turns teal with a 2px teal ring at 30%.
+- **Error / Disabled:** Red border with a 20% red ring. Disabled fields fade to 50% on an input-tinted fill.
 
 ### Navigation
+The school sidebar is the Harbour Navy spine.
+- Group headings are 10px uppercase in muted blue-grey.
+- Rows are 36px tall with 13px text and 17px line icons (stroke 1.6).
+- On hover, a row gets a faint white wash.
+- The active row has a Spine Teal fill, mint text and a 2px Mint Line on its left edge.
+- Child menus indent under a hairline guide.
+- Keyboard focus shows a 2px gold outline.
+- Collapsed mode shows a flyout of 240px.
+- The top bar is white and 72px tall, with a 40px search field on paper that shows a ⌘K hint.
 
-**`nav-bar`** — dark top navigation
-- Indigo `{colors.canvas}` bar, white `{colors.ink}` links at `{typography.link}`, padding `{spacing.md} {spacing.xl}`. Slots: Discord logo · text links · "Login" · a Blurple/green Download CTA. Collapses to logo + hamburger on mobile.
+### Field Note and Priority Block (signature)
+The dashboard opens with a single sheet with a navy border, split into two parts:
+- **Left:** a teal micro-label, a large tight headline and the actions.
+- **Right:** a 300px **Priority Coral** block that shows the day's count in very large numerals.
 
-**`footer`** — dark link footer
-- Indigo `{colors.canvas}`, white links at `{typography.link}`, padding `{spacing.section}`, organized into multi-column link groups above a giant "Discord" wordmark.
-
-### Signature Components
-
-**`pricing-table`** — nitro plan comparison table
-- Raised-indigo `{colors.surface-indigo}` surface, body text at `{typography.body}`, `{rounded.lg}`, padding `{spacing.xl}`. Two plan columns (Nitro Basic / Nitro) with the popular tier carrying a `{colors.magenta}` badge, each row ending in a `button-primary` "Subscribe".
-
-**`game-rank-feature`** — top-ranked game card (trending-games #1/#2/#3)
-- Raised-indigo `{colors.surface-indigo}` card, large media, rank number + title at `{typography.heading-sm}`, `{rounded.lg}`, padding `{spacing.md}`.
-
-**`game-rank-row`** — ranked game list row
-- Raised-indigo `{colors.surface-indigo}`, body text at `{typography.body}`, `{rounded.md}`, padding `{spacing.sm} {spacing.md}`. Rank · icon · title · metadata columns.
-
-**`badge`** — small rounded tag / category chip
-- Background `{colors.magenta}`, white text at `{typography.link-sm}`, `{rounded.lg}`, padding `{spacing.xxs} {spacing.sm}`.
-
-### Examples (illustrative)
-
-> Auto-derived kit-mirror demonstration surfaces (`scripts/derive-examples-block.mjs`). Each `ex-*` entry references brand-native primitives so downstream consumers (`/preview-design`, `/generate-kit`) re-skin the same 10 surfaces consistently. `TO_FILL` markers indicate missing primitives — resolve in the LLM judgment pass.
-
-**`ex-pricing-tier`** — Default Pricing tier card. Re-uses feature-card chrome with brand canvas-soft surface.
-- Properties: `backgroundColor`, `textColor`, `borderColor`, `rounded`, `padding`
-
-**`ex-pricing-tier-featured`** — Featured/highlighted tier — polarity-flipped surface (dark fill + light text in light mode, light fill + dark text in dark mode).
-- Properties: `backgroundColor`, `textColor`, `rounded`, `padding`
-
-**`ex-product-selector`** — What's Included summary card — re-purposed for SaaS / B2B verticals (NOT a literal product gallery).
-- Properties: `backgroundColor`, `rounded`, `padding`
-
-**`ex-cart-drawer`** — Subscription summary — re-purposed for SaaS / B2B (line items per add-on, not literal cart).
-- Properties: `backgroundColor`, `rounded`, `padding`, `item-divider`
-
-**`ex-app-shell-row`** — Sidebar nav row inside the App Shell example. Active state uses brand primary as the indicator.
-- Properties: `backgroundColor`, `activeIndicator`, `rounded`, `padding`
-
-**`ex-data-table-cell`** — Default data-table th + td chrome. Header uses mono-caps eyebrow typography; body uses body-sm.
-- Properties: `headerBackground`, `headerTypography`, `bodyTypography`, `cellPadding`, `rowBorder`
-
-**`ex-auth-form-card`** — Sign-in / sign-up card. Re-uses feature-card chrome with text-input primitives inside.
-- Properties: `backgroundColor`, `rounded`, `padding`
-
-**`ex-modal-card`** — Modal dialog surface — same chrome as feature-card with elevated shadow.
-- Properties: `backgroundColor`, `rounded`, `padding`
-
-**`ex-empty-state-card`** — Empty-state illustration frame.
-- Properties: `backgroundColor`, `rounded`, `padding`, `captionTypography`
-
-**`ex-toast`** — Toast notification surface — feature-card shape + medium shadow.
-- Properties: `backgroundColor`, `rounded`, `padding`, `typography`
-
+Under it sit the connected metric strip and a shared-border notice board, whose cells take a 45% teal wash on hover. This is the reference composition for operational overviews.
 
 ## Do's and Don'ts
 
-### Do
-- Lead with the deep-indigo canvas (`{colors.canvas}`) and let the animated Blurple-to-magenta gradient carry atmosphere.
-- Reserve `{colors.green}` for the single highest-intent CTA on a page; use `{colors.primary}` Blurple for everything else action-related.
-- Shout with `{typography.display-xl}` ABC Ginto Nord in all-caps for headlines; drop hard to `{typography.body}` for copy.
-- Round generously — `{rounded.sm}`–`{rounded.lg}` on controls, `{rounded.xl}`+ on media and feature panels.
-- Frame product mockups inside `{colors.magenta}` gradient panels or `{colors.surface-indigo}` dark cards.
-- Let 3D character art and props overlap card edges to build playful depth.
+### Do:
+- **Do** keep one gold primary action per view, with navy text on gold.
+- **Do** use teal for whatever is selected, active, linked or focused.
+- **Do** build overviews from connected strips and shared-border grids on Sheet White, separated by 1px rules.
+- **Do** put a teal uppercase micro-label (10 to 11px, tracked 0.1 to 0.16em) above section titles.
+- **Do** keep tabular numerals on for marks, fees, counts and dates.
+- **Do** test every new surface in Burmese and Mon and let the script line heights apply.
+- **Do** keep the dark theme blue-grey (Night Canvas #101720 and above).
 
-### Don't
-- Don't flatten the canvas to a neutral grey or pure black — the indigo + gradient mesh is the brand.
-- Don't use `{colors.green}` as a general accent; it is the high-intent CTA only.
-- Don't set headlines in a timid mid-weight — display type is 700–800 ABC Ginto Nord or it loses the brand voice.
-- Don't square off media or cards; the soft `{rounded.xl}`+ geometry is core to the playful tone.
-- Don't lean on drop shadows for depth; depth comes from colour, gradient, and overlapping art.
-- Don't introduce a fourth loud accent — Blurple, green, and magenta are the full chord.
+### Don't:
+- **Don't** use drop shadows, glows, blur or gradient panels in the school app.
+- **Don't** use radii above 8px, or pill-shaped buttons, on school-app surfaces.
+- **Don't** reintroduce purple or indigo gradients, or floating circular assistant buttons.
+- **Don't** fill a dashboard with a grid of equal-weight floating cards.
+- **Don't** use coral for errors or red for priority. They are separate signals.
+- **Don't** bring Learning Quest's Poppins, 45px pill buttons or bright gradients into the school app.
+
+### Scoped worlds (outside this system)
+These areas have their own design documents and are excluded from the rules above, inside their own wrappers:
+- **Learning Quest** (`.lq-mesh`): [docs/language-quest/DESIGN-Languagequest.md](docs/language-quest/DESIGN-Languagequest.md). It uses Poppins, larger radii and vivid colour.
+- **Games:** game scenes keep their own colour art.
+- **Finance:** [docs/finance/DESIGN.md](docs/finance/DESIGN.md) extends Fieldbook for the finance workflow and does not replace it.
+- **News:** uses Khit Haungg for Myanmar headlines ([docs/ui/NEWS-REDESIGN.md](docs/ui/NEWS-REDESIGN.md)).
+
+The previous root file, an analysis of Discord's style, is kept as a reference at [docs/ui/reference-discord.md](docs/ui/reference-discord.md). It is not part of this system.

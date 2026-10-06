@@ -1,0 +1,661 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-06T03:03:15Z",
+  "title": "Design System: MRLC LMS",
+  "extensions": {
+    "colorMeta": {
+      "fieldbook-paper": {
+        "role": "neutral",
+        "displayName": "Fieldbook Paper",
+        "canonical": "#f0f1ec",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#242422",
+          "#3f403d",
+          "#5d5e5a",
+          "#7d7e79",
+          "#9e9f9b",
+          "#c4c4c1",
+          "#eeefec"
+        ]
+      },
+      "fieldbook-sheet": {
+        "role": "neutral",
+        "displayName": "Sheet White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#242424",
+          "#404040",
+          "#5d5d5d",
+          "#7d7d7d",
+          "#9e9e9e",
+          "#c4c4c4",
+          "#eeeeee"
+        ]
+      },
+      "fieldbook-ink": {
+        "role": "neutral",
+        "displayName": "Fieldbook Ink",
+        "canonical": "#101b27",
+        "tonalRamp": [
+          "#070c12",
+          "#1d252d",
+          "#37414c",
+          "#535f6c",
+          "#727f8d",
+          "#94a0ad",
+          "#bbc5d1",
+          "#e7eff9"
+        ]
+      },
+      "card-ink": {
+        "role": "neutral",
+        "displayName": "Card Ink",
+        "canonical": "#172033",
+        "tonalRamp": [
+          "#070b14",
+          "#1e2431",
+          "#374051",
+          "#535e72",
+          "#727d94",
+          "#949fb3",
+          "#bbc4d6",
+          "#e7effe"
+        ]
+      },
+      "fieldbook-rule": {
+        "role": "neutral",
+        "displayName": "Field Rule",
+        "canonical": "#cfd5d2",
+        "tonalRamp": [
+          "#0a0c0b",
+          "#222523",
+          "#3d413f",
+          "#5a5f5c",
+          "#797f7c",
+          "#9ba09d",
+          "#c1c5c3",
+          "#ecefee"
+        ]
+      },
+      "input-rule": {
+        "role": "neutral",
+        "displayName": "Input Rule",
+        "canonical": "#c4cbc8",
+        "tonalRamp": [
+          "#090c0b",
+          "#212523",
+          "#3c413f",
+          "#595f5d",
+          "#797f7c",
+          "#9aa09d",
+          "#c0c5c3",
+          "#ebefee"
+        ]
+      },
+      "sage-wash": {
+        "role": "neutral",
+        "displayName": "Sage Wash",
+        "canonical": "#e5e8e3",
+        "tonalRamp": [
+          "#0a0c0a",
+          "#232522",
+          "#3e403d",
+          "#5c5e5a",
+          "#7c7e7a",
+          "#9d9f9b",
+          "#c3c5c1",
+          "#edefec"
+        ]
+      },
+      "slate-caption": {
+        "role": "neutral",
+        "displayName": "Slate Caption",
+        "canonical": "#5d6a72",
+        "tonalRamp": [
+          "#070c0f",
+          "#1e252a",
+          "#384147",
+          "#546067",
+          "#737f87",
+          "#95a0a8",
+          "#bcc6cc",
+          "#e8f0f5"
+        ]
+      },
+      "academic-gold": {
+        "role": "primary",
+        "displayName": "Ledger Gold",
+        "canonical": "#f2b84b",
+        "tonalRamp": [
+          "#1b0400",
+          "#3b1b00",
+          "#5e3600",
+          "#835200",
+          "#a67200",
+          "#c4963f",
+          "#e6bd79",
+          "#ffeab3"
+        ]
+      },
+      "academic-navy-deep": {
+        "role": "secondary",
+        "displayName": "Harbour Navy",
+        "canonical": "#0c2538",
+        "tonalRamp": [
+          "#030c15",
+          "#162633",
+          "#2e4253",
+          "#496175",
+          "#678197",
+          "#8aa2b6",
+          "#b3c7d9",
+          "#e0f1ff"
+        ]
+      },
+      "academic-navy": {
+        "role": "secondary",
+        "displayName": "Harbour Navy (structure)",
+        "canonical": "#19324d",
+        "tonalRamp": [
+          "#030c18",
+          "#152537",
+          "#2d4158",
+          "#47607b",
+          "#65809e",
+          "#89a1bc",
+          "#b2c6de",
+          "#dff1ff"
+        ]
+      },
+      "academic-teal": {
+        "role": "primary",
+        "displayName": "Fieldbook Teal",
+        "canonical": "#168c83",
+        "tonalRamp": [
+          "#082e2d",
+          "#164c49",
+          "#155c58",
+          "#14736d",
+          "#168c83",
+          "#2f918a",
+          "#58aaa3",
+          "#bde0db"
+        ]
+      },
+      "teal-wash": {
+        "role": "primary",
+        "displayName": "Teal Wash",
+        "canonical": "#dcefeb",
+        "tonalRamp": [
+          "#060d0b",
+          "#1d2624",
+          "#364340",
+          "#52615e",
+          "#71817e",
+          "#93a29f",
+          "#bac7c5",
+          "#e7f1ef"
+        ]
+      },
+      "teal-ink": {
+        "role": "primary",
+        "displayName": "Deep Teal Ink",
+        "canonical": "#126a65",
+        "tonalRamp": [
+          "#00100f",
+          "#002c29",
+          "#054a46",
+          "#206a66",
+          "#428c86",
+          "#6eaca6",
+          "#9cd0cb",
+          "#cff8f4"
+        ]
+      },
+      "academic-coral": {
+        "role": "tertiary",
+        "displayName": "Priority Coral",
+        "canonical": "#e97961",
+        "tonalRamp": [
+          "#240000",
+          "#480700",
+          "#702110",
+          "#9a3a27",
+          "#c15a44",
+          "#df816d",
+          "#feac9a",
+          "#ffdccc"
+        ]
+      },
+      "academic-sky": {
+        "role": "tertiary",
+        "displayName": "Survey Sky",
+        "canonical": "#4e91bd",
+        "tonalRamp": [
+          "#000d1f",
+          "#002740",
+          "#0d4464",
+          "#25648a",
+          "#4584ae",
+          "#6fa6cb",
+          "#9dcbeb",
+          "#cff4ff"
+        ]
+      },
+      "link-blue": {
+        "role": "tertiary",
+        "displayName": "Record Blue",
+        "canonical": "#347da7",
+        "tonalRamp": [
+          "#000d1f",
+          "#002840",
+          "#064563",
+          "#21648a",
+          "#4185ae",
+          "#6ca6cb",
+          "#9bcbeb",
+          "#cdf5ff"
+        ]
+      },
+      "signal-red": {
+        "role": "error",
+        "displayName": "Signal Red",
+        "canonical": "#d65445",
+        "tonalRamp": [
+          "#270000",
+          "#4d0000",
+          "#77140d",
+          "#a32f24",
+          "#ca5041",
+          "#e87a6a",
+          "#ffa798",
+          "#ffd7ca"
+        ]
+      },
+      "spine-navy": {
+        "role": "secondary",
+        "displayName": "Spine Navy",
+        "canonical": "#102b3b",
+        "tonalRamp": [
+          "#020d14",
+          "#152631",
+          "#2e4350",
+          "#486172",
+          "#668194",
+          "#8aa2b3",
+          "#b2c8d6",
+          "#e0f1fd"
+        ]
+      },
+      "spine-active": {
+        "role": "secondary",
+        "displayName": "Spine Teal",
+        "canonical": "#244b56",
+        "tonalRamp": [
+          "#000e13",
+          "#10282f",
+          "#27454d",
+          "#40646e",
+          "#5e8490",
+          "#83a5af",
+          "#adcad3",
+          "#dcf3fb"
+        ]
+      },
+      "spine-active-line": {
+        "role": "secondary",
+        "displayName": "Mint Line",
+        "canonical": "#83d8c1",
+        "tonalRamp": [
+          "#00110a",
+          "#002d22",
+          "#004c3d",
+          "#186d5b",
+          "#3c8e7a",
+          "#6aae9b",
+          "#99d2c2",
+          "#cdfaec"
+        ]
+      },
+      "spine-text": {
+        "role": "secondary",
+        "displayName": "Spine Text",
+        "canonical": "#bdcdd7",
+        "tonalRamp": [
+          "#060c10",
+          "#1d252a",
+          "#374148",
+          "#536068",
+          "#728088",
+          "#94a1a9",
+          "#bbc6cd",
+          "#e7f0f6"
+        ]
+      },
+      "dark-canvas": {
+        "role": "neutral",
+        "displayName": "Night Canvas",
+        "canonical": "#101720",
+        "tonalRamp": [
+          "#080b10",
+          "#1f242b",
+          "#3a4049",
+          "#565e69",
+          "#757e89",
+          "#979fa9",
+          "#bec5ce",
+          "#e9eff6"
+        ]
+      },
+      "dark-sheet": {
+        "role": "neutral",
+        "displayName": "Night Sheet",
+        "canonical": "#18232f",
+        "tonalRamp": [
+          "#070c12",
+          "#1d252d",
+          "#37414b",
+          "#535f6c",
+          "#727f8d",
+          "#94a0ad",
+          "#bbc5d1",
+          "#e7eff9"
+        ]
+      },
+      "dark-raised": {
+        "role": "neutral",
+        "displayName": "Night Raised",
+        "canonical": "#22313f",
+        "tonalRamp": [
+          "#060c12",
+          "#1b252e",
+          "#35414d",
+          "#50606e",
+          "#6f7f8f",
+          "#91a0af",
+          "#b9c6d2",
+          "#e5f0fa"
+        ]
+      },
+      "dark-rule": {
+        "role": "neutral",
+        "displayName": "Night Rule",
+        "canonical": "#304252",
+        "tonalRamp": [
+          "#050c13",
+          "#1a252f",
+          "#33424e",
+          "#4e6070",
+          "#6d8091",
+          "#90a1b0",
+          "#b7c6d4",
+          "#e4f0fc"
+        ]
+      },
+      "dark-ink": {
+        "role": "neutral",
+        "displayName": "Night Ink",
+        "canonical": "#f4f7fa",
+        "tonalRamp": [
+          "#0a0b0c",
+          "#232426",
+          "#3e4042",
+          "#5c5e60",
+          "#7b7d80",
+          "#9c9fa1",
+          "#c2c4c6",
+          "#edeff0"
+        ]
+      },
+      "dark-caption": {
+        "role": "neutral",
+        "displayName": "Night Caption",
+        "canonical": "#a9b7c6",
+        "tonalRamp": [
+          "#070c11",
+          "#1d252d",
+          "#37414b",
+          "#535f6b",
+          "#727f8c",
+          "#94a0ac",
+          "#bbc5d0",
+          "#e7eff8"
+        ]
+      },
+      "dark-gold": {
+        "role": "primary",
+        "displayName": "Lamplight Gold",
+        "canonical": "#f4c86e",
+        "tonalRamp": [
+          "#180600",
+          "#361e00",
+          "#573900",
+          "#7b5600",
+          "#9d7617",
+          "#bc9951",
+          "#dec085",
+          "#ffebbc"
+        ]
+      },
+      "dark-teal": {
+        "role": "primary",
+        "displayName": "Lagoon Teal",
+        "canonical": "#55b7ae",
+        "tonalRamp": [
+          "#00110f",
+          "#002d29",
+          "#004c46",
+          "#006d66",
+          "#2d8e86",
+          "#61aea7",
+          "#93d2cb",
+          "#c8fbf4"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Dashboard field-note headline and hero metrics."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page titles (h1)."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section headers over a dark rule."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "UI text, tables and forms, with tabular numerals."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase tracked micro-labels, column headers and badges."
+      },
+      "myanmar-body": {
+        "displayName": "Myanmar/Mon Body",
+        "purpose": "Active when lang is my or mnw. Opens line height for stacked glyphs."
+      },
+      "myanmar-display": {
+        "displayName": "Myanmar Display",
+        "purpose": "News headlines only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "none",
+        "value": "none",
+        "purpose": "School-app surfaces are flat. Shadow utilities are stripped inside .mrlc-app-shell."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-fast",
+        "value": "150ms ease",
+        "purpose": "Button, nav and input color/border transitions."
+      },
+      {
+        "name": "press-nudge",
+        "value": "translateY(1px)",
+        "purpose": "Button active state."
+      },
+      {
+        "name": "nav-reveal",
+        "value": "160ms ease-out, opacity + translateY(-3px)",
+        "purpose": "Sidebar child menu reveal; disabled under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      },
+      {
+        "name": "2xl",
+        "value": "1536px"
+      },
+      {
+        "name": "content-max",
+        "value": "1680px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one gold action per view.",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><line x1=\"19\" x2=\"19\" y1=\"8\" y2=\"14\"/><line x1=\"22\" x2=\"16\" y1=\"11\" y2=\"11\"/></svg>New registration</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;border:1px solid #f2b84b;border-radius:4px;background:#f2b84b;color:#0c2538;font:600 14px/1 'IBM Plex Sans Variable','Geist Variable',system-ui,sans-serif;cursor:pointer;transition:background-color .15s,border-color .15s,transform .15s}.ds-btn-primary:hover{background:#e97961;border-color:#e97961}.ds-btn-primary:focus-visible{outline:none;border-color:#168c83;box-shadow:0 0 0 2px rgba(22,140,131,.35)}.ds-btn-primary:active{transform:translateY(1px)}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary actions; inverts to ink on hover.",
+      "html": "<button class=\"ds-btn-outline\">Reports</button>",
+      "css": ".ds-btn-outline{height:40px;padding:0 14px;border:1px solid rgba(16,27,39,.25);border-radius:4px;background:#fff;color:#101b27;font:600 14px/1 'IBM Plex Sans Variable','Geist Variable',system-ui,sans-serif;cursor:pointer;transition:background-color .15s,color .15s,border-color .15s}.ds-btn-outline:hover{background:#101b27;border-color:#101b27;color:#f0f1ec}.ds-btn-outline:focus-visible{outline:none;border-color:#168c83;box-shadow:0 0 0 2px rgba(22,140,131,.35)}"
+    },
+    {
+      "name": "Link Button",
+      "kind": "button",
+      "refersTo": "button-link",
+      "description": "Teal tracked ledger link, e.g. 'View all'.",
+      "html": "<a href=\"#\" class=\"ds-link\">View all</a>",
+      "css": ".ds-link{display:inline-flex;align-items:center;min-height:40px;color:#168c83;font:600 12px/1 'IBM Plex Sans Variable','Geist Variable',system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;text-decoration:none}.ds-link:hover{color:#101b27}.ds-link:focus-visible{outline:2px solid #168c83;outline-offset:2px}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "40px flat field with teal focus.",
+      "html": "<input class=\"ds-input\" placeholder=\"Student name\" />",
+      "css": ".ds-input{height:40px;width:260px;padding:4px 12px;border:1px solid #c4cbc8;border-radius:4px;background:#fff;color:#101b27;font:400 14px/1.5 'IBM Plex Sans Variable','Geist Variable',system-ui,sans-serif;transition:border-color .15s}.ds-input::placeholder{color:#5d6a72}.ds-input:focus-visible{outline:none;border-color:#168c83;box-shadow:0 0 0 2px rgba(22,140,131,.3)}"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Uppercase tinted status tag.",
+      "html": "<span class=\"ds-badge\">Present</span> <span class=\"ds-badge ds-badge-priority\">Follow up</span>",
+      "css": ".ds-badge{display:inline-flex;align-items:center;height:20px;padding:2px 8px;border-radius:4px;background:#dcefeb;color:#126a65;font:600 10px/1 'IBM Plex Sans Variable','Geist Variable',system-ui,sans-serif;letter-spacing:.07em;text-transform:uppercase}.ds-badge-priority{background:#fbe4de;color:#9a3a26}"
+    },
+    {
+      "name": "Sidebar Navigation",
+      "kind": "nav",
+      "refersTo": "nav-row",
+      "description": "The navy spine with mint active line.",
+      "html": "<nav class=\"ds-nav\"><div class=\"ds-nav-head\">School</div><a class=\"ds-nav-row is-active\" href=\"#\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"9\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"5\"/><rect x=\"14\" y=\"12\" width=\"7\" height=\"9\"/><rect x=\"3\" y=\"16\" width=\"7\" height=\"5\"/></svg>Dashboard</a><a class=\"ds-nav-row\" href=\"#\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"><path d=\"M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z\"/><path d=\"M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z\"/></svg>Exams</a></nav>",
+      "css": ".ds-nav{width:240px;padding:16px 10px;background:#102b3b;font-family:'IBM Plex Sans Variable','Geist Variable',system-ui,sans-serif}.ds-nav-head{padding:0 8px 10px;color:#91a9b7;font-size:10px;letter-spacing:.09em;text-transform:uppercase}.ds-nav-row{position:relative;display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:6px;color:#bdcdd7;font-size:13px;font-weight:450;text-decoration:none;transition:background .15s,color .15s}.ds-nav-row svg{color:#8fa9ba}.ds-nav-row:hover{background:rgba(255,255,255,.035);color:#fff}.ds-nav-row.is-active{background:#244b56;color:#d6fff4}.ds-nav-row.is-active svg{color:#9de1d0}.ds-nav-row.is-active::before{content:'';position:absolute;left:0;top:9px;bottom:9px;width:2px;border-radius:2px;background:#83d8c1}.ds-nav-row:focus-visible{outline:2px solid #e8bd5e;outline-offset:2px}"
+    },
+    {
+      "name": "Ledger Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Flat sheet with a dark-ruled header and teal micro-label.",
+      "html": "<section class=\"ds-ledger\"><header class=\"ds-ledger-head\"><div><p class=\"ds-kicker\">Today</p><h3>Notice board</h3></div><a href=\"#\">View all</a></header><p class=\"ds-ledger-body\">Grade 10 mock exam moved to Thursday, 9:00.</p></section>",
+      "css": ".ds-ledger{width:360px;border:1px solid #cfd5d2;background:#fff;color:#172033;font-family:'IBM Plex Sans Variable','Geist Variable',system-ui,sans-serif}.ds-ledger-head{display:flex;align-items:flex-end;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid #101b27}.ds-kicker{margin:0;color:#168c83;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}.ds-ledger-head h3{margin:4px 0 0;font-size:18px;font-weight:600;letter-spacing:-.02em}.ds-ledger-head a{color:#168c83;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;text-decoration:none}.ds-ledger-head a:hover{color:#101b27}.ds-ledger-body{margin:0;padding:16px 20px;font-size:14px;line-height:1.5}"
+    },
+    {
+      "name": "Field Note with Priority Block",
+      "kind": "custom",
+      "refersTo": "field-note",
+      "description": "Signature dashboard opener: navy-bordered sheet with a coral priority count.",
+      "html": "<div class=\"ds-fieldnote\"><div class=\"ds-fn-main\"><p class=\"ds-fn-kicker\">Tuesday field note</p><h2>Three classes still need attendance.</h2></div><div class=\"ds-fn-priority\"><p class=\"ds-fn-kicker2\">Needs attention</p><strong>07</strong><span>open cases</span></div></div>",
+      "css": ".ds-fieldnote{display:grid;grid-template-columns:minmax(0,1fr) 220px;border:1px solid #0c2538;background:#fff;font-family:'IBM Plex Sans Variable','Geist Variable',system-ui,sans-serif}.ds-fn-main{padding:28px}.ds-fn-kicker,.ds-fn-kicker2{margin:0;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}.ds-fn-kicker{color:#168c83}.ds-fn-main h2{margin:12px 0 0;color:#101b27;font-size:34px;font-weight:600;line-height:.98;letter-spacing:-.04em}.ds-fn-priority{display:flex;flex-direction:column;justify-content:space-between;padding:24px;background:#e97961;color:#0c2538}.ds-fn-priority strong{font-size:64px;font-weight:600;line-height:1;letter-spacing:-.07em;font-variant-numeric:tabular-nums}.ds-fn-priority span{font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase}"
+    }
+  ],
+  "narrative": {
+    "northStar": "School Operations Fieldbook",
+    "overview": "MRLC LMS is a working school's record book. Each screen should read like a well-kept ledger page: pale paper, white sheets laid on it, hairline rules where a ledger would rule, and one dark navy spine down the side. Depth comes from rules and hierarchy, not from floating cards, glows or gradients. The system was locked on 31 August 2026 ([docs/ui/REFERO-UI-AUDIT.md](docs/ui/REFERO-UI-AUDIT.md)). It replaced a generic grid of rounded, shadowed cards with purple gradients, and that look is the confirmed anti-reference.\n\nThe density is operational. Staff move through attendance, exams, fees and cases all day, so controls are 40px tall, text is compact, and pages are connected strips and tables, not tiles of equal weight. Personality comes from precise details: tight display type with negative tracking, uppercase micro-labels in teal, a coral block that marks what needs attention today, and the gold button that means \"do this\".\n\nBurmese and Mon text uses the same system. The ledger structure stays the same, but line heights open up so stacked Myanmar-script glyphs never clip.",
+    "keyCharacteristics": [
+      "Flat paper and sheet surfaces, with 1px rules instead of shadows",
+      "Low, square corners (4px by default, 0 on ruled forms)",
+      "Every color has one job: gold for the primary action, teal for selection and links, coral for priority, navy for structure",
+      "IBM Plex Sans throughout, with tabular numerals",
+      "A navy spine that stays fixed in light and dark themes",
+      "Light theme by default, with a layered blue-grey dark theme (never pure black)"
+    ],
+    "rules": [
+      {
+        "name": "The One Job Rule",
+        "body": "Gold is for the primary action only, teal marks selection and navigation, coral marks priority, navy carries structure. Never swap them, and never use gold as decoration.",
+        "section": "colors"
+      },
+      {
+        "name": "The No-Purple Rule",
+        "body": "Purple and indigo gradients were deliberately removed from the school app. The legacy `aubergine-*` utility names now resolve to teal; don't reintroduce violet.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tracked Label Rule",
+        "body": "Uppercase with letter-spacing is reserved for labels of 11px or less. Headlines are never uppercase, and body text is never tracked.",
+        "section": "typography"
+      },
+      {
+        "name": "The Script Room Rule",
+        "body": "When Burmese or Mon is active, headings go to line-height 1.6, running text to 1.9 and controls to 1.7, and tracking resets to normal. Never apply Latin tight leading to Myanmar script.",
+        "section": "typography"
+      },
+      {
+        "name": "The Ruled Not Raised Rule",
+        "body": "Separate things with a rule or a surface change, never a shadow. A shadow on a school-app surface is a defect, apart from popovers that must float over content.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep one gold primary action per view, with navy text on gold.",
+      "Do use teal for whatever is selected, active, linked or focused.",
+      "Do build overviews from connected strips and shared-border grids on Sheet White, separated by 1px rules.",
+      "Do put a teal uppercase micro-label (10 to 11px, tracked 0.1 to 0.16em) above section titles.",
+      "Do keep tabular numerals on for marks, fees, counts and dates.",
+      "Do test every new surface in Burmese and Mon and let the script line heights apply.",
+      "Do keep the dark theme blue-grey (Night Canvas #101720 and above)."
+    ],
+    "donts": [
+      "Don't use drop shadows, glows, blur or gradient panels in the school app.",
+      "Don't use radii above 8px, or pill-shaped buttons, on school-app surfaces.",
+      "Don't reintroduce purple or indigo gradients, or floating circular assistant buttons.",
+      "Don't fill a dashboard with a grid of equal-weight floating cards.",
+      "Don't use coral for errors or red for priority. They are separate signals.",
+      "Don't bring Learning Quest's Poppins, 45px pill buttons or bright gradients into the school app."
+    ]
+  }
+}
