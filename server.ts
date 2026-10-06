@@ -8,6 +8,8 @@ import { announcementAudienceWhere } from "./lib/announcementAudience";
 import { notificationService, syncTeacherAppUpdates, type NotificationInput } from "./lib/notifications";
 import { registerNotificationRoutes } from "./notificationRoutes";
 import { saveStudioQuestions } from "./shared/examStudioPersistence";
+import { correctionData, scoreWithCorrectedKey } from "./shared/examAnswerKey";
+import { buildExamReviewQuestions } from "./shared/examReview";
 import { examAvailability, teacherExamStatus } from "./shared/examAvailability";
 import { collectSchoolFee, syncDonationCampaign, financeTransaction, reviewExpense, recordExpensePayment } from './lib/financeOperations';
 import { FinanceControlError, validateMoney } from './shared/financeControls';
@@ -8688,7 +8690,7 @@ async function startServer() {
           }
         });
       }
-      res.json(exams);
+      res.json(exams.map(({ answerKeyEditTeacherIds: _answerKeyEditTeacherIds, ...exam }) => exam));
     } catch (err: any) {
       if (err?.code === "P2021" || err?.code === "P2022") { logExamDatabaseError("Error fetching exams", err); res.status(503).json({ error: "Exam database is out of date — run `npx prisma migrate deploy` then restart the server." }); return; }
       logExamDatabaseError("Error fetching exams", err);
@@ -8783,12 +8785,109 @@ async function startServer() {
         }
       }
       const profile = await prisma.schoolProfile.findFirst();
-      res.json({ ...exam, lockdownPolicy: lockdownBrowserPolicy(profile) });
+      const { answerKeyEditTeacherIds, ...safeExam } = exam;
+      res.json({
+        ...safeExam,
+        canEditAnswerKey: jwtUser.role === "ADMIN" || (jwtUser.role === "TEACHER" && answerKeyEditTeacherIds.includes(jwtUser.userId)),
+        lockdownPolicy: lockdownBrowserPolicy(profile),
+      });
     } catch (err: any) {
       if (err?.code === "P2021" || err?.code === "P2022") { logExamDatabaseError("Error fetching exam", err); res.status(503).json({ error: "Exam database is out of date — run `npx prisma migrate deploy` then restart the server." }); return; }
       logExamDatabaseError("Error fetching exam", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
+  });
+
+  // An administrator grants or revokes this narrowly scoped permission for
+  // teachers assigned to the exam's class. The roster is admin-only.
+  app.get("/api/exams/:id/answer-key-permissions", authMiddleware, async (req, res) => {
+    const actor = (req as any).user as JwtPayload;
+    if (actor.role !== "ADMIN") { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const exam = await prisma.exam.findUnique({ where: { id: req.params.id }, select: { id: true, classId: true, answerKeyEditTeacherIds: true } });
+      if (!exam) { res.status(404).json({ error: "Exam not found" }); return; }
+      const assignments = await prisma.classTeacher.findMany({
+        where: { classId: exam.classId, teacher: { user: { isActive: true, role: "TEACHER" } } },
+        include: { teacher: { include: { user: { select: { id: true, firstName: true, lastName: true } } } } },
+      });
+      res.json(assignments.filter(row => row.teacher.user).map(row => ({
+        teacherUserId: row.teacher.user!.id,
+        name: `${row.teacher.user!.firstName} ${row.teacher.user!.lastName}`.trim(),
+        allowed: exam.answerKeyEditTeacherIds.includes(row.teacher.user!.id),
+      })));
+    } catch (err) { logger.error("Error loading answer-key permissions:", err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
+
+  app.put("/api/exams/:id/answer-key-permissions", authMiddleware, async (req, res) => {
+    const actor = (req as any).user as JwtPayload;
+    if (actor.role !== "ADMIN") { res.status(403).json({ error: "Forbidden" }); return; }
+    const parsed = z.object({ teacherUserId: z.string().uuid(), allowed: z.boolean() }).safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ error: "Choose a teacher and permission state" }); return; }
+    try {
+      const result = await prisma.$transaction(async tx => {
+        const exam = await tx.exam.findUnique({ where: { id: req.params.id }, select: { id: true, classId: true, status: true, answerKeyEditTeacherIds: true } });
+        if (!exam) throw Object.assign(new Error("Exam not found"), { http: 404 });
+        if (!["PUBLISHED", "ACTIVE", "SCHEDULED", "CLOSED"].includes(exam.status)) throw Object.assign(new Error("Only published exams can receive answer-key correction permission"), { http: 409 });
+        const eligible = await tx.classTeacher.findFirst({ where: { classId: exam.classId, teacher: { userId: parsed.data.teacherUserId, user: { isActive: true, role: "TEACHER" } } } });
+        if (!eligible) throw Object.assign(new Error("Teacher must be active and assigned to this class"), { http: 400 });
+        const ids = new Set(exam.answerKeyEditTeacherIds);
+        if (parsed.data.allowed) ids.add(parsed.data.teacherUserId); else ids.delete(parsed.data.teacherUserId);
+        await tx.exam.update({ where: { id: exam.id }, data: { answerKeyEditTeacherIds: [...ids] } });
+        return { allowed: parsed.data.allowed };
+      });
+      await createAuditLog(actor.userId, actor.email, result.allowed ? "GRANT" : "REVOKE", "EXAM", req.params.id,
+        `Answer-key correction ${result.allowed ? "granted to" : "revoked from"} teacher ${parsed.data.teacherUserId}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(result);
+    } catch (err: any) { if (err.http) { res.status(err.http).json({ error: err.message }); return; } logger.error("Error updating answer-key permission:", err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
+
+  app.put("/api/exams/:id/answer-key", authMiddleware, async (req, res) => {
+    const actor = (req as any).user as JwtPayload;
+    if (actor.role !== "ADMIN" && actor.role !== "TEACHER") { res.status(403).json({ error: "Forbidden" }); return; }
+    const parsed = z.object({ questionId: z.string().uuid(), correctAnswers: z.array(z.string()).optional(), modelAnswer: z.string().optional(), blankAnswers: z.array(z.string()).optional() }).strict().safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ error: "Invalid answer-key correction" }); return; }
+    try {
+      const result = await prisma.$transaction(async tx => {
+        const exam = await tx.exam.findUnique({ where: { id: req.params.id }, select: { id: true, classId: true, status: true, negativeMarking: true, answerKeyEditTeacherIds: true } });
+        if (!exam) throw Object.assign(new Error("Exam not found"), { http: 404 });
+        if (!await canManageExamClass(actor, exam.classId)) throw Object.assign(new Error("Forbidden"), { http: 403 });
+        if (actor.role === "TEACHER" && !exam.answerKeyEditTeacherIds.includes(actor.userId)) throw Object.assign(new Error("Admin permission is required to correct this answer key"), { http: 403 });
+        if (!["PUBLISHED", "ACTIVE", "SCHEDULED", "CLOSED"].includes(exam.status)) throw Object.assign(new Error("This exam is not published"), { http: 409 });
+        const question = await tx.question.findFirst({ where: { id: parsed.data.questionId, examId: exam.id } });
+        if (!question) throw Object.assign(new Error("Question does not belong to this exam"), { http: 404 });
+        let data: Record<string, unknown>;
+        try { data = correctionData(question, parsed.data); }
+        catch (error: any) { throw Object.assign(error, { http: 400 }); }
+        const attempts = await tx.examAttempt.findMany({
+          where: { examId: exam.id, isCompleted: true, invalidatedAt: null },
+          include: { answers: true },
+        });
+        if (question.type === "DRAG_DROP" && attempts.some(attempt => {
+          const frozen = Array.isArray(attempt.frozenContent) ? (attempt.frozenContent as any[]).find(q => q.id === question.id) : null;
+          return attempt.answers.some(answer => answer.questionId === question.id) && !frozen?.scoringOptions;
+        })) throw Object.assign(new Error("This older fill-in-the-blanks attempt has no frozen word bank, so its answers cannot be safely rescored"), { http: 409 });
+        const updated = await tx.question.update({ where: { id: question.id }, data: { ...data, answerKeyCorrectedAt: new Date() } });
+        let regraded = 0;
+        for (const attempt of attempts) {
+          const answer = attempt.answers.find(a => a.questionId === question.id);
+          if (!answer) continue;
+          const frozen = Array.isArray(attempt.frozenContent) ? (attempt.frozenContent as any[]).find(q => q.id === question.id) : null;
+          const scored = scoreWithCorrectedKey({ ...updated, negativePoints: exam.negativeMarking ? updated.negativePoints : null }, answer, frozen);
+          if (scored.manual) continue;
+          const awarded = answer.manualScore != null ? answer.manualScore : scored.score;
+          await tx.examAnswer.update({ where: { id: answer.id }, data: { isCorrect: scored.correct, autoScore: scored.score, pointsAwarded: awarded } });
+          if (attempt.score != null) {
+            const total = attempt.answers.reduce((sum, row) => sum + Number(row.id === answer.id ? awarded : row.pointsAwarded || 0), 0);
+            await tx.examAttempt.update({ where: { id: attempt.id }, data: { score: Math.max(0, total) } });
+          }
+          regraded++;
+        }
+        return { questionId: question.id, regraded };
+      });
+      await createAuditLog(actor.userId, actor.email, "CORRECT", "EXAM", req.params.id,
+        `Corrected answer key for question ${result.questionId}; recalculated ${result.regraded} submitted answer(s).`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(result);
+    } catch (err: any) { if (err.http) { res.status(err.http).json({ error: err.message }); return; } logger.error("Error correcting answer key:", err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
   // Upload an image to attach to an exam question. Teacher/admin only.
@@ -8967,6 +9066,9 @@ async function startServer() {
           include: { attempts: { select: { id: true } } },
         });
         if (!existing) throw Object.assign(new Error("Exam not found"), { http: 404 });
+        if (jwtUser.role === "TEACHER" && existing.status !== "DRAFT" && questions !== undefined) {
+          throw Object.assign(new Error("Published question content is locked. Use the answer-key correction permission to fix answers."), { http: 403 });
+        }
         if (existing.attempts.length > 0 && questions !== undefined) {
           throw Object.assign(new Error("Questions cannot be replaced after students have started this exam"), { http: 409 });
         }
@@ -9275,6 +9377,7 @@ async function startServer() {
         select: {
           id: true,
           title: true,
+          status: true,
           type: true,
           classId: true,
           durationMinutes: true,
@@ -9283,25 +9386,29 @@ async function startServer() {
           subject: { select: { name: true } },
           questions: { select: { id: true, text: true, type: true, points: true }, orderBy: { createdAt: "asc" } },
           attempts: {
+            where: { isCompleted: true, invalidatedAt: null },
             select: {
               id: true,
               score: true,
               isCompleted: true,
+              attemptNumber: true,
+              frozenContent: true,
               startedAt: true,
               completedAt: true,
               securityWarnings: true,
               autoSubmitted: true,
               integrityEvents: true,
               studentId: true,
-              student: { select: { studentCode: true, user: true } },
+              student: { select: { studentCode: true, user: { select: { firstName: true, lastName: true } } } },
               answers: {
                 select: {
                   id: true,
                   questionId: true,
                   answerText: true,
+                  selectedOptions: true,
                   isCorrect: true,
                   pointsAwarded: true,
-                  question: { select: { text: true, type: true, points: true } },
+                  question: { select: { type: true } },
                 },
                 orderBy: { createdAt: "asc" },
               },
@@ -9315,26 +9422,33 @@ async function startServer() {
         return;
       }
 
-      let scopedAttempts = exam.attempts;
-      let canGrade = jwtUser.role === "ADMIN" || jwtUser.role === "TEACHER";
       if (jwtUser.role === "TEACHER") {
         if (!(await canManageExamClass(jwtUser, exam.classId))) {
           res.status(403).json({ error: "Forbidden" });
           return;
         }
-      } else if (!canGrade) {
-        res.status(403).json({ error: "Forbidden" });
-        return;
       }
 
+      const questionIds = [...new Set(exam.attempts.flatMap(attempt => [
+        ...attempt.answers.map(answer => answer.questionId),
+        ...(Array.isArray(attempt.frozenContent) ? (attempt.frozenContent as any[]).map(question => question.id) : []),
+      ]))];
+      const currentQuestions = questionIds.length ? await prisma.question.findMany({
+        where: { id: { in: questionIds } },
+        select: {
+          id: true, text: true, type: true, points: true, passageText: true, imageUrl: true, explanation: true,
+          options: true, correctAnswer: true, correctAnswers: true, requiresManualGrading: true, answerKeyCorrectedAt: true,
+          optionRows: { select: { id: true, text: true, isCorrect: true }, orderBy: { orderIndex: "asc" } },
+        },
+      }) : [];
       const totalMarks = Number(exam.totalMarks || exam.questions.reduce((sum, q) => sum + Number(q.points || 0), 0) || 0);
       res.json({
         userRole: jwtUser.role,
-        canGrade,
+        canGrade: true,
         exam: {
           id: exam.id,
           title: exam.title,
-          status: "PUBLISHED",
+          status: exam.status,
           type: exam.type,
           totalMarks,
           durationMinutes: exam.durationMinutes,
@@ -9342,30 +9456,27 @@ async function startServer() {
           className: exam.class?.name || "—",
           studentCount: exam.class?.students.length || 0,
         },
-        attempts: scopedAttempts.map((attempt) => ({
+        attempts: exam.attempts.map((attempt) => {
+          const questions = buildExamReviewQuestions(attempt.answers, attempt.frozenContent, currentQuestions);
+          return ({
           id: attempt.id,
           studentId: attempt.studentId,
           studentName: fullName(attempt.student.user),
           studentCode: attempt.student.studentCode,
+          attemptNumber: attempt.attemptNumber,
           score: attempt.score,
-          percent: attempt.score != null && totalMarks > 0 ? round1((Number(attempt.score) / totalMarks) * 100) : null,
-          status: attempt.isCompleted ? (attempt.answers.some((answer) => MANUAL_QUESTION_TYPES.has(answer.question.type) && answer.pointsAwarded == null) ? "NEEDS_GRADING" : "GRADED") : "IN_PROGRESS",
+          totalMarks: Array.isArray(attempt.frozenContent) && attempt.frozenContent.length
+            ? (attempt.frozenContent as any[]).reduce((sum, question) => sum + Number(question.points || 0), 0)
+            : totalMarks,
+          status: questions.some(question => question?.status === "PENDING") ? "NEEDS_GRADING" : "GRADED",
           startedAt: attempt.startedAt,
           completedAt: attempt.completedAt,
           securityWarnings: attempt.securityWarnings,
           autoSubmitted: attempt.autoSubmitted,
           integrityEvents: Array.isArray(attempt.integrityEvents) ? attempt.integrityEvents : [],
-          answers: attempt.answers.map((answer) => ({
-            id: answer.id,
-            questionId: answer.questionId,
-            questionText: answer.question.text,
-            questionType: answer.question.type,
-            maxPoints: answer.question.points,
-            answerText: answer.answerText,
-            isCorrect: answer.isCorrect,
-            pointsAwarded: answer.pointsAwarded,
-          })),
-        })),
+          questions,
+          });
+        }),
       });
     } catch (err) {
       logger.error("Error fetching exam results:", err);

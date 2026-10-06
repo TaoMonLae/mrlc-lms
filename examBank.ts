@@ -362,6 +362,9 @@ export function registerExamBankRoutes(deps: Deps): void {
     try {
       const existing = await prisma.question.findUnique({ where: { id: req.params.id } });
       if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+      if (existing.examId) { res.status(409).json({ error: "Use the exam editor for exam-owned questions" }); return; }
+      const usedByPublishedExam = await prisma.examQuestion.count({ where: { questionId: existing.id, exam: { status: { in: ["PUBLISHED", "ACTIVE", "SCHEDULED", "CLOSED"] } } } });
+      if (usedByPublishedExam > 0) { res.status(409).json({ error: "This question is used by a published exam. Clone it before changing its content or answer key." }); return; }
       if (!(await canEditSubject(req, existing.subjectId))) { res.status(403).json({ error: "Not your subject" }); return; }
       if (b.subjectId !== undefined && !(await canEditSubject(req, b.subjectId || null))) { res.status(403).json({ error: "Not your subject" }); return; }
       if (existing.status === "ARCHIVED" && !isAdmin(req)) { res.status(409).json({ error: "Archived — restore first (admin)" }); return; }

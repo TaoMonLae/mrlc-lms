@@ -12,7 +12,7 @@ import { useEffect, useMemo, useRef, useState, useId, Children, cloneElement, is
 import { useNavigate, useParams } from 'react-router';
 import {
   ArrowLeft, ArrowUp, ArrowDown, Copy, Check, ChevronDown, Loader2, Plus, Trash2, X,
-  FileText, ListChecks, CalendarClock, Play, PanelRight, Eye, CircleDot, SquareCheck, AlignLeft, TextCursorInput, ChevronRight, BookOpen,
+  FileText, ListChecks, CalendarClock, Play, PanelRight, Eye, CircleDot, SquareCheck, AlignLeft, TextCursorInput, ChevronRight, BookOpen, KeyRound,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import MathField from '../../components/MathField';
 import MathText from '../../components/MathText';
 import QuestionImageField from '../../components/QuestionImageField';
+import { useAuth } from '../../providers/AuthProvider';
 
 /* ------------------------------------------------------------------ */
 /* Types & config                                                      */
@@ -115,6 +116,7 @@ const hasMath = (s?: string) => !!s && s.includes('$');
 export default function GuidedStudio() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -143,6 +145,9 @@ export default function GuidedStudio() {
   const [questionTheme, setQuestionTheme] = useState<QuestionTheme>('ged');
   const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'CLOSED' | 'ACTIVE' | 'SCHEDULED' | 'ARCHIVED'>('DRAFT');
   const [hasAttempts, setHasAttempts] = useState(false);
+  const [canEditAnswerKey, setCanEditAnswerKey] = useState(false);
+  const [answerKeyOpen, setAnswerKeyOpen] = useState(false);
+  const questionLocked = hasAttempts || (status !== 'DRAFT' && user?.role === 'TEACHER');
 
   const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
   const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
@@ -217,6 +222,7 @@ export default function GuidedStudio() {
       setReleaseAt(policy?.releaseAt ? toLocalInput(policy.releaseAt) : '');
       setPassMark(65); setRelease('approve'); setShowAnswers(false);
       setTitle(exam.title || '');
+      setCanEditAnswerKey(!!exam.canEditAnswerKey);
       setClassId(exam.classId || '');
       setSubjectId(exam.subjectId || '');
       setExamType((['QUIZ', 'MIDTERM', 'FINAL', 'MOCK'].includes(exam.type) ? exam.type : 'FINAL') as typeof examType);
@@ -337,7 +343,7 @@ export default function GuidedStudio() {
 
   /* ---------------- drag reorder ---------------- */
   const onDrop = () => {
-    if (!drag || hasAttempts || saving) return;
+    if (!drag || questionLocked || saving) return;
     const { from, over } = drag;
     if (from !== over) {
       setQuestions((prev) => { const next = [...prev]; const [m] = next.splice(from, 1); next.splice(over, 0, m); return next; });
@@ -446,7 +452,7 @@ export default function GuidedStudio() {
         // Keep a new exam private until its scheduling and release policy have
         // saved successfully; the final publish transition happens below.
         status: publishingDraft ? 'DRAFT' : (nextStatus || status),
-        questions: hasAttempts ? undefined : questions.map(toBackend),
+        questions: questionLocked ? undefined : questions.map(toBackend),
       });
 
       // 2) Real scheduling/scoring columns the taking flow reads.
@@ -526,6 +532,7 @@ export default function GuidedStudio() {
             </div>
           </div>
           <StatusPill status={status} />
+          {questionLocked && canEditAnswerKey && ['PUBLISHED', 'ACTIVE', 'SCHEDULED', 'CLOSED'].includes(status) && <button onClick={() => { setStep('questions'); setAnswerKeyOpen(true); }} className="gs-answer-key-button" disabled={!questions.length || saving}><KeyRound size={15} /> Correct answer key</button>}
           <button disabled={!questions.length} onClick={() => setPlayerOpen(true)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: C.purpleText, background: C.surface, border: `1.5px solid ${C.tint100}`, borderRadius: 10, padding: '8px 13px', cursor: 'pointer' }}>
             <Play size={13} fill="currentColor" /> Preview as student
@@ -564,8 +571,8 @@ export default function GuidedStudio() {
                   const td = typeDef(q.uiType);
                   const isOver = drag?.over === i && drag.from !== i;
                   return (
-                    <div className="gs-outline-item" key={q.id} role="button" tabIndex={0} aria-label={`Edit question ${i + 1}`} aria-current={step === 'questions' && sel === i ? 'true' : undefined} onKeyDown={e => { if (e.target !== e.currentTarget) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSel(i); setStep('questions'); } }} draggable={!hasAttempts && !saving}
-                      onDragStart={() => !hasAttempts && !saving && setDrag({ from: i, over: i })}
+                    <div className="gs-outline-item" key={q.id} role="button" tabIndex={0} aria-label={`${questionLocked ? 'View' : 'Edit'} question ${i + 1}`} aria-current={step === 'questions' && sel === i ? 'true' : undefined} onKeyDown={e => { if (e.target !== e.currentTarget) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSel(i); setStep('questions'); } }} draggable={!questionLocked && !saving}
+                      onDragStart={() => !questionLocked && !saving && setDrag({ from: i, over: i })}
                       onDragOver={(e) => { e.preventDefault(); setDrag((d) => (d ? { ...d, over: i } : d)); }}
                       onDrop={onDrop} onDragEnd={() => setDrag(null)}
                       onClick={() => { setSel(i); setStep('questions'); }}
@@ -580,7 +587,7 @@ export default function GuidedStudio() {
                       <span className="gs-question-number">{String(i + 1).padStart(2, '0')}</span>
                       <span className="gs-outline-copy"><strong>{q.text || 'Untitled question'}</strong><small>{td.label} · {q.points} pts</small></span>
                       <span className="gs-question-health" title={questionIssue(q) || 'Question ready'} aria-label={questionIssue(q) ? 'Needs attention' : 'Question ready'}>{questionIssue(q) ? <span /> : <Check size={12} />}</span>
-                      <button disabled={hasAttempts || saving} aria-label={`Delete question ${i + 1}`} onClick={(e) => { e.stopPropagation(); if (window.confirm(`Delete question ${i + 1}?`)) { removeQuestion(i); setDirty(true); } }} style={{ border: 'none', background: 'transparent', color: '#cdcdcd', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                      <button disabled={questionLocked || saving} aria-label={`Delete question ${i + 1}`} onClick={(e) => { e.stopPropagation(); if (window.confirm(`Delete question ${i + 1}?`)) { removeQuestion(i); setDirty(true); } }} style={{ border: 'none', background: 'transparent', color: '#cdcdcd', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                         <Trash2 size={13} />
                       </button>
                     </div>
@@ -591,7 +598,7 @@ export default function GuidedStudio() {
               {/* Add question + type picker — kept OUTSIDE the scroll list above so
                   the popover is never clipped; it opens upward for the same reason. */}
               <div style={{ position: 'relative', marginTop: 8, flexShrink: 0 }}>
-                <button className="gs-add-question" disabled={hasAttempts || saving} onClick={() => setShowTypePicker((v) => !v)}
+                <button className="gs-add-question" disabled={questionLocked || saving} onClick={() => setShowTypePicker((v) => !v)}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 10, border: `1.5px dashed ${C.tint100}`, background: C.tint7, color: C.purpleText, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                   <Plus size={14} /> Add question
                 </button>
@@ -605,12 +612,12 @@ export default function GuidedStudio() {
           {/* Center editor */}
           <div className={`gs-editor${step === 'questions' && !cur ? ' gs-editor-empty' : ''}`}>
             <div className="gs-editor-paper">
-            {hasAttempts && <p className="gs-notice">Students have started this exam. Questions are read-only to protect their answers.</p>}
+            {questionLocked && <p className="gs-notice">{hasAttempts ? 'Students have started this exam.' : 'This exam is published.'} Question content is locked.{canEditAnswerKey ? ' Use Correct answer key to fix a misplaced answer.' : ' Ask an administrator for answer-key correction permission if an answer was misplaced.'}</p>}
             <fieldset disabled={saving} style={{ minWidth: 0 }}>
             {step === 'details' && <DetailsStep {...{ title, setTitle, subjectId, setSubjectId, classId, setClassId, examType, setExamType, subjects, classes, duration, setDuration, instructions, setInstructions, audience, questionTheme, setQuestionTheme, applyPreset, hasAttempts, goNext: () => setStep('questions') }} />}
             {step === 'questions' && (
               cur ? (
-                <><div className="gs-question-actions"><span className="gs-editor-position"><span className="gs-editor-index">{String(sel + 1).padStart(2, '0')}</span><span>Question {sel + 1} of {questions.length}<small>{isObjective(cur.uiType) ? 'Automatically graded' : 'Teacher graded'}</small></span></span><button className="gs-preview-toggle" aria-label={previewVisible ? 'Hide live preview' : 'Show live preview'} aria-expanded={previewVisible} aria-controls="studio-live-preview" onClick={() => setPreviewVisible(v => !v)}><PanelRight size={16} /></button><button disabled={hasAttempts || sel === 0} aria-label="Move question up" onClick={() => { setQuestions(prev => { const next = [...prev]; [next[sel - 1], next[sel]] = [next[sel], next[sel - 1]]; return next; }); setSel(sel - 1); setDirty(true); }}><ArrowUp size={16} /></button><button disabled={hasAttempts || sel === questions.length - 1} aria-label="Move question down" onClick={() => { setQuestions(prev => { const next = [...prev]; [next[sel], next[sel + 1]] = [next[sel + 1], next[sel]]; return next; }); setSel(sel + 1); setDirty(true); }}><ArrowDown size={16} /></button><button disabled={hasAttempts} onClick={() => { setQuestions(prev => [...prev, { ...cur, id: crypto.randomUUID(), options: cur.options.map(o => ({ ...o })) }]); setSel(questions.length); setDirty(true); }}><Copy size={15} /> Duplicate</button></div><fieldset disabled={hasAttempts} style={{ minWidth: 0 }}>
+                <><div className="gs-question-actions"><span className="gs-editor-position"><span className="gs-editor-index">{String(sel + 1).padStart(2, '0')}</span><span>Question {sel + 1} of {questions.length}<small>{isObjective(cur.uiType) ? 'Automatically graded' : 'Teacher graded'}</small></span></span><button className="gs-preview-toggle" aria-label={previewVisible ? 'Hide live preview' : 'Show live preview'} aria-expanded={previewVisible} aria-controls="studio-live-preview" onClick={() => setPreviewVisible(v => !v)}><PanelRight size={16} /></button><button disabled={questionLocked || sel === 0} aria-label="Move question up" onClick={() => { setQuestions(prev => { const next = [...prev]; [next[sel - 1], next[sel]] = [next[sel], next[sel - 1]]; return next; }); setSel(sel - 1); setDirty(true); }}><ArrowUp size={16} /></button><button disabled={questionLocked || sel === questions.length - 1} aria-label="Move question down" onClick={() => { setQuestions(prev => { const next = [...prev]; [next[sel], next[sel + 1]] = [next[sel + 1], next[sel]]; return next; }); setSel(sel + 1); setDirty(true); }}><ArrowDown size={16} /></button><button disabled={questionLocked} onClick={() => { setQuestions(prev => [...prev, { ...cur, id: crypto.randomUUID(), options: cur.options.map(o => ({ ...o })) }]); setSel(questions.length); setDirty(true); }}><Copy size={15} /> Duplicate</button></div><fieldset disabled={questionLocked} style={{ minWidth: 0 }}>
                 <QuestionEditor
                   q={cur} index={sel} total={questions.length}
                   isMathSubject={isMathSubject} showMathTools={showMathTools} setShowMathTools={setShowMathTools}
@@ -647,6 +654,17 @@ export default function GuidedStudio() {
       </div>
 
       <Dialog open={showTypePicker} onOpenChange={setShowTypePicker}><DialogContent className="sm:max-w-xl"><DialogTitle>Add a question</DialogTitle><DialogDescription>Choose how students will respond.</DialogDescription><div className="grid grid-cols-2 gap-2">{TYPES.map(t => <button key={t.key} className="rounded border p-4 text-left hover:bg-muted" onClick={() => addQuestion(t.key)}>{t.label}</button>)}</div></DialogContent></Dialog>
+      <AnswerKeyCorrectionDialog
+        open={answerKeyOpen} onOpenChange={setAnswerKeyOpen} question={cur} index={sel}
+        onSave={async payload => {
+          if (!id || !cur) return;
+          if (dirty && !window.confirm('Saving this key will reload the exam and discard other unsaved changes. Continue?')) return;
+          const result = await apiSend<{ regraded: number }>(`/api/exams/${id}/answer-key`, 'PUT', { questionId: cur.id, ...payload });
+      toast.success(`Answer key corrected. ${result.regraded} submitted answer${result.regraded === 1 ? '' : 's'} rescored. Resync the Gradebook if this exam was already synced.`);
+          setAnswerKeyOpen(false);
+          setLoadVersion(version => version + 1);
+        }}
+      />
       {/* Player overlay */}
       {playerOpen && <StudentPlayer questions={questions} title={title} minutes={duration} onClose={() => setPlayerOpen(false)} />}
 
@@ -662,6 +680,58 @@ export default function GuidedStudio() {
 /* ------------------------------------------------------------------ */
 /* Small shared building blocks                                        */
 /* ------------------------------------------------------------------ */
+
+function AnswerKeyCorrectionDialog({ open, onOpenChange, question, index, onSave }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  question?: Question;
+  index: number;
+  onSave: (payload: { correctAnswers?: string[]; modelAnswer?: string; blankAnswers?: string[] }) => Promise<void>;
+}) {
+  const [choices, setChoices] = useState<string[]>([]);
+  const [modelAnswer, setModelAnswer] = useState('');
+  const [blankAnswers, setBlankAnswers] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => {
+    if (!open || !question) return;
+    setChoices(question.options.flatMap((option, i) => option.c ? [String(i)] : []));
+    setModelAnswer(question.sample || '');
+    setBlankAnswers(Array.isArray(question.original?.options?.blanks) ? question.original.options.blanks.map((blank: any) => String(blank.answer || '')) : []);
+  }, [open, question?.id]);
+  const manual = question && ['SHORT', 'ESSAY', 'EXTENDED'].includes(question.uiType);
+  const drag = question?.uiType === 'DRAG';
+  const multi = question?.uiType === 'HOTSPOT';
+  const bank = drag && question ? [...(question.original?.options?.blanks || []).map((blank: any) => String(blank.answer)), ...(question.original?.options?.distractors || []).map(String)] : [];
+  const submit = async () => {
+    if (!question) return;
+    setSaving(true);
+    try {
+      await onSave(manual ? { modelAnswer } : drag ? { blankAnswers } : { correctAnswers: choices });
+    } catch (error: any) { toast.error(error.message || 'Could not correct answer key.'); }
+    finally { setSaving(false); }
+  };
+  return <Dialog open={open} onOpenChange={onOpenChange}>
+    <DialogContent className="sm:max-w-xl">
+      <DialogTitle>Correct answer key · Question {index + 1}</DialogTitle>
+      <DialogDescription>Only the answer key will change. Submitted objective answers will be rescored; question text, options, and points stay the same. If scores were already synced, use Responses → Sync to Gradebook again.</DialogDescription>
+      {question && <div className="space-y-4">
+        <p className="font-semibold">{question.text}</p>
+        {manual ? <label className="block text-sm font-medium">Model answer / rubric note
+          <textarea className="mt-2 w-full rounded-lg border bg-background p-3 font-normal" rows={5} value={modelAnswer} onChange={event => setModelAnswer(event.target.value)} />
+        </label> : drag ? <div className="space-y-3">{blankAnswers.map((answer, blankIndex) => <label key={blankIndex} className="block text-sm font-medium">Blank {blankIndex + 1}
+          <select className="mt-1 w-full rounded-lg border bg-background p-2" value={answer} onChange={event => setBlankAnswers(values => values.map((value, i) => i === blankIndex ? event.target.value : value))}>
+            {bank.map((word: string, i: number) => <option key={`${word}-${i}`} value={word}>{word}</option>)}
+          </select>
+        </label>)}</div> : <div className="space-y-2">{question.options.map((option, i) => <label key={i} className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm">
+          <input type={multi ? 'checkbox' : 'radio'} name={`correct-answer-${question.id}`} checked={choices.includes(String(i))}
+            onChange={() => setChoices(previous => multi ? previous.includes(String(i)) ? previous.filter(value => value !== String(i)) : [...previous, String(i)] : [String(i)])} />
+          <span>{option.t}</span>
+        </label>)}</div>}
+        <button className="gs-answer-key-save" disabled={saving || (!manual && !drag && choices.length === 0)} onClick={submit}>{saving ? 'Saving correction…' : 'Save corrected answer'}</button>
+      </div>}
+    </DialogContent>
+  </Dialog>;
+}
 
 function toLocalInput(iso: string) {
   const d = new Date(iso);

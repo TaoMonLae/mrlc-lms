@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { AlertTriangle, ArrowLeft, ArrowRight, BarChart3, CheckCircle2, ClipboardCheck, Clock3, RefreshCw, Target } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, BarChart3, CheckCircle2, ClipboardCheck, Clock3, ListChecks, RefreshCw, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '../../components/ui/empty-state';
@@ -102,6 +102,7 @@ export default function ExamAnalytics() {
           <p className="mt-1 text-sm text-muted-foreground">{data.exam?.title || 'Review performance and question quality.'}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button variant="outline" render={<Link to={`/exams/${examId}/results`} />} nativeButton={false}><ListChecks className="size-4" />Student answers</Button>
           <Button variant="outline" render={<Link to={`/exam2/grading?examId=${examId}`} />} nativeButton={false}><ClipboardCheck className="size-4" />Grading queue</Button>
           <Button onClick={() => void recompute()} disabled={busy} className="bg-teal-600 text-white hover:bg-teal-700 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300"><RefreshCw className={`size-4 ${busy ? 'animate-spin' : ''}`} />{busy ? 'Recomputing…' : 'Recompute'}</Button>
         </div>
