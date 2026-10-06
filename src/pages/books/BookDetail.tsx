@@ -217,7 +217,7 @@ export default function BookDetail() {
             <Button variant="outline" render={<Link to={`/books/${id}/edit`} />} nativeButton={false}>
               <Pencil className="mr-2 h-4 w-4" /> Edit
             </Button>
-            <Button variant="outline" className="text-red-600 hover:text-red-700" onClick={handleDelete}>
+            <Button aria-label="Delete" variant="outline" className="text-red-600 hover:text-red-700" onClick={handleDelete}>
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>

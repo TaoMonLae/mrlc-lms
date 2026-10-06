@@ -127,7 +127,7 @@ export default function CheckersLeaderboard() {
           <Trophy className="size-5 text-yellow-400" />
           Checkers Leaderboard
         </h2>
-        <Button
+        <Button aria-label="Refresh"
           variant="outline"
           size="sm"
           onClick={refresh}

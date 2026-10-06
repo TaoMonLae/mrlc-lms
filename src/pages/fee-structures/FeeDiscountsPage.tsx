@@ -91,10 +91,10 @@ export default function FeeDiscountsPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm">
+                          <Button aria-label="Edit" variant="ghost" size="sm">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-red-600">
+                          <Button aria-label="Delete" variant="ghost" size="sm" className="text-red-600">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>

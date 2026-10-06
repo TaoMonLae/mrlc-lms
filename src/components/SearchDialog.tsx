@@ -129,7 +129,7 @@ export function SearchDialog({ open, onOpenChange }: { open: boolean; onOpenChan
               autoComplete="off"
             />
             {searchTerm && (
-              <Button
+              <Button aria-label="Close"
                 variant="ghost"
                 size="icon"
                 className="absolute right-0 top-0 h-full w-10 rounded-none"

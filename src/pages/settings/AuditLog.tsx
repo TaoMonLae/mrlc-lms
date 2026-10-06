@@ -271,7 +271,7 @@ export default function AuditLogPage() {
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
         <p className="text-xs font-medium text-muted-foreground italic">Showing {filteredLogs.length} entries of security activity logged.</p>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-border" disabled>
+          <Button aria-label="Previous" variant="outline" size="sm" className="h-9 w-9 p-0 border-border" disabled>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-border bg-slate-900 text-white shadow-none">
@@ -280,7 +280,7 @@ export default function AuditLogPage() {
           <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-border">
             2
           </Button>
-          <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-border">
+          <Button aria-label="Next" variant="outline" size="sm" className="h-9 w-9 p-0 border-border">
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

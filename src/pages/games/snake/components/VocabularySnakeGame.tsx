@@ -642,7 +642,7 @@ export default function VocabularySnakeGame() {
         {/* Definition card - shown on the right side */}
         {showDefinition && currentWord && (
           <Card className="w-full max-w-[350px] p-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/20 dark:from-green-900/30 dark:to-emerald-900/30 dark:border-2 dark:border-emerald-500/50 dark:shadow-[0_0_20px_rgba(16,185,129,0.4)] relative">
-            <Button
+            <Button aria-label="Close"
               variant="ghost"
               size="sm"
               className="absolute top-1 right-1 h-6 w-6 p-0 text-gray-400 hover:text-white"
@@ -655,7 +655,7 @@ export default function VocabularySnakeGame() {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <p className="font-bold text-base text-white dark:text-green-100">{currentWord.word}</p>
-                  <Button
+                  <Button aria-label="Play audio"
                     variant="ghost"
                     size="sm"
                     onClick={() => speakWord(currentWord.word)}

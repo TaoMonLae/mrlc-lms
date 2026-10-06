@@ -99,7 +99,7 @@ export default function TeacherClasses() {
                 >
                   Class Details
                 </Button>
-                <Button
+                <Button aria-label="View timetable"
                   variant="outline"
                   size="icon"
                   className="h-9 w-9 shrink-0 border-border"

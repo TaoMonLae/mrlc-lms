@@ -46,12 +46,12 @@ export default function TopicManager() {
           <div key={t.id} className="bg-card border border-border rounded-sm p-4">
             <div className="flex items-center justify-between">
               <p className="font-bold text-foreground">{t.name} {t.code && <span className="text-xs text-muted-foreground">({t.code})</span>}</p>
-              <Button variant="ghost" size="icon" className="text-red-500" onClick={() => del(t.id)}><Trash2 className="h-4 w-4" /></Button>
+              <Button aria-label="Delete" variant="ghost" size="icon" className="text-red-500" onClick={() => del(t.id)}><Trash2 className="h-4 w-4" /></Button>
             </div>
             {childrenOf(t.id).map((c) => (
               <div key={c.id} className="flex items-center justify-between pl-4 mt-2 border-l-2 border-border">
                 <p className="text-sm text-muted-foreground">{c.name}</p>
-                <Button variant="ghost" size="icon" className="text-red-400 h-7 w-7" onClick={() => del(c.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                <Button aria-label="Delete" variant="ghost" size="icon" className="text-red-400 h-7 w-7" onClick={() => del(c.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
               </div>
             ))}
           </div>

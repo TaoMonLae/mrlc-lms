@@ -254,10 +254,10 @@ export default function StaffDirectory() {
                 </td>
                 <td className="px-4 py-2 text-right">
                   <div className="flex justify-end gap-1">
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Edit" render={<Link to={`/staff/${e.id}`} />}>
+                    <Button aria-label="Edit" size="sm" variant="ghost" className="h-7 w-7 p-0" title="Edit" render={<Link to={`/staff/${e.id}`} />}>
                       <Pencil className="h-4 w-4 text-muted-foreground" />
                     </Button>
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Remove" onClick={() => handleDelete(e)}>
+                    <Button aria-label="Remove" size="sm" variant="ghost" className="h-7 w-7 p-0" title="Remove" onClick={() => handleDelete(e)}>
                       <Trash2 className="h-4 w-4 text-rose-500" />
                     </Button>
                   </div>

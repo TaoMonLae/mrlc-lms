@@ -279,7 +279,7 @@ export default function VideoNew() {
                         {videoFile?.name || 'Video uploaded successfully'}
                       </span>
                     </div>
-                    <Button
+                    <Button aria-label="Close"
                       type="button"
                       variant="ghost"
                       size="sm"

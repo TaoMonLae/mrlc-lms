@@ -222,7 +222,7 @@ export default function TeacherDashboard() {
                     <td className="px-6 py-4 text-muted-foreground font-medium">{sanitizeText(cls.room)}</td>
                     <td className="px-6 py-4 text-muted-foreground">{cls.students} Learners</td>
                     <td className="px-6 py-4 text-right">
-                      <Button
+                      <Button aria-label="View class details"
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground hover:text-aubergine-600"

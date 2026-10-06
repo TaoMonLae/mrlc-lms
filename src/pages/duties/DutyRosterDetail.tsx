@@ -270,7 +270,7 @@ export default function DutyRosterDetail() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" render={<Link to="/duties/rosters" />} nativeButton={false}>
+        <Button aria-label="Back" variant="ghost" size="sm" render={<Link to="/duties/rosters" />} nativeButton={false}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
@@ -470,7 +470,7 @@ export default function DutyRosterDetail() {
                   </TableCell>
                   {canManage && (
                     <TableCell>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleDeleteAssignment(a.id)}>
+                      <Button aria-label="Delete" variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleDeleteAssignment(a.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>

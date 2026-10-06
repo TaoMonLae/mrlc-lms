@@ -87,7 +87,7 @@ export default function EbookAnalytics() {
   return (
     <div className="space-y-6 pb-10">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" render={<Link to="/elibrary" />} nativeButton={false}><ArrowLeft className="h-4 w-4" /></Button>
+        <Button aria-label="Back" variant="ghost" size="icon" render={<Link to="/elibrary" />} nativeButton={false}><ArrowLeft className="h-4 w-4" /></Button>
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">E-Book Reading Analytics</h1>
           <p className="text-sm text-muted-foreground">Student completion, progress, and active reading time.</p>

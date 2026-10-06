@@ -69,7 +69,7 @@ export default function AccommodationManagement() {
                 {[r.extraTimePercent ? `+${r.extraTimePercent}%` : null, r.extraTimeMinutes ? `+${r.extraTimeMinutes}m` : null, ...TOGGLES.filter(([k]) => r[k]).map(([, l]) => l)].filter(Boolean).join(' · ') || 'No options set'}
               </p>
             </div>
-            <Button variant="ghost" size="icon" className="text-red-500" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4" /></Button>
+            <Button aria-label="Delete" variant="ghost" size="icon" className="text-red-500" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4" /></Button>
           </div>
         ))}
         {rows.length === 0 && <div className="rounded-sm border border-dashed border-border p-8 text-center text-muted-foreground">No accommodations configured.</div>}

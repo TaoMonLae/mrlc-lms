@@ -357,7 +357,7 @@ export default function CheckerVocabularyManager() {
                     >
                       {w.active ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                     </button>
-                    <button
+                    <button aria-label="Edit"
                       title="Edit"
                       onClick={() => {
                         setEditingId(w.id);
@@ -367,7 +367,7 @@ export default function CheckerVocabularyManager() {
                     >
                       <Pencil className="size-4" />
                     </button>
-                    <button
+                    <button aria-label="Delete"
                       title="Delete"
                       onClick={() => remove(w.id)}
                       className="p-1.5 rounded hover:bg-red-500/20 text-red-300"

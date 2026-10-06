@@ -205,12 +205,12 @@ export default function Leave() {
                   <td className="px-4 py-2 text-right">
                     {r.status === 'PENDING' && (
                       <div className="flex justify-end gap-1">
-                        <Button size="sm" variant="outline" onClick={() => decide(r.id, 'APPROVED')}><Check className="h-4 w-4 text-emerald-600" /></Button>
-                        <Button size="sm" variant="outline" onClick={() => decide(r.id, 'REJECTED')}><X className="h-4 w-4 text-rose-600" /></Button>
+                        <Button aria-label="Confirm" size="sm" variant="outline" onClick={() => decide(r.id, 'APPROVED')}><Check className="h-4 w-4 text-emerald-600" /></Button>
+                        <Button aria-label="Close" size="sm" variant="outline" onClick={() => decide(r.id, 'REJECTED')}><X className="h-4 w-4 text-rose-600" /></Button>
                       </div>
                     )}
                     {r.status === 'APPROVED' && (
-                      <Button size="sm" variant="outline" title="Cancel approved leave" onClick={() => decide(r.id, 'CANCELLED')}><X className="h-4 w-4 text-muted-foreground" /></Button>
+                      <Button aria-label="Cancel approved leave" size="sm" variant="outline" title="Cancel approved leave" onClick={() => decide(r.id, 'CANCELLED')}><X className="h-4 w-4 text-muted-foreground" /></Button>
                     )}
                   </td>
                 </tr>

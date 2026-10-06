@@ -112,7 +112,7 @@ export default function DonationNew() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Button
+        <Button aria-label="Back"
           variant="ghost"
           size="sm"
           render={<Link to={formData.donorId ? `/donors/${formData.donorId}` : '/donations'} />}

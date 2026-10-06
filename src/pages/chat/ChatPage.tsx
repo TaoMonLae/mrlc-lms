@@ -299,10 +299,10 @@ export default function ChatPage() {
           <h1 className="flex items-center gap-2 font-semibold text-foreground"><MessageSquare className="h-5 w-5 text-aubergine-600" /> Chat</h1>
           <div className="flex items-center gap-1">
           {isAdmin && (
-            <Button size="sm" variant="ghost" title="Sticker packs" render={<Link to="/chat/stickers" />}><Sticker className="h-4 w-4 text-aubergine-600" /></Button>
+            <Button aria-label="Sticker packs" size="sm" variant="ghost" title="Sticker packs" render={<Link to="/chat/stickers" />}><Sticker className="h-4 w-4 text-aubergine-600" /></Button>
           )}
           {isAdmin && (
-            <Button size="sm" variant="ghost" title="Moderation" render={<Link to="/chat/moderation" />}><ShieldAlert className="h-4 w-4 text-amber-600" /></Button>
+            <Button aria-label="Moderation" size="sm" variant="ghost" title="Moderation" render={<Link to="/chat/moderation" />}><ShieldAlert className="h-4 w-4 text-amber-600" /></Button>
           )}
           <Dialog open={newOpen} onOpenChange={(o) => (o ? openNew() : setNewOpen(false))}>
             <DialogTrigger render={<Button size="sm"><Plus className="mr-1 h-4 w-4" /> New</Button>} />
@@ -394,7 +394,7 @@ export default function ChatPage() {
         ) : (
           <>
             <div className="flex items-center gap-2 border-b border-border p-3">
-              <Button variant="ghost" size="sm" className="md:hidden -ml-2" onClick={() => { setActiveId(null); setDetail(null); }}><ArrowLeft className="h-4 w-4" /></Button>
+              <Button aria-label="Back" variant="ghost" size="sm" className="md:hidden -ml-2" onClick={() => { setActiveId(null); setDetail(null); }}><ArrowLeft className="h-4 w-4" /></Button>
               <div className="min-w-0">
                 <p className="truncate font-semibold text-foreground">{detail.title || detail.participants.filter((p) => p.id !== myId).map((p) => p.name).join(', ')}</p>
                 {(() => {
@@ -410,7 +410,7 @@ export default function ChatPage() {
               </div>
               {detail.oversight && <Badge className="ml-auto bg-amber-100 text-amber-700"><ShieldAlert className="mr-1 h-3 w-3" /> Oversight</Badge>}
               {canDeleteConv && (
-                <Button variant="ghost" size="icon" className={`h-8 w-8 ${detail.oversight ? '' : 'ml-auto'}`} title="Delete conversation" onClick={deleteConversation}>
+                <Button aria-label="Delete conversation" variant="ghost" size="icon" className={`h-8 w-8 ${detail.oversight ? '' : 'ml-auto'}`} title="Delete conversation" onClick={deleteConversation}>
                   <Trash2 className="h-4 w-4 text-rose-500" />
                 </Button>
               )}
@@ -442,7 +442,7 @@ export default function ChatPage() {
                       <div className={`mt-0.5 flex items-center gap-2 text-[11px] ${sticker ? 'text-muted-foreground' : m.mine ? 'text-white/70' : 'text-muted-foreground'} ${m.mine ? 'justify-end' : ''}`}>
                         <span>{timeLabel(m.createdAt)}</span>
                         {m.mine && <button type="button" onClick={() => deleteMessage(m.id)} className="opacity-70 hover:opacity-100" title="Delete message" aria-label="Delete message"><Trash2 className="h-3 w-3" /></button>}
-                        {!m.mine && <button onClick={() => report(m.id)} className="opacity-0 group-hover:opacity-100" title="Report"><Flag className="h-3 w-3" /></button>}
+                        {!m.mine && <button aria-label="Report" onClick={() => report(m.id)} className="opacity-0 group-hover:opacity-100" title="Report"><Flag className="h-3 w-3" /></button>}
                       </div>
                     </div>
                   </div>
@@ -484,17 +484,17 @@ export default function ChatPage() {
                 {attachment && (
                   <div className="relative mb-2 inline-block">
                     <img src={attachment} alt="attachment preview" className="max-h-24 rounded-lg border border-border" />
-                    <button type="button" onClick={() => setAttachment(null)} className="absolute -top-2 -right-2 rounded-full bg-card border border-border p-0.5 shadow-sm">
+                    <button aria-label="Close" type="button" onClick={() => setAttachment(null)} className="absolute -top-2 -right-2 rounded-full bg-card border border-border p-0.5 shadow-sm">
                       <X className="h-3.5 w-3.5 text-rose-500" />
                     </button>
                   </div>
                 )}
                 <div className="flex items-center gap-2">
                   <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAttachment(f); }} />
-                  <Button variant="ghost" size="icon" className="shrink-0" title="Attach image" onClick={() => fileRef.current?.click()} disabled={uploading || sending}>
+                  <Button aria-label="Attach image" variant="ghost" size="icon" className="shrink-0" title="Attach image" onClick={() => fileRef.current?.click()} disabled={uploading || sending}>
                     {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4 text-muted-foreground" />}
                   </Button>
-                  <Button variant="ghost" size="icon" className="shrink-0" title="Camera (disappears in 24h)" onClick={() => setCamera(true)} disabled={sending}>
+                  <Button aria-label="Camera (disappears in 24h)" variant="ghost" size="icon" className="shrink-0" title="Camera (disappears in 24h)" onClick={() => setCamera(true)} disabled={sending}>
                     <Camera className="h-4 w-4 text-muted-foreground" />
                   </Button>
                   <StickerPicker onSelect={sendSticker} />

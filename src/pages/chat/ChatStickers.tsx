@@ -102,7 +102,7 @@ export default function ChatStickers() {
                     <Button size="sm" variant="outline" disabled={uploadingTo === p.name} onClick={() => fileRefs.current[p.name]?.click()}>
                       {uploadingTo === p.name ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Upload className="mr-1 h-4 w-4" />} Upload
                     </Button>
-                    <Button size="sm" variant="ghost" className="text-rose-600" onClick={() => deletePack(p.name)}><Trash2 className="h-4 w-4" /></Button>
+                    <Button aria-label="Delete" size="sm" variant="ghost" className="text-rose-600" onClick={() => deletePack(p.name)}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 )}
               </div>
@@ -111,7 +111,7 @@ export default function ChatStickers() {
                   <div key={url} className="group relative">
                     <img src={url} alt="sticker" className="h-16 w-16 rounded-lg border border-border object-contain p-1" />
                     {p.editable && (
-                      <button onClick={() => deleteSticker(p.name, url)} className="absolute -top-1.5 -right-1.5 hidden rounded-full bg-white p-0.5 shadow ring-1 ring-border group-hover:block" title="Remove">
+                      <button aria-label="Remove" onClick={() => deleteSticker(p.name, url)} className="absolute -top-1.5 -right-1.5 hidden rounded-full bg-white p-0.5 shadow ring-1 ring-border group-hover:block" title="Remove">
                         <Trash2 className="h-3.5 w-3.5 text-rose-500" />
                       </button>
                     )}

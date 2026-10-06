@@ -436,7 +436,7 @@ export default function EbookUpload() {
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-10">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" render={<Link to="/elibrary" />} nativeButton={false}>
+        <Button aria-label="Back" variant="ghost" size="icon" render={<Link to="/elibrary" />} nativeButton={false}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>

@@ -53,7 +53,7 @@ export default function QuestionImageField({ value, onChange, disabled }: Props)
         <div className="relative inline-block">
           <img src={value} alt="Question media" className="max-h-48 rounded-lg border border-border" />
           {!disabled && (
-            <button
+            <button aria-label="Remove image"
               type="button"
               onClick={() => onChange(null)}
               title="Remove image"

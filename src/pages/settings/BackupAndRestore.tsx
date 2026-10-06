@@ -232,43 +232,43 @@ export default function BackupAndRestore() {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Database Backup */}
-            <div className="border border-border rounded-sm p-4 flex flex-col items-center text-center hover:border-aubergine-500/50 transition-colors bg-card shadow-sm cursor-pointer" onClick={() => !isBackingUp && handleBackup('Database')}>
+            <div className="border border-border rounded-sm p-4 flex flex-col items-center text-center hover:border-aubergine-500/50 transition-colors bg-card shadow-sm">
               <div className="h-12 w-12 bg-aubergine-100 dark:bg-aubergine-900/30 text-aubergine-600 dark:text-aubergine-400 rounded-full flex items-center justify-center mb-3">
                 <Database className="h-6 w-6" />
               </div>
               <h3 className="font-semibold text-foreground mb-1">Database</h3>
               <p className="text-xs text-muted-foreground mb-4 flex-1">Complete PostgreSQL custom archive of all tables and relationships.</p>
-              <Button variant="outline" size="sm" className="w-full" disabled={isBackingUp}>Create Backup</Button>
+              <Button variant="outline" size="sm" className="w-full" disabled={isBackingUp} onClick={() => handleBackup('Database')}>Create Backup</Button>
             </div>
 
             {/* Uploaded Files */}
-            <div className="border border-border rounded-sm p-4 flex flex-col items-center text-center hover:border-aubergine-500/50 transition-colors bg-card shadow-sm cursor-pointer" onClick={() => !isBackingUp && handleBackup('Files Archive')}>
+            <div className="border border-border rounded-sm p-4 flex flex-col items-center text-center hover:border-aubergine-500/50 transition-colors bg-card shadow-sm">
               <div className="h-12 w-12 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center mb-3">
                 <FolderArchive className="h-6 w-6" />
               </div>
               <h3 className="font-semibold text-foreground mb-1">Uploaded Files</h3>
               <p className="text-xs text-muted-foreground mb-4 flex-1">Archive of all user uploads, documents, and images.</p>
-              <Button variant="outline" size="sm" className="w-full" disabled={isBackingUp}>Create Archive</Button>
+              <Button variant="outline" size="sm" className="w-full" disabled={isBackingUp} onClick={() => handleBackup('Files Archive')}>Create Archive</Button>
             </div>
 
             {/* JSON Export */}
-            <div className="border border-border rounded-sm p-4 flex flex-col items-center text-center hover:border-aubergine-500/50 transition-colors bg-card shadow-sm cursor-pointer" onClick={() => !isBackingUp && handleBackup('JSON Export')}>
+            <div className="border border-border rounded-sm p-4 flex flex-col items-center text-center hover:border-aubergine-500/50 transition-colors bg-card shadow-sm">
               <div className="h-12 w-12 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mb-3">
                 <FileJson className="h-6 w-6" />
               </div>
               <h3 className="font-semibold text-foreground mb-1">JSON Export</h3>
               <p className="text-xs text-muted-foreground mb-4 flex-1">Structured data export for API or migration scripts.</p>
-              <Button variant="outline" size="sm" className="w-full" disabled={isBackingUp}>Export JSON</Button>
+              <Button variant="outline" size="sm" className="w-full" disabled={isBackingUp} onClick={() => handleBackup('JSON Export')}>Export JSON</Button>
             </div>
 
             {/* CSV Export */}
-            <div className="border border-border rounded-sm p-4 flex flex-col items-center text-center hover:border-aubergine-500/50 transition-colors bg-card shadow-sm cursor-pointer" onClick={() => !isBackingUp && handleBackup('CSV Export')}>
+            <div className="border border-border rounded-sm p-4 flex flex-col items-center text-center hover:border-aubergine-500/50 transition-colors bg-card shadow-sm">
               <div className="h-12 w-12 bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 rounded-full flex items-center justify-center mb-3">
                 <FileSpreadsheet className="h-6 w-6" />
               </div>
               <h3 className="font-semibold text-foreground mb-1">CSV Export</h3>
               <p className="text-xs text-muted-foreground mb-4 flex-1">Tabular data format easy to open in spreadsheet apps.</p>
-              <Button variant="outline" size="sm" className="w-full" disabled={isBackingUp}>Export CSV</Button>
+              <Button variant="outline" size="sm" className="w-full" disabled={isBackingUp} onClick={() => handleBackup('CSV Export')}>Export CSV</Button>
             </div>
           </div>
         </div>

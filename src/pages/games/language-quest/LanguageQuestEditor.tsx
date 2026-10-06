@@ -585,8 +585,8 @@ function LessonEditor({ lesson, index, isFirst, isLast, analytics, onChange, onR
         <Button type="button" variant="ghost" size="icon" className="h-8 w-8" disabled={isFirst} onClick={onMoveUp} aria-label={`Move lesson ${index + 1} up`}><ArrowUp className="h-4 w-4" /></Button>
         <Button type="button" variant="ghost" size="icon" className="h-8 w-8" disabled={isLast} onClick={onMoveDown} aria-label={`Move lesson ${index + 1} down`}><ArrowDown className="h-4 w-4" /></Button>
         <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPreviewOpen(true)} aria-label={`Preview lesson ${index + 1}`} title="Preview as a learner"><Eye className="h-4 w-4" /></Button>
-        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => setOpen((value) => !value)}>{open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</Button>
-        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-rose-500" onClick={onRemove}><Trash2 className="h-4 w-4" /></Button>
+        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label={open ? "Collapse" : "Expand"} aria-expanded={open} onClick={() => setOpen((value) => !value)}>{open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</Button>
+        <Button aria-label="Delete" type="button" variant="ghost" size="icon" className="h-8 w-8 text-rose-500" onClick={onRemove}><Trash2 className="h-4 w-4" /></Button>
       </div>
       <LessonPreviewDialog lesson={lesson} open={previewOpen} onOpenChange={setPreviewOpen} />
       {open && (
@@ -667,8 +667,8 @@ function UnitEditor({ unit, index, isFirst, isLast, analytics, onChange, onRemov
         </div>
         <Button type="button" variant="ghost" size="icon" disabled={isFirst} onClick={onMoveUp} aria-label={`Move unit ${index + 1} up`}><ArrowUp className="h-4 w-4" /></Button>
         <Button type="button" variant="ghost" size="icon" disabled={isLast} onClick={onMoveDown} aria-label={`Move unit ${index + 1} down`}><ArrowDown className="h-4 w-4" /></Button>
-        <Button type="button" variant="ghost" size="icon" onClick={() => setOpen((value) => !value)}>{open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</Button>
-        <Button type="button" variant="ghost" size="icon" className="text-rose-500" onClick={onRemove}><Trash2 className="h-4 w-4" /></Button>
+        <Button type="button" variant="ghost" size="icon" aria-label={open ? "Collapse" : "Expand"} aria-expanded={open} onClick={() => setOpen((value) => !value)}>{open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</Button>
+        <Button aria-label="Delete" type="button" variant="ghost" size="icon" className="text-rose-500" onClick={onRemove}><Trash2 className="h-4 w-4" /></Button>
       </header>
       {open && (
         <div className="space-y-4 border-t border-slate-200 p-4 sm:p-5 dark:border-surface-raised">
@@ -860,7 +860,7 @@ export default function LanguageQuestEditor() {
     <div className="mx-auto max-w-5xl space-y-6 pb-24">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={confirmLeave} render={<Link to="/games/language-quest/manage" />} nativeButton={false}><ArrowLeft className="h-4 w-4" /></Button>
+          <Button aria-label="Back" variant="ghost" size="icon" onClick={confirmLeave} render={<Link to="/games/language-quest/manage" />} nativeButton={false}><ArrowLeft className="h-4 w-4" /></Button>
           <div><h1 className="text-2xl font-black text-slate-900 dark:text-white">{isEdit ? 'Edit Course' : 'New Course'}</h1><p className="text-sm text-slate-500">Build from units → lessons → challenges.</p></div>
         </div>
         <div className="flex flex-wrap gap-2">

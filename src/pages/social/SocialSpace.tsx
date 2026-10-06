@@ -676,7 +676,7 @@ export default function SocialSpace() {
                 </div>
               ))}
               {photos.length < MAX_PHOTOS && (
-                <button type="button" onClick={() => fileRef.current?.click()} className="flex aspect-square items-center justify-center rounded-lg border border-dashed border-input text-muted-foreground hover:border-aubergine-400 hover:text-aubergine-500 dark:hover:border-aubergine-400"><Plus className="h-6 w-6" /></button>
+                <button aria-label="Add" type="button" onClick={() => fileRef.current?.click()} className="flex aspect-square items-center justify-center rounded-lg border border-dashed border-input text-muted-foreground hover:border-aubergine-400 hover:text-aubergine-500 dark:hover:border-aubergine-400"><Plus className="h-6 w-6" /></button>
               )}
             </div>
           )}
@@ -763,9 +763,9 @@ export default function SocialSpace() {
                     </div>
                   </div>
                   <div className="flex items-center gap-0.5">
-                    {!post.mine && <Button variant="ghost" size="icon" className="h-8 w-8" disabled={post.reportedByMe} title={post.reportedByMe ? 'Already reported' : 'Report post'} onClick={() => reportPost(post)}><Flag className={`h-3.5 w-3.5 ${post.reportedByMe ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground'}`} /></Button>}
-                    {(post.mine || isAdmin) && <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit post" onClick={() => startEditPost(post)}><Pencil className="h-4 w-4 text-muted-foreground" /></Button>}
-                    {(post.mine || isAdmin) && <Button variant="ghost" size="icon" className="h-8 w-8" title="Delete post" onClick={() => removePost(post.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>}
+                    {!post.mine && <Button aria-label={post.reportedByMe ? 'Already reported' : 'Report post'} variant="ghost" size="icon" className="h-8 w-8" disabled={post.reportedByMe} title={post.reportedByMe ? 'Already reported' : 'Report post'} onClick={() => reportPost(post)}><Flag className={`h-3.5 w-3.5 ${post.reportedByMe ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground'}`} /></Button>}
+                    {(post.mine || isAdmin) && <Button aria-label="Edit post" variant="ghost" size="icon" className="h-8 w-8" title="Edit post" onClick={() => startEditPost(post)}><Pencil className="h-4 w-4 text-muted-foreground" /></Button>}
+                    {(post.mine || isAdmin) && <Button aria-label="Delete post" variant="ghost" size="icon" className="h-8 w-8" title="Delete post" onClick={() => removePost(post.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>}
                   </div>
                 </div>
 
@@ -852,7 +852,7 @@ export default function SocialSpace() {
                         {editingComment === comment.id ? (
                           <div className="flex flex-1 items-center gap-2">
                             <Input value={editDraft} onChange={(event) => setEditDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') saveEditComment(post.id, comment.id); if (event.key === 'Escape') setEditingComment(null); }} className="h-8" autoFocus />
-                            <Button size="icon" className="h-8 w-8 shrink-0" onClick={() => saveEditComment(post.id, comment.id)}><Check className="h-4 w-4" /></Button>
+                            <Button aria-label="Confirm" size="icon" className="h-8 w-8 shrink-0" onClick={() => saveEditComment(post.id, comment.id)}><Check className="h-4 w-4" /></Button>
                           </div>
                         ) : (
                           <>
@@ -877,7 +877,7 @@ export default function SocialSpace() {
                         placeholder="Add a comment… (Enter to send, Shift+Enter for a new line)"
                         className="min-h-[2.25rem] resize-none"
                       />
-                      <Button size="icon" className="h-9 w-9 shrink-0" onClick={() => addComment(post)} disabled={commentBusy[post.id] || !(commentDraft[post.id] || '').trim()}>{commentBusy[post.id] ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</Button>
+                      <Button aria-label="Post comment" size="icon" className="h-9 w-9 shrink-0" onClick={() => addComment(post)} disabled={commentBusy[post.id] || !(commentDraft[post.id] || '').trim()}>{commentBusy[post.id] ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</Button>
                     </div>
                   </div>
                 )}

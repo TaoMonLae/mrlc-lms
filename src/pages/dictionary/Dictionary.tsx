@@ -189,7 +189,7 @@ export default function Dictionary() {
         <div className="flex items-center gap-2">
           <h2 className="text-2xl font-semibold text-foreground">{data.word}</h2>
           {data.entries.length > 0 && (
-            <Button variant="ghost" size="icon" className="h-7 w-7" title="Pronounce" onClick={() => speak(data.word)}>
+            <Button aria-label="Pronounce" variant="ghost" size="icon" className="h-7 w-7" title="Pronounce" onClick={() => speak(data.word)}>
               <Volume2 className="h-4 w-4" />
             </Button>
           )}
@@ -384,7 +384,7 @@ export default function Dictionary() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Featured Word</p>
-              <Button variant="ghost" size="icon" className="h-7 w-7" title="Another word" onClick={fetchRandom} disabled={loadingWotd}>
+              <Button aria-label="Another word" variant="ghost" size="icon" className="h-7 w-7" title="Another word" onClick={fetchRandom} disabled={loadingWotd}>
                 <Shuffle className="h-3.5 w-3.5" />
               </Button>
             </div>

@@ -103,7 +103,7 @@ function Sections({ examId, rows, reload }: any) {
       {rows.map((s: any) => (
         <div key={s.id} className="flex items-center justify-between bg-card border border-border rounded-sm p-4">
           <div><p className="font-bold text-foreground">{s.title}</p><p className="text-xs text-muted-foreground">{[s.timeLimitMinutes ? `${s.timeLimitMinutes}m` : null, s.shuffleQuestions ? 'shuffled' : null].filter(Boolean).join(' · ') || s.instructions || '—'}</p></div>
-          <Button variant="ghost" size="icon" className="text-red-500" onClick={() => del(s.id)}><Trash2 className="h-4 w-4" /></Button>
+          <Button aria-label="Delete" variant="ghost" size="icon" className="text-red-500" onClick={() => del(s.id)}><Trash2 className="h-4 w-4" /></Button>
         </div>
       ))}
       {rows.length === 0 && <Empty label="No sections yet." />}
@@ -134,7 +134,7 @@ function Passages({ examId, rows, reload }: any) {
       {rows.map((s: any) => (
         <div key={s.id} className="flex items-center justify-between bg-card border border-border rounded-sm p-4">
           <div className="min-w-0"><div className="flex items-center gap-2"><Badge variant="outline" className="text-[11px]">{s.type}</Badge><p className="font-bold text-foreground truncate">{s.title || 'Untitled'}</p></div><p className="text-xs text-muted-foreground truncate mt-1">{s.content || s.mediaUrl || '—'}</p></div>
-          <Button variant="ghost" size="icon" className="text-red-500" onClick={() => del(s.id)}><Trash2 className="h-4 w-4" /></Button>
+          <Button aria-label="Delete" variant="ghost" size="icon" className="text-red-500" onClick={() => del(s.id)}><Trash2 className="h-4 w-4" /></Button>
         </div>
       ))}
       {rows.length === 0 && <Empty label="No passages yet." />}
@@ -161,7 +161,7 @@ function Groups({ examId, rows, sections, stimuli, reload }: any) {
       {rows.map((g: any) => (
         <div key={g.id} className="flex items-center justify-between bg-card border border-border rounded-sm p-4">
           <div><p className="font-bold text-foreground">{g.title || 'Untitled group'}</p><p className="text-xs text-muted-foreground">{g.stimulus ? `Passage: ${g.stimulus.title || g.stimulus.type}` : 'No passage linked'}</p></div>
-          <Button variant="ghost" size="icon" className="text-red-500" onClick={() => del(g.id)}><Trash2 className="h-4 w-4" /></Button>
+          <Button aria-label="Delete" variant="ghost" size="icon" className="text-red-500" onClick={() => del(g.id)}><Trash2 className="h-4 w-4" /></Button>
         </div>
       ))}
       {rows.length === 0 && <Empty label="No question groups yet." />}
@@ -205,7 +205,7 @@ function Rubrics({ examId, rows, questions, reload }: any) {
       {rows.map((r: any) => (
         <div key={r.id} className="flex items-center justify-between bg-card border border-border rounded-sm p-4">
           <div><p className="font-bold text-foreground">{r.title} <span className="text-xs font-normal text-muted-foreground">/ {r.maxScore} pts</span></p><p className="text-xs text-muted-foreground">{(r.criteria || []).map((c: any) => `${c.label} (${c.maxScore})`).join(' · ') || 'No criteria'}</p></div>
-          <Button variant="ghost" size="icon" className="text-red-500" onClick={() => del(r.id)}><Trash2 className="h-4 w-4" /></Button>
+          <Button aria-label="Delete" variant="ghost" size="icon" className="text-red-500" onClick={() => del(r.id)}><Trash2 className="h-4 w-4" /></Button>
         </div>
       ))}
       {rows.length === 0 && <Empty label="No rubrics yet." />}
@@ -277,7 +277,7 @@ function FromBank({ examId, sections }: any) {
         {results.map((r) => (
           <div key={r.id} className="flex items-center justify-between gap-2 border-t border-border pt-2">
             <p className="text-sm text-foreground line-clamp-1">{r.text}</p>
-            <Button variant="outline" size="sm" className="shrink-0" onClick={() => add(r.id)}><Plus className="h-3.5 w-3.5" /></Button>
+            <Button aria-label="Add" variant="outline" size="sm" className="shrink-0" onClick={() => add(r.id)}><Plus className="h-3.5 w-3.5" /></Button>
           </div>
         ))}
       </Card>
@@ -286,7 +286,7 @@ function FromBank({ examId, sections }: any) {
         {linked.map((l) => (
           <div key={l.id} className="flex items-center justify-between bg-card border border-border rounded-sm p-3">
             <p className="text-sm text-foreground line-clamp-1">{l.question?.text}</p>
-            <Button variant="ghost" size="icon" className="text-red-500" onClick={() => remove(l.id)}><Trash2 className="h-4 w-4" /></Button>
+            <Button aria-label="Delete" variant="ghost" size="icon" className="text-red-500" onClick={() => remove(l.id)}><Trash2 className="h-4 w-4" /></Button>
           </div>
         ))}
         {linked.length === 0 && <Empty label="No bank questions linked yet." />}
@@ -328,7 +328,7 @@ function RandomRules({ examId, sections }: any) {
       {rules.map((r) => (
         <div key={r.id} className="flex items-center justify-between bg-card border border-border rounded-sm p-4">
           <p className="text-sm text-foreground"><b>{r.count}</b> question(s) · {topics.find((t) => t.id === r.topicId)?.name || 'any topic'} · {r.difficulty || 'any difficulty'}</p>
-          <Button variant="ghost" size="icon" className="text-red-500" onClick={() => del(r.id)}><Trash2 className="h-4 w-4" /></Button>
+          <Button aria-label="Delete" variant="ghost" size="icon" className="text-red-500" onClick={() => del(r.id)}><Trash2 className="h-4 w-4" /></Button>
         </div>
       ))}
       {rules.length === 0 && <Empty label="No random rules yet. Questions stay fixed." />}

@@ -35,7 +35,7 @@ export function StickerPicker({ onSelect }: { onSelect: (url: string) => void })
 
   return (
     <div className="relative" ref={ref}>
-      <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0" title="Stickers" onClick={() => setOpen((o) => !o)}>
+      <Button aria-label="Stickers" type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0" title="Stickers" onClick={() => setOpen((o) => !o)}>
         <Smile className="h-4 w-4 text-muted-foreground" />
       </Button>
       {open && (

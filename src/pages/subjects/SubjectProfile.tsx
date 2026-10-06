@@ -10,6 +10,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -395,10 +396,9 @@ export default function SubjectProfile() {
       </Tabs>
 
       {/* Assign teacher dialog */}
-      {assignOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => !assigning && setAssignOpen(false)}>
-          <div className="w-full max-w-md bg-card rounded-sm shadow-none p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-foreground">Assign Teacher</h3>
+      <Dialog open={assignOpen} onOpenChange={(open) => { if (!open && !assigning) setAssignOpen(false); }}>
+            <DialogContent className="sm:max-w-md space-y-4">
+            <DialogHeader><DialogTitle>Assign Teacher</DialogTitle></DialogHeader>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-foreground">Teacher</label>
               <select
@@ -421,9 +421,8 @@ export default function SubjectProfile() {
                 {assigning ? 'Assigning…' : 'Assign'}
               </Button>
             </div>
-          </div>
-        </div>
-      )}
+          </DialogContent>
+        </Dialog>
     </div>
   );
 }

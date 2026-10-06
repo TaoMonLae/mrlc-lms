@@ -124,7 +124,7 @@ export default function FeeStructureDetail() {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" render={<Link to="/fee-structures" />} nativeButton={false}>
+          <Button aria-label="Back" variant="ghost" size="sm" render={<Link to="/fee-structures" />} nativeButton={false}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
           <div>
@@ -276,7 +276,7 @@ export default function FeeStructureDetail() {
                           </div>
                         </div>
                         {canManage && structure.status !== 'ACTIVE' && (
-                          <Button
+                          <Button aria-label="Delete"
                             variant="ghost"
                             size="sm"
                             className="text-red-600"

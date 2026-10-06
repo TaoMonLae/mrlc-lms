@@ -372,7 +372,7 @@ export default function DonorList() {
                       </Button>
                       {hasPermission("manage_donations") && (
                         <>
-                          <Button
+                          <Button aria-label="Edit"
                             variant="ghost"
                             size="sm"
                             className="h-8 w-8 p-0"
@@ -381,7 +381,7 @@ export default function DonorList() {
                             <Pencil className="h-4 w-4" />
                           </Button>
                           {donor.isActive ? (
-                            <Button
+                            <Button aria-label="Delete"
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
@@ -390,7 +390,7 @@ export default function DonorList() {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           ) : (
-                            <Button
+                            <Button aria-label="Reactivate donor"
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0 text-green-600 hover:text-green-700"

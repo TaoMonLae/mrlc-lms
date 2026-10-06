@@ -266,12 +266,12 @@ export default function Payroll() {
                     <Download className="mr-1 h-4 w-4" /> {exporting ? 'Exporting…' : 'Export PDF'}
                   </Button>
                   {selected.status === 'DRAFT' && (
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Edit" onClick={openEdit}>
+                    <Button aria-label="Edit" size="sm" variant="ghost" className="h-8 w-8 p-0" title="Edit" onClick={openEdit}>
                       <Pencil className="h-4 w-4 text-muted-foreground" />
                     </Button>
                   )}
                   {selected.status === 'DRAFT' && (
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Delete" onClick={removeRun}>
+                    <Button aria-label="Delete" size="sm" variant="ghost" className="h-8 w-8 p-0" title="Delete" onClick={removeRun}>
                       <Trash2 className="h-4 w-4 text-rose-500" />
                     </Button>
                   )}

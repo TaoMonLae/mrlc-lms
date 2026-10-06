@@ -265,7 +265,7 @@ export default function AnnouncementsList() {
 
               {canManage && (
                 <DropdownMenu>
-                  <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-muted-foreground" />} nativeButton={true}>
+                  <DropdownMenuTrigger aria-label="More actions" render={<Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-muted-foreground" />} nativeButton={true}>
                     <MoreVertical className="h-4 w-4" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-40">

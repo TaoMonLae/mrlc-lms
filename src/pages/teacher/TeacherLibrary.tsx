@@ -270,7 +270,7 @@ export default function TeacherLibrary() {
                 </div>
                 <div className="flex items-center gap-2 ml-4">
                     {isPreviewable(resource) && (
-                      <Button
+                      <Button aria-label="View in app"
                         variant="ghost"
                         size="icon"
                         className="h-9 w-9 text-muted-foreground hover:text-aubergine-600"
@@ -280,7 +280,7 @@ export default function TeacherLibrary() {
                           <Eye className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button
+                    <Button aria-label="Download resource"
                       variant="ghost"
                       size="icon"
                       className="h-9 w-9 text-muted-foreground hover:text-aubergine-600"
@@ -296,7 +296,7 @@ export default function TeacherLibrary() {
                         <Download className="h-4 w-4" />
                     </Button>
                     {resource.uploadedById === user?.id && (
-                        <Button
+                        <Button aria-label="Copy share link"
                           variant="ghost"
                           size="icon"
                           className="h-9 w-9 text-muted-foreground hover:text-blue-600"
@@ -308,7 +308,7 @@ export default function TeacherLibrary() {
                     )}
                     <DropdownMenu>
                       <DropdownMenuTrigger>
-                        <Button
+                        <Button aria-label="More options"
                           variant="ghost"
                           size="icon"
                           className="h-9 w-9 text-muted-foreground hover:text-aubergine-600"

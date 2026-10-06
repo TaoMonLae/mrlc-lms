@@ -218,10 +218,10 @@ export default function VendorsPage() {
                     </Button>
                   {hasPermission('manage_vendors') && (
                     <>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" render={<Link to={`/vendors/${vendor.id}/edit`} />} nativeButton={false}>
+                      <Button aria-label="Edit" variant="ghost" size="sm" className="h-8 w-8 p-0" render={<Link to={`/vendors/${vendor.id}/edit`} />} nativeButton={false}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                      <Button
+                      <Button aria-label="Delete"
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"

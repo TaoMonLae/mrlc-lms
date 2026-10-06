@@ -15,6 +15,7 @@ import {
   X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -518,10 +519,9 @@ export default function ClassProfile() {
           </div>
 
           {/* Assign students dialog */}
-          {studentsOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => !assigningStudents && setStudentsOpen(false)}>
-              <div className="w-full max-w-lg bg-card rounded-sm shadow-none p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-lg font-bold text-foreground">Assign Students</h3>
+          <Dialog open={studentsOpen} onOpenChange={(open) => { if (!open && !assigningStudents) setStudentsOpen(false); }}>
+                <DialogContent className="sm:max-w-lg space-y-4">
+                <DialogHeader><DialogTitle>Assign Students</DialogTitle></DialogHeader>
                 <Input
                   placeholder="Search by name or student ID..."
                   value={studentSearch}
@@ -560,9 +560,8 @@ export default function ClassProfile() {
                     {assigningStudents ? 'Assigning…' : `Assign${selectedStudentIds.length ? ` (${selectedStudentIds.length})` : ''}`}
                   </Button>
                 </div>
-              </div>
-            </div>
-          )}
+              </DialogContent>
+            </Dialog>
         </TabsContent>
 
         <TabsContent value="teachers" className="p-0 animate-in fade-in slide-in-from-bottom-2">
@@ -602,10 +601,9 @@ export default function ClassProfile() {
           </div>
 
           {/* Assign teacher dialog */}
-          {assignOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => !assigning && setAssignOpen(false)}>
-              <div className="w-full max-w-md bg-card rounded-sm shadow-none p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-lg font-bold text-foreground">Assign Teacher</h3>
+          <Dialog open={assignOpen} onOpenChange={(open) => { if (!open && !assigning) setAssignOpen(false); }}>
+                <DialogContent className="sm:max-w-md space-y-4">
+                <DialogHeader><DialogTitle>Assign Teacher</DialogTitle></DialogHeader>
                 <div className="space-y-1.5">
                   <span className="text-sm font-medium text-foreground">Teacher</span>
                   <Select value={assignTeacherId} onValueChange={setAssignTeacherId}>
@@ -637,9 +635,8 @@ export default function ClassProfile() {
                     {assigning ? 'Assigning…' : 'Assign'}
                   </Button>
                 </div>
-              </div>
-            </div>
-          )}
+              </DialogContent>
+            </Dialog>
         </TabsContent>
 
         <TabsContent value="subjects" className="p-6 animate-in fade-in slide-in-from-bottom-2">
@@ -672,10 +669,9 @@ export default function ClassProfile() {
           </div>
 
           {/* Add subject dialog */}
-          {subjectOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => !addingSubject && setSubjectOpen(false)}>
-              <div className="w-full max-w-md bg-card rounded-sm shadow-none p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-lg font-bold text-foreground">Add Subject</h3>
+          <Dialog open={subjectOpen} onOpenChange={(open) => { if (!open && !addingSubject) setSubjectOpen(false); }}>
+                <DialogContent className="sm:max-w-md space-y-4">
+                <DialogHeader><DialogTitle>Add Subject</DialogTitle></DialogHeader>
                 <div className="space-y-1.5">
                   <span className="text-sm font-medium text-foreground">Subject</span>
                   <Select value={addSubjectId} onValueChange={setAddSubjectId}>
@@ -702,9 +698,8 @@ export default function ClassProfile() {
                     {addingSubject ? 'Adding…' : 'Add'}
                   </Button>
                 </div>
-              </div>
-            </div>
-          )}
+              </DialogContent>
+            </Dialog>
         </TabsContent>
 
         <TabsContent value="attendance" className="p-6 animate-in fade-in slide-in-from-bottom-2">

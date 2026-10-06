@@ -216,7 +216,7 @@ export default function StudentFees() {
                           </Badge>
                         </td>
                         <td className="px-6 py-4">
-                          <Button
+                          <Button aria-label={tx.receiptNumber ? 'View and download receipt' : 'No receipt available'}
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-aubergine-600"

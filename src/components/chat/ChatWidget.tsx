@@ -189,7 +189,7 @@ export default function ChatWidget() {
     <div className="fixed inset-x-3 bottom-3 z-50 flex h-[75vh] max-h-[560px] flex-col overflow-hidden rounded-sm border border-border bg-card shadow-[8px_8px_0_color-mix(in_srgb,var(--foreground)_14%,transparent)] sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-96">
       <div className="flex items-center justify-between border-b border-border px-3 py-2">
         <div className="flex items-center gap-2">
-          {activeId && <button onClick={() => { setActiveId(null); setDetail(null); }} className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /></button>}
+          {activeId && <button aria-label="Back" onClick={() => { setActiveId(null); setDetail(null); }} className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /></button>}
           <span className="font-semibold text-foreground">
             {detail ? (
               <span className="flex flex-col leading-tight">
@@ -296,10 +296,10 @@ export default function ChatWidget() {
             <div className="border-t border-border p-2 text-center text-[11px] text-muted-foreground">Admin oversight — read only</div>
           ) : (
             <div className="flex items-center gap-1 border-t border-border p-2">
-              <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" title="Camera (disappears in 24h)" onClick={() => setCamera(true)} disabled={sending}><Camera className="h-4 w-4 text-muted-foreground" /></Button>
+              <Button aria-label="Camera (disappears in 24h)" variant="ghost" size="icon" className="h-9 w-9 shrink-0" title="Camera (disappears in 24h)" onClick={() => setCamera(true)} disabled={sending}><Camera className="h-4 w-4 text-muted-foreground" /></Button>
               <StickerPicker onSelect={sendSticker} />
               <Input value={draft} maxLength={5000} onChange={(e) => { setDraft(e.target.value); if (e.target.value.trim() && activeId) sendTyping(activeId); }} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Type a message…" className="h-9" disabled={sending} />
-              <Button size="icon" className="h-9 w-9 shrink-0" onClick={send} disabled={sending || !draft.trim()}>{sending ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> : <Send className="h-4 w-4" />}</Button>
+              <Button aria-label="Send message" size="icon" className="h-9 w-9 shrink-0" onClick={send} disabled={sending || !draft.trim()}>{sending ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> : <Send className="h-4 w-4" />}</Button>
             </div>
           )}
         </>

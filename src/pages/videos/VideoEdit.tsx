@@ -326,7 +326,7 @@ export default function VideoEdit() {
                         {videoFile?.name || 'Video uploaded successfully'}
                       </span>
                     </div>
-                    <Button
+                    <Button aria-label="Close"
                       type="button"
                       variant="ghost"
                       size="sm"

@@ -385,15 +385,15 @@ export default function ExpensesDashboard() {
                     </td>
                     <td className="py-3 px-4 text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" render={<Link to={`/expenses/${expense.id}`} />} nativeButton={false}>
+                        <Button aria-label="View expense" variant="ghost" size="sm" className="h-8 w-8 p-0" render={<Link to={`/expenses/${expense.id}`} />} nativeButton={false}>
                             <Receipt className="h-4 w-4" />
                           </Button>
                         {hasPermission('manage_expenses') && (
                           <>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" render={<Link to={`/expenses/${expense.id}/edit`} />} nativeButton={false}>
+                            <Button aria-label="Edit" variant="ghost" size="sm" className="h-8 w-8 p-0" render={<Link to={`/expenses/${expense.id}/edit`} />} nativeButton={false}>
                                 <Pencil className="h-4 w-4" />
                               </Button>
-                            <Button
+                            <Button aria-label="Delete"
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0 text-red-600 hover:text-red-700"

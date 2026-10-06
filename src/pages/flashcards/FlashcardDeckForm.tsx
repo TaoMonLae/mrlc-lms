@@ -212,7 +212,7 @@ export default function FlashcardDeckForm() {
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-10">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" render={<Link to="/flashcards" />}>
+        <Button aria-label="Back" variant="ghost" size="icon" render={<Link to="/flashcards" />}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
@@ -337,7 +337,7 @@ export default function FlashcardDeckForm() {
                 className="flex-1 min-h-0 resize-none"
                 maxLength={2000}
               />
-              <Button size="icon" variant="ghost" className="h-9 w-9 text-rose-500 hover:text-rose-600 shrink-0" onClick={() => removeCard(i)} disabled={cards.length === 1}>
+              <Button aria-label="Delete" size="icon" variant="ghost" className="h-9 w-9 text-rose-500 hover:text-rose-600 shrink-0" onClick={() => removeCard(i)} disabled={cards.length === 1}>
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
             </div>

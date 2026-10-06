@@ -91,7 +91,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = React.memo(({
             <Trophy className="w-5 h-5 text-yellow-400" />
             <h2 className="text-lg font-black text-white tracking-wide font-mono">ARCADE HALL OF FAME</h2>
           </div>
-          <button
+          <button aria-label="Close"
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer"
           >

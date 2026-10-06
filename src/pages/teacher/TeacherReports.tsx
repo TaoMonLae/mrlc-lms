@@ -165,7 +165,7 @@ export default function TeacherReports() {
                         >
                             <Download className="h-3.5 w-3.5 mr-2" /> Download
                         </Button>
-                        <Button
+                        <Button aria-label="View report details"
                           variant="ghost"
                           size="icon"
                           className="h-9 w-9 text-muted-foreground hover:text-aubergine-600"

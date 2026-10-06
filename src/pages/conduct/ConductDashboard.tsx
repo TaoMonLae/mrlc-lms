@@ -503,7 +503,7 @@ export default function ConductDashboard() {
                   <td className="px-4 py-3 text-muted-foreground">{v.reportedByName}</td>
                   <td className="px-4 py-3 text-muted-foreground max-w-[240px] truncate" title={v.note || ''}>{v.note || '—'}</td>
                   <td className="px-4 py-3 text-right flex items-center justify-end gap-1">
-                    <Button
+                    <Button aria-label="Download disciplinary notice for this record"
                       size="icon"
                       variant="ghost"
                       className="h-7 w-7 text-muted-foreground hover:text-aubergine-600"
@@ -529,7 +529,7 @@ export default function ConductDashboard() {
                       <FileDown className="h-3.5 w-3.5" />
                     </Button>
                     {(isAdmin || v.reportedById === user?.id) && (
-                      <Button size="icon" variant="ghost" className="h-7 w-7 text-rose-500 hover:text-rose-600" onClick={() => removeViolation(v)}>
+                      <Button aria-label="Delete" size="icon" variant="ghost" className="h-7 w-7 text-rose-500 hover:text-rose-600" onClick={() => removeViolation(v)}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     )}

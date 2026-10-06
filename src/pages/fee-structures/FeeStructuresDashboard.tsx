@@ -233,12 +233,12 @@ export default function FeeStructuresDashboard() {
                         <div className="flex justify-end gap-2">
                           <Button variant="ghost" size="sm" render={<Link to={`/fee-structures/${structure.id}`} />} nativeButton={false}>View</Button>
                           {hasPermission('manage_fee_structures') && structure.status !== 'ACTIVE' && (
-                            <Button variant="ghost" size="sm" render={<Link to={`/fee-structures/${structure.id}/edit`} />} nativeButton={false}>
+                            <Button aria-label="Edit" variant="ghost" size="sm" render={<Link to={`/fee-structures/${structure.id}/edit`} />} nativeButton={false}>
                                 <Edit className="h-4 w-4" />
                               </Button>
                           )}
                           {hasPermission('manage_fee_structures') && structure.status !== 'ACTIVE' && (
-                            <Button variant="ghost" size="sm" className="text-red-600" onClick={() => handleDelete(structure.id, structure.name)}>
+                            <Button aria-label="Delete" variant="ghost" size="sm" className="text-red-600" onClick={() => handleDelete(structure.id, structure.name)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           )}

@@ -264,7 +264,7 @@ export default function ClassDetails() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <Button
+              <Button aria-label="Filter"
                 id="class-details-filter-btn"
                 variant="outline"
                 size="icon"
@@ -343,7 +343,7 @@ export default function ClassDetails() {
                     >
                       Profile
                     </Button>
-                    <Button
+                    <Button aria-label="Send message"
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-aubergine-600"
@@ -435,7 +435,7 @@ export default function ClassDetails() {
                         {exam.status.replace('_', ' ')}
                       </Badge>
                     </div>
-                    <Button
+                    <Button aria-label="View exam details"
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-aubergine-600"

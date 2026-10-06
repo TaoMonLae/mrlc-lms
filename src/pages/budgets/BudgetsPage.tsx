@@ -238,7 +238,7 @@ export default function BudgetsPage() {
                         </Badge>
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" render={<Link to={`/budgets/${budget.id}`} />} nativeButton={false}>
+                        <Button aria-label={`View budget ${budget.name ?? ""}`.trim()} variant="ghost" size="sm" className="h-8 w-8 p-0" render={<Link to={`/budgets/${budget.id}`} />} nativeButton={false}>
                             <PieChart className="h-4 w-4" />
                           </Button>
                       </td>

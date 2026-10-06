@@ -157,7 +157,7 @@ export default function FlashcardSpelling() {
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-10">
       <div className="flex items-center gap-3 flex-wrap">
-        <Button variant="ghost" size="icon" render={<Link to={listUrl} />}>
+        <Button aria-label="Back" variant="ghost" size="icon" render={<Link to={listUrl} />}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-[160px]">

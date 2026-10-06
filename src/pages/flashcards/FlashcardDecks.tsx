@@ -140,13 +140,13 @@ export default function FlashcardDecks() {
                       {d.shared && <Share2 className="h-3.5 w-3.5 text-aubergine-500 shrink-0" aria-label="Shared with other teachers" />}
                     </h3>
                     <div className="flex items-center gap-1 shrink-0">
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Student progress" render={<Link to={`/flashcards/${d.id}/progress`} />}>
+                      <Button aria-label="Student progress" size="icon" variant="ghost" className="h-7 w-7" title="Student progress" render={<Link to={`/flashcards/${d.id}/progress`} />}>
                         <BarChart3 className="h-3.5 w-3.5" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" render={<Link to={`/flashcards/${d.id}/edit`} />}>
+                      <Button aria-label="Edit" size="icon" variant="ghost" className="h-7 w-7" render={<Link to={`/flashcards/${d.id}/edit`} />}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7 text-rose-500 hover:text-rose-600" onClick={() => remove(d)}>
+                      <Button aria-label="Delete" size="icon" variant="ghost" className="h-7 w-7 text-rose-500 hover:text-rose-600" onClick={() => remove(d)}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>

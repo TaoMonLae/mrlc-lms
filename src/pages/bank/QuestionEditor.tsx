@@ -127,7 +127,7 @@ export default function QuestionEditor() {
                   <input type="checkbox" checked={o.isCorrect} onChange={(e) => setOpt(i, { isCorrect: e.target.checked })} />
                   <Input placeholder={`Option ${i + 1}`} value={o.text} onChange={(e) => setOpt(i, { text: e.target.value })} />
                   {f.partialCredit && <Input type="number" className="w-20" placeholder="wt" value={o.weight ?? ''} onChange={(e) => setOpt(i, { weight: e.target.value })} />}
-                  <Button variant="ghost" size="icon" className="text-red-500 shrink-0" onClick={() => setF({ ...f, options: f.options.filter((_: any, idx: number) => idx !== i) })}><Trash2 className="h-4 w-4" /></Button>
+                  <Button aria-label="Delete" variant="ghost" size="icon" className="text-red-500 shrink-0" onClick={() => setF({ ...f, options: f.options.filter((_: any, idx: number) => idx !== i) })}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               ))}
               <Button variant="outline" size="sm" onClick={() => setF({ ...f, options: [...f.options, { text: '', isCorrect: false }] })}><Plus className="h-3 w-3 mr-1" /> Add option</Button>

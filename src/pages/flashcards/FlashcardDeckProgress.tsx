@@ -54,7 +54,7 @@ export default function FlashcardDeckProgress() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-10">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" render={<Link to="/flashcards" />}>
+        <Button aria-label="Back" variant="ghost" size="icon" render={<Link to="/flashcards" />}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">

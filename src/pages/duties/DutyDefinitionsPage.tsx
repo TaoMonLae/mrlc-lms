@@ -142,7 +142,7 @@ export default function DutyDefinitionsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" render={<Link to="/duties" />} nativeButton={false}>
+        <Button aria-label="Back" variant="ghost" size="sm" render={<Link to="/duties" />} nativeButton={false}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
@@ -160,7 +160,7 @@ export default function DutyDefinitionsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle>{editingId ? 'Edit Duty Type' : 'New Duty Type'}</CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => setFormOpen(false)}>
+            <Button aria-label="Close" variant="ghost" size="sm" onClick={() => setFormOpen(false)}>
               <X className="h-4 w-4" />
             </Button>
           </CardHeader>
@@ -269,10 +269,10 @@ export default function DutyDefinitionsPage() {
                   </div>
                   {canManage && (
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => openEdit(def)}>
+                      <Button aria-label="Edit" variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => openEdit(def)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleDelete(def.id)}>
+                      <Button aria-label="Delete" variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleDelete(def.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
