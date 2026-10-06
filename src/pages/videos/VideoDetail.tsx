@@ -10,6 +10,7 @@ import { apiGet } from '../../lib/api';
 import { useVideoProgress } from '../../hooks/useVideoProgress';
 import { VideoPlayerControls } from '../../components/VideoPlayerControls';
 import { VIDEO_RESUME_MIN_SECONDS } from '../../lib/video/constants';
+import { formatNoteTimestamp } from '../../lib/video/noteTimestamp';
 import type { VideoLesson, VideoAnalytics } from '../../lib/video/types';
 import { getYouTubeVideoId } from '../../../shared/videoSource';
 import { YouTubeLessonPlayer, type LessonPlayerHandle } from '../../components/video/YouTubeLessonPlayer';
@@ -32,6 +33,8 @@ export default function VideoDetail() {
   const playerFrameRef = useRef<HTMLDivElement>(null);
   const [noteCapture, setNoteCapture] = useState({ sequence: 0, seconds: 0 });
   const restoredVideoRef = useRef<string | null>(null);
+  // The "Resuming from" badge is a hint for the first play, not a permanent overlay.
+  const [resumeNoticeDismissed, setResumeNoticeDismissed] = useState(false);
 
   // Enable progress tracking for students and teachers (not admins)
   const shouldTrackProgress = !isAdmin;
@@ -52,13 +55,15 @@ export default function VideoDetail() {
   useEffect(() => {
     if (!id) return;
     const controller = new AbortController();
-    setLoading(true); setVideo(null); setAnalytics(null); setNoteCapture({ sequence: 0, seconds: 0 });
+    setLoading(true); setVideo(null); setAnalytics(null); setNoteCapture({ sequence: 0, seconds: 0 }); setResumeNoticeDismissed(false);
     const fetchVideo = async () => {
       try {
         const v = await apiGet<VideoLesson>(`/api/videos/${id}`, { signal: controller.signal });
         if (v.videoUrl.startsWith('/uploads/videos/')) {
+          // Refresh the scoped media cookie for private uploads. A failure here
+          // must not hide the lesson page; playback will report its own error.
           const token = sessionStorage.getItem('auth_token');
-          await fetch('/api/videos/media-session', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, signal: controller.signal });
+          await fetch('/api/videos/media-session', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, signal: controller.signal }).catch(() => undefined);
         }
         if (controller.signal.aborted) return;
         setVideo(v);
@@ -164,14 +169,18 @@ export default function VideoDetail() {
       toast.success('Video completed! 🎉');
     };
 
+    const handlePlay = () => setResumeNoticeDismissed(true);
+
     videoEl.addEventListener('timeupdate', handleTimeUpdate);
     videoEl.addEventListener('pause', handlePause);
     videoEl.addEventListener('ended', handleEnded);
+    videoEl.addEventListener('play', handlePlay);
 
     return () => {
       videoEl.removeEventListener('timeupdate', handleTimeUpdate);
       videoEl.removeEventListener('pause', handlePause);
       videoEl.removeEventListener('ended', handleEnded);
+      videoEl.removeEventListener('play', handlePlay);
     };
   }, [shouldTrackProgress, saveProgress, saveProgressImmediate, isCompleted, transcode, playbackRevision, video?.videoUrl, playbackError]);
 
@@ -291,7 +300,7 @@ export default function VideoDetail() {
       <div className="video-lesson-grid min-w-0">
       <div className="min-w-0 space-y-5">
       {/* Video Player */}
-      <div ref={playerFrameRef} className="video-lesson-player-frame relative aspect-video min-h-[200px] w-full scroll-mt-24 overflow-hidden rounded-sm border border-border bg-black group" aria-label="Lesson video player">
+      <div ref={playerFrameRef} role="region" className="video-lesson-player-frame relative aspect-video min-h-[200px] w-full scroll-mt-24 overflow-hidden rounded-sm border border-border bg-black group [&:fullscreen]:rounded-none [&:fullscreen]:border-0" aria-label="Lesson video player">
         {isYouTube && shouldTrackProgress && progressLoading ? <p className="flex h-full items-center justify-center text-sm text-white">Loading saved position…</p> : isYouTube ? <YouTubeLessonPlayer
           key={`${video.id}-${playbackRevision}`} ref={youtubeRef} source={video.videoUrl} title={video.title}
           track={shouldTrackProgress} startPosition={startPosition} onProgress={saveProgress} onFlush={saveProgressImmediate}
@@ -326,7 +335,7 @@ export default function VideoDetail() {
               <p className="font-semibold text-white">The converted video could not be loaded.</p>
               <p className="mt-1 text-xs text-white/60">The file may be incomplete or use an unsupported codec. Try converting it again.</p>
             </div>
-            <Button size="sm" variant="outline" onClick={() => { setPlaybackError(false); setPlaybackRevision(Date.now()); }}>
+            <Button size="sm" variant="outline" onClick={() => { setPlaybackError(false); restoredVideoRef.current = null; setPlaybackRevision(Date.now()); }}>
               Retry playback
             </Button>
           </div>
@@ -361,14 +370,14 @@ export default function VideoDetail() {
               }}
             />
             {/* Resume indicator */}
-            {startPosition > VIDEO_RESUME_MIN_SECONDS && !isCompleted && (
-              <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 backdrop-blur-sm">
+            {startPosition > VIDEO_RESUME_MIN_SECONDS && !isCompleted && !resumeNoticeDismissed && (
+              <div className="pointer-events-none absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 backdrop-blur-sm">
                 <RotateCcw className="h-3 w-3" />
-                Resuming from {Math.floor(startPosition / 60)}:{String(Math.floor(startPosition % 60)).padStart(2, '0')}
+                Resuming from {formatNoteTimestamp(startPosition)}
               </div>
             )}
             {isCompleted && (
-              <div className="absolute top-4 right-4 bg-green-600/90 text-white px-3 py-1.5 rounded-lg text-xs font-medium backdrop-blur-sm">
+              <div className="pointer-events-none absolute top-4 right-4 bg-green-600/90 text-white px-3 py-1.5 rounded-lg text-xs font-medium backdrop-blur-sm">
                 ✓ Completed
               </div>
             )}

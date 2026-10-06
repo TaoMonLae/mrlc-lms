@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { ArrowLeft, Save, Info, Upload, X, Film } from 'lucide-react';
 import { useForm, type Resolver } from 'react-hook-form';
@@ -102,15 +102,17 @@ export default function VideoEdit() {
   const videoUrl = watch('videoUrl');
   const thumbnailUrl = watch('thumbnailUrl');
 
+  // Auto-fill once per video source. Re-filling whenever the field is empty
+  // made "Remove" impossible for YouTube/Vimeo lessons: the thumbnail came
+  // straight back together with a toast.
+  const autoThumbnailRef = useRef<string | null>(null);
   useEffect(() => {
-    // Only auto-fill if thumbnail is empty and videoUrl is a YouTube/Vimeo URL
-    if (videoUrl && !thumbnailUrl) {
-      const autoThumb = getVideoThumbnailUrl(videoUrl);
-      if (autoThumb) {
-        setValue('thumbnailUrl', autoThumb);
-        toast.info('Auto-fetched video thumbnail');
-      }
-    }
+    const autoThumb = videoUrl ? getVideoThumbnailUrl(videoUrl) : null;
+    if (!autoThumb || autoThumbnailRef.current === autoThumb) return;
+    autoThumbnailRef.current = autoThumb;
+    if (thumbnailUrl) return;
+    setValue('thumbnailUrl', autoThumb, { shouldValidate: true });
+    toast.info('Auto-fetched video thumbnail');
   }, [videoUrl, thumbnailUrl, setValue]);
 
   useEffect(() => {

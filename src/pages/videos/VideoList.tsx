@@ -90,61 +90,48 @@ export default function VideoList() {
     });
   };
 
+  // "Select all" only concerns the lessons currently shown. Selections hidden
+  // by a filter must not make the toggle look complete (or clear everything).
+  const allVisibleSelected = filteredVideos.length > 0 && filteredVideos.every(v => selectedIds.has(v.id));
   const toggleAll = () => {
-    if (selectedIds.size === filteredVideos.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredVideos.map(v => v.id)));
-    }
+    setSelectedIds(allVisibleSelected ? new Set() : new Set(filteredVideos.map(v => v.id)));
+  };
+
+  const plural = (count: number) => `${count} video${count === 1 ? '' : 's'}`;
+
+  // Run one request per selected lesson and report partial failures honestly:
+  // lessons that succeeded are updated on screen, the rest stay selected so the
+  // action can be retried.
+  const runBulk = async (action: (id: string) => Promise<unknown>) => {
+    const ids = Array.from(selectedIds);
+    const results = await Promise.allSettled(ids.map(id => action(id)));
+    const succeeded = new Set(ids.filter((_, index) => results[index].status === 'fulfilled'));
+    const failed = ids.filter(id => !succeeded.has(id));
+    setSelectedIds(new Set(failed));
+    return { succeeded, failed };
   };
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(`Are you sure you want to delete ${selectedIds.size} video${selectedIds.size > 1 ? 's' : ''}?`)) return;
+    if (!confirm(`Are you sure you want to delete ${plural(selectedIds.size)}?`)) return;
 
-    try {
-      await Promise.all(Array.from(selectedIds).map(id => apiSend(`/api/videos/${id}`, 'DELETE')));
-      setVideos(prev => prev.filter(v => !selectedIds.has(v.id)));
-      setSelectedIds(new Set());
-      toast.success(`${selectedIds.size} video${selectedIds.size > 1 ? 's' : ''} deleted`);
-    } catch {
-      toast.error('Failed to delete some videos');
-    }
+    const { succeeded, failed } = await runBulk(id => apiSend(`/api/videos/${id}`, 'DELETE'));
+    if (succeeded.size) setVideos(prev => prev.filter(v => !succeeded.has(v.id)));
+    if (failed.length) toast.error(`${plural(failed.length)} could not be deleted`);
+    else toast.success(`${plural(succeeded.size)} deleted`);
   };
 
-  const handleBulkArchive = async () => {
+  const setBulkStatus = async (status: 'ARCHIVED' | 'PUBLISHED') => {
     if (selectedIds.size === 0) return;
-
-    try {
-      await Promise.all(Array.from(selectedIds).map(id =>
-        apiSend(`/api/videos/${id}`, 'PUT', { status: 'ARCHIVED' })
-      ));
-      setVideos(prev => prev.map(v =>
-        selectedIds.has(v.id) ? { ...v, status: 'ARCHIVED' as const } : v
-      ));
-      setSelectedIds(new Set());
-      toast.success(`${selectedIds.size} video${selectedIds.size > 1 ? 's' : ''} archived`);
-    } catch {
-      toast.error('Failed to archive some videos');
-    }
+    const verb = status === 'ARCHIVED' ? 'archived' : 'published';
+    const { succeeded, failed } = await runBulk(id => apiSend(`/api/videos/${id}`, 'PUT', { status }));
+    if (succeeded.size) setVideos(prev => prev.map(v => (succeeded.has(v.id) ? { ...v, status } : v)));
+    if (failed.length) toast.error(`${plural(failed.length)} could not be ${verb}`);
+    else toast.success(`${plural(succeeded.size)} ${verb}`);
   };
 
-  const handleBulkPublish = async () => {
-    if (selectedIds.size === 0) return;
-
-    try {
-      await Promise.all(Array.from(selectedIds).map(id =>
-        apiSend(`/api/videos/${id}`, 'PUT', { status: 'PUBLISHED' })
-      ));
-      setVideos(prev => prev.map(v =>
-        selectedIds.has(v.id) ? { ...v, status: 'PUBLISHED' as const } : v
-      ));
-      setSelectedIds(new Set());
-      toast.success(`${selectedIds.size} video${selectedIds.size > 1 ? 's' : ''} published`);
-    } catch {
-      toast.error('Failed to publish some videos');
-    }
-  };
+  const handleBulkArchive = () => setBulkStatus('ARCHIVED');
+  const handleBulkPublish = () => setBulkStatus('PUBLISHED');
 
   const subjects = Array.from(new Set(videos.map(v => v.subjectName).filter(Boolean)));
 
@@ -196,10 +183,13 @@ export default function VideoList() {
       <div className="bg-card p-4 rounded-sm border border-border shadow-sm flex flex-col md:flex-row gap-4 items-center">
         {(isAdmin || isTeacher) && (
           <button
+            type="button"
             onClick={toggleAll}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            aria-pressed={allVisibleSelected}
+            disabled={filteredVideos.length === 0}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
           >
-            {selectedIds.size === filteredVideos.length && filteredVideos.length > 0 ? (
+            {allVisibleSelected ? (
               <CheckSquare className="h-4 w-4" />
             ) : (
               <Square className="h-4 w-4" />
