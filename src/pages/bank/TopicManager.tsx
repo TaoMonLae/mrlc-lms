@@ -28,35 +28,35 @@ export default function TopicManager() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
-      <Button variant="ghost" size="sm" className="-ml-2 text-slate-500" onClick={() => navigate('/bank')}><ArrowLeft className="h-4 w-4 mr-1" /> Bank</Button>
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><FolderTree className="h-6 w-6 text-aubergine-600" /> Topics & Subtopics</h1>
+      <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground" onClick={() => navigate('/bank')}><ArrowLeft className="h-4 w-4 mr-1" /> Bank</Button>
+      <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><FolderTree className="h-6 w-6 text-aubergine-600" /> Topics & Subtopics</h1>
 
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-5 space-y-3">
+      <div className="bg-card border border-border rounded-sm p-5 space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div><Label>Name</Label><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
           <div><Label>Code</Label><Input value={f.code} onChange={(e) => setF({ ...f, code: e.target.value })} /></div>
-          <div><Label>Subject</Label><select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={f.subjectId} onChange={(e) => setF({ ...f, subjectId: e.target.value })}><option value="">—</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
-          <div><Label>Parent (for subtopic)</Label><select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={f.parentId} onChange={(e) => setF({ ...f, parentId: e.target.value })}><option value="">None (top-level)</option>{roots.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>
+          <div><Label>Subject</Label><select className="w-full h-10 rounded-md border border-border bg-card px-2 text-sm" value={f.subjectId} onChange={(e) => setF({ ...f, subjectId: e.target.value })}><option value="">—</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
+          <div><Label>Parent (for subtopic)</Label><select className="w-full h-10 rounded-md border border-border bg-card px-2 text-sm" value={f.parentId} onChange={(e) => setF({ ...f, parentId: e.target.value })}><option value="">None (top-level)</option>{roots.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>
         </div>
         <Button onClick={add} className="bg-primary text-primary-foreground"><Plus className="h-4 w-4 mr-1" /> Add topic</Button>
       </div>
 
       <div className="space-y-2">
         {roots.map((t) => (
-          <div key={t.id} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4">
+          <div key={t.id} className="bg-card border border-border rounded-sm p-4">
             <div className="flex items-center justify-between">
-              <p className="font-bold text-slate-900 dark:text-white">{t.name} {t.code && <span className="text-xs text-slate-400">({t.code})</span>}</p>
+              <p className="font-bold text-foreground">{t.name} {t.code && <span className="text-xs text-muted-foreground">({t.code})</span>}</p>
               <Button variant="ghost" size="icon" className="text-red-500" onClick={() => del(t.id)}><Trash2 className="h-4 w-4" /></Button>
             </div>
             {childrenOf(t.id).map((c) => (
-              <div key={c.id} className="flex items-center justify-between pl-4 mt-2 border-l-2 border-slate-100 dark:border-surface-raised">
-                <p className="text-sm text-slate-600 dark:text-slate-300">{c.name}</p>
+              <div key={c.id} className="flex items-center justify-between pl-4 mt-2 border-l-2 border-border">
+                <p className="text-sm text-muted-foreground">{c.name}</p>
                 <Button variant="ghost" size="icon" className="text-red-400 h-7 w-7" onClick={() => del(c.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
               </div>
             ))}
           </div>
         ))}
-        {roots.length === 0 && <div className="rounded-xl border border-dashed border-slate-200 dark:border-surface-raised p-8 text-center text-slate-500">No topics yet.</div>}
+        {roots.length === 0 && <div className="rounded-sm border border-dashed border-border p-8 text-center text-muted-foreground">No topics yet.</div>}
       </div>
     </div>
   );

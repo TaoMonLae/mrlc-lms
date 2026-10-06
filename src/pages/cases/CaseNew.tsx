@@ -101,17 +101,17 @@ export default function CaseNew() {
   return (
     <div className="space-y-6 max-w-3xl mx-auto pb-10">
       <div>
-        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/cases" />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/cases" />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Cases
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Open New Case</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Record a new student support or protection concern.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Open New Case</h1>
+        <p className="text-sm text-muted-foreground mt-1">Record a new student support or protection concern.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {selectedType === 'PROTECTION' && (
-           <div className="bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 p-4 rounded-xl border border-red-200 dark:border-red-900 flex items-start gap-3">
+           <div className="bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 p-4 rounded-sm border border-red-200 dark:border-red-900 flex items-start gap-3">
              <ShieldAlert className="h-5 w-5 mt-0.5 shrink-0" />
              <div>
                <h3 className="font-semibold">Protection Case Guidelines</h3>
@@ -120,7 +120,7 @@ export default function CaseNew() {
            </div>
         )}
 
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm p-6 space-y-6">
+        <div className="bg-card border border-border rounded-sm overflow-hidden shadow-sm p-6 space-y-6">
            
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2 md:col-span-2">
@@ -159,7 +159,7 @@ export default function CaseNew() {
                   placeholder="Provide all known context, observations, and factual details..." 
                   rows={5} 
                 />
-                <p className="text-xs text-slate-500">Do not include subjective opinions or diagnoses unless formally provided by a professional.</p>
+                <p className="text-xs text-muted-foreground">Do not include subjective opinions or diagnoses unless formally provided by a professional.</p>
                 {errors.description && <p className="text-xs text-red-500 font-medium">{errors.description.message}</p>}
               </div>
 

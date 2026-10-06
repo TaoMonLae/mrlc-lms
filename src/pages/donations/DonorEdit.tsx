@@ -126,8 +126,8 @@ export default function DonorEdit() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Edit Donor</h1>
-          <p className="text-sm text-slate-500">Update donor information</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Edit Donor</h1>
+          <p className="text-sm text-muted-foreground">Update donor information</p>
         </div>
       </div>
 
@@ -240,7 +240,7 @@ export default function DonorEdit() {
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
                 <Label htmlFor="doNotContact">Do Not Contact</Label>
-                <p className="text-xs text-slate-500">Suppress outreach communications to this donor</p>
+                <p className="text-xs text-muted-foreground">Suppress outreach communications to this donor</p>
               </div>
               <Switch
                 id="doNotContact"
@@ -344,7 +344,7 @@ export default function DonorEdit() {
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
                 <Label htmlFor="isActive">Active</Label>
-                <p className="text-xs text-slate-500">Inactive donors are hidden from default lists</p>
+                <p className="text-xs text-muted-foreground">Inactive donors are hidden from default lists</p>
               </div>
               <Switch
                 id="isActive"

@@ -50,8 +50,8 @@ export default function ExamAuthoring() {
     <div className="max-w-4xl mx-auto space-y-5 pb-12">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Exam Authoring</h1>
-          <p className="text-sm text-slate-500 mt-1">Build sections, passages, grouped questions and grading rubrics.</p>
+          <h1 className="text-2xl font-bold text-foreground">Exam Authoring</h1>
+          <p className="text-sm text-muted-foreground mt-1">Build sections, passages, grouped questions and grading rubrics.</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" size="sm" onClick={clone}><Copy className="h-4 w-4 mr-1" /> Clone</Button>
@@ -60,9 +60,9 @@ export default function ExamAuthoring() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-1 border-b border-slate-200 dark:border-surface-raised">
+      <div className="flex flex-wrap gap-1 border-b border-border">
         {TABS.map(([k, label, Icon]) => (
-          <button key={k} onClick={() => setTab(k)} className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 -mb-px transition-colors ${tab === k ? 'border-aubergine-600 text-aubergine-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+          <button key={k} onClick={() => setTab(k)} className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 -mb-px transition-colors ${tab === k ? 'border-aubergine-600 text-aubergine-600' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
             <Icon className="h-4 w-4" /> {label}
           </button>
         ))}
@@ -80,7 +80,7 @@ export default function ExamAuthoring() {
 }
 
 function Card({ children }: { children: any }) {
-  return <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-5 space-y-3">{children}</div>;
+  return <div className="bg-card border border-border rounded-sm p-5 space-y-3">{children}</div>;
 }
 
 // ── Sections ────────────────────────────────────────────────────────────────
@@ -91,9 +91,9 @@ function Sections({ examId, rows, reload }: any) {
   return (
     <div className="space-y-4">
       <Card>
-        <h3 className="font-bold text-sm uppercase tracking-widest text-slate-800 dark:text-white">New section</h3>
+        <h3 className="font-bold text-sm uppercase tracking-widest text-foreground">New section</h3>
         <Input placeholder="Section title (e.g. Section 1: Reading)" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
-        <textarea className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas p-2 text-sm" placeholder="Instructions" value={f.instructions} onChange={(e) => setF({ ...f, instructions: e.target.value })} />
+        <textarea className="w-full min-h-[60px] rounded-md border border-border bg-card p-2 text-sm" placeholder="Instructions" value={f.instructions} onChange={(e) => setF({ ...f, instructions: e.target.value })} />
         <div className="flex items-center gap-4">
           <div className="flex-1"><Label>Time limit (min)</Label><Input type="number" value={f.timeLimitMinutes} onChange={(e) => setF({ ...f, timeLimitMinutes: e.target.value })} /></div>
           <label className="flex items-center gap-2 text-sm font-medium mt-5"><input type="checkbox" checked={f.shuffleQuestions} onChange={(e) => setF({ ...f, shuffleQuestions: e.target.checked })} /> Shuffle</label>
@@ -101,8 +101,8 @@ function Sections({ examId, rows, reload }: any) {
         <Button onClick={add} className="bg-primary text-primary-foreground"><Plus className="h-4 w-4 mr-1" /> Add section</Button>
       </Card>
       {rows.map((s: any) => (
-        <div key={s.id} className="flex items-center justify-between bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4">
-          <div><p className="font-bold text-slate-900 dark:text-white">{s.title}</p><p className="text-xs text-slate-500">{[s.timeLimitMinutes ? `${s.timeLimitMinutes}m` : null, s.shuffleQuestions ? 'shuffled' : null].filter(Boolean).join(' · ') || s.instructions || '—'}</p></div>
+        <div key={s.id} className="flex items-center justify-between bg-card border border-border rounded-sm p-4">
+          <div><p className="font-bold text-foreground">{s.title}</p><p className="text-xs text-muted-foreground">{[s.timeLimitMinutes ? `${s.timeLimitMinutes}m` : null, s.shuffleQuestions ? 'shuffled' : null].filter(Boolean).join(' · ') || s.instructions || '—'}</p></div>
           <Button variant="ghost" size="icon" className="text-red-500" onClick={() => del(s.id)}><Trash2 className="h-4 w-4" /></Button>
         </div>
       ))}
@@ -119,21 +119,21 @@ function Passages({ examId, rows, reload }: any) {
   return (
     <div className="space-y-4">
       <Card>
-        <h3 className="font-bold text-sm uppercase tracking-widest text-slate-800 dark:text-white">New passage / media</h3>
+        <h3 className="font-bold text-sm uppercase tracking-widest text-foreground">New passage / media</h3>
         <div className="flex gap-3">
-          <select className="h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-3 text-sm" value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}>
+          <select className="h-10 rounded-md border border-border bg-card px-3 text-sm" value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}>
             {STIMULUS_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
           <Input placeholder="Title" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
         </div>
         {f.type === 'TEXT' || f.type === 'TABLE' || f.type === 'CHART'
-          ? <textarea className="w-full min-h-[120px] rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas p-2 text-sm font-mono" placeholder={f.type === 'TEXT' ? 'Passage text…' : 'Data (JSON / CSV)'} value={f.content} onChange={(e) => setF({ ...f, content: e.target.value })} />
+          ? <textarea className="w-full min-h-[120px] rounded-md border border-border bg-card p-2 text-sm font-mono" placeholder={f.type === 'TEXT' ? 'Passage text…' : 'Data (JSON / CSV)'} value={f.content} onChange={(e) => setF({ ...f, content: e.target.value })} />
           : <Input placeholder="Media URL" value={f.mediaUrl} onChange={(e) => setF({ ...f, mediaUrl: e.target.value })} />}
         <Button onClick={add} className="bg-primary text-primary-foreground"><Plus className="h-4 w-4 mr-1" /> Add passage</Button>
       </Card>
       {rows.map((s: any) => (
-        <div key={s.id} className="flex items-center justify-between bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4">
-          <div className="min-w-0"><div className="flex items-center gap-2"><Badge variant="outline" className="text-[9px]">{s.type}</Badge><p className="font-bold text-slate-900 dark:text-white truncate">{s.title || 'Untitled'}</p></div><p className="text-xs text-slate-500 truncate mt-1">{s.content || s.mediaUrl || '—'}</p></div>
+        <div key={s.id} className="flex items-center justify-between bg-card border border-border rounded-sm p-4">
+          <div className="min-w-0"><div className="flex items-center gap-2"><Badge variant="outline" className="text-[11px]">{s.type}</Badge><p className="font-bold text-foreground truncate">{s.title || 'Untitled'}</p></div><p className="text-xs text-muted-foreground truncate mt-1">{s.content || s.mediaUrl || '—'}</p></div>
           <Button variant="ghost" size="icon" className="text-red-500" onClick={() => del(s.id)}><Trash2 className="h-4 w-4" /></Button>
         </div>
       ))}
@@ -150,17 +150,17 @@ function Groups({ examId, rows, sections, stimuli, reload }: any) {
   return (
     <div className="space-y-4">
       <Card>
-        <h3 className="font-bold text-sm uppercase tracking-widest text-slate-800 dark:text-white">New question group</h3>
+        <h3 className="font-bold text-sm uppercase tracking-widest text-foreground">New question group</h3>
         <Input placeholder="Group title" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
         <div className="grid grid-cols-2 gap-3">
-          <div><Label>Section</Label><select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-3 text-sm" value={f.sectionId} onChange={(e) => setF({ ...f, sectionId: e.target.value })}><option value="">—</option>{sections.map((s: any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select></div>
-          <div><Label>Shared passage</Label><select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-3 text-sm" value={f.stimulusId} onChange={(e) => setF({ ...f, stimulusId: e.target.value })}><option value="">—</option>{stimuli.map((s: any) => <option key={s.id} value={s.id}>{s.title || s.type}</option>)}</select></div>
+          <div><Label>Section</Label><select className="w-full h-10 rounded-md border border-border bg-card px-3 text-sm" value={f.sectionId} onChange={(e) => setF({ ...f, sectionId: e.target.value })}><option value="">—</option>{sections.map((s: any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select></div>
+          <div><Label>Shared passage</Label><select className="w-full h-10 rounded-md border border-border bg-card px-3 text-sm" value={f.stimulusId} onChange={(e) => setF({ ...f, stimulusId: e.target.value })}><option value="">—</option>{stimuli.map((s: any) => <option key={s.id} value={s.id}>{s.title || s.type}</option>)}</select></div>
         </div>
         <Button onClick={add} className="bg-primary text-primary-foreground"><Plus className="h-4 w-4 mr-1" /> Add group</Button>
       </Card>
       {rows.map((g: any) => (
-        <div key={g.id} className="flex items-center justify-between bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4">
-          <div><p className="font-bold text-slate-900 dark:text-white">{g.title || 'Untitled group'}</p><p className="text-xs text-slate-500">{g.stimulus ? `Passage: ${g.stimulus.title || g.stimulus.type}` : 'No passage linked'}</p></div>
+        <div key={g.id} className="flex items-center justify-between bg-card border border-border rounded-sm p-4">
+          <div><p className="font-bold text-foreground">{g.title || 'Untitled group'}</p><p className="text-xs text-muted-foreground">{g.stimulus ? `Passage: ${g.stimulus.title || g.stimulus.type}` : 'No passage linked'}</p></div>
           <Button variant="ghost" size="icon" className="text-red-500" onClick={() => del(g.id)}><Trash2 className="h-4 w-4" /></Button>
         </div>
       ))}
@@ -182,10 +182,10 @@ function Rubrics({ examId, rows, questions, reload }: any) {
   return (
     <div className="space-y-4">
       <Card>
-        <h3 className="font-bold text-sm uppercase tracking-widest text-slate-800 dark:text-white">New rubric</h3>
+        <h3 className="font-bold text-sm uppercase tracking-widest text-foreground">New rubric</h3>
         <Input placeholder="Rubric title" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
         <div><Label>Attach to question (optional)</Label>
-          <select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-3 text-sm" value={f.questionId} onChange={(e) => setF({ ...f, questionId: e.target.value })}>
+          <select className="w-full h-10 rounded-md border border-border bg-card px-3 text-sm" value={f.questionId} onChange={(e) => setF({ ...f, questionId: e.target.value })}>
             <option value="">Exam-wide</option>
             {questions.map((q: any) => <option key={q.id} value={q.id}>{(q.text || '').slice(0, 60)}</option>)}
           </select>
@@ -203,8 +203,8 @@ function Rubrics({ examId, rows, questions, reload }: any) {
         <Button onClick={add} className="bg-primary text-primary-foreground"><Save className="h-4 w-4 mr-1" /> Save rubric</Button>
       </Card>
       {rows.map((r: any) => (
-        <div key={r.id} className="flex items-center justify-between bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4">
-          <div><p className="font-bold text-slate-900 dark:text-white">{r.title} <span className="text-xs font-normal text-slate-400">/ {r.maxScore} pts</span></p><p className="text-xs text-slate-500">{(r.criteria || []).map((c: any) => `${c.label} (${c.maxScore})`).join(' · ') || 'No criteria'}</p></div>
+        <div key={r.id} className="flex items-center justify-between bg-card border border-border rounded-sm p-4">
+          <div><p className="font-bold text-foreground">{r.title} <span className="text-xs font-normal text-muted-foreground">/ {r.maxScore} pts</span></p><p className="text-xs text-muted-foreground">{(r.criteria || []).map((c: any) => `${c.label} (${c.maxScore})`).join(' · ') || 'No criteria'}</p></div>
           <Button variant="ghost" size="icon" className="text-red-500" onClick={() => del(r.id)}><Trash2 className="h-4 w-4" /></Button>
         </div>
       ))}
@@ -220,16 +220,16 @@ function Organize({ questions, sections, groups, stimuli, reload }: any) {
   return (
     <div className="space-y-3">
       {questions.map((q: any) => (
-        <div key={q.id} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4 space-y-3">
-          <p className="text-sm font-medium text-slate-900 dark:text-white">{(q.text || '').slice(0, 120)} <span className="text-xs text-slate-400">({q.points} pts)</span></p>
+        <div key={q.id} className="bg-card border border-border rounded-sm p-4 space-y-3">
+          <p className="text-sm font-medium text-foreground">{(q.text || '').slice(0, 120)} <span className="text-xs text-muted-foreground">({q.points} pts)</span></p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <select className="h-9 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-xs" defaultValue={q.sectionId || ''} onChange={(e) => save(q, { sectionId: e.target.value })}>
+            <select className="h-9 rounded-md border border-border bg-card px-2 text-xs" defaultValue={q.sectionId || ''} onChange={(e) => save(q, { sectionId: e.target.value })}>
               <option value="">No section</option>{sections.map((s: any) => <option key={s.id} value={s.id}>{s.title}</option>)}
             </select>
-            <select className="h-9 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-xs" defaultValue={q.groupId || ''} onChange={(e) => save(q, { groupId: e.target.value })}>
+            <select className="h-9 rounded-md border border-border bg-card px-2 text-xs" defaultValue={q.groupId || ''} onChange={(e) => save(q, { groupId: e.target.value })}>
               <option value="">No group</option>{groups.map((g: any) => <option key={g.id} value={g.id}>{g.title || 'Group'}</option>)}
             </select>
-            <select className="h-9 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-xs" defaultValue={q.stimulusId || ''} onChange={(e) => save(q, { stimulusId: e.target.value })}>
+            <select className="h-9 rounded-md border border-border bg-card px-2 text-xs" defaultValue={q.stimulusId || ''} onChange={(e) => save(q, { stimulusId: e.target.value })}>
               <option value="">No passage</option>{stimuli.map((s: any) => <option key={s.id} value={s.id}>{s.title || s.type}</option>)}
             </select>
           </div>
@@ -237,8 +237,8 @@ function Organize({ questions, sections, groups, stimuli, reload }: any) {
             <label className="flex items-center gap-1.5"><input type="checkbox" defaultChecked={q.partialCredit} onChange={(e) => save(q, { partialCredit: e.target.checked })} /> Partial credit</label>
             <label className="flex items-center gap-1.5"><input type="checkbox" defaultChecked={q.caseSensitive} onChange={(e) => save(q, { caseSensitive: e.target.checked })} /> Case-sensitive</label>
             <label className="flex items-center gap-1.5"><input type="checkbox" defaultChecked={q.requiresManualGrading} onChange={(e) => save(q, { requiresManualGrading: e.target.checked })} /> Manual grading</label>
-            <span className="flex items-center gap-1.5">Neg. <input type="number" className="w-16 h-7 rounded border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-1" defaultValue={q.negativePoints ?? ''} onBlur={(e) => save(q, { negativePoints: e.target.value })} /></span>
-            <span className="flex items-center gap-1.5">Tol. <input type="number" className="w-16 h-7 rounded border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-1" defaultValue={q.numericTolerance ?? ''} onBlur={(e) => save(q, { numericTolerance: e.target.value })} /></span>
+            <span className="flex items-center gap-1.5">Neg. <input type="number" className="w-16 h-7 rounded border border-border bg-card px-1" defaultValue={q.negativePoints ?? ''} onBlur={(e) => save(q, { negativePoints: e.target.value })} /></span>
+            <span className="flex items-center gap-1.5">Tol. <input type="number" className="w-16 h-7 rounded border border-border bg-card px-1" defaultValue={q.numericTolerance ?? ''} onBlur={(e) => save(q, { numericTolerance: e.target.value })} /></span>
           </div>
         </div>
       ))}
@@ -266,17 +266,17 @@ function FromBank({ examId, sections }: any) {
   return (
     <div className="space-y-4">
       <Card>
-        <h3 className="font-bold text-sm uppercase tracking-widest text-slate-800 dark:text-white">Add approved bank questions</h3>
+        <h3 className="font-bold text-sm uppercase tracking-widest text-foreground">Add approved bank questions</h3>
         <div className="flex flex-col sm:flex-row gap-2">
           <Input placeholder="Search approved questions…" value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && search()} />
-          <select className="h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={sectionId} onChange={(e) => setSectionId(e.target.value)}>
+          <select className="h-10 rounded-md border border-border bg-card px-2 text-sm" value={sectionId} onChange={(e) => setSectionId(e.target.value)}>
             <option value="">No section</option>{sections.map((s: any) => <option key={s.id} value={s.id}>{s.title}</option>)}
           </select>
           <Button onClick={search} className="bg-primary text-primary-foreground shrink-0">Search</Button>
         </div>
         {results.map((r) => (
-          <div key={r.id} className="flex items-center justify-between gap-2 border-t border-slate-100 dark:border-surface-raised pt-2">
-            <p className="text-sm text-slate-700 dark:text-slate-200 line-clamp-1">{r.text}</p>
+          <div key={r.id} className="flex items-center justify-between gap-2 border-t border-border pt-2">
+            <p className="text-sm text-foreground line-clamp-1">{r.text}</p>
             <Button variant="outline" size="sm" className="shrink-0" onClick={() => add(r.id)}><Plus className="h-3.5 w-3.5" /></Button>
           </div>
         ))}
@@ -284,8 +284,8 @@ function FromBank({ examId, sections }: any) {
       <div className="space-y-2">
         <Label>Linked questions ({linked.length})</Label>
         {linked.map((l) => (
-          <div key={l.id} className="flex items-center justify-between bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-3">
-            <p className="text-sm text-slate-800 dark:text-slate-200 line-clamp-1">{l.question?.text}</p>
+          <div key={l.id} className="flex items-center justify-between bg-card border border-border rounded-sm p-3">
+            <p className="text-sm text-foreground line-clamp-1">{l.question?.text}</p>
             <Button variant="ghost" size="icon" className="text-red-500" onClick={() => remove(l.id)}><Trash2 className="h-4 w-4" /></Button>
           </div>
         ))}
@@ -315,19 +315,19 @@ function RandomRules({ examId, sections }: any) {
   return (
     <div className="space-y-4">
       <Card>
-        <h3 className="font-bold text-sm uppercase tracking-widest text-slate-800 dark:text-white">Random selection quota</h3>
+        <h3 className="font-bold text-sm uppercase tracking-widest text-foreground">Random selection quota</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div><Label>Topic</Label><select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={f.topicId} onChange={(e) => setF({ ...f, topicId: e.target.value })}><option value="">Any</option>{topics.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>
-          <div><Label>Difficulty</Label><select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={f.difficulty} onChange={(e) => setF({ ...f, difficulty: e.target.value })}><option value="">Any</option>{DIFFICULTY.map((d) => <option key={d} value={d}>{d}</option>)}</select></div>
+          <div><Label>Topic</Label><select className="w-full h-10 rounded-md border border-border bg-card px-2 text-sm" value={f.topicId} onChange={(e) => setF({ ...f, topicId: e.target.value })}><option value="">Any</option>{topics.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>
+          <div><Label>Difficulty</Label><select className="w-full h-10 rounded-md border border-border bg-card px-2 text-sm" value={f.difficulty} onChange={(e) => setF({ ...f, difficulty: e.target.value })}><option value="">Any</option>{DIFFICULTY.map((d) => <option key={d} value={d}>{d}</option>)}</select></div>
           <div><Label>Count</Label><Input type="number" value={f.count} onChange={(e) => setF({ ...f, count: e.target.value })} /></div>
-          <div><Label>Section</Label><select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={f.sectionId} onChange={(e) => setF({ ...f, sectionId: e.target.value })}><option value="">—</option>{sections.map((s: any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select></div>
+          <div><Label>Section</Label><select className="w-full h-10 rounded-md border border-border bg-card px-2 text-sm" value={f.sectionId} onChange={(e) => setF({ ...f, sectionId: e.target.value })}><option value="">—</option>{sections.map((s: any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select></div>
         </div>
         <Button onClick={add} className="bg-primary text-primary-foreground"><Plus className="h-4 w-4 mr-1" /> Add rule</Button>
       </Card>
 
       {rules.map((r) => (
-        <div key={r.id} className="flex items-center justify-between bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4">
-          <p className="text-sm text-slate-800 dark:text-slate-200"><b>{r.count}</b> question(s) · {topics.find((t) => t.id === r.topicId)?.name || 'any topic'} · {r.difficulty || 'any difficulty'}</p>
+        <div key={r.id} className="flex items-center justify-between bg-card border border-border rounded-sm p-4">
+          <p className="text-sm text-foreground"><b>{r.count}</b> question(s) · {topics.find((t) => t.id === r.topicId)?.name || 'any topic'} · {r.difficulty || 'any difficulty'}</p>
           <Button variant="ghost" size="icon" className="text-red-500" onClick={() => del(r.id)}><Trash2 className="h-4 w-4" /></Button>
         </div>
       ))}
@@ -335,14 +335,14 @@ function RandomRules({ examId, sections }: any) {
 
       <div className="flex items-center gap-2">
         <Button variant="outline" onClick={doPreview}><Shuffle className="h-4 w-4 mr-1" /> Preview generated set</Button>
-        {preview && <span className="text-sm text-slate-500">{preview.count} questions selected</span>}
+        {preview && <span className="text-sm text-muted-foreground">{preview.count} questions selected</span>}
       </div>
       {preview && (
         <div className="space-y-1">
           {preview.questions.map((q: any, i: number) => (
-            <div key={q.id} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-lg p-3 text-sm flex items-center justify-between">
+            <div key={q.id} className="bg-card border border-border rounded-lg p-3 text-sm flex items-center justify-between">
               <span className="line-clamp-1">{i + 1}. {q.text}</span>
-              <Badge variant="outline" className="text-[9px] shrink-0">{q.source}</Badge>
+              <Badge variant="outline" className="text-[11px] shrink-0">{q.source}</Badge>
             </div>
           ))}
         </div>
@@ -352,5 +352,5 @@ function RandomRules({ examId, sections }: any) {
 }
 
 function Empty({ label }: { label: string }) {
-  return <div className="rounded-xl border border-dashed border-slate-200 dark:border-surface-raised p-8 text-center text-slate-500 text-sm">{label}</div>;
+  return <div className="rounded-sm border border-dashed border-border p-8 text-center text-muted-foreground text-sm">{label}</div>;
 }

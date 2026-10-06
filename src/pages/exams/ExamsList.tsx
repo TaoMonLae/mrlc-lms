@@ -103,8 +103,8 @@ export default function ExamsList() {
     <div className="space-y-6 max-w-[1600px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Exams</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage assessments, quizzes, and standard tests.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Exams</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage assessments, quizzes, and standard tests.</p>
         </div>
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Button variant="outline" render={<Link to="/exam2/grading" />} nativeButton={false}>Grading queue</Button>
@@ -121,9 +121,9 @@ export default function ExamsList() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex flex-col sm:flex-row gap-4 items-center">
+      <div className="bg-card p-4 rounded-sm border border-border shadow-sm flex flex-col sm:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             aria-label="Search exams by title or subject" placeholder="Search exams by title, subject..."
             className="pl-9"
@@ -136,19 +136,19 @@ export default function ExamsList() {
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="ml-3 text-slate-500">Loading exams...</span>
+          <span className="ml-3 text-muted-foreground">Loading exams...</span>
         </div>
       ) : loadError ? (
-        <div role="alert" className="space-y-3 rounded-xl border border-destructive/40 bg-card p-6"><h2 className="font-semibold">Could not load exams</h2><p className="text-sm text-muted-foreground">{loadError}</p><Button variant="outline" onClick={() => setRetry(n => n + 1)}>Retry</Button></div>
+        <div role="alert" className="space-y-3 rounded-sm border border-destructive/40 bg-card p-6"><h2 className="font-semibold">Could not load exams</h2><p className="text-sm text-muted-foreground">{loadError}</p><Button variant="outline" onClick={() => setRetry(n => n + 1)}>Retry</Button></div>
       ) : filteredExams.length === 0 ? (
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-12 text-center">
-          <p className="text-lg font-medium text-slate-900 dark:text-white">No exams found</p>
-          <p className="text-sm text-slate-500">{searchTerm ? 'Try adjusting your search.' : showArchived ? 'Archived exams will appear here. Your active exams are still available under Show active.' : 'Create your first exam to get started.'}</p>
+        <div className="bg-card border border-border rounded-sm p-12 text-center">
+          <p className="text-lg font-medium text-foreground">No exams found</p>
+          <p className="text-sm text-muted-foreground">{searchTerm ? 'Try adjusting your search.' : showArchived ? 'Archived exams will appear here. Your active exams are still available under Show active.' : 'Create your first exam to get started.'}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredExams.map(exam => (
-            <div key={exam.id} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm flex flex-col hover:border-aubergine-200 dark:hover:border-aubergine-900/50 transition-colors">
+            <div key={exam.id} className="bg-card border border-border rounded-sm overflow-hidden shadow-sm flex flex-col hover:border-aubergine-200 dark:hover:border-aubergine-900/50 transition-colors">
               <div className="p-5 flex-1">
                 <div className="flex justify-between items-start mb-4">
                   <Badge variant={exam.status === 'PUBLISHED' ? 'default' : exam.status === 'DRAFT' ? 'secondary' : 'outline'}
@@ -161,7 +161,7 @@ export default function ExamsList() {
                   </Badge>
                   <DropdownMenu>
                     <DropdownMenuTrigger render={<Button variant="ghost" size="sm" aria-label={`Actions for ${exam.title}`} className="h-8 w-8 p-0" />} nativeButton={true}>
-                      <MoreHorizontal className="h-4 w-4 text-slate-500" />
+                      <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem render={<Link to={`/exams/${exam.id}`} />} nativeButton={false}>View Dashboard</DropdownMenuItem>
@@ -180,22 +180,22 @@ export default function ExamsList() {
                   </DropdownMenu>
                 </div>
 
-                <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-1">{exam.title}</h3>
-                <p className="text-slate-500 text-sm mb-4">{exam.subject}</p>
+                <h3 className="font-bold text-lg text-foreground mb-1">{exam.title}</h3>
+                <p className="text-muted-foreground text-sm mb-4">{exam.subject}</p>
 
                 <div className="space-y-2 mt-auto">
-                  <div className="flex items-center text-sm text-slate-600 dark:text-slate-300">
-                    <Clock className="mr-2 h-4 w-4 text-slate-400" />
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
                     {exam.durationMinutes} Minutes
                   </div>
-                  <div className="flex items-center text-sm text-slate-600 dark:text-slate-300">
-                    <CheckCircle2 className="mr-2 h-4 w-4 text-slate-400" />
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <CheckCircle2 className="mr-2 h-4 w-4 text-muted-foreground" />
                     {exam.totalPoints} Points Total
                   </div>
                 </div>
               </div>
-              <div className="bg-slate-50 dark:bg-surface-raised/50 p-4 border-t border-slate-100 dark:border-surface-raised flex justify-between items-center">
-                <span className="text-xs text-slate-500 font-medium">{exam.className}</span>
+              <div className="bg-muted/50 p-4 border-t border-border flex justify-between items-center">
+                <span className="text-xs text-muted-foreground font-medium">{exam.className}</span>
                 <Button variant="ghost" size="sm" className="text-aubergine-600 hover:text-aubergine-700 hover:bg-aubergine-50 dark:hover:bg-aubergine-900/20" render={<Link to={`/exams/${exam.id}`} />} nativeButton={false}>
                   Manage <ArrowRight className="ml-1 h-3 w-3" />
                 </Button>

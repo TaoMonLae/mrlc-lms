@@ -130,14 +130,14 @@ export default function FlashcardSpelling() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <span className="animate-spin rounded-full h-6 w-6 border-2 border-aubergine-600 border-t-transparent mr-2"></span>
-        <span className="text-slate-500">Loading spelling quiz…</span>
+        <span className="text-muted-foreground">Loading spelling quiz…</span>
       </div>
     );
   }
 
   if (!deck) {
     return (
-      <div className="text-center py-12 text-slate-500">
+      <div className="text-center py-12 text-muted-foreground">
         <p>Deck not found, or it isn't assigned to your class.</p>
         <Button variant="outline" className="mt-4" render={<Link to={listUrl} />}>Back to Flashcards</Button>
       </div>
@@ -146,7 +146,7 @@ export default function FlashcardSpelling() {
 
   if (deck.cards.length < 1) {
     return (
-      <div className="max-w-xl mx-auto text-center py-12 text-slate-500 space-y-4">
+      <div className="max-w-xl mx-auto text-center py-12 text-muted-foreground space-y-4">
         <SpellCheck className="h-10 w-10 mx-auto text-slate-300" />
         <p>This deck has no cards to spell yet.</p>
         <Button variant="outline" render={<Link to={listUrl} />}><ArrowLeft className="mr-2 h-4 w-4" /> Back to Flashcards</Button>
@@ -161,7 +161,7 @@ export default function FlashcardSpelling() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-[160px]">
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <SpellCheck className="h-5 w-5 text-aubergine-600" /> {deck.title} — Spelling
           </h1>
         </div>
@@ -173,17 +173,17 @@ export default function FlashcardSpelling() {
       </div>
 
       {finished ? (
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-8 text-center space-y-4">
-          <p className="text-sm text-slate-500 uppercase tracking-widest font-semibold">Spelling Quiz Complete</p>
+        <div className="bg-card border border-border rounded-sm shadow-sm p-8 text-center space-y-4">
+          <p className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">Spelling Quiz Complete</p>
           <p className="text-4xl font-bold text-aubergine-600">{score} / {answers.length}</p>
-          <p className="text-sm text-slate-500">{Math.round((score / answers.length) * 100)}% spelled correctly</p>
+          <p className="text-sm text-muted-foreground">{Math.round((score / answers.length) * 100)}% spelled correctly</p>
           {isStudentRoute && bestScore && (
-            <p className="text-xs text-slate-400">Personal best: {bestScore.score} / {bestScore.total} ({Math.round((bestScore.score / bestScore.total) * 100)}%)</p>
+            <p className="text-xs text-muted-foreground">Personal best: {bestScore.score} / {bestScore.total} ({Math.round((bestScore.score / bestScore.total) * 100)}%)</p>
           )}
 
           {answers.some((a) => !a.correct) && (
             <div className="text-left mt-6 space-y-2">
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Words to practice</p>
+              <p className="text-sm font-semibold text-foreground">Words to practice</p>
               {answers.filter((a) => !a.correct).map((a, i) => (
                 <div key={i} className="rounded-lg border border-rose-200 dark:border-rose-900/30 bg-rose-50 dark:bg-rose-900/10 p-3 text-sm">
                   <p className="text-rose-600">You typed: {a.typed || '(nothing)'}</p>
@@ -200,12 +200,12 @@ export default function FlashcardSpelling() {
         </div>
       ) : current ? (
         <>
-          <div className="h-1.5 w-full bg-slate-100 dark:bg-surface-raised rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
             <div className="h-full bg-aubergine-500 rounded-full transition-all" style={{ width: `${Math.round((index / order.length) * 100)}%` }} />
           </div>
-          <p className="text-center text-sm text-slate-500">Word {index + 1} of {order.length}</p>
+          <p className="text-center text-sm text-muted-foreground">Word {index + 1} of {order.length}</p>
 
-          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-8 space-y-6">
+          <div className="bg-card border border-border rounded-sm shadow-sm p-8 space-y-6">
             <div className="text-center space-y-3">
               <Button variant="outline" size="lg" onClick={() => speak(current.term)} disabled={!speechSupported}>
                 <Volume2 className="mr-2 h-5 w-5" /> Hear the word again
@@ -213,7 +213,7 @@ export default function FlashcardSpelling() {
               {current.imageUrl && (
                 <img src={current.imageUrl} alt="" className="max-h-28 mx-auto rounded-lg object-contain" />
               )}
-              <p className="text-slate-600 dark:text-slate-300"><MathText>{current.definition}</MathText></p>
+              <p className="text-muted-foreground"><MathText>{current.definition}</MathText></p>
               {!speechSupported && (
                 <p className="text-xs text-amber-600">Your browser can't read words aloud, so the definition is your only clue.</p>
               )}

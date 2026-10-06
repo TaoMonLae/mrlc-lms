@@ -171,14 +171,14 @@ export default function FlashcardQuiz() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <span className="animate-spin rounded-full h-6 w-6 border-2 border-aubergine-600 border-t-transparent mr-2"></span>
-        <span className="text-slate-500">Loading quiz…</span>
+        <span className="text-muted-foreground">Loading quiz…</span>
       </div>
     );
   }
 
   if (!deck) {
     return (
-      <div className="text-center py-12 text-slate-500">
+      <div className="text-center py-12 text-muted-foreground">
         <p>Deck not found, or it isn't assigned to your class.</p>
         <Button variant="outline" className="mt-4" render={<Link to={listUrl} />}>Back to Flashcards</Button>
       </div>
@@ -187,7 +187,7 @@ export default function FlashcardQuiz() {
 
   if (deck.cards.length < 2) {
     return (
-      <div className="max-w-xl mx-auto text-center py-12 text-slate-500 space-y-4">
+      <div className="max-w-xl mx-auto text-center py-12 text-muted-foreground space-y-4">
         <Brain className="h-10 w-10 mx-auto text-slate-300" />
         <p>Quiz mode needs at least 2 cards in this deck.</p>
         <Button variant="outline" render={<Link to={listUrl} />}><ArrowLeft className="mr-2 h-4 w-4" /> Back to Flashcards</Button>
@@ -202,7 +202,7 @@ export default function FlashcardQuiz() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-[160px]">
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Brain className="h-5 w-5 text-aubergine-600" /> {deck.title} — Quiz
           </h1>
         </div>
@@ -214,40 +214,40 @@ export default function FlashcardQuiz() {
       </div>
 
       {!started ? (
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-6 space-y-5">
+        <div className="bg-card border border-border rounded-sm shadow-sm p-6 space-y-5">
           <div className="flex items-center gap-2">
             <Settings2 className="h-4 w-4 text-aubergine-600" />
-            <h2 className="font-semibold text-slate-900 dark:text-white">Question types</h2>
+            <h2 className="font-semibold text-foreground">Question types</h2>
           </div>
           <div className="space-y-2">
             {TYPE_OPTIONS.map((opt) => (
-              <label key={opt.key} className="flex items-start gap-3 rounded-lg border border-slate-200 dark:border-surface-raised px-3 py-2.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-surface-raised/50">
+              <label key={opt.key} className="flex items-start gap-3 rounded-lg border border-border px-3 py-2.5 cursor-pointer hover:bg-muted/50">
                 <Checkbox checked={enabledTypes.includes(opt.key)} onCheckedChange={() => toggleType(opt.key)} className="mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{opt.label}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{opt.desc}</p>
+                  <p className="text-sm font-medium text-foreground">{opt.label}</p>
+                  <p className="text-xs text-muted-foreground">{opt.desc}</p>
                 </div>
               </label>
             ))}
           </div>
-          <p className="text-xs text-slate-400">Each of the deck's {deck.cards.length} cards becomes one question, randomly using one of the types you've checked.</p>
+          <p className="text-xs text-muted-foreground">Each of the deck's {deck.cards.length} cards becomes one question, randomly using one of the types you've checked.</p>
           <Button onClick={startQuiz} className="w-full">Start Quiz</Button>
         </div>
       ) : finished ? (
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-8 text-center space-y-4">
-          <p className="text-sm text-slate-500 uppercase tracking-widest font-semibold">Quiz Complete</p>
+        <div className="bg-card border border-border rounded-sm shadow-sm p-8 text-center space-y-4">
+          <p className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">Quiz Complete</p>
           <p className="text-4xl font-bold text-aubergine-600">{score} / {questions.length}</p>
-          <p className="text-sm text-slate-500">{Math.round((score / questions.length) * 100)}% correct</p>
+          <p className="text-sm text-muted-foreground">{Math.round((score / questions.length) * 100)}% correct</p>
           {isStudentRoute && bestScore && (
-            <p className="text-xs text-slate-400">Personal best: {bestScore.score} / {bestScore.total} ({Math.round((bestScore.score / bestScore.total) * 100)}%)</p>
+            <p className="text-xs text-muted-foreground">Personal best: {bestScore.score} / {bestScore.total} ({Math.round((bestScore.score / bestScore.total) * 100)}%)</p>
           )}
 
           {answers.some((a) => !a.isCorrect) && (
             <div className="text-left mt-6 space-y-2">
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Review missed questions</p>
+              <p className="text-sm font-semibold text-foreground">Review missed questions</p>
               {answers.filter((a) => !a.isCorrect).map((a, i) => (
                 <div key={i} className="rounded-lg border border-rose-200 dark:border-rose-900/30 bg-rose-50 dark:bg-rose-900/10 p-3 text-sm">
-                  <p className="font-medium text-slate-800 dark:text-slate-200">{a.term}</p>
+                  <p className="font-medium text-foreground">{a.term}</p>
                   <p className="text-rose-600">Your answer: {a.picked || '(nothing)'}</p>
                   <p className="text-emerald-600">Correct: {a.correct}</p>
                 </div>
@@ -263,19 +263,19 @@ export default function FlashcardQuiz() {
         </div>
       ) : current ? (
         <>
-          <div className="h-1.5 w-full bg-slate-100 dark:bg-surface-raised rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
             <div className="h-full bg-aubergine-500 rounded-full transition-all" style={{ width: `${Math.round(((index) / questions.length) * 100)}%` }} />
           </div>
-          <p className="text-center text-sm text-slate-500">Question {index + 1} of {questions.length}</p>
+          <p className="text-center text-sm text-muted-foreground">Question {index + 1} of {questions.length}</p>
 
-          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-8">
+          <div className="bg-card border border-border rounded-sm shadow-sm p-8">
             {current.imageUrl && (
               <img src={current.imageUrl} alt="" className="max-h-32 mx-auto mb-4 rounded-lg object-contain" />
             )}
 
             {current.type === 'MC' && (
               <>
-                <p className="text-lg font-semibold text-slate-900 dark:text-white text-center mb-6"><MathText>{current.term}</MathText></p>
+                <p className="text-lg font-semibold text-foreground text-center mb-6"><MathText>{current.term}</MathText></p>
                 <div className="grid grid-cols-1 gap-3">
                   {(current.choices ?? []).map((choice) => {
                     const isPicked = answered?.value === choice;
@@ -290,7 +290,7 @@ export default function FlashcardQuiz() {
                         className={`text-left rounded-lg border px-4 py-3 text-sm transition-colors ${
                           showState && isCorrect ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/10 text-emerald-800 dark:text-emerald-300' :
                           showState && isPicked && !isCorrect ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/10 text-rose-700 dark:text-rose-300' :
-                          'border-slate-200 dark:border-surface-raised hover:border-aubergine-300 hover:bg-slate-50 dark:hover:bg-surface-raised/50 text-slate-700 dark:text-slate-200'
+                          'border-border hover:border-aubergine-300 hover:bg-muted/50 text-foreground'
                         }`}
                       >
                         <span className="flex items-center justify-between gap-2">
@@ -307,9 +307,9 @@ export default function FlashcardQuiz() {
 
             {current.type === 'TF' && (
               <>
-                <p className="text-xs uppercase tracking-widest text-slate-400 text-center mb-2">Does this definition match the term?</p>
-                <p className="text-lg font-semibold text-slate-900 dark:text-white text-center mb-2"><MathText>{current.term}</MathText></p>
-                <p className="text-slate-600 dark:text-slate-300 text-center mb-6"><MathText>{current.candidateDefinition ?? ''}</MathText></p>
+                <p className="text-xs uppercase tracking-widest text-muted-foreground text-center mb-2">Does this definition match the term?</p>
+                <p className="text-lg font-semibold text-foreground text-center mb-2"><MathText>{current.term}</MathText></p>
+                <p className="text-muted-foreground text-center mb-6"><MathText>{current.candidateDefinition ?? ''}</MathText></p>
                 <div className="grid grid-cols-2 gap-3">
                   {(current.choices ?? []).map((choice) => {
                     const isPicked = answered?.value === choice;
@@ -324,7 +324,7 @@ export default function FlashcardQuiz() {
                         className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
                           showState && isCorrect ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/10 text-emerald-800 dark:text-emerald-300' :
                           showState && isPicked && !isCorrect ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/10 text-rose-700 dark:text-rose-300' :
-                          'border-slate-200 dark:border-surface-raised hover:border-aubergine-300 hover:bg-slate-50 dark:hover:bg-surface-raised/50 text-slate-700 dark:text-slate-200'
+                          'border-border hover:border-aubergine-300 hover:bg-muted/50 text-foreground'
                         }`}
                       >
                         {choice}
@@ -337,8 +337,8 @@ export default function FlashcardQuiz() {
 
             {current.type === 'FILL' && (
               <>
-                <p className="text-xs uppercase tracking-widest text-slate-400 text-center mb-2">Type the term for this definition</p>
-                <p className="text-slate-700 dark:text-slate-200 text-center mb-6"><MathText>{current.definition}</MathText></p>
+                <p className="text-xs uppercase tracking-widest text-muted-foreground text-center mb-2">Type the term for this definition</p>
+                <p className="text-foreground text-center mb-6"><MathText>{current.definition}</MathText></p>
                 <Input
                   value={textDraft}
                   onChange={(e) => setTextDraft(e.target.value)}

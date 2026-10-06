@@ -113,18 +113,18 @@ export default function TeacherEdit() {
   return (
     <div className="space-y-6 max-w-[1000px] mx-auto pb-10">
       <div>
-        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to={`/teachers/${id}`} />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to={`/teachers/${id}`} />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Profile
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Edit Teacher Profile</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Update account information and professional details for faculty members.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Edit Teacher Profile</h1>
+        <p className="text-sm text-muted-foreground mt-1">Update account information and professional details for faculty members.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Personal Information</h2>
+          <div className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-4">
+            <h2 className="text-lg font-semibold text-foreground mb-4">Personal Information</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name</Label>
@@ -154,7 +154,7 @@ export default function TeacherEdit() {
                 {errors.gender && <p className="text-xs text-red-500 font-medium">{errors.gender.message}</p>}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="joinedDate">Joined Date {adminOnly && <span className="text-[10px] text-slate-400">(admin only)</span>}</Label>
+                <Label htmlFor="joinedDate">Joined Date {adminOnly && <span className="text-[11px] text-muted-foreground">(admin only)</span>}</Label>
                 <Input id="joinedDate" type="date" {...register('joinedDate')} disabled={adminOnly} />
                 {errors.joinedDate && <p className="text-xs text-red-500 font-medium">{errors.joinedDate.message}</p>}
               </div>
@@ -162,7 +162,7 @@ export default function TeacherEdit() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address {adminOnly && <span className="text-[10px] text-slate-400">(admin only)</span>}</Label>
+                <Label htmlFor="email">Email Address {adminOnly && <span className="text-[11px] text-muted-foreground">(admin only)</span>}</Label>
                 <Input id="email" type="email" {...register('email')} disabled={adminOnly} />
                 {errors.email && <p className="text-xs text-red-500 font-medium">{errors.email.message}</p>}
               </div>
@@ -180,11 +180,11 @@ export default function TeacherEdit() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Professional Details</h2>
+          <div className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-4">
+            <h2 className="text-lg font-semibold text-foreground mb-4">Professional Details</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Status {adminOnly && <span className="text-[10px] text-slate-400">(admin only)</span>}</Label>
+                <Label>Status {adminOnly && <span className="text-[11px] text-muted-foreground">(admin only)</span>}</Label>
                 <Select value={watch('status')} onValueChange={(val: any) => setValue('status', val)} disabled={adminOnly}>
                   <SelectTrigger id="status">
                     <SelectValue placeholder="Select status" />
@@ -197,7 +197,7 @@ export default function TeacherEdit() {
                 {errors.status && <p className="text-xs text-red-500 font-medium">{errors.status.message}</p>}
               </div>
               <div className="space-y-2">
-                <Label>Employment Type {adminOnly && <span className="text-[10px] text-slate-400">(admin only)</span>}</Label>
+                <Label>Employment Type {adminOnly && <span className="text-[11px] text-muted-foreground">(admin only)</span>}</Label>
                 <Select value={watch('employmentType')} onValueChange={(val: any) => setValue('employmentType', val)} disabled={adminOnly}>
                   <SelectTrigger id="employmentType">
                     <SelectValue placeholder="Select type" />
@@ -208,7 +208,7 @@ export default function TeacherEdit() {
                     <SelectItem value="VOLUNTEER">Volunteer</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-muted-foreground">
                   Employment type does not change account permissions. Assigned classes and subjects determine academic access.
                 </p>
                 {errors.employmentType && <p className="text-xs text-red-500 font-medium">{errors.employmentType.message}</p>}
@@ -218,10 +218,10 @@ export default function TeacherEdit() {
               <Label htmlFor="subjects">Specialization (comma separated)</Label>
               <Input id="subjects" {...register('subjects')} />
               {errors.subjects && <p className="text-xs text-red-500 font-medium">{errors.subjects.message}</p>}
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-muted-foreground">
                 This is free-text background info only. To actually assign this teacher to
                 teach a subject (so it shows on rosters and class assignment), use{' '}
-                <span className="font-medium text-slate-500">Subjects tab → Assign Subject</span> on their profile page.
+                <span className="font-medium text-muted-foreground">Subjects tab → Assign Subject</span> on their profile page.
               </p>
             </div>
             <div className="space-y-2">
@@ -232,8 +232,8 @@ export default function TeacherEdit() {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-2">Profile Picture</h2>
+          <div className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-4">
+            <h2 className="text-base font-semibold text-foreground mb-2">Profile Picture</h2>
             <ProfilePhotoUploader
               currentUrl={profilePhotoUrl}
               fallbackText={`${watch('firstName')?.[0] || ''}${watch('lastName')?.[0] || ''}`}
@@ -242,7 +242,7 @@ export default function TeacherEdit() {
               onUploaded={setProfilePhotoUrl}
               imageClassName="w-full aspect-square rounded-lg"
             />
-            <p className="text-[10px] text-slate-500 text-center uppercase tracking-wider font-bold">Current Photo</p>
+            <p className="text-[11px] text-muted-foreground text-center uppercase tracking-wider font-bold">Current Photo</p>
           </div>
 
           <div className="space-y-3">

@@ -188,12 +188,12 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
       <form onSubmit={form.handleSubmit(handleEnrichedSubmit)} className="timetable-form space-y-5">
         <section className="grid border border-foreground bg-card lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,.65fr)]">
           <div className="border-b border-foreground px-5 py-5 lg:border-b-0 lg:border-r">
-            <p className="font-mono text-[10px] uppercase tracking-[0.13em] text-academic-teal">Schedule record</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.13em] text-academic-teal">Schedule record</p>
             <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em]">{initialData ? 'Revise the field entry' : 'Build the field entry'}</h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">Complete the teaching assignment and timing. The slot proof updates as you work.</p>
           </div>
           <div className="bg-academic-navy-deep px-5 py-5 text-white">
-            <p className="font-mono text-[10px] uppercase tracking-[0.13em] text-[#6dd4cb]">Slot proof</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.13em] text-[#6dd4cb]">Slot proof</p>
             <p className="mt-3 text-lg font-semibold">{subjectOptions.find((option) => option.id === selectedSubject)?.name || scheduleType.replaceAll('_', ' ')}</p>
             <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
               <div><dt className="text-white/55">When</dt><dd className="mt-1 font-mono tabular-nums">{startTime || '—'}–{endTime || '—'}</dd></div>
@@ -201,7 +201,7 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
               <div><dt className="text-white/55">Class</dt><dd className="mt-1 truncate">{classOptions.find((option) => option.id === selectedClass)?.name || 'Not set'}</dd></div>
               <div><dt className="text-white/55">Teacher</dt><dd className="mt-1 truncate">{teacherOptions.find((option) => option.id === selectedTeacher)?.name || 'Not set'}</dd></div>
             </dl>
-            <p className="mt-4 border-t border-white/25 pt-3 font-mono text-[10px] uppercase tracking-[0.1em] text-white/65">{selectedDays.length ? selectedDays.join(' · ') : 'No day selected'}</p>
+            <p className="mt-4 border-t border-white/25 pt-3 font-mono text-[11px] uppercase tracking-[0.1em] text-white/65">{selectedDays.length ? selectedDays.join(' · ') : 'No day selected'}</p>
           </div>
         </section>
 
@@ -416,7 +416,7 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
                       );
                     };
                     const quick =
-                      "border-b border-foreground/35 px-1 py-1 font-mono text-[9px] uppercase tracking-[0.08em] text-muted-foreground hover:border-academic-teal hover:text-academic-teal";
+                      "border-b border-foreground/35 px-1 py-1 font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground hover:border-academic-teal hover:text-academic-teal";
                     return (
                       <FormItem>
                         <div className="flex items-center justify-between gap-2">
@@ -440,7 +440,7 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
                                 type="button"
                                 aria-pressed={on}
                                 onClick={() => toggle(day)}
-                                className={`border px-2 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] transition ${
+                                className={`border px-2 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] transition ${
                                   on
                                     ? 'border-academic-gold bg-academic-gold text-academic-navy-deep'
                                     : 'border-border bg-card text-muted-foreground hover:border-foreground hover:text-foreground'

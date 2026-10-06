@@ -161,14 +161,14 @@ export default function FlashcardMatch() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <span className="animate-spin rounded-full h-6 w-6 border-2 border-aubergine-600 border-t-transparent mr-2"></span>
-        <span className="text-slate-500">Loading match game…</span>
+        <span className="text-muted-foreground">Loading match game…</span>
       </div>
     );
   }
 
   if (!deck) {
     return (
-      <div className="text-center py-12 text-slate-500">
+      <div className="text-center py-12 text-muted-foreground">
         <p>Deck not found, or it isn't assigned to your class.</p>
         <Button variant="outline" className="mt-4" render={<Link to={listUrl} />}>Back to Flashcards</Button>
       </div>
@@ -177,7 +177,7 @@ export default function FlashcardMatch() {
 
   if (deck.cards.length < 2) {
     return (
-      <div className="max-w-xl mx-auto text-center py-12 text-slate-500 space-y-4">
+      <div className="max-w-xl mx-auto text-center py-12 text-muted-foreground space-y-4">
         <Grid3x3 className="h-10 w-10 mx-auto text-slate-300" />
         <p>Match mode needs at least 2 cards in this deck.</p>
         <Button variant="outline" render={<Link to={listUrl} />}><ArrowLeft className="mr-2 h-4 w-4" /> Back to Flashcards</Button>
@@ -192,7 +192,7 @@ export default function FlashcardMatch() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-[160px]">
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Grid3x3 className="h-5 w-5 text-aubergine-600" /> {deck.title} — Match
           </h1>
         </div>
@@ -204,10 +204,10 @@ export default function FlashcardMatch() {
       </div>
 
       {!gameStarted ? (
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-6 space-y-5">
+        <div className="bg-card border border-border rounded-sm shadow-sm p-6 space-y-5">
           <div className="flex items-center gap-2">
             <Settings2 className="h-4 w-4 text-aubergine-600" />
-            <h2 className="font-semibold text-slate-900 dark:text-white">Difficulty / grid size</h2>
+            <h2 className="font-semibold text-foreground">Difficulty / grid size</h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {SIZE_PRESETS.filter((p) => p.pairs <= maxPairs).map((p) => (
@@ -218,11 +218,11 @@ export default function FlashcardMatch() {
                 className={`rounded-lg border px-3 py-3 text-center transition-colors ${
                   pairCount === p.pairs
                     ? 'border-aubergine-400 bg-aubergine-50 dark:bg-aubergine-900/10 text-aubergine-800 dark:text-aubergine-300'
-                    : 'border-slate-200 dark:border-surface-raised hover:border-aubergine-300 text-slate-700 dark:text-slate-200'
+                    : 'border-border hover:border-aubergine-300 text-foreground'
                 }`}
               >
                 <p className="text-sm font-semibold">{p.label}</p>
-                <p className="text-xs text-slate-400">{p.pairs} pairs</p>
+                <p className="text-xs text-muted-foreground">{p.pairs} pairs</p>
               </button>
             ))}
             {maxPairs > 0 && !SIZE_PRESETS.some((p) => p.pairs === maxPairs && p.pairs <= maxPairs) && (
@@ -232,15 +232,15 @@ export default function FlashcardMatch() {
                 className={`rounded-lg border px-3 py-3 text-center transition-colors ${
                   pairCount === maxPairs
                     ? 'border-aubergine-400 bg-aubergine-50 dark:bg-aubergine-900/10 text-aubergine-800 dark:text-aubergine-300'
-                    : 'border-slate-200 dark:border-surface-raised hover:border-aubergine-300 text-slate-700 dark:text-slate-200'
+                    : 'border-border hover:border-aubergine-300 text-foreground'
                 }`}
               >
                 <p className="text-sm font-semibold">All Cards</p>
-                <p className="text-xs text-slate-400">{maxPairs} pairs</p>
+                <p className="text-xs text-muted-foreground">{maxPairs} pairs</p>
               </button>
             )}
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-muted-foreground">
             This deck has {deck.cards.length} card{deck.cards.length === 1 ? '' : 's'}
             {maxPairs < deck.cards.length ? ` (grids are capped at ${ABSOLUTE_MAX_PAIRS} pairs).` : '.'} More pairs means a bigger grid and a harder game.
           </p>
@@ -248,20 +248,20 @@ export default function FlashcardMatch() {
         </div>
       ) : (
         <>
-          <div className="flex items-center justify-between text-sm text-slate-500">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5"><Timer className="h-4 w-4" /> {formatTime(elapsed)}</span>
             <span>Matched {matched.size} / {totalPairs}</span>
             <span>Mistakes {mistakes}</span>
           </div>
 
           {finished ? (
-            <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-8 text-center space-y-4">
+            <div className="bg-card border border-border rounded-sm shadow-sm p-8 text-center space-y-4">
               <Trophy className="h-10 w-10 mx-auto text-amber-500" />
-              <p className="text-sm text-slate-500 uppercase tracking-widest font-semibold">Match Complete</p>
+              <p className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">Match Complete</p>
               <p className="text-3xl font-bold text-aubergine-600">{formatTime(elapsed)}</p>
-              <p className="text-sm text-slate-500">{mistakes} mistake{mistakes === 1 ? '' : 's'} · {totalPairs} pairs</p>
+              <p className="text-sm text-muted-foreground">{mistakes} mistake{mistakes === 1 ? '' : 's'} · {totalPairs} pairs</p>
               {isStudentRoute && bestRun && (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-muted-foreground">
                   Personal best: {bestRun.total - bestRun.score} mistake{bestRun.total - bestRun.score === 1 ? '' : 's'}
                   {bestRun.durationMs != null ? ` in ${formatTime(bestRun.durationMs)}` : ''}
                 </p>
@@ -289,7 +289,7 @@ export default function FlashcardMatch() {
                         isMatched ? 'opacity-0 pointer-events-none' :
                         isWrong ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/10 text-rose-700 dark:text-rose-300' :
                         isSelected ? 'border-aubergine-400 bg-aubergine-50 dark:bg-aubergine-900/10 text-aubergine-800 dark:text-aubergine-300' :
-                        'border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo hover:border-aubergine-300'
+                        'border-border bg-card hover:border-aubergine-300'
                       }`}
                     >
                       <MathText>{t.text}</MathText>

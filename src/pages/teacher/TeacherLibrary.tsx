@@ -158,7 +158,7 @@ export default function TeacherLibrary() {
       case 'IMAGE': return <ImageIcon className="h-5 w-5 text-emerald-500" />;
       case 'DOCUMENT': return <File className="h-5 w-5 text-blue-600" />;
       case 'LINK': return <Link2 className="h-5 w-5 text-amber-600" />;
-      default: return <File className="h-5 w-5 text-slate-400" />;
+      default: return <File className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
@@ -195,14 +195,14 @@ export default function TeacherLibrary() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight dark:text-white uppercase tracking-tighter">Teaching Resources</h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">Access shared materials and manage your own teaching uploads.</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight uppercase tracking-tighter">Teaching Resources</h1>
+          <p className="text-sm text-muted-foreground mt-1 font-medium">Access shared materials and manage your own teaching uploads.</p>
         </div>
         {/* Upload button navigates to the shared /library/new page (TEACHER has manage_own_library) */}
         <Button
           id="upload-resource-btn"
           render={<Link to="/library/new" />}
-          className="h-11 px-6 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[11px] uppercase tracking-widest shadow-lg"
+          className="h-11 px-6 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[11px] uppercase tracking-widest shadow-none"
         >
           <Upload className="h-4 w-4 mr-2" /> Upload Resource
         </Button>
@@ -210,17 +210,17 @@ export default function TeacherLibrary() {
 
       <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
         <div className="relative w-full lg:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
             placeholder="Search filenames, tags..." 
-            className="pl-10 h-11 bg-white dark:bg-canvas border-slate-200 dark:border-surface-raised font-medium"
+            className="pl-10 h-11 bg-card border-border font-medium"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <div className="flex items-center gap-3 w-full lg:w-auto">
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="h-11 w-full lg:w-40 border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas">
+            <SelectTrigger className="h-11 w-full lg:w-40 border-border bg-card">
               <SelectValue placeholder="All Types" />
             </SelectTrigger>
             <SelectContent>
@@ -238,19 +238,19 @@ export default function TeacherLibrary() {
 
       <div className="grid grid-cols-1 gap-4">
         {filteredResources.map((resource) => (
-          <Card key={resource.id} className="group border-slate-200 dark:border-surface-raised hover:border-aubergine-200 hover:shadow-sm transition-all duration-200 overflow-hidden">
+          <Card key={resource.id} className="group border-border hover:border-aubergine-200 hover:shadow-sm transition-all duration-200 overflow-hidden">
             <CardContent className="p-0 flex flex-col sm:flex-row items-center">
               <div className="p-5 flex items-center gap-4 flex-1 w-full">
-                <div className="h-12 w-12 shrink-0 rounded-xl bg-slate-50 dark:bg-surface-raised flex items-center justify-center border border-slate-100 dark:border-surface-raised">
+                <div className="h-12 w-12 shrink-0 rounded-sm bg-muted/50 flex items-center justify-center border border-border">
                   {getFileIcon(resource.type)}
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-aubergine-600 transition-colors truncate uppercase text-sm tracking-tight">{resource.title}</h4>
-                  <div className="flex items-center gap-3 mt-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+                  <h4 className="font-bold text-foreground group-hover:text-aubergine-600 transition-colors truncate uppercase text-sm tracking-tight">{resource.title}</h4>
+                  <div className="flex items-center gap-3 mt-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
                     <span>{resource.type}</span>
-                    <span className="h-1 w-1 rounded-full bg-slate-300" />
+                    <span className="h-1 w-1 rounded-full bg-input" />
                     <span>{formatFileSize(resource.fileSize)}</span>
-                    <span className="h-1 w-1 rounded-full bg-slate-300" />
+                    <span className="h-1 w-1 rounded-full bg-input" />
                     <div className="flex items-center gap-1">
                         {getVisibilityMeta(resource.visibility).icon}
                         {getVisibilityMeta(resource.visibility).label}
@@ -259,21 +259,21 @@ export default function TeacherLibrary() {
                 </div>
               </div>
 
-              <div className="p-5 flex items-center justify-between sm:justify-end gap-x-8 w-full sm:w-auto bg-slate-50/50 dark:bg-surface-raised/20 border-t sm:border-t-0 sm:border-l border-slate-100 dark:border-surface-raised">
+              <div className="p-5 flex items-center justify-between sm:justify-end gap-x-8 w-full sm:w-auto bg-muted/30 border-t sm:border-t-0 sm:border-l border-border">
                 <div className="text-left sm:text-right">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Uploaded By</p>
-                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{resource.uploadedBy}</p>
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Uploaded By</p>
+                    <p className="text-xs font-bold text-foreground">{resource.uploadedBy}</p>
                 </div>
                 <div className="text-left sm:text-right">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Downloads</p>
-                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{resource.downloadCount}</p>
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Downloads</p>
+                    <p className="text-xs font-bold text-foreground">{resource.downloadCount}</p>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
                     {isPreviewable(resource) && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-9 w-9 text-slate-400 hover:text-aubergine-600"
+                        className="h-9 w-9 text-muted-foreground hover:text-aubergine-600"
                         title="View in app"
                         render={<Link to={`/library/${resource.id}`} />}
                       >
@@ -283,7 +283,7 @@ export default function TeacherLibrary() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-9 w-9 text-slate-400 hover:text-aubergine-600"
+                      className="h-9 w-9 text-muted-foreground hover:text-aubergine-600"
                       title="Download resource"
                       onClick={() => {
                         if (resource.url) {
@@ -299,7 +299,7 @@ export default function TeacherLibrary() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-9 w-9 text-slate-400 hover:text-blue-600"
+                          className="h-9 w-9 text-muted-foreground hover:text-blue-600"
                           title="Copy share link"
                           onClick={() => handleShare(resource)}
                         >
@@ -311,7 +311,7 @@ export default function TeacherLibrary() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-9 w-9 text-slate-400 hover:text-aubergine-600"
+                          className="h-9 w-9 text-muted-foreground hover:text-aubergine-600"
                           title="More options"
                         >
                           <MoreHorizontal className="h-4 w-4" />

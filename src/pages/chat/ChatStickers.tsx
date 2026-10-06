@@ -69,14 +69,14 @@ export default function ChatStickers() {
 
   return (
     <div className="space-y-6">
-      <Link to="/chat" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700">
+      <Link to="/chat" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Back to chat
       </Link>
 
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-aubergine-100 p-2 text-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-400"><Sticker className="h-5 w-5" /></div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Sticker packs</h1>
+          <h1 className="text-xl font-semibold text-foreground">Sticker packs</h1>
         </div>
         <div className="flex items-end gap-2">
           <div className="space-y-1"><Label className="text-xs">New pack</Label><Input value={newPack} onChange={(e) => setNewPack(e.target.value)} placeholder="e.g. School fun" className="h-9 w-48" /></div>
@@ -84,16 +84,16 @@ export default function ChatStickers() {
         </div>
       </div>
 
-      {loading ? <p className="text-sm text-slate-400">Loading…</p> :
-        packs.length === 0 ? <p className="rounded-lg border border-dashed border-slate-200 py-16 text-center text-sm text-slate-400">No sticker packs yet. Create one above.</p> :
+      {loading ? <p className="text-sm text-muted-foreground">Loading…</p> :
+        packs.length === 0 ? <p className="rounded-lg border border-dashed border-border py-16 text-center text-sm text-muted-foreground">No sticker packs yet. Create one above.</p> :
         <div className="space-y-5">
           {packs.map((p) => (
-            <div key={p.name} className="rounded-lg border border-slate-200 p-4">
+            <div key={p.name} className="rounded-lg border border-border p-4">
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <h2 className="font-semibold text-slate-800">{p.name}</h2>
-                  <Badge variant="outline" className="text-[10px]">{p.stickers.length}</Badge>
-                  {!p.editable && <Badge className="bg-slate-200 text-slate-600 text-[10px]">Built-in</Badge>}
+                  <h2 className="font-semibold text-foreground">{p.name}</h2>
+                  <Badge variant="outline" className="text-[11px]">{p.stickers.length}</Badge>
+                  {!p.editable && <Badge className="bg-muted text-muted-foreground text-[11px]">Built-in</Badge>}
                 </div>
                 {p.editable && (
                   <div className="flex items-center gap-2">
@@ -109,15 +109,15 @@ export default function ChatStickers() {
               <div className="flex flex-wrap gap-2">
                 {p.stickers.map((url) => (
                   <div key={url} className="group relative">
-                    <img src={url} alt="sticker" className="h-16 w-16 rounded-lg border border-slate-100 object-contain p-1" />
+                    <img src={url} alt="sticker" className="h-16 w-16 rounded-lg border border-border object-contain p-1" />
                     {p.editable && (
-                      <button onClick={() => deleteSticker(p.name, url)} className="absolute -top-1.5 -right-1.5 hidden rounded-full bg-white p-0.5 shadow ring-1 ring-slate-200 group-hover:block" title="Remove">
+                      <button onClick={() => deleteSticker(p.name, url)} className="absolute -top-1.5 -right-1.5 hidden rounded-full bg-white p-0.5 shadow ring-1 ring-border group-hover:block" title="Remove">
                         <Trash2 className="h-3.5 w-3.5 text-rose-500" />
                       </button>
                     )}
                   </div>
                 ))}
-                {p.stickers.length === 0 && <p className="text-xs text-slate-400">No stickers — upload some.</p>}
+                {p.stickers.length === 0 && <p className="text-xs text-muted-foreground">No stickers — upload some.</p>}
               </div>
             </div>
           ))}

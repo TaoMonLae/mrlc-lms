@@ -112,10 +112,10 @@ export default function GutenbergImport() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground flex items-center gap-2">
             <BookMarked className="h-6 w-6 text-accent-purple" /> Import from Project Gutenberg
           </h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">
+          <p className="text-sm text-muted-foreground mt-1">
             Search 70,000+ free, public-domain books and add them to your E-Library with one click.
           </p>
         </div>
@@ -123,7 +123,7 @@ export default function GutenbergImport() {
 
       <form onSubmit={onSubmit} className="flex gap-2 max-w-xl">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -138,11 +138,11 @@ export default function GutenbergImport() {
       </form>
 
       {searched && !searching && results.length === 0 && (
-        <p className="text-sm text-slate-500 py-6 text-center">No books found for "{query}". Try a different title or author spelling.</p>
+        <p className="text-sm text-muted-foreground py-6 text-center">No books found for "{query}". Try a different title or author spelling.</p>
       )}
 
       {count !== null && results.length > 0 && (
-        <p className="text-xs text-slate-400">{count.toLocaleString()} result{count === 1 ? '' : 's'} on Project Gutenberg</p>
+        <p className="text-xs text-muted-foreground">{count.toLocaleString()} result{count === 1 ? '' : 's'} on Project Gutenberg</p>
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -150,8 +150,8 @@ export default function GutenbergImport() {
           const isImporting = importing.has(b.gutenbergId);
           const isImported = imported.has(b.gutenbergId);
           return (
-            <div key={b.gutenbergId} className="flex gap-3 rounded-lg border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo p-3">
-              <div className="w-14 h-20 shrink-0 rounded bg-slate-100 dark:bg-surface-raised overflow-hidden flex items-center justify-center">
+            <div key={b.gutenbergId} className="flex gap-3 rounded-lg border border-border bg-card p-3">
+              <div className="w-14 h-20 shrink-0 rounded bg-muted overflow-hidden flex items-center justify-center">
                 {b.coverUrl ? (
                   <img src={b.coverUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -159,16 +159,16 @@ export default function GutenbergImport() {
                 )}
               </div>
               <div className="min-w-0 flex-1 flex flex-col">
-                <p className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2">{b.title}</p>
-                {b.author && <p className="text-xs text-slate-500 mt-0.5 truncate">{b.author}</p>}
+                <p className="text-sm font-medium text-foreground line-clamp-2">{b.title}</p>
+                {b.author && <p className="text-xs text-muted-foreground mt-0.5 truncate">{b.author}</p>}
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {b.languages.slice(0, 1).map((l) => (
-                    <Badge key={l} variant="outline" className="text-[9px] uppercase">{l}</Badge>
+                    <Badge key={l} variant="outline" className="text-[11px] uppercase">{l}</Badge>
                   ))}
                   {b.subjects.slice(0, 1).map((s) => (
-                    <Badge key={s} variant="outline" className="text-[9px] truncate max-w-[100px]">{s}</Badge>
+                    <Badge key={s} variant="outline" className="text-[11px] truncate max-w-[100px]">{s}</Badge>
                   ))}
-                  <Badge variant="outline" className="text-[9px] truncate max-w-[100px]">{b.category}</Badge>
+                  <Badge variant="outline" className="text-[11px] truncate max-w-[100px]">{b.category}</Badge>
                 </div>
                 <div className="mt-auto pt-2">
                   {isImported ? (

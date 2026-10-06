@@ -195,14 +195,14 @@ export default function FlashcardDeckForm() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <span className="animate-spin rounded-full h-6 w-6 border-2 border-aubergine-600 border-t-transparent mr-2"></span>
-        <span className="text-slate-500">Loading deck…</span>
+        <span className="text-muted-foreground">Loading deck…</span>
       </div>
     );
   }
 
   if (loadFailed) {
     return (
-      <div className="text-center py-12 text-slate-500">
+      <div className="text-center py-12 text-muted-foreground">
         <p>Couldn't load this flashcard deck.</p>
         <Button variant="outline" className="mt-4" render={<Link to="/flashcards" />}>Back to Flashcards</Button>
       </div>
@@ -215,13 +215,13 @@ export default function FlashcardDeckForm() {
         <Button variant="ghost" size="icon" render={<Link to="/flashcards" />}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
           <Layers className="h-6 w-6 text-aubergine-600" />
           {isEdit ? 'Edit Deck' : 'New Deck'}
         </h1>
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-6 space-y-4">
+      <div className="bg-card border border-border rounded-sm shadow-sm p-6 space-y-4">
         <div className="space-y-2">
           <Label htmlFor="deck-title">Title</Label>
           <Input id="deck-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Chapter 5 Vocabulary" maxLength={200} />
@@ -245,32 +245,32 @@ export default function FlashcardDeckForm() {
         <div className="space-y-2">
           <Label>Assign to classes</Label>
           {classes.length === 0 ? (
-            <p className="text-sm text-slate-400">No classes available.</p>
+            <p className="text-sm text-muted-foreground">No classes available.</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {classes.map((c) => (
-                <label key={c.id} className="flex items-center gap-2 text-sm rounded-lg border border-slate-200 dark:border-surface-raised px-3 py-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-surface-raised/50">
+                <label key={c.id} className="flex items-center gap-2 text-sm rounded-lg border border-border px-3 py-2 cursor-pointer hover:bg-muted/50">
                   <Checkbox checked={classIds.includes(c.id)} onCheckedChange={() => toggleClass(c.id)} />
                   {c.name}
                 </label>
               ))}
             </div>
           )}
-          <p className="text-xs text-slate-400">Students in the selected classes will be able to study this deck. You can leave this unassigned and set it later.</p>
+          <p className="text-xs text-muted-foreground">Students in the selected classes will be able to study this deck. You can leave this unassigned and set it later.</p>
         </div>
-        <div className="flex items-start gap-2 pt-2 border-t border-slate-100 dark:border-surface-raised">
+        <div className="flex items-start gap-2 pt-2 border-t border-border">
           <Checkbox checked={shared} onCheckedChange={(v) => setShared(!!v)} id="deck-shared" className="mt-0.5" />
-          <Label htmlFor="deck-shared" className="text-sm font-normal cursor-pointer text-slate-600 dark:text-slate-300">
+          <Label htmlFor="deck-shared" className="text-sm font-normal cursor-pointer text-muted-foreground">
             Share this deck with other teachers -- they'll be able to find it in Community and clone a copy into their own library, but can't edit your original.
           </Label>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-6 space-y-4">
+      <div className="bg-card border border-border rounded-sm shadow-sm p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-semibold text-slate-900 dark:text-white">Cards</h2>
-            <p className="text-xs text-slate-400">{cards.length} / {MAX_CARDS}</p>
+            <h2 className="font-semibold text-foreground">Cards</h2>
+            <p className="text-xs text-muted-foreground">{cards.length} / {MAX_CARDS}</p>
           </div>
           <Button size="sm" variant="outline" onClick={addCard}>
             <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Card
@@ -284,20 +284,20 @@ export default function FlashcardDeckForm() {
           <Button size="sm" variant="outline" onClick={exportCsv}>
             <Download className="mr-1.5 h-3.5 w-3.5" /> Export CSV
           </Button>
-          <span className="text-xs text-slate-400">Two columns: term, definition. A header row is optional.</span>
+          <span className="text-xs text-muted-foreground">Two columns: term, definition. A header row is optional.</span>
         </div>
-        <p className="text-xs text-slate-400 -mt-1">Tip: wrap math in <code className="px-1 rounded bg-slate-100 dark:bg-surface-raised">$...$</code> (e.g. <code className="px-1 rounded bg-slate-100 dark:bg-surface-raised">$x^2 + 1$</code>) to render it as a formula, and click the square next to a card to attach an image.</p>
+        <p className="text-xs text-muted-foreground -mt-1">Tip: wrap math in <code className="px-1 rounded bg-muted">$...$</code> (e.g. <code className="px-1 rounded bg-muted">$x^2 + 1$</code>) to render it as a formula, and click the square next to a card to attach an image.</p>
         <div className="space-y-3">
           {cards.map((c, i) => {
             const incomplete = Boolean(c.term.trim()) !== Boolean(c.definition.trim());
             return (
             <div key={c.clientKey} className={`flex flex-wrap sm:flex-nowrap gap-2 items-start rounded-lg ${incomplete ? 'ring-1 ring-rose-300 p-2' : ''}`}>
-              <span className="mt-2.5 text-xs font-semibold text-slate-400 w-5 shrink-0">{i + 1}.</span>
+              <span className="mt-2.5 text-xs font-semibold text-muted-foreground w-5 shrink-0">{i + 1}.</span>
 
               <div className="flex flex-col items-center gap-1 shrink-0">
                 <label
                   htmlFor={`card-img-${i}`}
-                  className="relative h-9 w-9 rounded-md border border-dashed border-slate-300 dark:border-surface-raised flex items-center justify-center cursor-pointer overflow-hidden bg-slate-50 dark:bg-surface-raised/40 hover:border-aubergine-300"
+                  className="relative h-9 w-9 rounded-md border border-dashed border-input flex items-center justify-center cursor-pointer overflow-hidden bg-muted/50 hover:border-aubergine-300"
                   title="Add an image to this card"
                 >
                   {uploadingKey === c.clientKey ? (
@@ -305,7 +305,7 @@ export default function FlashcardDeckForm() {
                   ) : c.imageUrl ? (
                     <img src={c.imageUrl} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    <ImagePlus className="h-4 w-4 text-slate-400" />
+                    <ImagePlus className="h-4 w-4 text-muted-foreground" />
                   )}
                 </label>
                 <input
@@ -316,7 +316,7 @@ export default function FlashcardDeckForm() {
                   onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) uploadCardImage(c.clientKey, f); }}
                 />
                 {c.imageUrl && (
-                  <button type="button" onClick={() => { discardUnusedImage(c.imageUrl); setCardImage(c.clientKey, null); }} className="flex items-center text-[10px] text-rose-500 hover:underline">
+                  <button type="button" onClick={() => { discardUnusedImage(c.imageUrl); setCardImage(c.clientKey, null); }} className="flex items-center text-[11px] text-rose-500 hover:underline">
                     <X className="h-2.5 w-2.5" /> remove
                   </button>
                 )}

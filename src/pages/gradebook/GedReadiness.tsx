@@ -23,11 +23,11 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export const STATUS_STYLES: Record<string, string> = {
-  NOT_READY: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-200',
+  NOT_READY: 'bg-muted text-muted-foreground',
   DEVELOPING: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
   NEAR_READY: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
   READY: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-  TEST_SCHEDULED: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+  TEST_SCHEDULED: 'bg-lavender text-accent-purple',
   PASSED: 'bg-emerald-600 text-white',
 };
 
@@ -81,10 +81,10 @@ export default function GedReadinessPage() {
     <div className="space-y-6 max-w-[1600px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Target className="h-6 w-6 text-aubergine-600" /> GED Readiness
           </h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Track each student's readiness across the four GED subjects.</p>
+          <p className="text-sm text-muted-foreground mt-1">Track each student's readiness across the four GED subjects.</p>
         </div>
         <Select value={classId} onValueChange={setClassId}>
           <SelectTrigger className="w-[220px]"><SelectValue placeholder="Class">{classes.find((c) => c.id === classId)?.name || 'Class'}</SelectValue></SelectTrigger>
@@ -94,9 +94,9 @@ export default function GedReadinessPage() {
         </Select>
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm overflow-x-auto">
+      <div className="bg-card border border-border rounded-sm shadow-sm overflow-x-auto">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 uppercase tracking-wider font-semibold text-[11px]">
+          <thead className="bg-muted/50 text-muted-foreground uppercase tracking-wider font-semibold text-[11px]">
             <tr>
               <th className="px-6 py-4 min-w-[220px]">Student</th>
               {(matrix?.subjects || ['RLA', 'MATH', 'SCIENCE', 'SOCIAL_STUDIES']).map((s) => (
@@ -104,12 +104,12 @@ export default function GedReadinessPage() {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {loading && <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-500">Loading…</td></tr>}
-            {!loading && (matrix?.rows.length ?? 0) === 0 && <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-500">No students in this class.</td></tr>}
+          <tbody className="divide-y divide-border">
+            {loading && <tr><td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">Loading…</td></tr>}
+            {!loading && (matrix?.rows.length ?? 0) === 0 && <tr><td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">No students in this class.</td></tr>}
             {!loading && matrix?.rows.map((r) => (
-              <tr key={r.studentId} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                <td className="px-6 py-3 font-medium text-slate-900 dark:text-white">{r.name} <span className="text-xs text-slate-400 font-mono ml-1">{r.code}</span></td>
+              <tr key={r.studentId} className="hover:bg-muted/50">
+                <td className="px-6 py-3 font-medium text-foreground">{r.name} <span className="text-xs text-muted-foreground font-mono ml-1">{r.code}</span></td>
                 {matrix.subjects.map((sub) => (
                   <td key={sub} className="px-4 py-3">
                     {canManage ? (

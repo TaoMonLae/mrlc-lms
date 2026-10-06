@@ -187,7 +187,7 @@ export default function Dictionary() {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-2">
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">{data.word}</h2>
+          <h2 className="text-2xl font-semibold text-foreground">{data.word}</h2>
           {data.entries.length > 0 && (
             <Button variant="ghost" size="icon" className="h-7 w-7" title="Pronounce" onClick={() => speak(data.word)}>
               <Volume2 className="h-4 w-4" />
@@ -199,8 +199,8 @@ export default function Dictionary() {
             <p className="text-xs font-semibold uppercase tracking-widest text-accent-purple">Myanmar Translation (မြန်မာဘာသာပြန်)</p>
             <ul className="space-y-1.5">
               {data.translations.map((t, i) => (
-                <li key={i} className="text-sm text-slate-700 dark:text-slate-200 flex items-baseline gap-2">
-                  {t.pos && <span className="text-[10px] font-medium text-slate-400 shrink-0">{t.pos}</span>}
+                <li key={i} className="text-sm text-foreground flex items-baseline gap-2">
+                  {t.pos && <span className="text-[11px] font-medium text-muted-foreground shrink-0">{t.pos}</span>}
                   <span>{t.definition}</span>
                 </li>
               ))}
@@ -214,19 +214,19 @@ export default function Dictionary() {
               {data.monMatches.map((m, i) => (
                 <div key={i} className={i > 0 ? 'pt-3 border-t border-amber-500/10' : ''}>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-base font-semibold text-slate-900 dark:text-white">{m.word}</span>
-                    {m.ipa && <span className="text-xs text-slate-400">/{m.ipa}/</span>}
-                    {m.thaiGloss && <span className="text-xs text-slate-400">· {m.thaiGloss}</span>}
+                    <span className="text-base font-semibold text-foreground">{m.word}</span>
+                    {m.ipa && <span className="text-xs text-muted-foreground">/{m.ipa}/</span>}
+                    {m.thaiGloss && <span className="text-xs text-muted-foreground">· {m.thaiGloss}</span>}
                   </div>
                   <ul className="mt-1 space-y-1">
                     {m.definitions.map((d, j) => (
-                      <li key={j} className="text-sm text-slate-700 dark:text-slate-200 flex items-baseline gap-2">
-                        <span className="text-[10px] font-medium text-slate-400 shrink-0 w-14">{MON_LANG_LABEL[d.lang] || d.lang}</span>
+                      <li key={j} className="text-sm text-foreground flex items-baseline gap-2">
+                        <span className="text-[11px] font-medium text-muted-foreground shrink-0 w-14">{MON_LANG_LABEL[d.lang] || d.lang}</span>
                         <span>
                           {d.definition}
                           {d.example && (
-                            <details className="mt-1 text-xs text-slate-500">
-                              <summary className="cursor-pointer select-none italic hover:text-slate-700 dark:hover:text-slate-300">Example</summary>
+                            <details className="mt-1 text-xs text-muted-foreground">
+                              <summary className="cursor-pointer select-none italic hover:text-foreground">Example</summary>
                               <p className="mt-1 italic">{d.example}</p>
                             </details>
                           )}
@@ -246,15 +246,15 @@ export default function Dictionary() {
               {data.chineseMatches.map((c, i) => (
                 <div key={i} className={i > 0 ? 'pt-3 border-t border-sky-500/10' : ''}>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-base font-semibold text-slate-900 dark:text-white">{c.simplified}</span>
+                    <span className="text-base font-semibold text-foreground">{c.simplified}</span>
                     {c.traditional !== c.simplified && (
-                      <span className="text-sm text-slate-400">({c.traditional})</span>
+                      <span className="text-sm text-muted-foreground">({c.traditional})</span>
                     )}
-                    <span className="text-xs text-slate-400">{c.pinyin}</span>
+                    <span className="text-xs text-muted-foreground">{c.pinyin}</span>
                   </div>
                   <ul className="mt-1 space-y-1">
                     {c.definitions.map((d, j) => (
-                      <li key={j} className="text-sm text-slate-700 dark:text-slate-200">{d}</li>
+                      <li key={j} className="text-sm text-foreground">{d}</li>
                     ))}
                   </ul>
                 </div>
@@ -264,15 +264,15 @@ export default function Dictionary() {
         )}
         {Array.from(groups.entries()).map(([posLabel, entries]) => (
           <div key={posLabel} className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">{posLabel}</p>
-            <ol className="space-y-3 list-decimal list-inside marker:text-slate-400 marker:text-sm">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{posLabel}</p>
+            <ol className="space-y-3 list-decimal list-inside marker:text-muted-foreground marker:text-sm">
               {entries.map((e, i) => (
-                <li key={i} className="text-sm text-slate-700 dark:text-slate-200">
+                <li key={i} className="text-sm text-foreground">
                   {e.definition}
                   {e.examples.length > 0 && (
                     <ul className="mt-1 space-y-0.5 pl-5">
                       {e.examples.map((ex, j) => (
-                        <li key={j} className="text-xs text-slate-500 italic">“{ex}”</li>
+                        <li key={j} className="text-xs text-muted-foreground italic">“{ex}”</li>
                       ))}
                     </ul>
                   )}
@@ -283,7 +283,7 @@ export default function Dictionary() {
                           key={s}
                           type="button"
                           onClick={() => lookup(s.replace(/_/g, ' '))}
-                          className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-surface-raised text-slate-500 hover:text-primary hover:underline transition-colors"
+                          className="text-[11px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground hover:text-primary hover:underline transition-colors"
                         >
                           {s.replace(/_/g, ' ')}
                         </button>
@@ -305,15 +305,15 @@ export default function Dictionary() {
   const isSignedIn = typeof window !== 'undefined' && !!sessionStorage.getItem('auth_token');
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-canvas">
-      <header className="border-b border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo">
+    <div className="min-h-screen bg-muted/50">
+      <header className="border-b border-border bg-card">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
+          <Link to="/" className="flex items-center gap-2 font-semibold text-foreground">
             <BookA className="h-5 w-5 text-accent-purple" /> Dictionary
           </Link>
           <Link
             to={isSignedIn ? '/dashboard' : '/login'}
-            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary transition-colors"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> {isSignedIn ? 'Back to Dashboard' : 'Log in'}
           </Link>
@@ -322,12 +322,12 @@ export default function Dictionary() {
 
       <div className="max-w-2xl mx-auto px-4 space-y-6 py-6 pb-10">
       <div>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Look up any English word — definitions, examples, synonyms, and Myanmar/Mon/Chinese translations — or paste a Mon or Chinese word directly. Free to use, no sign-in required.</p>
+        <p className="text-sm text-muted-foreground mt-1">Look up any English word — definitions, examples, synonyms, and Myanmar/Mon/Chinese translations — or paste a Mon or Chinese word directly. Free to use, no sign-in required.</p>
       </div>
 
       <form onSubmit={onSubmit} className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -345,32 +345,32 @@ export default function Dictionary() {
 
       {recents.length > 0 && !result && (
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-xs text-slate-400 mr-1">Recent:</span>
+          <span className="text-xs text-muted-foreground mr-1">Recent:</span>
           {recents.map((w) => (
             <button
               key={w}
               type="button"
               onClick={() => lookup(w)}
-              className="text-xs px-2 py-1 rounded-full border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo text-slate-600 dark:text-slate-300 hover:border-primary/50 transition-colors"
+              className="text-xs px-2 py-1 rounded-full border border-border bg-card text-muted-foreground hover:border-primary/50 transition-colors"
             >
               {w}
             </button>
           ))}
-          <button type="button" onClick={clearRecents} className="text-slate-400 hover:text-slate-600 ml-1" title="Clear recent searches" aria-label="Clear recent searches">
+          <button type="button" onClick={clearRecents} className="text-muted-foreground hover:text-muted-foreground ml-1" title="Clear recent searches" aria-label="Clear recent searches">
             <X className="h-3 w-3" />
           </button>
         </div>
       )}
 
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-lg p-6 min-h-[240px]">
+      <div className="bg-card border border-border rounded-lg p-6 min-h-[240px]">
         {loading ? (
-          <div className="h-full flex items-center justify-center text-slate-500 py-10">
+          <div className="h-full flex items-center justify-center text-muted-foreground py-10">
             <Loader2 className="h-5 w-5 animate-spin mr-2" /> Looking up “{lookupWord}”…
           </div>
         ) : error ? (
           <div className="text-center py-10">
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{error}</p>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-sm font-medium text-foreground">{error}</p>
+            <p className="text-xs text-muted-foreground mt-1">
               {MYANMAR_SCRIPT_RE.test(lookupWord)
                 ? 'Check the spelling of the Mon word, or try a shorter part of it.'
                 : HAN_SCRIPT_RE.test(lookupWord)
@@ -383,13 +383,13 @@ export default function Dictionary() {
         ) : (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Featured Word</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Featured Word</p>
               <Button variant="ghost" size="icon" className="h-7 w-7" title="Another word" onClick={fetchRandom} disabled={loadingWotd}>
                 <Shuffle className="h-3.5 w-3.5" />
               </Button>
             </div>
             {loadingWotd ? (
-              <div className="flex items-center justify-center py-10 text-slate-500">
+              <div className="flex items-center justify-center py-10 text-muted-foreground">
                 <Loader2 className="h-5 w-5 animate-spin" />
               </div>
             ) : wordOfDay ? (
@@ -397,7 +397,7 @@ export default function Dictionary() {
                 {renderEntries(wordOfDay)}
               </div>
             ) : (
-              <p className="text-sm text-slate-500 text-center py-10">Search for a word above to get started.</p>
+              <p className="text-sm text-muted-foreground text-center py-10">Search for a word above to get started.</p>
             )}
           </div>
         )}

@@ -121,8 +121,8 @@ export default function DonationNew() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Record Donation</h1>
-          <p className="text-sm text-slate-500">Log a new donation from a donor</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Record Donation</h1>
+          <p className="text-sm text-muted-foreground">Log a new donation from a donor</p>
         </div>
       </div>
 
@@ -252,7 +252,7 @@ export default function DonationNew() {
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
                 <Label htmlFor="isTaxDeductible">Tax Deductible</Label>
-                <p className="text-xs text-slate-500">Enable only after confirming the organisation’s approval and this gift’s eligibility.</p>
+                <p className="text-xs text-muted-foreground">Enable only after confirming the organisation’s approval and this gift’s eligibility.</p>
               </div>
               <Switch
                 id="isTaxDeductible"

@@ -37,8 +37,8 @@ export default function VerifyPaymentReceipt() {
   }, [id]);
 
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 font-sans">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className="min-h-screen bg-muted flex items-center justify-center p-4 font-sans">
+      <div className="w-full max-w-lg bg-card rounded-sm shadow-none overflow-hidden">
         <div className="bg-slate-900 text-white px-6 py-5 flex items-center gap-3">
           {result?.school.logoUrl ? (
             <img src={result.school.logoUrl} alt="" className="h-10 w-10 object-contain bg-white/10 rounded p-1" />
@@ -53,14 +53,14 @@ export default function VerifyPaymentReceipt() {
 
         <div className="p-6">
           {loading && (
-            <div className="py-10 text-center text-slate-500"><Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" /> Verifying...</div>
+            <div className="py-10 text-center text-muted-foreground"><Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" /> Verifying...</div>
           )}
 
           {!loading && (notFound || !result) && (
             <div className="py-8 text-center">
               <ShieldX className="h-14 w-14 text-red-500 mx-auto mb-3" />
-              <h2 className="text-lg font-bold text-slate-900">Receipt Not Found</h2>
-              <p className="text-sm text-slate-500 mt-1">No payment receipt matches this verification link. It may be invalid or mistyped.</p>
+              <h2 className="text-lg font-bold text-foreground">Receipt Not Found</h2>
+              <p className="text-sm text-muted-foreground mt-1">No payment receipt matches this verification link. It may be invalid or mistyped.</p>
             </div>
           )}
 
@@ -71,18 +71,18 @@ export default function VerifyPaymentReceipt() {
                   <>
                     <ShieldCheck className="h-14 w-14 text-emerald-500 mx-auto mb-2" />
                     <h2 className="text-lg font-bold text-emerald-700">Valid Payment Receipt</h2>
-                    <p className="text-sm text-slate-500">This is an authentic payment receipt issued by {result.school.name}.</p>
+                    <p className="text-sm text-muted-foreground">This is an authentic payment receipt issued by {result.school.name}.</p>
                   </>
                 ) : (
                   <>
                     <ShieldAlert className="h-14 w-14 text-amber-500 mx-auto mb-2" />
                     <h2 className="text-lg font-bold text-amber-700">Voided Receipt</h2>
-                    <p className="text-sm text-slate-500">This payment receipt has been voided and should not be accepted as proof of payment.</p>
+                    <p className="text-sm text-muted-foreground">This payment receipt has been voided and should not be accepted as proof of payment.</p>
                   </>
                 )}
               </div>
 
-              <div className="rounded-xl border border-slate-200 divide-y divide-slate-100 text-sm">
+              <div className="rounded-sm border border-border divide-y divide-border text-sm">
                 <Row label="Receipt Number" value={result.receiptNumber || '-'} mono />
                 <Row label="Payment Type" value={result.paymentType} />
                 <Row label="Student" value={result.studentName} />
@@ -94,7 +94,7 @@ export default function VerifyPaymentReceipt() {
                 <Row label="Status" value={result.status} />
               </div>
 
-              <p className="text-[11px] text-slate-400 text-center mt-5">
+              <p className="text-[11px] text-muted-foreground text-center mt-5">
                 Only receipt verification details are shown. Private student financial notes are never disclosed on this page.
               </p>
             </>
@@ -108,8 +108,8 @@ export default function VerifyPaymentReceipt() {
 function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-4 px-4 py-2.5">
-      <span className="text-slate-500">{label}</span>
-      <span className={`font-semibold text-slate-900 text-right ${mono ? 'font-mono text-xs' : ''}`}>{value}</span>
+      <span className="text-muted-foreground">{label}</span>
+      <span className={`font-semibold text-foreground text-right ${mono ? 'font-mono text-xs' : ''}`}>{value}</span>
     </div>
   );
 }

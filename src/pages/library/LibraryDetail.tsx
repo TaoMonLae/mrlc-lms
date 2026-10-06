@@ -68,10 +68,10 @@ export default function LibraryDetail() {
     switch (type) {
       case 'PDF': return <FileText className="text-red-500 h-8 w-8" />;
       case 'IMAGE': return <ImageIcon className="text-blue-500 h-8 w-8" />;
-      case 'VIDEO': return <Video className="text-purple-500 h-8 w-8" />;
+      case 'VIDEO': return <Video className="text-accent-purple h-8 w-8" />;
       case 'LINK': return <LinkIcon className="text-emerald-500 h-8 w-8" />;
       case 'DOCUMENT': return <File className="text-blue-700 h-8 w-8" />;
-      default: return <File className="text-slate-500 h-8 w-8" />;
+      default: return <File className="text-muted-foreground h-8 w-8" />;
     }
   };
 
@@ -144,7 +144,7 @@ export default function LibraryDetail() {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <span className="ml-3 text-slate-500">Loading resource...</span>
+        <span className="ml-3 text-muted-foreground">Loading resource...</span>
       </div>
     );
   }
@@ -152,11 +152,11 @@ export default function LibraryDetail() {
   if (!resource) {
     return (
       <div className="space-y-6 max-w-5xl mx-auto pb-10">
-        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/library" />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/library" />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Library
         </Button>
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center text-slate-500 dark:bg-surface-indigo dark:border-surface-raised">
+        <div className="rounded-sm border border-dashed border-border bg-card p-10 text-center text-muted-foreground">
           Resource not found.
         </div>
       </div>
@@ -177,16 +177,16 @@ export default function LibraryDetail() {
     <div className="space-y-6 max-w-5xl mx-auto pb-10">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
-          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/library" />} nativeButton={false}>
+          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/library" />} nativeButton={false}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Library
           </Button>
           <div className="flex items-center gap-3">
-             <div className="p-3 bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm">
+             <div className="p-3 bg-card rounded-sm border border-border shadow-sm">
                 {getIconForType(resource.type)}
              </div>
              <div>
-               <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{resource.title}</h1>
+               <h1 className="text-2xl font-bold tracking-tight text-foreground">{resource.title}</h1>
                <div className="flex flex-wrap items-center gap-2 mt-2">
                  <Badge variant="secondary" className="font-normal">{resource.type}</Badge>
                  {resource.visibility === 'TEACHERS_ONLY' ? (
@@ -194,7 +194,7 @@ export default function LibraryDetail() {
                      Internal Staff Only
                    </Badge>
                  ) : (
-                   <Badge variant="outline" className="font-normal border-slate-200 text-slate-600 dark:border-surface-raised dark:text-slate-300">
+                   <Badge variant="outline" className="font-normal border-border text-muted-foreground">
                      Visible to Students
                    </Badge>
                  )}
@@ -219,7 +219,7 @@ export default function LibraryDetail() {
 
         {/* Main Content Area */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm">
+          <div className="bg-card border border-border rounded-sm overflow-hidden shadow-sm">
             {embedUrl ? (
               <div className="aspect-video w-full">
                 <iframe
@@ -231,11 +231,11 @@ export default function LibraryDetail() {
                 ></iframe>
               </div>
             ) : isPdf ? (
-              <div className="h-[75vh] w-full bg-slate-100 dark:bg-surface-indigo/50">
+              <div className="h-[75vh] w-full bg-muted">
                 <iframe src={fileUrl} title={resource.title} className="w-full h-full border-0"></iframe>
               </div>
             ) : isImage ? (
-              <div className="flex items-center justify-center bg-slate-50 dark:bg-surface-indigo/50 p-4">
+              <div className="flex items-center justify-center bg-muted/50 p-4">
                 <img src={fileUrl} alt={resource.title} className="max-h-[75vh] w-auto max-w-full rounded-lg" />
               </div>
             ) : isSelfHostedVideo ? (
@@ -243,10 +243,10 @@ export default function LibraryDetail() {
                 <video src={fileUrl} controls className="w-full max-h-[75vh]" />
               </div>
             ) : (
-              <div className="p-12 flex flex-col items-center justify-center text-center bg-slate-50 dark:bg-surface-indigo/50">
+              <div className="p-12 flex flex-col items-center justify-center text-center bg-muted/50">
                 {getIconForType(resource.type)}
-                <h3 className="mt-4 text-lg font-medium text-slate-900 dark:text-white">Preview not available</h3>
-                <p className="text-slate-500 mt-1 max-w-sm">This file type cannot be previewed directly in the browser.</p>
+                <h3 className="mt-4 text-lg font-medium text-foreground">Preview not available</h3>
+                <p className="text-muted-foreground mt-1 max-w-sm">This file type cannot be previewed directly in the browser.</p>
                 {resource.externalUrl && (
                   <div className="mt-6">
                     <Button render={<a href={resource.externalUrl} target="_blank" rel="noopener noreferrer" />} nativeButton={false}>
@@ -257,7 +257,7 @@ export default function LibraryDetail() {
               </div>
             )}
             {(isPdf || isImage || isSelfHostedVideo) && resource.externalUrl && (
-              <div className="flex justify-end p-3 border-t border-slate-100 dark:border-surface-raised">
+              <div className="flex justify-end p-3 border-t border-border">
                 <Button variant="outline" size="sm" render={<a href={resource.externalUrl} target="_blank" rel="noopener noreferrer" />} nativeButton={false}>
                   <Download className="mr-2 h-4 w-4" /> Download
                 </Button>
@@ -265,31 +265,31 @@ export default function LibraryDetail() {
             )}
 
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Description</h3>
-              <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{resource.description || 'No description available.'}</p>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Description</h3>
+              <p className="text-foreground whitespace-pre-wrap">{resource.description || 'No description available.'}</p>
             </div>
           </div>
         </div>
 
         {/* Sidebar Info */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-6 overflow-hidden">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider mb-4 border-b border-slate-100 dark:border-surface-raised pb-2">Information</h3>
+          <div className="bg-card border border-border rounded-sm shadow-sm p-6 overflow-hidden">
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4 border-b border-border pb-2">Information</h3>
 
             <dl className="space-y-4">
               {resource.author && (
                 <div>
-                  <dt className="text-xs text-slate-500 dark:text-slate-300">Author</dt>
-                  <dd className="font-medium text-slate-900 dark:text-white">{resource.author}</dd>
+                  <dt className="text-xs text-muted-foreground">Author</dt>
+                  <dd className="font-medium text-foreground">{resource.author}</dd>
                 </div>
               )}
               <div>
-                <dt className="text-xs text-slate-500 dark:text-slate-300">Date Added</dt>
-                <dd className="font-medium text-slate-900 dark:text-white">{format(new Date(resource.createdAt), 'MMMM d, yyyy')}</dd>
+                <dt className="text-xs text-muted-foreground">Date Added</dt>
+                <dd className="font-medium text-foreground">{format(new Date(resource.createdAt), 'MMMM d, yyyy')}</dd>
               </div>
               {resource.classId && (
                 <div>
-                  <dt className="text-xs text-slate-500 dark:text-slate-300">Assigned Class</dt>
+                  <dt className="text-xs text-muted-foreground">Assigned Class</dt>
                   <dd className="font-medium text-blue-600 dark:text-blue-400">
                     <Link to={`/classes/${resource.classId}`} className="hover:underline">View Class</Link>
                   </dd>

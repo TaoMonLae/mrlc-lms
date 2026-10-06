@@ -118,16 +118,16 @@ export default function AttendanceAnalytics() {
     color: string;
     subtitle?: string;
   }) => (
-    <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
+    <Card className="border-border bg-card shadow-sm">
       <CardContent className="p-4">
         <div className="flex items-center gap-3">
           <div className={`h-12 w-12 rounded-full ${color} flex items-center justify-center`}>
             <Icon className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">{title}</p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
-            {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
+            <p className="text-[11px] font-bold uppercase text-muted-foreground tracking-wider">{title}</p>
+            <p className="text-2xl font-bold text-foreground">{value}</p>
+            {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
           </div>
         </div>
       </CardContent>
@@ -137,7 +137,7 @@ export default function AttendanceAnalytics() {
   const ProgressBar = ({ value, total, color }: { value: number; total: number; color: string }) => {
     const percentage = total > 0 ? (value / total) * 100 : 0;
     return (
-      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+      <div className="w-full bg-muted rounded-full h-2">
         <div
           className={`h-2 rounded-full ${color} transition-all`}
           style={{ width: `${percentage}%` }}
@@ -151,17 +151,17 @@ export default function AttendanceAnalytics() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight dark:text-white uppercase">Attendance Analytics</h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">Comprehensive attendance insights and statistics.</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight uppercase">Attendance Analytics</h1>
+          <p className="text-sm text-muted-foreground mt-1 font-medium">Comprehensive attendance insights and statistics.</p>
         </div>
       </div>
 
       {/* Filters */}
-      <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
+      <Card className="border-border bg-card shadow-sm">
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4">
             <div className="flex flex-col gap-1.5 min-w-[140px]">
-              <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Start Date</span>
+              <span className="text-[11px] font-black uppercase text-muted-foreground tracking-widest">Start Date</span>
               <Input
                 type="date"
                 value={startDate}
@@ -170,7 +170,7 @@ export default function AttendanceAnalytics() {
               />
             </div>
             <div className="flex flex-col gap-1.5 min-w-[140px]">
-              <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">End Date</span>
+              <span className="text-[11px] font-black uppercase text-muted-foreground tracking-widest">End Date</span>
               <Input
                 type="date"
                 value={endDate}
@@ -180,7 +180,7 @@ export default function AttendanceAnalytics() {
             </div>
             {userRole === "ADMIN" && (
               <div className="flex flex-col gap-1.5 min-w-[140px]">
-                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Group By</span>
+                <span className="text-[11px] font-black uppercase text-muted-foreground tracking-widest">Group By</span>
                 <Select value={groupBy} onValueChange={(v) => setGroupBy(v as any)}>
                   <SelectTrigger className="h-10">
                     <SelectValue />
@@ -198,9 +198,9 @@ export default function AttendanceAnalytics() {
       </Card>
 
       {loading ? (
-        <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
+        <Card className="border-border bg-card shadow-sm">
           <CardContent className="p-8 text-center">
-            <p className="text-slate-500">Loading analytics...</p>
+            <p className="text-muted-foreground">Loading analytics...</p>
           </CardContent>
         </Card>
       ) : data ? (
@@ -241,11 +241,11 @@ export default function AttendanceAnalytics() {
           </div>
 
           {/* Overall Rate Card */}
-          <Card className={`border-slate-200 dark:border-surface-raised ${getRateBgColor(data.overall.rate)} shadow-sm`}>
+          <Card className={`border-border ${getRateBgColor(data.overall.rate)} shadow-sm`}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Overall Attendance Rate</p>
+                  <p className="text-[11px] font-bold uppercase text-muted-foreground tracking-wider">Overall Attendance Rate</p>
                   <p className={`text-4xl font-bold ${getRateColor(data.overall.rate)} mt-1`}>
                     {data.overall.rate}%
                   </p>
@@ -266,7 +266,7 @@ export default function AttendanceAnalytics() {
 
           {/* By Subject */}
           {data.bySubject && data.bySubject.length > 0 && (
-            <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
+            <Card className="border-border bg-card shadow-sm">
               <CardHeader>
                 <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                   <BookOpen className="h-4 w-4" /> Attendance by Subject
@@ -275,13 +275,13 @@ export default function AttendanceAnalytics() {
               <CardContent>
                 <div className="space-y-4">
                   {data.bySubject.map(subject => (
-                    <div key={subject.subjectId} className="p-4 bg-slate-50 dark:bg-surface-raised/20 rounded-lg">
+                    <div key={subject.subjectId} className="p-4 bg-muted/50 rounded-lg">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           <Badge className={`h-3 w-3 rounded-full p-0 ${subject.subjectColor.replace('bg-', 'bg-') || 'bg-blue-500'}`} />
                           <div>
-                            <p className="font-bold text-sm text-slate-900 dark:text-white">{subject.subjectName}</p>
-                            <p className="text-xs text-slate-500">{subject.uniqueStudents} students · {subject.total} sessions</p>
+                            <p className="font-bold text-sm text-foreground">{subject.subjectName}</p>
+                            <p className="text-xs text-muted-foreground">{subject.uniqueStudents} students · {subject.total} sessions</p>
                           </div>
                         </div>
                         <div className="text-right">
@@ -318,7 +318,7 @@ export default function AttendanceAnalytics() {
 
           {/* By Teacher (Admin Only) */}
           {data.byTeacher && data.byTeacher.length > 0 && (
-            <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
+            <Card className="border-border bg-card shadow-sm">
               <CardHeader>
                 <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                   <Users className="h-4 w-4" /> Attendance by Teacher
@@ -327,14 +327,14 @@ export default function AttendanceAnalytics() {
               <CardContent>
                 <div className="space-y-3">
                   {data.byTeacher.map(teacher => (
-                    <div key={teacher.teacherId} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-surface-raised/20 rounded-lg">
+                    <div key={teacher.teacherId} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                          <Users className="h-5 w-5 text-slate-500" />
+                        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                          <Users className="h-5 w-5 text-muted-foreground" />
                         </div>
                         <div>
-                          <p className="font-bold text-sm text-slate-900 dark:text-white">{teacher.teacherName}</p>
-                          <p className="text-xs text-slate-500">{teacher.total} sessions recorded</p>
+                          <p className="font-bold text-sm text-foreground">{teacher.teacherName}</p>
+                          <p className="text-xs text-muted-foreground">{teacher.total} sessions recorded</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
@@ -355,9 +355,9 @@ export default function AttendanceAnalytics() {
           )}
         </>
       ) : (
-        <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
+        <Card className="border-border bg-card shadow-sm">
           <CardContent className="p-8 text-center">
-            <p className="text-slate-500">Select a date range to view analytics.</p>
+            <p className="text-muted-foreground">Select a date range to view analytics.</p>
           </CardContent>
         </Card>
       )}

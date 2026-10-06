@@ -86,8 +86,8 @@ export default function TeacherDashboard() {
           <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-aubergine-700 dark:text-aubergine-300">
             {greeting}{firstName ? `, ${firstName}` : ''}
           </p>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight dark:text-white">Teacher Dashboard</h1>
-          <p className="text-sm text-slate-500 mt-1.5 font-medium dark:text-slate-300">
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">Teacher Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1.5 font-medium">
             {stats.classCount > 0
               ? `Managing ${stats.classCount} assigned ${stats.classCount === 1 ? 'class' : 'classes'} with ${stats.studentCount} students.`
               : 'No classes assigned to you yet.'}
@@ -106,7 +106,7 @@ export default function TeacherDashboard() {
             id="dashboard-planner-btn"
             variant="outline"
             size="sm"
-            className="h-10 rounded-lg border-border bg-card px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700 shadow-sm dark:text-slate-200"
+            className="h-10 rounded-lg border-border bg-card px-4 text-[11px] font-bold uppercase tracking-wider text-foreground shadow-sm"
             onClick={() => navigate('/teacher/planner')}
           >
             Lesson Planner
@@ -124,16 +124,16 @@ export default function TeacherDashboard() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {teacherStats.map((stat) => (
-          <Card key={stat.title} className="relative rounded-2xl border border-border bg-card p-5 shadow-[0_8px_24px_rgba(25,50,77,0.06)] transition-all hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(25,50,77,0.10)]">
+          <Card key={stat.title} className="relative rounded-sm border border-border bg-card p-5 shadow-[0_8px_24px_rgba(25,50,77,0.06)] transition-all hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(25,50,77,0.10)]">
             <div className={`absolute inset-x-0 top-0 h-1 ${stat.accent}`} aria-hidden="true" />
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400 whitespace-nowrap">{stat.title}</span>
-              <div className={`rounded-xl p-2.5 ${stat.bgColor} ${stat.color}`}>
+              <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground whitespace-nowrap">{stat.title}</span>
+              <div className={`rounded-sm p-2.5 ${stat.bgColor} ${stat.color}`}>
                 <stat.icon className="h-4 w-4" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-slate-900 dark:text-white">{stat.value}</div>
-            <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-300">
+            <div className="text-3xl font-bold text-foreground">{stat.value}</div>
+            <p className="mt-1 text-xs font-semibold text-muted-foreground">
               {stat.description}
             </p>
           </Card>
@@ -142,12 +142,12 @@ export default function TeacherDashboard() {
 
       {/* Today's sessions — one tap into attendance for that session */}
       {todaySessions.length > 0 && (
-        <Card className="rounded-2xl border border-border bg-card shadow-[0_8px_24px_rgba(25,50,77,0.05)] overflow-hidden">
+        <Card className="rounded-sm border border-border bg-card shadow-[0_8px_24px_rgba(25,50,77,0.05)] overflow-hidden">
           <div className="flex items-center justify-between border-b border-border px-6 py-4">
-            <h3 className="font-bold text-slate-800 text-sm dark:text-slate-100 flex items-center gap-2">
+            <h3 className="font-bold text-foreground text-sm flex items-center gap-2">
               <Clock className="h-4 w-4 text-aubergine-600" /> Today's Sessions
             </h3>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
               {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
             </span>
           </div>
@@ -157,15 +157,15 @@ export default function TeacherDashboard() {
                 key={s.id}
                 type="button"
                 onClick={() => navigate(`/teacher/attendance?sessionId=${s.id}`)}
-                className="group flex items-center justify-between rounded-xl border border-border bg-background/75 p-3.5 text-left transition-all hover:border-aubergine-400 hover:bg-aubergine-50 dark:hover:bg-aubergine-900/20"
+                className="group flex items-center justify-between rounded-sm border border-border bg-background/75 p-3.5 text-left transition-all hover:border-aubergine-400 hover:bg-aubergine-50 dark:hover:bg-aubergine-900/20"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-200">{sanitizeText(s.subjectName || 'Session')}</p>
-                  <p className="mt-0.5 truncate text-[11px] font-semibold text-slate-500">
+                  <p className="truncate text-sm font-bold text-foreground">{sanitizeText(s.subjectName || 'Session')}</p>
+                  <p className="mt-0.5 truncate text-[11px] font-semibold text-muted-foreground">
                     {s.startTime}–{s.endTime}{s.className ? ` · ${sanitizeText(s.className)}` : ''}{s.room ? ` · ${sanitizeText(s.room)}` : ''}
                   </p>
                 </div>
-                <span className="ml-3 flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-aubergine-600 opacity-0 transition-opacity group-hover:opacity-100">
+                <span className="ml-3 flex shrink-0 items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-aubergine-600 opacity-0 transition-opacity group-hover:opacity-100">
                   Attendance <ArrowRight className="h-3 w-3" />
                 </span>
               </button>
@@ -177,10 +177,10 @@ export default function TeacherDashboard() {
       <section className="space-y-4" aria-labelledby="learning-activities-heading">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h2 id="learning-activities-heading" className="text-base font-bold text-slate-900 dark:text-white">Learning activities</h2>
-            <p className="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">A little daily practice keeps learning momentum strong.</p>
+            <h2 id="learning-activities-heading" className="text-base font-bold text-foreground">Learning activities</h2>
+            <p className="mt-0.5 text-xs font-medium text-muted-foreground">A little daily practice keeps learning momentum strong.</p>
           </div>
-          <span className="hidden rounded-full bg-academic-gold/15 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#97651b] sm:inline dark:text-academic-gold">
+          <span className="hidden rounded-full bg-academic-gold/15 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#97651b] sm:inline dark:text-academic-gold">
             Build a streak
           </span>
         </div>
@@ -191,9 +191,9 @@ export default function TeacherDashboard() {
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-2 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden dark:bg-surface-indigo/50 dark:border-surface-raised flex flex-col">
-          <div className="flex items-center justify-between border-b px-6 py-4 dark:border-surface-raised">
-            <h3 className="font-bold text-slate-800 text-sm dark:text-slate-100">My Assigned Classes</h3>
+        <Card className="lg:col-span-2 rounded-sm border border-border bg-card shadow-sm overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between border-b px-6 py-4">
+            <h3 className="font-bold text-foreground text-sm">My Assigned Classes</h3>
             <button
               id="dashboard-full-schedule-link"
               className="text-xs text-aubergine-600 font-bold uppercase tracking-widest cursor-pointer hover:underline focus:outline-none"
@@ -204,7 +204,7 @@ export default function TeacherDashboard() {
           </div>
           <div className="p-0 overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wider font-bold dark:bg-surface-raised/30">
+              <thead className="bg-muted/50 text-muted-foreground text-[11px] uppercase tracking-wider font-bold">
                 <tr>
                   <th className="px-6 py-3">Module Name</th>
                   <th className="px-6 py-3">Location</th>
@@ -212,20 +212,20 @@ export default function TeacherDashboard() {
                   <th className="px-6 py-3 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-border">
                 {assignedClasses.map((cls) => (
-                  <tr key={cls.id} className="hover:bg-slate-50 transition-colors group dark:hover:bg-surface-raised/50">
+                  <tr key={cls.id} className="hover:bg-muted/50 transition-colors group">
                     <td className="px-6 py-4">
-                      <div className="font-bold text-slate-800 dark:text-slate-200">{sanitizeText(cls.name)}</div>
-                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{sanitizeText(cls.level)}</div>
+                      <div className="font-bold text-foreground">{sanitizeText(cls.name)}</div>
+                      <div className="text-[11px] text-muted-foreground font-bold uppercase tracking-tighter">{sanitizeText(cls.level)}</div>
                     </td>
-                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium">{sanitizeText(cls.room)}</td>
-                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{cls.students} Learners</td>
+                    <td className="px-6 py-4 text-muted-foreground font-medium">{sanitizeText(cls.room)}</td>
+                    <td className="px-6 py-4 text-muted-foreground">{cls.students} Learners</td>
                     <td className="px-6 py-4 text-right">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-slate-400 hover:text-aubergine-600"
+                        className="h-8 w-8 text-muted-foreground hover:text-aubergine-600"
                         title="View class details"
                         onClick={() => navigate(`/teacher/classes/${cls.id}`)}
                       >
@@ -240,9 +240,9 @@ export default function TeacherDashboard() {
         </Card>
 
         <div className="space-y-8">
-          <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden dark:bg-surface-indigo/50 dark:border-surface-raised">
-            <div className="border-b px-6 py-4 dark:border-surface-raised">
-              <h3 className="font-bold text-slate-800 text-sm dark:text-slate-100">Attendance This Week</h3>
+          <Card className="rounded-sm border border-border bg-card shadow-sm overflow-hidden">
+            <div className="border-b px-6 py-4">
+              <h3 className="font-bold text-foreground text-sm">Attendance This Week</h3>
             </div>
             <CardContent className="p-4 pt-6">
               <div className="h-[200px] w-full">
@@ -255,7 +255,7 @@ export default function TeacherDashboard() {
                       tickLine={false} 
                       tick={{ fontSize: 11, fontWeight: 'bold' }} 
                       dy={10}
-                      className="text-slate-500"
+                      className="text-muted-foreground"
                     />
                     <YAxis 
                       hide 
@@ -277,38 +277,38 @@ export default function TeacherDashboard() {
               <div className="mt-4 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                  <span className="font-bold text-slate-500">Above 90%</span>
+                  <span className="font-bold text-muted-foreground">Above 90%</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-amber-500" />
-                  <span className="font-bold text-slate-500">Below 90%</span>
+                  <span className="font-bold text-muted-foreground">Below 90%</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden dark:bg-surface-indigo/50 dark:border-surface-raised flex flex-col">
-            <div className="border-b px-6 py-4 dark:border-surface-raised flex items-center justify-between">
-              <h3 className="font-bold text-slate-800 text-sm dark:text-slate-100">Upcoming Exams</h3>
-              <Calendar className="h-4 w-4 text-slate-400" />
+          <Card className="rounded-sm border border-border bg-card shadow-sm overflow-hidden flex flex-col">
+            <div className="border-b px-6 py-4 flex items-center justify-between">
+              <h3 className="font-bold text-foreground text-sm">Upcoming Exams</h3>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
             </div>
             <CardContent className="p-4 space-y-4">
               {upcomingExams.map((exam) => (
-                <div key={exam.id} className="p-3 rounded-lg bg-slate-50 dark:bg-surface-raised/30 border border-slate-100 dark:border-surface-raised flex justify-between items-center group hover:border-aubergine-200 transition-colors">
+                <div key={exam.id} className="p-3 rounded-lg bg-muted/50 border border-border flex justify-between items-center group hover:border-aubergine-200 transition-colors">
                   <div className="space-y-1">
-                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase">{sanitizeText(exam.title)}</p>
-                    <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-tight">{sanitizeText(exam.class)}</p>
+                    <p className="text-xs font-bold text-foreground uppercase">{sanitizeText(exam.title)}</p>
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-tight">{sanitizeText(exam.class)}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs font-bold text-aubergine-600 uppercase">{exam.date}</p>
-                    <p className="text-[10px] font-bold text-slate-400">{exam.time}</p>
+                    <p className="text-[11px] font-bold text-muted-foreground">{exam.time}</p>
                   </div>
                 </div>
               ))}
               <Button
                 id="dashboard-manage-calendar-btn"
                 variant="ghost"
-                className="w-full mt-2 text-[10px] font-bold text-slate-500 hover:text-aubergine-600 uppercase tracking-widest h-8"
+                className="w-full mt-2 text-[11px] font-bold text-muted-foreground hover:text-aubergine-600 uppercase tracking-widest h-8"
                 onClick={() => navigate('/teacher/timetable')}
               >
                 Manage Calendar
@@ -319,24 +319,24 @@ export default function TeacherDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-1 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden dark:bg-surface-indigo/50 dark:border-surface-raised">
-          <div className="border-b px-6 py-4 dark:border-surface-raised">
-            <h3 className="font-bold text-slate-800 text-sm dark:text-slate-100">Performance Snapshot</h3>
+        <Card className="lg:col-span-1 rounded-sm border border-border bg-card shadow-sm overflow-hidden">
+          <div className="border-b px-6 py-4">
+            <h3 className="font-bold text-foreground text-sm">Performance Snapshot</h3>
           </div>
           <div className="p-0">
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            <div className="divide-y divide-border">
               {recentPerformance.map((item) => (
-                <div key={item.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors dark:hover:bg-surface-raised/50">
+                <div key={item.id} className="px-6 py-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
                   <div className="space-y-0.5">
-                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{sanitizeText(item.student)}</p>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{sanitizeText(item.class)}</p>
+                    <p className="text-sm font-bold text-foreground">{sanitizeText(item.student)}</p>
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">{sanitizeText(item.class)}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <p className="text-sm font-black text-slate-900 dark:text-white">{item.score}</p>
-                      <span className={`text-[9px] font-heavy uppercase tracking-widest ${
+                      <p className="text-sm font-black text-foreground">{item.score}</p>
+                      <span className={`text-[11px] font-heavy uppercase tracking-widest ${
                         item.trend === 'up' ? 'text-emerald-500' : 
-                        item.trend === 'down' ? 'text-red-500' : 'text-slate-400'
+                        item.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'
                       }`}>
                         {item.trend === 'up' ? '↑ Rising' : item.trend === 'down' ? '↓ Falling' : '→ Stable'}
                       </span>
@@ -346,12 +346,12 @@ export default function TeacherDashboard() {
                 </div>
               ))}
             </div>
-            <div className="p-4 bg-slate-50/50 dark:bg-surface-raised/10">
+            <div className="p-4 bg-muted/30">
               <Button
                 id="dashboard-full-gradebook-btn"
                 size="sm"
                 variant="outline"
-                className="w-full text-[10px] font-bold uppercase tracking-widest h-9 bg-white dark:bg-surface-indigo dark:border-surface-raised"
+                className="w-full text-[11px] font-bold uppercase tracking-widest h-9 bg-card"
                 onClick={() => navigate('/teacher/reports')}
               >
                 Full Gradebook
@@ -360,16 +360,16 @@ export default function TeacherDashboard() {
           </div>
         </Card>
 
-        <Card className="lg:col-span-2 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden dark:bg-surface-indigo/50 dark:border-surface-raised flex flex-col">
-          <div className="border-b px-6 py-4 dark:border-surface-raised flex items-center justify-between">
-            <h3 className="font-bold text-slate-800 text-sm dark:text-slate-100">Announcements</h3>
+        <Card className="lg:col-span-2 rounded-sm border border-border bg-card shadow-sm overflow-hidden flex flex-col">
+          <div className="border-b px-6 py-4 flex items-center justify-between">
+            <h3 className="font-bold text-foreground text-sm">Announcements</h3>
             {announcements.length > 0 && (
-              <Badge variant="secondary" className="font-bold text-[10px] tracking-widest uppercase">{announcements.length} Recent</Badge>
+              <Badge variant="secondary" className="font-bold text-[11px] tracking-widest uppercase">{announcements.length} Recent</Badge>
             )}
           </div>
           <CardContent className="p-6 space-y-4">
             {announcements.length === 0 ? (
-              <div className="py-8 flex flex-col items-center justify-center text-center text-slate-400">
+              <div className="py-8 flex flex-col items-center justify-center text-center text-muted-foreground">
                 <BookOpen className="h-8 w-8 mb-2 opacity-40" />
                 <p className="text-xs font-semibold">No announcements yet.</p>
               </div>
@@ -380,13 +380,13 @@ export default function TeacherDashboard() {
                   onClick={() => navigate(`/announcements/${ann.id}`)}
                   className="w-full text-left flex gap-4 items-start group focus:outline-none"
                 >
-                  <div className="h-10 w-10 shrink-0 rounded-xl bg-aubergine-50 dark:bg-aubergine-900/20 flex items-center justify-center text-aubergine-600">
+                  <div className="h-10 w-10 shrink-0 rounded-sm bg-aubergine-50 dark:bg-aubergine-900/20 flex items-center justify-center text-aubergine-600">
                     <BookOpen className="h-5 w-5" />
                   </div>
                   <div className="space-y-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase truncate group-hover:text-aubergine-600 transition-colors">{sanitizeText(ann.title)}</p>
-                    <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-300 font-medium line-clamp-2">{sanitizeText(ann.body)}</p>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                    <p className="text-xs font-bold text-foreground uppercase truncate group-hover:text-aubergine-600 transition-colors">{sanitizeText(ann.title)}</p>
+                    <p className="text-[11px] leading-relaxed text-muted-foreground font-medium line-clamp-2">{sanitizeText(ann.body)}</p>
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
                       {new Date(ann.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </p>
                   </div>
@@ -396,7 +396,7 @@ export default function TeacherDashboard() {
             <Button
               id="dashboard-announcements-btn"
               variant="ghost"
-              className="w-full mt-2 text-[10px] font-bold text-slate-500 hover:text-aubergine-600 uppercase tracking-widest h-8"
+              className="w-full mt-2 text-[11px] font-bold text-muted-foreground hover:text-aubergine-600 uppercase tracking-widest h-8"
               onClick={() => navigate('/announcements')}
             >
               View All Announcements

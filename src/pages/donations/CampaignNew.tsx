@@ -87,8 +87,8 @@ export default function CampaignNew() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">New Campaign</h1>
-          <p className="text-sm text-slate-500">Launch a new fundraising campaign</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">New Campaign</h1>
+          <p className="text-sm text-muted-foreground">Launch a new fundraising campaign</p>
         </div>
       </div>
 

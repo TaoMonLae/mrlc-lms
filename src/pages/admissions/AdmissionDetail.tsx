@@ -202,7 +202,7 @@ export default function AdmissionDetail() {
   };
 
   if (loading) {
-    return <div className="flex h-80 items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-slate-400" /></div>;
+    return <div className="flex h-80 items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-muted-foreground" /></div>;
   }
 
   if (!application) return null;
@@ -219,10 +219,10 @@ export default function AdmissionDetail() {
             Back to Admissions
           </Button>
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{application.applicantName}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">{application.applicantName}</h1>
             <span className="rounded-md bg-aubergine-100 px-2 py-1 text-xs font-semibold text-aubergine-700 dark:bg-aubergine-500/20 dark:text-aubergine-200">{application.status.replaceAll('_', ' ')}</span>
           </div>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{application.applicationNo || application.id}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{application.applicationNo || application.id}</p>
         </div>
         {application.convertedStudentId && (
           <Button render={<Link to={`/students/${application.convertedStudentId}`} />} nativeButton={false}>
@@ -262,14 +262,14 @@ export default function AdmissionDetail() {
           <Panel title={`Document Checklist (${verifiedDocs}/${application.documents.length} verified)`}>
             <div className="space-y-3">
               {application.documents.map((document) => (
-                <div key={document.id} className="rounded-lg border border-slate-200 p-3 dark:border-white/10">
+                <div key={document.id} className="rounded-lg border border-border p-3">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div>
-                      <div className="font-medium text-slate-900 dark:text-white">{document.title}</div>
-                      <div className="mt-1 text-sm text-slate-500">{document.documentType.replaceAll('_', ' ')} - {document.fileName || 'No file uploaded'}</div>
+                      <div className="font-medium text-foreground">{document.title}</div>
+                      <div className="mt-1 text-sm text-muted-foreground">{document.documentType.replaceAll('_', ' ')} - {document.fileName || 'No file uploaded'}</div>
                       {document.fileUrl && <a href={document.fileUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-sm font-medium text-aubergine-600">Open document</a>}
                     </div>
-                    <select value={document.checklistStatus} onChange={(event) => updateDocumentStatus(document, event.target.value)} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-white/10 dark:bg-surface-raised dark:text-white">
+                    <select value={document.checklistStatus} onChange={(event) => updateDocumentStatus(document, event.target.value)} className="h-10 rounded-md border border-border bg-white px-3 text-sm dark:bg-surface-raised">
                       {checklistStatuses.map((status) => <option key={status} value={status}>{status.replaceAll('_', ' ')}</option>)}
                     </select>
                   </div>
@@ -277,12 +277,12 @@ export default function AdmissionDetail() {
               ))}
             </div>
 
-            <form onSubmit={uploadDocument} className="mt-5 rounded-lg bg-slate-50 p-4 dark:bg-white/5">
-              <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Upload or add checklist item</h3>
+            <form onSubmit={uploadDocument} className="mt-5 rounded-lg bg-muted/50 p-4">
+              <h3 className="mb-3 text-sm font-semibold text-foreground">Upload or add checklist item</h3>
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <Input value={documentForm.title} onChange={(event) => setDocumentForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="Document title" required />
                 <Input value={documentForm.documentType} onChange={(event) => setDocumentForm((prev) => ({ ...prev, documentType: event.target.value }))} placeholder="Document type" />
-                <select value={documentForm.checklistStatus} onChange={(event) => setDocumentForm((prev) => ({ ...prev, checklistStatus: event.target.value }))} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-white/10 dark:bg-surface-raised dark:text-white">
+                <select value={documentForm.checklistStatus} onChange={(event) => setDocumentForm((prev) => ({ ...prev, checklistStatus: event.target.value }))} className="h-10 rounded-md border border-border bg-white px-3 text-sm dark:bg-surface-raised">
                   {checklistStatuses.map((status) => <option key={status} value={status}>{status.replaceAll('_', ' ')}</option>)}
                 </select>
                 <Input type="file" onChange={(event) => setDocumentFile(event.target.files?.[0] || null)} />
@@ -303,10 +303,10 @@ export default function AdmissionDetail() {
                     <Clock3 className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className="font-medium text-slate-900 dark:text-white">{item.title}</div>
-                    <div className="text-sm text-slate-500">{formatDateTime(item.createdAt)} - {item.createdByName || 'System'}</div>
-                    {item.fromStatus || item.toStatus ? <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{item.fromStatus || 'Start'}{' -> '}{item.toStatus || 'No status'}</div> : null}
-                    {item.description && <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{item.description}</p>}
+                    <div className="font-medium text-foreground">{item.title}</div>
+                    <div className="text-sm text-muted-foreground">{formatDateTime(item.createdAt)} - {item.createdByName || 'System'}</div>
+                    {item.fromStatus || item.toStatus ? <div className="mt-1 text-sm text-muted-foreground">{item.fromStatus || 'Start'}{' -> '}{item.toStatus || 'No status'}</div> : null}
+                    {item.description && <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>}
                   </div>
                 </div>
               ))}
@@ -330,7 +330,7 @@ export default function AdmissionDetail() {
 
           <Panel title="Admission Decision">
             <form onSubmit={recordDecision} className="space-y-3">
-              <select value={decision.status} onChange={(event) => setDecision((prev) => ({ ...prev, status: event.target.value }))} className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-white/10 dark:bg-surface-raised dark:text-white">
+              <select value={decision.status} onChange={(event) => setDecision((prev) => ({ ...prev, status: event.target.value }))} className="h-10 w-full rounded-md border border-border bg-white px-3 text-sm dark:bg-surface-raised">
                 {['APPROVED', 'WAITLISTED', 'REJECTED'].map((status) => <option key={status} value={status}>{status}</option>)}
               </select>
               <Textarea value={decision.decisionNotes} onChange={(event) => setDecision((prev) => ({ ...prev, decisionNotes: event.target.value }))} placeholder="Decision notes" />
@@ -351,7 +351,7 @@ export default function AdmissionDetail() {
                 {busy === 'convert' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
                 Convert to Student
               </Button>
-              {!canConvert && <p className="text-xs text-slate-500">Only approved, not-yet-enrolled applications can be converted.</p>}
+              {!canConvert && <p className="text-xs text-muted-foreground">Only approved, not-yet-enrolled applications can be converted.</p>}
             </form>
           </Panel>
         </aside>
@@ -362,8 +362,8 @@ export default function AdmissionDetail() {
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-surface-indigo">
-      <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">{title}</h2>
+    <section className="rounded-sm border border-border bg-card p-5 shadow-sm">
+      <h2 className="mb-4 text-lg font-semibold text-foreground">{title}</h2>
       {children}
     </section>
   );
@@ -372,8 +372,8 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 function Info({ label, value }: { label: string; value?: string | null }) {
   return (
     <div>
-      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">{value || 'Not set'}</div>
+      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="mt-1 text-sm font-medium text-foreground">{value || 'Not set'}</div>
     </div>
   );
 }
@@ -381,9 +381,9 @@ function Info({ label, value }: { label: string; value?: string | null }) {
 function LongInfo({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
-    <div className="mt-4 rounded-lg bg-slate-50 p-3 dark:bg-white/5">
-      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-      <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200">{value}</p>
+    <div className="mt-4 rounded-lg bg-muted/50 p-3">
+      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
+      <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{value}</p>
     </div>
   );
 }

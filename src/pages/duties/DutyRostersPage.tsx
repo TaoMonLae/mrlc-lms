@@ -87,9 +87,9 @@ export default function DutyRostersPage() {
       case 'PUBLISHED':
         return 'bg-blue-100 text-blue-800';
       case 'COMPLETED':
-        return 'bg-slate-200 text-slate-800';
+        return 'bg-muted text-foreground';
       case 'ARCHIVED':
-        return 'bg-slate-100 text-slate-600';
+        return 'bg-muted text-muted-foreground';
       default:
         return 'bg-amber-100 text-amber-800';
     }
@@ -104,8 +104,8 @@ export default function DutyRostersPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Duty Rosters</h1>
-          <p className="text-sm text-slate-500">Weekly or monthly duty periods</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Duty Rosters</h1>
+          <p className="text-sm text-muted-foreground">Weekly or monthly duty periods</p>
         </div>
         {canManage && !formOpen && (
           <Button onClick={() => setFormOpen(true)}>
@@ -195,27 +195,27 @@ export default function DutyRostersPage() {
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <div className="text-center py-8 text-slate-500">Loading...</div>
+            <div className="text-center py-8 text-muted-foreground">Loading...</div>
           ) : rosters.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">No rosters yet.</div>
+            <div className="text-center py-8 text-muted-foreground">No rosters yet.</div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            <div className="divide-y divide-border">
               {rosters.map((r) => (
                 <Link
                   key={r.id}
                   to={`/duties/rosters/${r.id}`}
-                  className="flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-900"
+                  className="flex items-center justify-between p-4 hover:bg-muted/50"
                 >
                   <div>
                     <div className="font-medium">{r.name}</div>
-                    <div className="text-xs text-slate-500 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       {new Date(r.startDate).toLocaleDateString()} - {new Date(r.endDate).toLocaleDateString()}
                       {r._count ? ` · ${r._count.assignments} assignments` : ''}
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <Badge className={getStatusColor(r.status)}>{r.status}</Badge>
-                    <ArrowRight className="h-4 w-4 text-slate-400" />
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
                   </div>
                 </Link>
               ))}

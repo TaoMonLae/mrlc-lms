@@ -79,15 +79,15 @@ export default function StudentSuccessHub() {
   return (
     <div className="space-y-6 pb-10">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div><h1 className="flex items-center gap-2 text-2xl font-bold"><HeartPulse className="h-6 w-6 text-aubergine-600" /> Student Success</h1><p className="mt-1 text-sm text-slate-500">Transparent warnings across attendance, homework, exams, and GED readiness.</p></div>
+        <div><h1 className="flex items-center gap-2 text-2xl font-bold"><HeartPulse className="h-6 w-6 text-aubergine-600" /> Student Success</h1><p className="mt-1 text-sm text-muted-foreground">Transparent warnings across attendance, homework, exams, and GED readiness.</p></div>
         <Button variant="outline" onClick={() => void load()} disabled={loading}><RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />Refresh</Button>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Card><CardContent className="p-4"><p className="text-xs text-slate-500">High priority</p><p className="mt-1 text-2xl font-bold text-rose-600">{summary.high}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-slate-500">Watch closely</p><p className="mt-1 text-2xl font-bold text-amber-600">{summary.medium}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-slate-500">Open plans</p><p className="mt-1 text-2xl font-bold text-blue-600">{summary.open}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-slate-500">Overdue actions</p><p className="mt-1 text-2xl font-bold text-aubergine-600">{summary.overdue}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">High priority</p><p className="mt-1 text-2xl font-bold text-rose-600">{summary.high}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Watch closely</p><p className="mt-1 text-2xl font-bold text-amber-600">{summary.medium}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Open plans</p><p className="mt-1 text-2xl font-bold text-blue-600">{summary.open}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Overdue actions</p><p className="mt-1 text-2xl font-bold text-aubergine-600">{summary.overdue}</p></CardContent></Card>
       </div>
 
       {selected && <Card id="intervention-form" className="border-aubergine-200"><CardHeader><CardTitle className="text-lg">New plan for {selected.name}</CardTitle></CardHeader><CardContent><form onSubmit={createPlan} className="grid gap-4 md:grid-cols-2">
@@ -101,22 +101,22 @@ export default function StudentSuccessHub() {
       </form></CardContent></Card>}
 
       <Card><CardHeader><CardTitle className="text-lg">Students needing attention</CardTitle></CardHeader><CardContent className="space-y-3">
-        {!loading && students.length === 0 && <p className="py-8 text-center text-sm text-slate-500">No active students found.</p>}
-        {students.map((student) => <div key={student.id} className="rounded-xl border p-4"><div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{student.name}</h3><Badge className={riskClass[student.risk]}>{student.risk} · {student.score}</Badge><span className="text-xs text-slate-500">{student.studentCode} · {student.className}</span></div>
-            <div className="mt-2 flex flex-wrap gap-2">{student.reasons.length ? student.reasons.map((reason) => <span key={reason.code} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700 dark:bg-white/10 dark:text-slate-200">{reason.label}</span>) : <span className="flex items-center gap-1 text-xs text-emerald-600"><CheckCircle2 className="h-3.5 w-3.5" /> No current threshold warnings</span>}</div>
-            <p className="mt-2 text-xs text-slate-500">Attendance {student.metrics.attendanceRate ?? '—'}% · Missing homework {student.metrics.missingHomework} · Exam average {student.metrics.examAverage ?? '—'}% · Active plans {student.activeInterventions}</p>
+        {!loading && students.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">No active students found.</p>}
+        {students.map((student) => <div key={student.id} className="rounded-sm border p-4"><div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{student.name}</h3><Badge className={riskClass[student.risk]}>{student.risk} · {student.score}</Badge><span className="text-xs text-muted-foreground">{student.studentCode} · {student.className}</span></div>
+            <div className="mt-2 flex flex-wrap gap-2">{student.reasons.length ? student.reasons.map((reason) => <span key={reason.code} className="rounded-full bg-muted px-2.5 py-1 text-xs text-foreground">{reason.label}</span>) : <span className="flex items-center gap-1 text-xs text-emerald-600"><CheckCircle2 className="h-3.5 w-3.5" /> No current threshold warnings</span>}</div>
+            <p className="mt-2 text-xs text-muted-foreground">Attendance {student.metrics.attendanceRate ?? '—'}% · Missing homework {student.metrics.missingHomework} · Exam average {student.metrics.examAverage ?? '—'}% · Active plans {student.activeInterventions}</p>
           </div><Button size="sm" onClick={() => openForm(student)}><Plus className="mr-1 h-4 w-4" />Plan support</Button>
         </div></div>)}
       </CardContent></Card>
 
       <Card><CardHeader><CardTitle className="text-lg">Intervention plans</CardTitle></CardHeader><CardContent className="space-y-3">
-        {interventions.length === 0 && <p className="py-6 text-center text-sm text-slate-500">No intervention plans yet.</p>}
-        {interventions.map((plan) => <div key={plan.id} className="flex flex-col gap-3 rounded-xl border p-4 md:flex-row md:items-center md:justify-between"><div><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{plan.title}</h3><Badge variant="outline">{plan.priority}</Badge></div><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{plan.student.user?.firstName} {plan.student.user?.lastName} · {plan.student.class?.name || 'Unassigned'}</p><p className="mt-1 text-xs text-slate-500">{plan.reason}{plan.assignedTo ? ` · Assigned to ${plan.assignedTo.firstName} ${plan.assignedTo.lastName}` : ''}{plan.dueDate ? ` · Review ${new Date(plan.dueDate).toLocaleDateString()}` : ''}</p></div>
+        {interventions.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">No intervention plans yet.</p>}
+        {interventions.map((plan) => <div key={plan.id} className="flex flex-col gap-3 rounded-sm border p-4 md:flex-row md:items-center md:justify-between"><div><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{plan.title}</h3><Badge variant="outline">{plan.priority}</Badge></div><p className="mt-1 text-sm text-muted-foreground">{plan.student.user?.firstName} {plan.student.user?.lastName} · {plan.student.class?.name || 'Unassigned'}</p><p className="mt-1 text-xs text-muted-foreground">{plan.reason}{plan.assignedTo ? ` · Assigned to ${plan.assignedTo.firstName} ${plan.assignedTo.lastName}` : ''}{plan.dueDate ? ` · Review ${new Date(plan.dueDate).toLocaleDateString()}` : ''}</p></div>
           <Select value={plan.status} onValueChange={(value) => value && void updateStatus(plan.id, value)}><SelectTrigger className="w-full md:w-44" aria-label={`Status for ${plan.title}`}><SelectValue /></SelectTrigger><SelectContent>{['OPEN','IN_PROGRESS','MONITORING','COMPLETED','CANCELLED'].map((value) => <SelectItem key={value} value={value}>{value.replace('_', ' ')}</SelectItem>)}</SelectContent></Select>
         </div>)}
       </CardContent></Card>
-      <div className="flex items-start gap-2 rounded-lg bg-slate-100 p-3 text-xs text-slate-600 dark:bg-white/5 dark:text-slate-300"><Activity className="mt-0.5 h-4 w-4 shrink-0" /><span>Risk levels are rule-based and explain every reason. They support professional judgment; they never automatically label, discipline, or restrict a student.</span></div>
+      <div className="flex items-start gap-2 rounded-lg bg-muted p-3 text-xs text-muted-foreground"><Activity className="mt-0.5 h-4 w-4 shrink-0" /><span>Risk levels are rule-based and explain every reason. They support professional judgment; they never automatically label, discipline, or restrict a student.</span></div>
       {summary.overdue > 0 && <p className="flex items-center gap-2 text-sm text-rose-600"><CalendarClock className="h-4 w-4" />{summary.overdue} action{summary.overdue === 1 ? '' : 's'} overdue.</p>}
       {summary.high > 0 && <span className="sr-only" role="status"><AlertTriangle />{summary.high} high-priority students</span>}
     </div>

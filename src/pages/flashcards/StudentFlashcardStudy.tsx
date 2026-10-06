@@ -148,14 +148,14 @@ export default function StudentFlashcardStudy() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <span className="animate-spin rounded-full h-6 w-6 border-2 border-aubergine-600 border-t-transparent mr-2"></span>
-        <span className="text-slate-500">Loading deck…</span>
+        <span className="text-muted-foreground">Loading deck…</span>
       </div>
     );
   }
 
   if (!deck) {
     return (
-      <div className="text-center py-12 text-slate-500">
+      <div className="text-center py-12 text-muted-foreground">
         <p>Deck not found, or it isn't assigned to your class.</p>
         <Button variant="outline" className="mt-4" render={<Link to={listUrl} />}>Back to Flashcards</Button>
       </div>
@@ -169,10 +169,10 @@ export default function StudentFlashcardStudy() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-[160px]">
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Layers className="h-5 w-5 text-aubergine-600" /> {deck.title}
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">By {deck.authorName || deck.teacherName || 'Teacher'}{deck.subject ? ` · ${deck.subject.name}` : ''}</p>
+          <p className="text-xs text-muted-foreground">By {deck.authorName || deck.teacherName || 'Teacher'}{deck.subject ? ` · ${deck.subject.name}` : ''}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" render={<Link to={quizUrl} />}><Brain className="mr-1.5 h-3.5 w-3.5" /> Quiz</Button>
@@ -183,7 +183,7 @@ export default function StudentFlashcardStudy() {
 
       {isStudent && deck.cards.length > 0 && (
         <div className="flex items-center justify-between gap-3 text-sm">
-          <span className="text-slate-500">{knownCount} of {deck.cards.length} cards known</span>
+          <span className="text-muted-foreground">{knownCount} of {deck.cards.length} cards known</span>
           <Button size="sm" variant="outline" onClick={toggleOnlyLearning}>
             {onlyLearning ? 'Study all cards' : 'Study still learning'}
           </Button>
@@ -191,7 +191,7 @@ export default function StudentFlashcardStudy() {
       )}
 
       {order.length === 0 ? (
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-12 text-center text-slate-500">
+        <div className="bg-card border border-border rounded-sm p-12 text-center text-muted-foreground">
           {onlyLearning ? (
             <>
               <CheckCircle2 className="h-10 w-10 mx-auto text-emerald-400 mb-2" />
@@ -204,10 +204,10 @@ export default function StudentFlashcardStudy() {
         </div>
       ) : (
         <>
-          <div className="h-1.5 w-full bg-slate-100 dark:bg-surface-raised rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
             <div className="h-full bg-aubergine-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
           </div>
-          <p className="text-center text-sm text-slate-500">Card {index + 1} of {order.length}</p>
+          <p className="text-center text-sm text-muted-foreground">Card {index + 1} of {order.length}</p>
 
           {/* Flip card, wrapped in an animated electric border for a bit of flair */}
           <ElectricBorder color="#7a3dff" speed={1} chaos={0.08} borderRadius={16} className="w-full" style={{}}>
@@ -221,22 +221,22 @@ export default function StudentFlashcardStudy() {
                 className="relative w-full min-h-[260px] transition-transform duration-500 [transform-style:preserve-3d]"
                 style={{ transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
               >
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8 rounded-2xl border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm [backface-visibility:hidden]">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8 rounded-sm border border-border bg-card shadow-sm [backface-visibility:hidden]">
                   {current?.imageUrl && (
                     <img src={current.imageUrl} alt="" className="max-h-32 rounded-lg object-contain" />
                   )}
-                  <p className="text-xl font-semibold text-slate-900 dark:text-white text-center"><MathText>{current?.term}</MathText></p>
+                  <p className="text-xl font-semibold text-foreground text-center"><MathText>{current?.term}</MathText></p>
                 </div>
                 <div
-                  className="absolute inset-0 flex items-center justify-center p-8 rounded-2xl border border-aubergine-200 dark:border-aubergine-900/40 bg-aubergine-50 dark:bg-aubergine-900/10 shadow-sm [backface-visibility:hidden]"
+                  className="absolute inset-0 flex items-center justify-center p-8 rounded-sm border border-aubergine-200 dark:border-aubergine-900/40 bg-aubergine-50 dark:bg-aubergine-900/10 shadow-sm [backface-visibility:hidden]"
                   style={{ transform: 'rotateY(180deg)' }}
                 >
-                  <p className="text-lg text-slate-700 dark:text-slate-200 text-center"><MathText>{current?.definition}</MathText></p>
+                  <p className="text-lg text-foreground text-center"><MathText>{current?.definition}</MathText></p>
                 </div>
               </div>
             </button>
           </ElectricBorder>
-          <p className="text-center text-xs text-slate-400">Tap the card or press Space to flip · Arrow keys move between cards</p>
+          <p className="text-center text-xs text-muted-foreground">Tap the card or press Space to flip · Arrow keys move between cards</p>
 
           <div className="flex items-center justify-between gap-3">
             <Button variant="outline" onClick={goPrev} disabled={index === 0}>

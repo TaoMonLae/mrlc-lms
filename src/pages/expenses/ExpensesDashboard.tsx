@@ -107,11 +107,11 @@ export default function ExpensesDashboard() {
     switch (status) {
       case 'PAID': return 'bg-green-100 text-green-800 border-green-200';
       case 'APPROVED': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'PARTIAL': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'PARTIAL': return 'bg-lavender text-accent-purple border-border';
       case 'PENDING_APPROVAL': return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'REJECTED': return 'bg-red-100 text-red-800 border-red-200';
-      case 'CANCELLED': return 'bg-slate-100 text-slate-800 border-slate-200';
-      default: return 'bg-slate-100 text-slate-800 border-slate-200';
+      case 'CANCELLED': return 'bg-muted text-foreground border-border';
+      default: return 'bg-muted text-foreground border-border';
     }
   };
 
@@ -193,8 +193,8 @@ export default function ExpensesDashboard() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="print:hidden flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Expenses</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Track and manage school expenses.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Expenses</h1>
+          <p className="text-sm text-muted-foreground mt-1">Track and manage school expenses.</p>
         </div>
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           {hasPermission('view_budgets') && (
@@ -225,7 +225,7 @@ export default function ExpensesDashboard() {
       <div className="print:hidden grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Total Expenses</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Expenses</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatMoney(totalAmount, currency)}</div>
@@ -233,7 +233,7 @@ export default function ExpensesDashboard() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Paid</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Paid</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{formatMoney(paidAmount, currency)}</div>
@@ -241,7 +241,7 @@ export default function ExpensesDashboard() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Outstanding</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Outstanding</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-amber-600">{formatMoney(pendingAmount, currency)}</div>
@@ -249,7 +249,7 @@ export default function ExpensesDashboard() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Awaiting Approval</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Awaiting Approval</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{pendingApproval}</div>
@@ -260,7 +260,7 @@ export default function ExpensesDashboard() {
       {/* Filters */}
       <div className="print:hidden flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search expenses..."
             value={searchTerm}
@@ -270,7 +270,7 @@ export default function ExpensesDashboard() {
         </div>
         <Select value={monthFilter} onValueChange={setMonthFilter}>
           <SelectTrigger className="w-full sm:w-[190px]">
-            <CalendarDays className="mr-2 h-4 w-4 text-slate-400" />
+            <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
             <SelectValue placeholder="Expense month" />
           </SelectTrigger>
           <SelectContent>
@@ -323,25 +323,25 @@ export default function ExpensesDashboard() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Title</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Category</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Source</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Payee</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Date</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-slate-500">Amount</th>
-                <th className="text-center py-3 px-4 text-sm font-medium text-slate-500">Status</th>
-                <th className="text-center py-3 px-4 text-sm font-medium text-slate-500"></th>
+              <tr className="border-b border-border">
+                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Title</th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Category</th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Source</th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Payee</th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Date</th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Amount</th>
+                <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
+                <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground"></th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-8 text-slate-500">Loading...</td>
+                  <td colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</td>
                 </tr>
               ) : filteredExpenses.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-8 text-slate-500">
+                  <td colSpan={8} className="text-center py-8 text-muted-foreground">
                     {searchTerm || statusFilter !== 'ALL' || categoryFilter !== 'ALL' || monthFilter !== 'ALL' || sourceFilter !== 'ALL'
                       ? 'No expenses found matching your filters.'
                       : 'No expenses yet. Create your first expense to get started.'}
@@ -349,11 +349,11 @@ export default function ExpensesDashboard() {
                 </tr>
               ) : (
                 filteredExpenses.map(expense => (
-                  <tr key={expense.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900">
+                  <tr key={expense.id} className="border-b border-border hover:bg-muted/50">
                     <td className="py-3 px-4">
-                      <div className="font-medium text-slate-900 dark:text-white">{expense.title}</div>
+                      <div className="font-medium text-foreground">{expense.title}</div>
                       {expense.vendorInvoiceNo && (
-                        <div className="text-xs text-slate-500">{expense.vendorInvoiceNo}</div>
+                        <div className="text-xs text-muted-foreground">{expense.vendorInvoiceNo}</div>
                       )}
                     </td>
                     <td className="py-3 px-4">
@@ -365,17 +365,17 @@ export default function ExpensesDashboard() {
                       {expense.source === 'STUDENT_DUTY' ? (
                         <div>
                           <Badge variant="outline" className="border-academic-teal/30 bg-academic-teal/10 text-academic-teal">Student duty</Badge>
-                          <p className="mt-1 text-xs text-slate-500">{expense.student?.preferredName || `${expense.student?.user?.firstName || ''} ${expense.student?.user?.lastName || ''}`.trim() || expense.student?.studentCode}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">{expense.student?.preferredName || `${expense.student?.user?.firstName || ''} ${expense.student?.user?.lastName || ''}`.trim() || expense.student?.studentCode}</p>
                         </div>
-                      ) : <span className="text-sm text-slate-500">Finance office</span>}
+                      ) : <span className="text-sm text-muted-foreground">Finance office</span>}
                     </td>
-                    <td className="py-3 px-4 text-slate-600 dark:text-slate-300">
+                    <td className="py-3 px-4 text-muted-foreground">
                       {expense.vendor?.name || expense.merchantName || '—'}
                     </td>
-                    <td className="py-3 px-4 text-slate-600 dark:text-slate-300">
+                    <td className="py-3 px-4 text-muted-foreground">
                       {new Date(expense.expenseDate).toLocaleDateString()}
                     </td>
-                    <td className="py-3 px-4 text-right font-medium text-slate-900 dark:text-white">
+                    <td className="py-3 px-4 text-right font-medium text-foreground">
                       {formatMoney(expenseGrossAmount(expense), expense.currency || currency)}
                     </td>
                     <td className="py-3 px-4 text-center">
@@ -417,20 +417,20 @@ export default function ExpensesDashboard() {
       <div className="hidden print:block">
         <PrintLayout title="Expenses" filters={activeFilters}>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="border border-slate-300 p-3 rounded text-center">
-              <p className="text-xs text-slate-500 uppercase font-bold">Total Expenses</p>
+            <div className="border border-input p-3 rounded text-center">
+              <p className="text-xs text-muted-foreground uppercase font-bold">Total Expenses</p>
               <p className="text-lg font-bold mt-1">{formatMoney(totalAmount, currency)}</p>
             </div>
-            <div className="border border-slate-300 p-3 rounded text-center">
-              <p className="text-xs text-slate-500 uppercase font-bold">Paid</p>
+            <div className="border border-input p-3 rounded text-center">
+              <p className="text-xs text-muted-foreground uppercase font-bold">Paid</p>
               <p className="text-lg font-bold mt-1">{formatMoney(paidAmount, currency)}</p>
             </div>
-            <div className="border border-slate-300 p-3 rounded text-center">
-              <p className="text-xs text-slate-500 uppercase font-bold">Outstanding</p>
+            <div className="border border-input p-3 rounded text-center">
+              <p className="text-xs text-muted-foreground uppercase font-bold">Outstanding</p>
               <p className="text-lg font-bold mt-1">{formatMoney(pendingAmount, currency)}</p>
             </div>
-            <div className="border border-slate-300 p-3 rounded text-center">
-              <p className="text-xs text-slate-500 uppercase font-bold">Awaiting Approval</p>
+            <div className="border border-input p-3 rounded text-center">
+              <p className="text-xs text-muted-foreground uppercase font-bold">Awaiting Approval</p>
               <p className="text-lg font-bold mt-1">{pendingApproval}</p>
             </div>
           </div>
@@ -449,7 +449,7 @@ export default function ExpensesDashboard() {
             <tbody>
               {filteredExpenses.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center p-4 text-slate-500">No expenses to show.</td>
+                  <td colSpan={6} className="text-center p-4 text-muted-foreground">No expenses to show.</td>
                 </tr>
               ) : (
                 filteredExpenses.map((expense) => (
@@ -457,7 +457,7 @@ export default function ExpensesDashboard() {
                     <td className="p-2">
                       {expense.title}
                       {expense.vendorInvoiceNo && (
-                        <span className="text-slate-500"> ({expense.vendorInvoiceNo})</span>
+                        <span className="text-muted-foreground"> ({expense.vendorInvoiceNo})</span>
                       )}
                     </td>
                     <td className="p-2">{getCategoryLabel(expense.category)}</td>

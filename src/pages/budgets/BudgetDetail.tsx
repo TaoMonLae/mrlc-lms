@@ -62,7 +62,7 @@ export default function BudgetDetail() {
   }
 
   if (!budget) {
-    return <div className="text-center py-8 text-slate-500">Budget not found</div>;
+    return <div className="text-center py-8 text-muted-foreground">Budget not found</div>;
   }
 
   const percentUsed = budget.allocatedAmount > 0
@@ -93,8 +93,8 @@ export default function BudgetDetail() {
       case 'ACTIVE': return 'bg-green-100 text-green-800 border-green-200';
       case 'EXHAUSTED': return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'EXCEEDED': return 'bg-red-100 text-red-800 border-red-200';
-      case 'ARCHIVED': return 'bg-slate-100 text-slate-800 border-slate-200';
-      default: return 'bg-slate-100 text-slate-800 border-slate-200';
+      case 'ARCHIVED': return 'bg-muted text-foreground border-border';
+      default: return 'bg-muted text-foreground border-border';
     }
   };
 
@@ -106,9 +106,9 @@ export default function BudgetDetail() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{budget.name}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">{budget.name}</h1>
             <div className="flex items-center gap-3 mt-1">
-              {budget.code && <p className="text-sm text-slate-500">{budget.code}</p>}
+              {budget.code && <p className="text-sm text-muted-foreground">{budget.code}</p>}
               <Badge className={getStatusColor(budget.status)} variant="outline">
                 {budget.status}
               </Badge>
@@ -138,7 +138,7 @@ export default function BudgetDetail() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Allocated</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Allocated</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatMoney(budget.allocatedAmount, budget.currency || currency)}</div>
@@ -146,7 +146,7 @@ export default function BudgetDetail() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Spent</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Spent</CardTitle>
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${isOverBudget ? 'text-red-600' : percentUsed >= 80 ? 'text-amber-600' : ''}`}>
@@ -156,7 +156,7 @@ export default function BudgetDetail() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Remaining</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Remaining</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
@@ -166,7 +166,7 @@ export default function BudgetDetail() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Utilization</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Utilization</CardTitle>
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${isOverBudget ? 'text-red-600' : percentUsed >= 80 ? 'text-amber-600' : ''}`}>
@@ -188,14 +188,14 @@ export default function BudgetDetail() {
         <CardContent className="space-y-4">
           <div>
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-slate-600 dark:text-slate-300">Used</span>
+              <span className="text-muted-foreground">Used</span>
               <span className="font-medium">{percentUsed.toFixed(1)}%</span>
             </div>
             <Progress value={Math.min(100, percentUsed)} className="h-3" />
           </div>
           <div>
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-slate-600 dark:text-slate-300">Remaining</span>
+              <span className="text-muted-foreground">Remaining</span>
               <span className="font-medium">{remainingPercent.toFixed(1)}%</span>
             </div>
             <Progress value={remainingPercent} className="h-3 bg-green-500" />
@@ -227,17 +227,17 @@ export default function BudgetDetail() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center gap-3">
-              <Calendar className="h-5 w-5 text-slate-400" />
+              <Calendar className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-slate-500">Fiscal Year</p>
-                <p className="text-slate-900 dark:text-white font-medium">{budget.fiscalYear}</p>
+                <p className="text-sm text-muted-foreground">Fiscal Year</p>
+                <p className="text-foreground font-medium">{budget.fiscalYear}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Wallet className="h-5 w-5 text-slate-400" />
+              <Wallet className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-slate-500">Period</p>
-                <p className="text-slate-900 dark:text-white">
+                <p className="text-sm text-muted-foreground">Period</p>
+                <p className="text-foreground">
                   {new Date(budget.startDate).toLocaleDateString()} - {new Date(budget.endDate).toLocaleDateString()}
                 </p>
               </div>
@@ -252,11 +252,11 @@ export default function BudgetDetail() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-300">Alert Threshold</span>
+              <span className="text-muted-foreground">Alert Threshold</span>
               <span className="font-medium">{(budget.alertThreshold * 100).toFixed(0)}%</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-300">Strict Limit</span>
+              <span className="text-muted-foreground">Strict Limit</span>
               <span className="font-medium">{budget.strictLimit ? 'Yes' : 'No'}</span>
             </div>
           </CardContent>
@@ -272,15 +272,15 @@ export default function BudgetDetail() {
           <CardContent>
             <div className="space-y-3">
               {budget.expenses.slice(0, 10).map((expense: any) => (
-                <div key={expense.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                <div key={expense.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div className="flex-1">
-                    <p className="font-medium text-slate-900 dark:text-white">{expense.title}</p>
-                    <p className="text-sm text-slate-500">
+                    <p className="font-medium text-foreground">{expense.title}</p>
+                    <p className="text-sm text-muted-foreground">
                       {new Date(expense.expenseDate).toLocaleDateString()} • {expense.category}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-slate-900 dark:text-white">
+                    <p className="font-semibold text-foreground">
                       {formatMoney(expense.amount, expense.currency || currency)}
                     </p>
                     <Badge variant="outline" className="text-xs mt-1">
@@ -306,7 +306,7 @@ export default function BudgetDetail() {
             <CardTitle>Notes</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-slate-900 dark:text-white">{budget.notes}</p>
+            <p className="text-foreground">{budget.notes}</p>
           </CardContent>
         </Card>
       )}

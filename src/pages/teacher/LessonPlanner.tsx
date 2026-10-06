@@ -163,15 +163,15 @@ export default function LessonPlanner() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 px-2 text-slate-500"
+            className="h-8 px-2 text-muted-foreground"
             onClick={() => navigate('/teacher/dashboard')}
           >
             <ChevronLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight dark:text-white">Lesson Planner</h1>
-            <p className="text-sm text-slate-500 mt-1 font-medium">Plan and manage your lesson schedules</p>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">Lesson Planner</h1>
+            <p className="text-sm text-muted-foreground mt-1 font-medium">Plan and manage your lesson schedules</p>
           </div>
         </div>
         <Button
@@ -183,7 +183,7 @@ export default function LessonPlanner() {
       </div>
 
       {showForm && (
-        <Card className="border-slate-200 dark:border-surface-raised">
+        <Card className="border-border">
           <CardHeader>
             <CardTitle className="text-lg font-bold">Create New Lesson Plan</CardTitle>
           </CardHeader>
@@ -191,7 +191,7 @@ export default function LessonPlanner() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Title *</label>
+                  <label className="text-sm font-bold text-foreground">Title *</label>
                   <Input
                     placeholder="Lesson title"
                     value={formData.title}
@@ -201,7 +201,7 @@ export default function LessonPlanner() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Class *</label>
+                  <label className="text-sm font-bold text-foreground">Class *</label>
                   <Select value={formData.classId} onValueChange={(value) => setFormData({ ...formData, classId: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select class" />
@@ -217,7 +217,7 @@ export default function LessonPlanner() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Date *</label>
+                  <label className="text-sm font-bold text-foreground">Date *</label>
                   <Input
                     type="date"
                     value={formData.plannedDate}
@@ -227,7 +227,7 @@ export default function LessonPlanner() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Duration (minutes)</label>
+                  <label className="text-sm font-bold text-foreground">Duration (minutes)</label>
                   <Input
                     type="number"
                     value={formData.duration}
@@ -238,7 +238,7 @@ export default function LessonPlanner() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Room</label>
+                  <label className="text-sm font-bold text-foreground">Room</label>
                   <Input
                     placeholder="Room number or location"
                     value={formData.room}
@@ -247,7 +247,7 @@ export default function LessonPlanner() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Subject</label>
+                  <label className="text-sm font-bold text-foreground">Subject</label>
                   <Select value={formData.subjectId} onValueChange={(value) => setFormData({ ...formData, subjectId: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select subject (optional)" />
@@ -262,7 +262,7 @@ export default function LessonPlanner() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Description</label>
+                <label className="text-sm font-bold text-foreground">Description</label>
                 <Textarea
                   placeholder="Brief description of the lesson..."
                   value={formData.description}
@@ -272,7 +272,7 @@ export default function LessonPlanner() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Learning Objectives (one per line)</label>
+                <label className="text-sm font-bold text-foreground">Learning Objectives (one per line)</label>
                 <Textarea
                   placeholder="• Students will be able to...&#10;• Understand the concept of...&#10;• Apply knowledge to..."
                   value={formData.objectives}
@@ -282,7 +282,7 @@ export default function LessonPlanner() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Materials Needed (one per line)</label>
+                <label className="text-sm font-bold text-foreground">Materials Needed (one per line)</label>
                 <Textarea
                   placeholder="• Textbook page 45-47&#10;• Whiteboard and markers&#10;• Student worksheets..."
                   value={formData.materials}
@@ -292,7 +292,7 @@ export default function LessonPlanner() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Activities (one per line)</label>
+                <label className="text-sm font-bold text-foreground">Activities (one per line)</label>
                 <Textarea
                   placeholder="• Introduction (5 min): Review previous lesson&#10;• Main activity (30 min): Group work&#10;• Practice (15 min): Individual exercises..."
                   value={formData.activities}
@@ -302,7 +302,7 @@ export default function LessonPlanner() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Assessment Method</label>
+                <label className="text-sm font-bold text-foreground">Assessment Method</label>
                 <Textarea
                   placeholder="How will you assess student understanding?"
                   value={formData.assessment}
@@ -332,30 +332,30 @@ export default function LessonPlanner() {
       )}
 
       <div className="space-y-4">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Upcoming Lessons</h2>
+        <h2 className="text-lg font-bold text-foreground">Upcoming Lessons</h2>
 
         {lessonPlans.length === 0 ? (
-          <Card className="border-slate-200 dark:border-surface-raised">
-            <CardContent className="p-8 text-center text-slate-400">
+          <Card className="border-border">
+            <CardContent className="p-8 text-center text-muted-foreground">
               No upcoming lesson plans. Create your first lesson plan to get started!
             </CardContent>
           </Card>
         ) : (
           lessonPlans.map((plan) => (
-            <Card key={plan.id} className="border-slate-200 dark:border-surface-raised hover:shadow-md transition-shadow">
+            <Card key={plan.id} className="border-border hover:shadow-none transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">{plan.title}</h3>
-                      <Badge variant={plan.status === 'SCHEDULED' ? 'default' : 'secondary'} className="font-bold text-[10px] uppercase">
+                      <h3 className="text-lg font-bold text-foreground">{plan.title}</h3>
+                      <Badge variant={plan.status === 'SCHEDULED' ? 'default' : 'secondary'} className="font-bold text-[11px] uppercase">
                         {plan.status}
                       </Badge>
                     </div>
 
-                    <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">{plan.description}</p>
+                    <p className="text-muted-foreground text-sm mb-4">{plan.description}</p>
 
-                    <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500 dark:text-slate-400">
+                    <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1.5">
                         <BookOpen className="h-4 w-4" />
                         <span>{plan.class.name} ({plan.class.level})</span>
@@ -378,10 +378,10 @@ export default function LessonPlanner() {
 
                     {plan.objectives && plan.objectives.length > 0 && (
                       <div className="mt-4">
-                        <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Objectives:</h4>
+                        <h4 className="text-sm font-bold text-foreground mb-2">Objectives:</h4>
                         <ul className="space-y-1">
                           {plan.objectives.slice(0, 3).map((objective, index) => (
-                            <li key={index} className="text-sm text-slate-600 dark:text-slate-300 flex items-start gap-2">
+                            <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
                               <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
                               <span>{objective}</span>
                             </li>

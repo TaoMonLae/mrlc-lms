@@ -66,7 +66,7 @@ export function BudgetProgress({
       <header className="flex items-start justify-between gap-4 border-b border-foreground px-5 py-4">
         <div>
           <p className="text-sm font-semibold">{name}</p>
-          {status && <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">{status}</p>}
+          {status && <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground">{status}</p>}
         </div>
         <div className={cn("flex items-center gap-1.5 text-xs font-semibold", tone.text)}>
           <tone.Icon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -91,7 +91,7 @@ export function BudgetProgress({
             ["Remaining", remaining, remaining < 0 ? "text-academic-coral" : "text-academic-teal"],
           ].map(([label, value, valueClass], index) => (
             <div key={String(label)} className={cn("min-w-0 px-4 py-3", index && "border-l border-border")}>
-              <dt className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">{label}</dt>
+              <dt className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">{label}</dt>
               <dd className={cn("mt-1 truncate font-mono text-xs font-semibold tabular-nums", String(valueClass))}>{money(Number(value), currency)}</dd>
             </div>
           ))}
@@ -131,7 +131,7 @@ export function BudgetComparisonCard({
       <header className="flex items-start justify-between gap-4 border-b border-foreground px-5 py-4">
         <div className="min-w-0">
           <h3 className="truncate text-sm font-semibold">{name}</h3>
-          {fiscalYear && <p className="mt-1 font-mono text-[10px] text-muted-foreground">FY {fiscalYear}</p>}
+          {fiscalYear && <p className="mt-1 font-mono text-[11px] text-muted-foreground">FY {fiscalYear}</p>}
         </div>
         <span className={cn("font-mono text-sm font-semibold tabular-nums", tone.text)}>{utilization.toFixed(1)}%</span>
       </header>

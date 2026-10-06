@@ -28,15 +28,15 @@ export function EmptyState({
       )}
     >
       {Icon && (
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-          <Icon className="h-8 w-8 text-slate-400" />
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+          <Icon className="h-8 w-8 text-muted-foreground" />
         </div>
       )}
-      <h3 className="mb-2 text-base font-semibold text-slate-900 dark:text-white">
+      <h3 className="mb-2 text-base font-semibold text-foreground">
         {title}
       </h3>
       {description && (
-        <p className="mb-4 max-w-sm text-sm text-slate-500 dark:text-slate-400">
+        <p className="mb-4 max-w-sm text-sm text-muted-foreground">
           {description}
         </p>
       )}
@@ -59,7 +59,7 @@ export function EmptyListState({
     <EmptyState
       icon={() => (
         <svg
-          className="h-12 w-12 text-slate-400"
+          className="h-12 w-12 text-muted-foreground"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -90,7 +90,7 @@ export function EmptySearchState({
     <EmptyState
       icon={() => (
         <svg
-          className="h-12 w-12 text-slate-400"
+          className="h-12 w-12 text-muted-foreground"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

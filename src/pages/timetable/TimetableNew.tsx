@@ -77,7 +77,7 @@ export default function TimetableNew() {
           <span className="sr-only">Back to timetable</span>
         </Button>
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-academic-teal">Timetable / New field entry</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-academic-teal">Timetable / New field entry</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">Publish a schedule item</h1>
           <p className="mt-2 text-sm text-muted-foreground">Assign the people, place, teaching period, and effective date window.</p>
         </div>

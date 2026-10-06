@@ -113,7 +113,7 @@ export default function EbookEdit() {
   };
 
   if (loading) {
-    return <div className="py-20 text-center text-sm text-slate-500"><Loader2 className="h-5 w-5 animate-spin inline mr-2" /> Loading…</div>;
+    return <div className="py-20 text-center text-sm text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin inline mr-2" /> Loading…</div>;
   }
 
   return (
@@ -123,18 +123,18 @@ export default function EbookEdit() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            Edit E-book {format && <Badge variant="outline" className="text-[9px] uppercase tracking-widest font-bold">{format}</Badge>}
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground flex items-center gap-2">
+            Edit E-book {format && <Badge variant="outline" className="text-[11px] uppercase tracking-widest font-bold">{format}</Badge>}
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-300">Update details and access permissions.</p>
+          <p className="text-sm text-muted-foreground">Update details and access permissions.</p>
         </div>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-6">
         <div className="flex items-center gap-4">
-          <div className="h-24 w-16 shrink-0 rounded-sm bg-accent-purple/10 border border-slate-200 dark:border-surface-raised flex items-center justify-center overflow-hidden">
+          <div className="h-24 w-16 shrink-0 rounded-sm bg-accent-purple/10 border border-border flex items-center justify-center overflow-hidden">
             {coverUploading ? (
-              <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             ) : coverUrl ? (
               <img src={coverUrl} alt="" className="h-full w-full object-cover" />
             ) : (
@@ -152,7 +152,7 @@ export default function EbookEdit() {
             <Button type="button" variant="outline" size="sm" onClick={() => coverInputRef.current?.click()} disabled={coverUploading}>
               <ImagePlus className="h-3.5 w-3.5 mr-1.5" /> {coverUrl ? 'Replace cover' : 'Add cover'}
             </Button>
-            <p className="text-xs text-slate-500 mt-1">Optional — shown on the E-Library list.</p>
+            <p className="text-xs text-muted-foreground mt-1">Optional — shown on the E-Library list.</p>
           </div>
         </div>
 
@@ -216,14 +216,14 @@ export default function EbookEdit() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-surface-raised p-4 bg-white dark:bg-surface-indigo">
+        <div className="flex items-center justify-between rounded-lg border border-border p-4 bg-card">
           <div className="flex items-start gap-3">
             <div className="p-2 rounded-lg bg-primary/10 text-primary h-fit">
               {downloadAllowed ? <Download className="h-5 w-5" /> : <Lock className="h-5 w-5" />}
             </div>
             <div>
               <Label className="text-base">Allow download</Label>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {downloadAllowed ? 'Readers can download the original file.' : 'Read online only — no download.'}
               </p>
             </div>

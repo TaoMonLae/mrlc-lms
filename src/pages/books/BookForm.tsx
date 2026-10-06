@@ -52,7 +52,7 @@ interface BookFormProps {
 }
 
 const inputClass = 'space-y-2';
-const labelText = 'text-sm font-medium text-slate-700 dark:text-slate-300';
+const labelText = 'text-sm font-medium text-foreground';
 const CATEGORY_OPTIONS = [
   'Academic',
   'Biography',
@@ -115,7 +115,7 @@ export default function BookForm({ initial, submitting, submitLabel = 'Save Book
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-6">
+      <div className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-6">
         <div className={inputClass}>
           <Label htmlFor="title" className={labelText}>Title *</Label>
           <Input id="title" value={values.title} onChange={set('title')} placeholder="e.g. A Brief History of Time" />

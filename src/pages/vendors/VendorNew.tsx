@@ -98,8 +98,8 @@ export default function VendorNew() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">New Vendor</h1>
-          <p className="text-sm text-slate-500">Add a new supplier or service provider</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">New Vendor</h1>
+          <p className="text-sm text-muted-foreground">Add a new supplier or service provider</p>
         </div>
       </div>
 

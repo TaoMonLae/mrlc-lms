@@ -42,10 +42,10 @@ export default function ManualGradingQueue() {
         </select>
       </div>
       {loading ? <div className="py-16 text-center text-muted-foreground">Loading…</div> :
-        error ? <div role="alert" className="border border-destructive/40 p-5"><p>{error}</p><Button variant="outline" className="mt-3" onClick={() => setRetry(n => n + 1)}>Retry</Button></div> : rows.length === 0 ? <div className="rounded-xl border border-dashed border-border p-10 text-center text-muted-foreground">No responses match this status. Choose All to review other marking work.</div> :
+        error ? <div role="alert" className="border border-destructive/40 p-5"><p>{error}</p><Button variant="outline" className="mt-3" onClick={() => setRetry(n => n + 1)}>Retry</Button></div> : rows.length === 0 ? <div className="rounded-sm border border-dashed border-border p-10 text-center text-muted-foreground">No responses match this status. Choose All to review other marking work.</div> :
         <div className="space-y-3">
           {rows.map((g) => (
-            <Link key={g.id} to={`/exam2/grade/${g.attemptId}/${g.questionId}?${params.toString()}`} className="block bg-card border border-border rounded-xl p-5 hover:border-primary focus-visible:outline-2 focus-visible:outline-primary transition-colors">
+            <Link key={g.id} to={`/exam2/grade/${g.attemptId}/${g.questionId}?${params.toString()}`} className="block bg-card border border-border rounded-sm p-5 hover:border-primary focus-visible:outline-2 focus-visible:outline-primary transition-colors">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-bold text-foreground truncate">{g.attempt?.student?.user ? `${g.attempt.student.user.firstName} ${g.attempt.student.user.lastName}` : g.attempt?.student?.studentCode}</p>

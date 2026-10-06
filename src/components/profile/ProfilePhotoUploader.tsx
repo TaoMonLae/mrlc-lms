@@ -116,13 +116,13 @@ export function ProfilePhotoUploader({
   return (
     <>
     <div className={`flex flex-col items-center gap-3 ${className}`}>
-      <div className={`${imageClassName} overflow-hidden bg-slate-100 dark:bg-surface-raised border border-slate-200 dark:border-surface-raised flex items-center justify-center text-slate-500 font-bold`}>
+      <div className={`${imageClassName} overflow-hidden bg-muted border border-border flex items-center justify-center text-muted-foreground font-bold`}>
         {previewUrl ? (
           <img src={previewUrl} alt="Profile" className="h-full w-full object-cover" />
         ) : fallbackText ? (
           <span>{fallbackText.slice(0, 2).toUpperCase()}</span>
         ) : (
-          <ImageIcon className="h-8 w-8 text-slate-400" />
+          <ImageIcon className="h-8 w-8 text-muted-foreground" />
         )}
       </div>
       {canEdit && <input

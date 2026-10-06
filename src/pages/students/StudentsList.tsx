@@ -162,8 +162,8 @@ export default function StudentsList() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Students</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage student records, enrollment, and academic profiles.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Students</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage student records, enrollment, and academic profiles.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           {isAdmin && (
@@ -182,22 +182,22 @@ export default function StudentsList() {
       </div>
 
       {/* Card Container */}
-      <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
+      <div className="bg-card rounded-sm border border-border shadow-sm overflow-hidden">
         {/* Filters */}
-        <div className="p-4 border-b border-slate-200 dark:border-surface-raised flex flex-col sm:flex-row gap-4 items-center">
+        <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-4 items-center">
           <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search by name or ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 bg-slate-50 dark:bg-surface-raised border-slate-200 dark:border-surface-raised"
+              className="pl-9 bg-muted/50 border-border"
             />
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Filter className="h-4 w-4 text-slate-400 hidden sm:block" />
+            <Filter className="h-4 w-4 text-muted-foreground hidden sm:block" />
             <Select value={classFilter} onValueChange={setClassFilter}>
-              <SelectTrigger className="w-full sm:w-[180px] bg-slate-50 dark:bg-surface-raised border-slate-200 dark:border-surface-raised">
+              <SelectTrigger className="w-full sm:w-[180px] bg-muted/50 border-border">
                 <SelectValue placeholder="All Classes" />
               </SelectTrigger>
               <SelectContent>
@@ -208,7 +208,7 @@ export default function StudentsList() {
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[150px] bg-slate-50 dark:bg-surface-raised border-slate-200 dark:border-surface-raised">
+              <SelectTrigger className="w-full sm:w-[150px] bg-muted/50 border-border">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
@@ -235,7 +235,7 @@ export default function StudentsList() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm" role="table" aria-label="Students list">
                     <caption className="sr-only">List of all students including name, student ID, class, gender, enrollment date, and status</caption>
-                    <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
+                    <thead className="bg-muted/50 text-muted-foreground uppercase tracking-wider font-semibold text-[11px]">
                       <tr>
                         <th scope="col" className="px-6 py-4">Student</th>
                         <th scope="col" className="px-6 py-4">ID / Gender</th>
@@ -245,18 +245,18 @@ export default function StudentsList() {
                         <th scope="col" className="px-6 py-4 text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tbody className="divide-y divide-border">
                       {filteredStudents.map((student) => (
-                        <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors group">
+                        <tr key={student.id} className="hover:bg-muted/50 transition-colors group">
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
                               <UserAvatar name={`${student.firstName} ${student.lastName}`} src={student.profilePhotoUrl} className="h-9 w-9 text-xs" />
                               <div>
-                                <Link to={`/students/${student.id}`} className="font-semibold text-slate-900 dark:text-white hover:text-aubergine-600 dark:hover:text-aubergine-400">
+                                <Link to={`/students/${student.id}`} className="font-semibold text-foreground hover:text-aubergine-600 dark:hover:text-aubergine-400">
                                   {student.firstName} {student.lastName}
                                 </Link>
                                 {student.studentCouncilRole && (
-                                  <Badge variant="outline" className="mt-1 block w-fit border-academic-teal/30 bg-academic-teal/10 text-[10px] text-academic-teal">
+                                  <Badge variant="outline" className="mt-1 block w-fit border-academic-teal/30 bg-academic-teal/10 text-[11px] text-academic-teal">
                                     {student.studentCouncilRole}
                                   </Badge>
                                 )}
@@ -264,13 +264,13 @@ export default function StudentsList() {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="font-medium text-slate-700 dark:text-slate-300">{student.studentId}</div>
-                            <div className="text-[11px] text-slate-500 capitalize">{student.gender.toLowerCase()}</div>
+                            <div className="font-medium text-foreground">{student.studentId}</div>
+                            <div className="text-[11px] text-muted-foreground capitalize">{student.gender.toLowerCase()}</div>
                           </td>
-                          <td className="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium">
+                          <td className="px-6 py-4 text-muted-foreground font-medium">
                             {student.class}
                           </td>
-                          <td className="px-6 py-4 text-slate-500 dark:text-slate-300">
+                          <td className="px-6 py-4 text-muted-foreground">
                             {new Date(student.enrollmentDate).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4">
@@ -280,7 +280,7 @@ export default function StudentsList() {
                             <DropdownMenu>
                               <DropdownMenuTrigger render={<Button variant="ghost" className="h-8 w-8 p-0" aria-label={`Open menu for ${student.firstName} ${student.lastName}`} />} nativeButton={true}>
                                 <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4 text-slate-400" />
+                                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuGroup>
@@ -323,7 +323,7 @@ export default function StudentsList() {
                 </div>
               )}
               {filteredStudents.length === 0 && !searchTerm && (
-                <div className="text-center py-10 text-slate-500">
+                <div className="text-center py-10 text-muted-foreground">
                   <User className="h-10 w-10 mx-auto text-slate-300 mb-2" />
                   <p>No students found matching your filters.</p>
                 </div>
@@ -337,13 +337,13 @@ export default function StudentsList() {
           {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 space-y-3">
+                <div key={i} className="border border-border rounded-lg p-4 space-y-3">
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse"></div>
+                      <div className="h-10 w-10 rounded-full bg-muted animate-pulse"></div>
                       <div className="space-y-2">
-                        <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded animate-pulse"></div>
-                        <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse"></div>
+                        <div className="h-4 w-32 bg-muted rounded animate-pulse"></div>
+                        <div className="h-3 w-24 bg-muted rounded animate-pulse"></div>
                       </div>
                     </div>
                   </div>
@@ -354,24 +354,24 @@ export default function StudentsList() {
             searchTerm ? (
               <EmptySearchState searchTerm={searchTerm} onClear={() => setSearchTerm('')} />
             ) : (
-              <div className="text-center py-10 text-slate-500">
+              <div className="text-center py-10 text-muted-foreground">
                 <User className="h-8 w-8 mx-auto text-slate-300 mb-2" />
                 <p>No students found</p>
               </div>
             )
           ) : (
             filteredStudents.map((student) => (
-              <div key={student.id} className="border border-slate-200 dark:border-surface-raised rounded-lg p-4 space-y-3 bg-white dark:bg-surface-indigo shadow-sm relative">
+              <div key={student.id} className="border border-border rounded-lg p-4 space-y-3 bg-card shadow-sm relative">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
                     <UserAvatar name={`${student.firstName} ${student.lastName}`} src={student.profilePhotoUrl} className="h-10 w-10 text-sm" />
                     <div>
-                      <Link to={`/students/${student.id}`} className="font-semibold text-slate-900 dark:text-white block hover:underline">
+                      <Link to={`/students/${student.id}`} className="font-semibold text-foreground block hover:underline">
                         {student.firstName} {student.lastName}
                       </Link>
-                      <span className="text-xs text-slate-500 font-mono">{student.studentId}</span>
+                      <span className="text-xs text-muted-foreground font-mono">{student.studentId}</span>
                       {student.studentCouncilRole && (
-                        <Badge variant="outline" className="mt-1 block w-fit border-academic-teal/30 bg-academic-teal/10 text-[10px] text-academic-teal">
+                        <Badge variant="outline" className="mt-1 block w-fit border-academic-teal/30 bg-academic-teal/10 text-[11px] text-academic-teal">
                           {student.studentCouncilRole}
                         </Badge>
                       )}
@@ -379,7 +379,7 @@ export default function StudentsList() {
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger render={<Button variant="ghost" className="h-8 w-8 p-0 -mr-2 -mt-1" aria-label={`Open options menu for ${student.firstName} ${student.lastName}`} />} nativeButton={true}>
-                      <MoreHorizontal className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                      <MoreHorizontal className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem render={<Link to={`/students/${student.id}`} />}>
@@ -406,14 +406,14 @@ export default function StudentsList() {
                   </DropdownMenu>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-sm pt-2 border-t border-slate-100 dark:border-surface-raised">
+                <div className="grid grid-cols-2 gap-2 text-sm pt-2 border-t border-border">
                   <div>
-                    <span className="text-xs text-slate-500 block">Class</span>
-                    <span className="font-medium text-slate-700 dark:text-slate-300 truncate block">{student.class}</span>
+                    <span className="text-xs text-muted-foreground block">Class</span>
+                    <span className="font-medium text-foreground truncate block">{student.class}</span>
                   </div>
                   <div>
-                    <span className="text-xs text-slate-500 block">Enrolled</span>
-                    <span className="font-medium text-slate-700 dark:text-slate-300 truncate block">{new Date(student.enrollmentDate).toLocaleDateString()}</span>
+                    <span className="text-xs text-muted-foreground block">Enrolled</span>
+                    <span className="font-medium text-foreground truncate block">{new Date(student.enrollmentDate).toLocaleDateString()}</span>
                   </div>
                 </div>
 

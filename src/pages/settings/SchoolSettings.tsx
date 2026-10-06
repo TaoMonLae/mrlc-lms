@@ -55,7 +55,7 @@ export default function SchoolSettings() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="relative">
       <div className="border-b border-border px-5 py-6 sm:px-7">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-academic-teal">Identity record</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.13em] text-academic-teal">Identity record</p>
         <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-foreground">School profile</h2>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">The canonical school details used in reports, public contact points and academic records.</p>
       </div>

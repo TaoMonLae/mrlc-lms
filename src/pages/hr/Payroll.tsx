@@ -17,7 +17,7 @@ import { formatMoney } from '../../lib/locale';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const STATUS_STYLES: Record<string, string> = {
-  DRAFT: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
+  DRAFT: 'bg-muted text-foreground',
   APPROVED: 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300',
   PAID: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300',
 };
@@ -168,7 +168,7 @@ export default function Payroll() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-emerald-100 p-2 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"><Wallet className="h-5 w-5" /></div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Payroll</h1>
+          <h1 className="text-xl font-semibold text-foreground">Payroll</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
         <Button variant="outline" size="sm" onClick={refresh} disabled={refreshing}>
@@ -178,7 +178,7 @@ export default function Payroll() {
           <DialogTrigger render={<Button><Plus className="mr-1 h-4 w-4" /> New run</Button>} />
           <DialogContent>
             <DialogHeader><DialogTitle>New payroll run</DialogTitle></DialogHeader>
-            <p className="text-sm text-slate-500">A draft payslip is created for every active employee from their base salary.</p>
+            <p className="text-sm text-muted-foreground">A draft payslip is created for every active employee from their base salary.</p>
             <div className="flex gap-3">
               <div className="flex-1 space-y-1">
                 <Label>Month</Label>
@@ -198,7 +198,7 @@ export default function Payroll() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card p-3">
         <Select value={yearFilter} onValueChange={setYearFilter}>
           <SelectTrigger className="w-36"><SelectValue placeholder="Year" /></SelectTrigger>
           <SelectContent>
@@ -229,20 +229,20 @@ export default function Payroll() {
             <FilterX className="mr-1 h-4 w-4" /> Clear filters
           </Button>
         )}
-        <span className="ml-auto text-xs text-slate-500">Showing {filteredRuns.length} of {runs.length} runs</span>
+        <span className="ml-auto text-xs text-muted-foreground">Showing {filteredRuns.length} of {runs.length} runs</span>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-2 lg:col-span-1">
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Runs</h2>
-          {loading ? <p className="text-sm text-slate-400">Loading…</p> :
-            runs.length === 0 ? <p className="text-sm text-slate-400">No payroll runs yet.</p> :
-            filteredRuns.length === 0 ? <p className="text-sm text-slate-400">No payroll runs match these filters.</p> :
+          <h2 className="text-sm font-semibold text-foreground">Runs</h2>
+          {loading ? <p className="text-sm text-muted-foreground">Loading…</p> :
+            runs.length === 0 ? <p className="text-sm text-muted-foreground">No payroll runs yet.</p> :
+            filteredRuns.length === 0 ? <p className="text-sm text-muted-foreground">No payroll runs match these filters.</p> :
             <ul className="space-y-1">
               {filteredRuns.map((r) => (
                 <li key={r.id}>
-                  <button onClick={() => openRun(r.id)} className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition-colors ${selected?.id === r.id ? 'border-indigo-300 bg-indigo-50 dark:border-indigo-700 dark:bg-indigo-950/40' : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800'}`}>
-                    <span>{MONTHS[r.periodMonth - 1]} {r.periodYear} <span className="text-xs text-slate-400">· {r._count?.payslips ?? 0} payslips</span></span>
+                  <button onClick={() => openRun(r.id)} className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition-colors ${selected?.id === r.id ? 'border-border bg-lavender' : 'border-border hover:bg-muted/50'}`}>
+                    <span>{MONTHS[r.periodMonth - 1]} {r.periodYear} <span className="text-xs text-muted-foreground">· {r._count?.payslips ?? 0} payslips</span></span>
                     <Badge className={STATUS_STYLES[r.status]}>{r.status}</Badge>
                   </button>
                 </li>
@@ -252,13 +252,13 @@ export default function Payroll() {
 
         <div className="lg:col-span-2">
           {!selected ? (
-            <div className="rounded-lg border border-dashed border-slate-200 py-16 text-center text-sm text-slate-400 dark:border-slate-700">Select a run to view payslips</div>
+            <div className="rounded-lg border border-dashed border-border py-16 text-center text-sm text-muted-foreground">Select a run to view payslips</div>
           ) : (
-            <div className="space-y-4 rounded-lg border border-slate-200 p-4 dark:border-slate-700">
+            <div className="space-y-4 rounded-lg border border-border p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h2 className="font-semibold text-slate-800 dark:text-slate-100">{MONTHS[selected.periodMonth - 1]} {selected.periodYear}</h2>
-                  <p className="text-sm text-slate-500">Total net: {formatMoney(selected.totalNet ?? 0, selected.payslips?.[0]?.currency)}</p>
+                  <h2 className="font-semibold text-foreground">{MONTHS[selected.periodMonth - 1]} {selected.periodYear}</h2>
+                  <p className="text-sm text-muted-foreground">Total net: {formatMoney(selected.totalNet ?? 0, selected.payslips?.[0]?.currency)}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge className={STATUS_STYLES[selected.status]}>{selected.status}</Badge>
@@ -267,7 +267,7 @@ export default function Payroll() {
                   </Button>
                   {selected.status === 'DRAFT' && (
                     <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Edit" onClick={openEdit}>
-                      <Pencil className="h-4 w-4 text-slate-500" />
+                      <Pencil className="h-4 w-4 text-muted-foreground" />
                     </Button>
                   )}
                   {selected.status === 'DRAFT' && (
@@ -282,10 +282,10 @@ export default function Payroll() {
               </div>
               <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="text-left text-xs uppercase text-slate-500">
+                <thead className="text-left text-xs uppercase text-muted-foreground">
                   <tr><th className="py-1">Payee</th><th className="py-1">Type</th><th className="py-1 text-right">Base</th><th className="py-1 text-right">Allowances</th><th className="py-1 text-right">Deductions</th><th className="py-1 text-right">Net</th><th className="py-1"></th></tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                <tbody className="divide-y divide-border">
                   {selected.payslips?.map((p: any) => (
                     <PayslipRow key={p.id} payslip={p} editable={selected.status === 'DRAFT'} onSave={savePayslip} />
                   ))}
@@ -338,7 +338,7 @@ function PayslipRow({ payslip, editable, onSave }: { payslip: any; editable: boo
   return (
     <tr>
       <td className="py-1">{payeeName(payslip)}</td>
-      <td className="py-1"><span className="text-xs text-slate-400">{payslip.teacher ? 'Teacher' : 'Staff'}</span></td>
+      <td className="py-1"><span className="text-xs text-muted-foreground">{payslip.teacher ? 'Teacher' : 'Staff'}</span></td>
       <td className="py-1 text-right">
         {editable ? <Input className="h-7 w-24 text-right" type="number" min="0" step="0.01" value={base} onChange={(e) => setBase(e.target.value)} /> : formatMoney(payslip.baseSalary, payslip.currency)}
       </td>
@@ -352,7 +352,7 @@ function PayslipRow({ payslip, editable, onSave }: { payslip: any; editable: boo
       <td className="py-1 text-right">
         {editable && dirty
           ? <Button size="sm" variant="ghost" className="h-6" disabled={!valid} title={valid ? 'Save payslip' : 'Amounts must be non-negative and deductions cannot exceed gross pay'} onClick={() => onSave(payslip, Number(base), Number(allowances), Number(deductions))}>Save</Button>
-          : <Link to={`/payroll/payslips/${payslip.id}/print`} className="text-slate-400 hover:text-slate-600" title="Print payslip"><Printer className="inline h-4 w-4" /></Link>}
+          : <Link to={`/payroll/payslips/${payslip.id}/print`} className="text-muted-foreground hover:text-muted-foreground" title="Print payslip"><Printer className="inline h-4 w-4" /></Link>}
       </td>
     </tr>
   );

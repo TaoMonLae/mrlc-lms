@@ -171,25 +171,25 @@ export default function LibraryNew() {
   return (
     <div className="space-y-6 max-w-[800px] mx-auto pb-10">
       <div>
-        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/library" />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/library" />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Library
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Add New Resource</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Upload files or link external content to the central library.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Add New Resource</h1>
+        <p className="text-sm text-muted-foreground mt-1">Upload files or link external content to the central library.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6">
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-card border border-border rounded-sm overflow-hidden shadow-sm">
            
           {/* Tabs */}
-          <div className="flex border-b border-slate-200 dark:border-surface-raised">
+          <div className="flex border-b border-border">
             <button
               type="button"
               className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
                 activeTab === 'upload' 
-                  ? 'border-b-2 border-slate-900 text-slate-900 dark:border-white dark:text-white' 
-                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                  ? 'border-b-2 border-foreground text-foreground' 
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
               onClick={() => {
                 setActiveTab('upload');
@@ -212,8 +212,8 @@ export default function LibraryNew() {
               type="button"
               className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
                 activeTab === 'link' 
-                  ? 'border-b-2 border-slate-900 text-slate-900 dark:border-white dark:text-white' 
-                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                  ? 'border-b-2 border-foreground text-foreground' 
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
               onClick={() => {
                 setActiveTab('link');
@@ -232,23 +232,23 @@ export default function LibraryNew() {
             {activeTab === 'upload' ? (
               <div className="space-y-2">
                 <Label>Select File *</Label>
-                <div className="border-2 border-dashed border-slate-200 dark:border-surface-raised rounded-xl p-8 flex flex-col items-center justify-center text-center bg-slate-50 dark:bg-surface-indigo/50 hover:bg-slate-100 dark:hover:bg-surface-raised/80 transition-colors">
+                <div className="border-2 border-dashed border-border rounded-sm p-8 flex flex-col items-center justify-center text-center bg-muted/50 hover:bg-muted transition-colors">
                   {file ? (
                     <div className="flex flex-col items-center gap-2">
                       <div className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 mb-2">
                          <FileCheck className="h-6 w-6" />
                       </div>
-                      <p className="font-medium text-slate-900 dark:text-white">{file.name}</p>
-                      <p className="text-xs text-slate-500">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                      <p className="font-medium text-foreground">{file.name}</p>
+                      <p className="text-xs text-muted-foreground">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
                       <Button type="button" variant="ghost" size="sm" onClick={() => setFile(null)} className="mt-2 text-red-500 hover:text-red-600">Remove</Button>
                     </div>
                   ) : (
                     <>
-                      <UploadCloud className="h-10 w-10 text-slate-400 mb-4" />
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Click to upload or drag and drop</p>
-                      <p className="text-xs text-slate-500 mt-1 mb-4">PDF, PPTX, DOCX, JPG, PNG (Max 50MB)</p>
+                      <UploadCloud className="h-10 w-10 text-muted-foreground mb-4" />
+                      <p className="text-sm font-medium text-foreground">Click to upload or drag and drop</p>
+                      <p className="text-xs text-muted-foreground mt-1 mb-4">PDF, PPTX, DOCX, JPG, PNG (Max 50MB)</p>
                       <Label htmlFor="file-upload" className="cursor-pointer">
-                        <div className="bg-white dark:bg-canvas border border-slate-200 dark:border-surface-raised px-4 py-2 rounded-md justify-center text-sm font-medium hover:bg-slate-50 dark:hover:bg-surface-indigo transition-colors">
+                        <div className="bg-card border border-border px-4 py-2 rounded-md justify-center text-sm font-medium hover:bg-muted/50 transition-colors">
                           Browse Files
                         </div>
                       </Label>
@@ -272,7 +272,7 @@ export default function LibraryNew() {
               </div>
             )}
 
-            <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-surface-raised">
+            <div className="space-y-4 pt-4 border-t border-border">
               <div className="space-y-2">
                 <Label htmlFor="title">Resource Title *</Label>
                 <Input id="title" {...register('title')} placeholder="e.g. Intro to Biology Worksheet" />

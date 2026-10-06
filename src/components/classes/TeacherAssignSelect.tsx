@@ -55,7 +55,7 @@ export function TeacherAssignSelect({ value, onChange }: Props) {
               <button
                 type="button"
                 onClick={() => onChange(value.filter((v) => v !== id))}
-                className="rounded-full hover:bg-slate-300/50 p-0.5"
+                className="rounded-full hover:bg-input/50 p-0.5"
                 aria-label={`Remove ${nameOf(id)}`}
               >
                 <X className="h-3.5 w-3.5" />
@@ -64,7 +64,7 @@ export function TeacherAssignSelect({ value, onChange }: Props) {
           ))}
         </div>
       ) : (
-        <p className="text-xs text-slate-400">No teachers assigned yet.</p>
+        <p className="text-xs text-muted-foreground">No teachers assigned yet.</p>
       )}
     </div>
   );

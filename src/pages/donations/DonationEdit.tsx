@@ -175,8 +175,8 @@ export default function DonationEdit() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Edit Donation</h1>
-            <p className="text-sm text-slate-500">{donationNumber}</p>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Edit Donation</h1>
+            <p className="text-sm text-muted-foreground">{donationNumber}</p>
           </div>
         </div>
         <Button variant="outline" className="text-red-600 hover:text-red-700" onClick={handleDelete} disabled={posted}>
@@ -330,7 +330,7 @@ export default function DonationEdit() {
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
                 <Label htmlFor="isTaxDeductible">Tax Deductible</Label>
-                <p className="text-xs text-slate-500">A tax receipt can be issued for this donation</p>
+                <p className="text-xs text-muted-foreground">A tax receipt can be issued for this donation</p>
               </div>
               <Switch
                 id="isTaxDeductible" disabled={posted}

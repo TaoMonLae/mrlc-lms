@@ -174,21 +174,21 @@ export default function VideoNew() {
         <Button
           variant="ghost"
           size="sm"
-          className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white"
+          className="-ml-3 mb-2 text-muted-foreground hover:text-foreground"
           render={<Link to="/videos" />}
           nativeButton={false}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Video Lessons
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Add Video Lesson</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Add Video Lesson</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Link a YouTube, Vimeo, or direct video URL to the lesson library.
         </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-6">
+        <div className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-6">
 
           {/* Upload Method Selector */}
           <div className="space-y-3">
@@ -203,7 +203,7 @@ export default function VideoNew() {
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 text-sm font-medium transition-colors ${
                   uploadMethod === 'url'
                     ? 'border-aubergine-600 bg-aubergine-50 text-aubergine-700 dark:bg-aubergine-900/20 dark:text-aubergine-300'
-                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-surface-raised dark:bg-surface-indigo dark:text-slate-300 dark:hover:bg-surface-raised'
+                    : 'border-border bg-card text-muted-foreground hover:bg-muted/50'
                 }`}
               >
                 <Film className="h-4 w-4" />
@@ -215,7 +215,7 @@ export default function VideoNew() {
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 text-sm font-medium transition-colors ${
                   uploadMethod === 'file'
                     ? 'border-aubergine-600 bg-aubergine-50 text-aubergine-700 dark:bg-aubergine-900/20 dark:text-aubergine-300'
-                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-surface-raised dark:bg-surface-indigo dark:text-slate-300 dark:hover:bg-surface-raised'
+                    : 'border-border bg-card text-muted-foreground hover:bg-muted/50'
                 }`}
               >
                 <Upload className="h-4 w-4" />
@@ -266,7 +266,7 @@ export default function VideoNew() {
                       <Upload className="mr-2 h-4 w-4" />
                       {uploadingVideo ? `Uploading ${videoUploadProgress}%…` : 'Choose Video File'}
                     </Button>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Supports {ALLOWED_VIDEO_EXTENSIONS.map((e) => e.replace('.', '').toUpperCase()).join(', ')} files up to {MAX_VIDEO_FILE_SIZE_DISPLAY}.
                       Non-MP4 files (e.g. MTS, AVI, MKV) are automatically converted to MP4 for web playback, and files over 250MB are automatically compressed — large files may take a few minutes.
                     </p>
@@ -413,20 +413,20 @@ export default function VideoNew() {
                 />
                 <CaptionUploadButton onUploaded={(url) => setValue('captionsUrl', url)} />
               </div>
-              <p className="text-xs text-slate-400">Paste a WebVTT URL or upload a .vtt/.srt file. Shown as a CC toggle for uploaded videos — a big help for second-language learners.</p>
+              <p className="text-xs text-muted-foreground">Paste a WebVTT URL or upload a .vtt/.srt file. Shown as a CC toggle for uploaded videos — a big help for second-language learners.</p>
             </div>
 
             {/* Required viewing */}
-            <div className="space-y-2 sm:col-span-2 rounded-lg border border-slate-200 dark:border-surface-raised p-3">
+            <div className="space-y-2 sm:col-span-2 rounded-lg border border-border p-3">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="h-4 w-4 rounded border-slate-300" {...register('isRequired')} />
-                <span className="text-sm font-medium text-slate-900 dark:text-white">Required viewing for the assigned class</span>
+                <input type="checkbox" className="h-4 w-4 rounded border-input" {...register('isRequired')} />
+                <span className="text-sm font-medium text-foreground">Required viewing for the assigned class</span>
               </label>
               {watch('isRequired') && (
                 <div className="pt-2">
                   <Label htmlFor="dueDate">Due date (optional)</Label>
                   <Input id="dueDate" type="date" className="mt-1 max-w-[220px]" {...register('dueDate')} />
-                  <p className="text-xs text-slate-400 mt-1">Students see a “Required” badge; teachers can track completion in Watch analytics.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Students see a “Required” badge; teachers can track completion in Watch analytics.</p>
                 </div>
               )}
             </div>

@@ -36,7 +36,7 @@ interface LoggedViolation {
 }
 
 const severityStyle = (s: string) =>
-  s === 'SERIOUS' ? 'bg-red-100 text-red-700' : s === 'MODERATE' ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-600';
+  s === 'SERIOUS' ? 'bg-red-100 text-red-700' : s === 'MODERATE' ? 'bg-amber-100 text-amber-700' : 'bg-muted text-muted-foreground';
 
 const severityLabel = (s: string) => (s === 'SERIOUS' ? 'Serious' : s === 'MODERATE' ? 'Moderate' : 'Minor');
 
@@ -55,14 +55,14 @@ function ordinal(n: number): string {
 
 function StatCard({ label, value, tone }: { label: string; value: number; tone: 'slate' | 'amber' | 'red' | 'aubergine' }) {
   const toneClasses: Record<string, string> = {
-    slate: 'text-slate-700 dark:text-slate-200',
+    slate: 'text-foreground',
     amber: 'text-amber-600',
     red: 'text-red-600',
     aubergine: 'text-aubergine-600',
   };
   return (
-    <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl px-4 py-3">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+    <div className="bg-card border border-border rounded-sm px-4 py-3">
+      <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
       <p className={`text-2xl font-bold mt-0.5 ${toneClasses[tone]}`}>{value}</p>
     </div>
   );
@@ -239,10 +239,10 @@ export default function ConductDashboard() {
     <div className="space-y-6 max-w-[1400px] mx-auto">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <ShieldAlert className="h-6 w-6 text-aubergine-600" /> Conduct
           </h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">
+          <p className="text-sm text-muted-foreground mt-1">
             Log rule violations against the school handbook and track how many times each student has broken a rule.
           </p>
         </div>
@@ -264,12 +264,12 @@ export default function ConductDashboard() {
                         <li key={v.id} className="flex items-center gap-2 text-xs text-emerald-900 dark:text-emerald-100">
                           <span className="font-mono text-emerald-500 dark:text-emerald-400">{v.ruleCode}</span>
                           <span className="truncate">{v.ruleTitle}</span>
-                          <Badge className={`${severityStyle(v.severity)} border-0 text-[9px] shrink-0`}>{severityLabel(v.severity)}</Badge>
+                          <Badge className={`${severityStyle(v.severity)} border-0 text-[11px] shrink-0`}>{severityLabel(v.severity)}</Badge>
                         </li>
                       ))}
                     </ul>
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     Generate a printable Disciplinary Notice — with the rule(s) broken, escalation context, and signature lines — to send home or file.
                   </p>
                 </div>
@@ -290,15 +290,15 @@ export default function ConductDashboard() {
                   </div>
 
                   {reportStudentId && (
-                    <div className="rounded-lg border border-slate-200 dark:border-surface-raised bg-slate-50 dark:bg-surface-raised/30 p-3 text-xs">
+                    <div className="rounded-lg border border-border bg-muted/50 p-3 text-xs">
                       {summaryLoading ? (
-                        <span className="text-slate-400">Loading history…</span>
+                        <span className="text-muted-foreground">Loading history…</span>
                       ) : summary && summary.total > 0 ? (
                         <div className="flex items-center gap-3 flex-wrap">
-                          <span className="font-semibold text-slate-700 dark:text-slate-200">{summary.total} prior violation{summary.total === 1 ? '' : 's'}:</span>
-                          <span className="text-slate-500">{summary.bySeverity.MINOR} minor</span>
-                          <span className="text-slate-500">{summary.bySeverity.MODERATE} moderate</span>
-                          <span className="text-slate-500">{summary.bySeverity.SERIOUS} serious</span>
+                          <span className="font-semibold text-foreground">{summary.total} prior violation{summary.total === 1 ? '' : 's'}:</span>
+                          <span className="text-muted-foreground">{summary.bySeverity.MINOR} minor</span>
+                          <span className="text-muted-foreground">{summary.bySeverity.MODERATE} moderate</span>
+                          <span className="text-muted-foreground">{summary.bySeverity.SERIOUS} serious</span>
                         </div>
                       ) : (
                         <span className="text-emerald-600">No prior violations on record.</span>
@@ -310,7 +310,7 @@ export default function ConductDashboard() {
                     <div className="flex items-center justify-between">
                       <Label>Rules broken *</Label>
                       {reportRuleIds.length > 0 && (
-                        <span className="text-[11px] font-medium text-slate-400">{reportRuleIds.length} selected</span>
+                        <span className="text-[11px] font-medium text-muted-foreground">{reportRuleIds.length} selected</span>
                       )}
                     </div>
 
@@ -336,24 +336,24 @@ export default function ConductDashboard() {
                     )}
 
                     <div className="relative">
-                      <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                      <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                       <input
                         value={ruleSearch}
                         onChange={(e) => setRuleSearch(e.target.value)}
                         placeholder="Search rules by code or title…"
-                        className="h-9 w-full rounded-lg border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas pl-8 pr-3 text-sm outline-none focus:ring-2 focus:ring-aubergine-500/30"
+                        className="h-9 w-full rounded-lg border border-border bg-card pl-8 pr-3 text-sm outline-none focus:ring-2 focus:ring-aubergine-500/30"
                       />
                     </div>
 
-                    <div className="max-h-60 overflow-y-auto rounded-lg border border-slate-200 dark:border-surface-raised divide-y divide-slate-100 dark:divide-slate-800">
+                    <div className="max-h-60 overflow-y-auto rounded-lg border border-border divide-y divide-border">
                       {rulesByArticle.length === 0 && (
-                        <p className="p-4 text-center text-xs text-slate-400">
+                        <p className="p-4 text-center text-xs text-muted-foreground">
                           {rules.length === 0 ? 'No rules found — ask an admin to seed the conduct rule catalog.' : 'No rules match your search.'}
                         </p>
                       )}
                       {rulesByArticle.map(([article, list]) => (
                         <div key={article}>
-                          <div className="sticky top-0 bg-slate-50 dark:bg-surface-raised/70 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                          <div className="sticky top-0 bg-muted/50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
                             {article}
                           </div>
                           {list.map((r) => {
@@ -362,19 +362,19 @@ export default function ConductDashboard() {
                             return (
                               <label
                                 key={r.id}
-                                className={`flex items-start gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-surface-raised/40 ${checked ? 'bg-aubergine-50/60 dark:bg-aubergine-900/20' : ''}`}
+                                className={`flex items-start gap-2.5 px-3 py-2 cursor-pointer hover:bg-muted/50 ${checked ? 'bg-aubergine-50/60 dark:bg-aubergine-900/20' : ''}`}
                               >
                                 <input
                                   type="checkbox"
                                   checked={checked}
                                   onChange={() => toggleRule(r.id)}
-                                  className="mt-1 h-3.5 w-3.5 shrink-0 rounded border-slate-300 text-aubergine-600 focus:ring-aubergine-500"
+                                  className="mt-1 h-3.5 w-3.5 shrink-0 rounded border-input text-aubergine-600 focus:ring-aubergine-500"
                                 />
                                 <span className="min-w-0 flex-1">
                                   <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                                    <span className="font-mono text-xs text-slate-400">{r.code}</span>
-                                    <span className="font-medium text-slate-800 dark:text-slate-200">{r.title}</span>
-                                    <Badge className={`${severityStyle(r.severity)} border-0 text-[9px] shrink-0`}>{severityLabel(r.severity)}</Badge>
+                                    <span className="font-mono text-xs text-muted-foreground">{r.code}</span>
+                                    <span className="font-medium text-foreground">{r.title}</span>
+                                    <Badge className={`${severityStyle(r.severity)} border-0 text-[11px] shrink-0`}>{severityLabel(r.severity)}</Badge>
                                   </span>
                                   {reportStudentId && priorForRule > 0 && (
                                     <span className="mt-0.5 flex items-center gap-1 text-[11px] text-amber-600">
@@ -403,7 +403,7 @@ export default function ConductDashboard() {
                       placeholder="e.g. Verbal warning, after-school detention, parent meeting scheduled…"
                       rows={2}
                     />
-                    <p className="text-[11px] text-slate-400">Printed on the Disciplinary Notice under "Recommended Action".</p>
+                    <p className="text-[11px] text-muted-foreground">Printed on the Disciplinary Notice under "Recommended Action".</p>
                   </div>
                 </div>
               )}
@@ -471,10 +471,10 @@ export default function ConductDashboard() {
       </div>
 
       {/* List */}
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-card border border-border rounded-sm shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 uppercase tracking-wider font-semibold text-[11px]">
+            <thead className="bg-muted/50 text-muted-foreground uppercase tracking-wider font-semibold text-[11px]">
               <tr>
                 <th className="px-6 py-3">Student</th>
                 <th className="px-4 py-3">Rule</th>
@@ -485,28 +485,28 @@ export default function ConductDashboard() {
                 <th className="px-4 py-3 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {loading && <tr><td colSpan={7} className="px-6 py-8 text-center text-slate-500">Loading…</td></tr>}
-              {!loading && violations.length === 0 && <tr><td colSpan={7} className="px-6 py-8 text-center text-slate-500">No conduct records yet.</td></tr>}
+            <tbody className="divide-y divide-border">
+              {loading && <tr><td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">Loading…</td></tr>}
+              {!loading && violations.length === 0 && <tr><td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">No conduct records yet.</td></tr>}
               {!loading && violations.map((v) => (
-                <tr key={v.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                  <td className="px-6 py-3 font-medium text-slate-900 dark:text-white">
-                    {v.studentName} <span className="text-xs text-slate-400 font-mono">{v.studentCode}</span>
-                    {v.className && <span className="block text-xs text-slate-400">{v.className}</span>}
+                <tr key={v.id} className="hover:bg-muted/50">
+                  <td className="px-6 py-3 font-medium text-foreground">
+                    {v.studentName} <span className="text-xs text-muted-foreground font-mono">{v.studentCode}</span>
+                    {v.className && <span className="block text-xs text-muted-foreground">{v.className}</span>}
                   </td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                    <span className="font-mono text-xs text-slate-400">{v.ruleCode}</span> {v.ruleTitle}
-                    <span className="block text-xs text-slate-400">{v.article}</span>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    <span className="font-mono text-xs text-muted-foreground">{v.ruleCode}</span> {v.ruleTitle}
+                    <span className="block text-xs text-muted-foreground">{v.article}</span>
                   </td>
                   <td className="px-4 py-3 text-center"><Badge className={`${severityStyle(v.severity)} border-0`}>{severityLabel(v.severity)}</Badge></td>
-                  <td className="px-4 py-3 text-slate-500">{new Date(v.occurredAt).toLocaleDateString()}</td>
-                  <td className="px-4 py-3 text-slate-500">{v.reportedByName}</td>
-                  <td className="px-4 py-3 text-slate-500 max-w-[240px] truncate" title={v.note || ''}>{v.note || '—'}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{new Date(v.occurredAt).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{v.reportedByName}</td>
+                  <td className="px-4 py-3 text-muted-foreground max-w-[240px] truncate" title={v.note || ''}>{v.note || '—'}</td>
                   <td className="px-4 py-3 text-right flex items-center justify-end gap-1">
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-7 w-7 text-slate-400 hover:text-aubergine-600"
+                      className="h-7 w-7 text-muted-foreground hover:text-aubergine-600"
                       title="Download disciplinary notice for this record"
                       onClick={async () => {
                         try {

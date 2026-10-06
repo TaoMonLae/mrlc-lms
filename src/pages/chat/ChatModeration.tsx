@@ -19,7 +19,7 @@ interface Report {
 const STATUS_STYLES: Record<string, string> = {
   OPEN: 'bg-amber-100 text-amber-700',
   ACTIONED: 'bg-rose-100 text-rose-700',
-  DISMISSED: 'bg-slate-200 text-slate-600',
+  DISMISSED: 'bg-muted text-muted-foreground',
 };
 
 export default function ChatModeration() {
@@ -51,14 +51,14 @@ export default function ChatModeration() {
 
   return (
     <div className="space-y-6">
-      <Link to="/chat" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700">
+      <Link to="/chat" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Back to chat
       </Link>
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-amber-100 p-2 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"><ShieldAlert className="h-5 w-5" /></div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Chat moderation</h1>
+          <h1 className="text-xl font-semibold text-foreground">Chat moderation</h1>
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
@@ -72,19 +72,19 @@ export default function ChatModeration() {
       </div>
 
       <div className="space-y-3">
-        {loading ? <p className="text-sm text-slate-400">Loading…</p> :
-          reports.length === 0 ? <p className="rounded-lg border border-dashed border-slate-200 py-16 text-center text-sm text-slate-400">No reports.</p> :
+        {loading ? <p className="text-sm text-muted-foreground">Loading…</p> :
+          reports.length === 0 ? <p className="rounded-lg border border-dashed border-border py-16 text-center text-sm text-muted-foreground">No reports.</p> :
           reports.map((r) => (
-            <div key={r.id} className="rounded-lg border border-slate-200 p-4">
+            <div key={r.id} className="rounded-lg border border-border p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-slate-800">{r.message.sender}</span>
+                    <span className="text-sm font-medium text-foreground">{r.message.sender}</span>
                     <Badge className={STATUS_STYLES[r.status] ?? ''}>{r.status}</Badge>
-                    <span className="text-xs text-slate-400">{format(new Date(r.message.createdAt), 'd MMM yyyy HH:mm')}</span>
+                    <span className="text-xs text-muted-foreground">{format(new Date(r.message.createdAt), 'd MMM yyyy HH:mm')}</span>
                   </div>
-                  <p className="mt-1 whitespace-pre-wrap break-words rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">{r.message.body}</p>
-                  {r.reason && <p className="mt-1 text-xs text-slate-500">Reason: {r.reason}</p>}
+                  <p className="mt-1 whitespace-pre-wrap break-words rounded-md bg-muted/50 px-3 py-2 text-sm text-foreground">{r.message.body}</p>
+                  {r.reason && <p className="mt-1 text-xs text-muted-foreground">Reason: {r.reason}</p>}
                   <Link to="/chat" className="mt-1 inline-block text-xs text-aubergine-600 hover:underline">Open conversation</Link>
                 </div>
                 {r.status === 'OPEN' && (

@@ -68,7 +68,7 @@ export default function RoleManagement({ open, onClose }: RoleManagementProps) {
       <DialogContent className="w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] sm:max-w-4xl max-h-[90vh] overflow-x-hidden overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-purple-600" />
+            <Shield className="h-5 w-5 text-accent-purple" />
             Role Access Reference
           </DialogTitle>
           <DialogDescription>
@@ -94,12 +94,12 @@ export default function RoleManagement({ open, onClose }: RoleManagementProps) {
             </Select>
           </div>
 
-          <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-900">
+          <div className="rounded-lg bg-muted/50 p-4">
             <div className="mb-2 flex items-center justify-between gap-3">
               <span className="text-sm font-medium">{ROLE_LABELS[selectedRole]} access</span>
               <Badge variant="secondary">{currentPermissions.length} permissions</Badge>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-muted-foreground">
               {ROLE_DESCRIPTIONS[selectedRole]}
               {selectedRole === 'TEACHER' && ' Full-time, part-time, and volunteer are employment classifications; assignments determine academic data scope.'}
             </p>
@@ -113,7 +113,7 @@ export default function RoleManagement({ open, onClose }: RoleManagementProps) {
               if (granted.length === 0) return null;
               return (
                 <section key={categoryKey} className="space-y-2">
-                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white">{categoryLabel}</h4>
+                  <h4 className="text-sm font-semibold text-foreground">{categoryLabel}</h4>
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                     {granted.map((permission) => (
                       <div
@@ -130,8 +130,8 @@ export default function RoleManagement({ open, onClose }: RoleManagementProps) {
             })}
           </div>
 
-          <div className="min-w-0 border-t border-slate-200 pt-4 dark:border-slate-700">
-            <h4 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">All roles overview</h4>
+          <div className="min-w-0 border-t border-border pt-4">
+            <h4 className="mb-3 text-sm font-semibold text-foreground">All roles overview</h4>
             <PermissionMatrix showAllPermissions={false} />
           </div>
         </div>

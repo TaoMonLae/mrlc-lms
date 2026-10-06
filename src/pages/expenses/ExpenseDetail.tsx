@@ -154,8 +154,8 @@ export default function ExpenseDetail() {
       case 'APPROVED': return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'PENDING_APPROVAL': return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'REJECTED': return 'bg-red-100 text-red-800 border-red-200';
-      case 'CANCELLED': return 'bg-slate-100 text-slate-800 border-slate-200';
-      default: return 'bg-slate-100 text-slate-800 border-slate-200';
+      case 'CANCELLED': return 'bg-muted text-foreground border-border';
+      default: return 'bg-muted text-foreground border-border';
     }
   };
 
@@ -180,7 +180,7 @@ export default function ExpenseDetail() {
   }
 
   if (!expense) {
-    return <div className="text-center py-8 text-slate-500">Expense not found</div>;
+    return <div className="text-center py-8 text-muted-foreground">Expense not found</div>;
   }
 
   return (
@@ -191,8 +191,8 @@ export default function ExpenseDetail() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{expense.title}</h1>
-            <p className="text-sm text-slate-500">Expense Details</p>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">{expense.title}</h1>
+            <p className="text-sm text-muted-foreground">Expense Details</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -262,15 +262,15 @@ export default function ExpenseDetail() {
           </CardHeader>
           <CardContent className="grid gap-4 pt-5 sm:grid-cols-2">
             <div className="flex items-start gap-3">
-              <UserRound className="mt-0.5 h-5 w-5 text-slate-400" />
-              <div><p className="text-sm text-slate-500">Submitted by student</p><p className="font-medium">{expense.student?.preferredName || `${expense.student?.user?.firstName || ''} ${expense.student?.user?.lastName || ''}`.trim() || 'Student'}{expense.student?.studentCode ? ` · ${expense.student.studentCode}` : ''}</p></div>
+              <UserRound className="mt-0.5 h-5 w-5 text-muted-foreground" />
+              <div><p className="text-sm text-muted-foreground">Submitted by student</p><p className="font-medium">{expense.student?.preferredName || `${expense.student?.user?.firstName || ''} ${expense.student?.user?.lastName || ''}`.trim() || 'Student'}{expense.student?.studentCode ? ` · ${expense.student.studentCode}` : ''}</p></div>
             </div>
             <div className="flex items-start gap-3">
-              <Calendar className="mt-0.5 h-5 w-5 text-slate-400" />
-              <div><p className="text-sm text-slate-500">Assigned duty</p><p className="font-medium">{expense.dutyAssignment?.dutyDefinition?.name || 'Duty assignment'} · {new Date(expense.dutyAssignment?.scheduledDate || expense.expenseDate).toLocaleDateString()}</p></div>
+              <Calendar className="mt-0.5 h-5 w-5 text-muted-foreground" />
+              <div><p className="text-sm text-muted-foreground">Assigned duty</p><p className="font-medium">{expense.dutyAssignment?.dutyDefinition?.name || 'Duty assignment'} · {new Date(expense.dutyAssignment?.scheduledDate || expense.expenseDate).toLocaleDateString()}</p></div>
             </div>
-            <div><p className="text-sm text-slate-500">Shop or payee</p><p className="font-medium">{expense.merchantName || 'Not provided'}</p></div>
-            <div><p className="text-sm text-slate-500">Receipt / reference</p><p className="font-medium">{expense.receiptReference || 'Not provided'}</p></div>
+            <div><p className="text-sm text-muted-foreground">Shop or payee</p><p className="font-medium">{expense.merchantName || 'Not provided'}</p></div>
+            <div><p className="text-sm text-muted-foreground">Receipt / reference</p><p className="font-medium">{expense.receiptReference || 'Not provided'}</p></div>
           </CardContent>
         </Card>
       )}
@@ -283,34 +283,34 @@ export default function ExpenseDetail() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-start gap-3">
-              <FileText className="h-5 w-5 text-slate-400 mt-0.5" />
+              <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm text-slate-500">Description</p>
-                <p className="text-slate-900 dark:text-white">{expense.description || '—'}</p>
+                <p className="text-sm text-muted-foreground">Description</p>
+                <p className="text-foreground">{expense.description || '—'}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <Wallet className="h-5 w-5 text-slate-400 mt-0.5" />
+              <Wallet className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm text-slate-500">Category</p>
-                <p className="text-slate-900 dark:text-white">{getCategoryLabel(expense.category)}</p>
+                <p className="text-sm text-muted-foreground">Category</p>
+                <p className="text-foreground">{getCategoryLabel(expense.category)}</p>
               </div>
             </div>
             {expense.budget && (
               <div className="flex items-start gap-3">
-                <Wallet className="h-5 w-5 text-slate-400 mt-0.5" />
+                <Wallet className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm text-slate-500">Budget</p>
-                  <p className="text-slate-900 dark:text-white">{expense.budget.name}</p>
+                  <p className="text-sm text-muted-foreground">Budget</p>
+                  <p className="text-foreground">{expense.budget.name}</p>
                 </div>
               </div>
             )}
             {expense.academicYear && (
               <div className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-slate-400 mt-0.5" />
+                <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm text-slate-500">Academic Year</p>
-                  <p className="text-slate-900 dark:text-white">{expense.academicYear}</p>
+                  <p className="text-sm text-muted-foreground">Academic Year</p>
+                  <p className="text-foreground">{expense.academicYear}</p>
                 </div>
               </div>
             )}
@@ -324,12 +324,12 @@ export default function ExpenseDetail() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between">
-              <span className="text-slate-500">Amount</span>
+              <span className="text-muted-foreground">Amount</span>
               <span className="font-semibold">{formatMoney(expense.amount, expense.currency || currency)}</span>
             </div>
             {expense.taxAmount > 0 && (
               <div className="flex justify-between">
-                <span className="text-slate-500">Tax</span>
+                <span className="text-muted-foreground">Tax</span>
                 <span className="font-semibold">{formatMoney(expense.taxAmount, expense.currency || currency)}</span>
               </div>
             )}
@@ -337,21 +337,21 @@ export default function ExpenseDetail() {
               <span className="font-semibold">Total</span>
               <span className="font-bold">{formatMoney(expense.totalAmount || expense.amount, expense.currency || currency)}</span>
             </div>
-            <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="pt-4 border-t border-border">
               <div className="flex items-start gap-3">
-                <Calendar className="h-5 w-5 text-slate-400 mt-0.5" />
+                <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm text-slate-500">Expense Date</p>
-                  <p className="text-slate-900 dark:text-white">{new Date(expense.expenseDate).toLocaleDateString()}</p>
+                  <p className="text-sm text-muted-foreground">Expense Date</p>
+                  <p className="text-foreground">{new Date(expense.expenseDate).toLocaleDateString()}</p>
                 </div>
               </div>
             </div>
             {expense.dueDate && (
               <div className="flex items-start gap-3">
-                <Calendar className="h-5 w-5 text-slate-400 mt-0.5" />
+                <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm text-slate-500">Due Date</p>
-                  <p className="text-slate-900 dark:text-white">{new Date(expense.dueDate).toLocaleDateString()}</p>
+                  <p className="text-sm text-muted-foreground">Due Date</p>
+                  <p className="text-foreground">{new Date(expense.dueDate).toLocaleDateString()}</p>
                 </div>
               </div>
             )}
@@ -366,27 +366,27 @@ export default function ExpenseDetail() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-start gap-3">
-                <Building2 className="h-5 w-5 text-slate-400 mt-0.5" />
+                <Building2 className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm text-slate-500">Vendor Name</p>
-                  <p className="text-slate-900 dark:text-white">{expense.vendor.name}</p>
+                  <p className="text-sm text-muted-foreground">Vendor Name</p>
+                  <p className="text-foreground">{expense.vendor.name}</p>
                 </div>
               </div>
               {expense.vendorInvoiceNo && (
                 <div className="flex items-start gap-3">
-                  <FileText className="h-5 w-5 text-slate-400 mt-0.5" />
+                  <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-sm text-slate-500">Invoice Number</p>
-                    <p className="text-slate-900 dark:text-white">{expense.vendorInvoiceNo}</p>
+                    <p className="text-sm text-muted-foreground">Invoice Number</p>
+                    <p className="text-foreground">{expense.vendorInvoiceNo}</p>
                   </div>
                 </div>
               )}
               {expense.vendor.contactPerson && (
                 <div className="flex items-start gap-3">
-                  <FileText className="h-5 w-5 text-slate-400 mt-0.5" />
+                  <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-sm text-slate-500">Contact Person</p>
-                    <p className="text-slate-900 dark:text-white">{expense.vendor.contactPerson}</p>
+                    <p className="text-sm text-muted-foreground">Contact Person</p>
+                    <p className="text-foreground">{expense.vendor.contactPerson}</p>
                   </div>
                 </div>
               )}
@@ -403,10 +403,10 @@ export default function ExpenseDetail() {
             <CardContent>
               <div className="space-y-3">
                 {expense.payments.map((payment: any) => (
-                  <div key={payment.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                  <div key={payment.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                     <div>
                       <p className="font-medium">{payment.paymentNumber}</p>
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-muted-foreground">
                         {payment.paymentMethod} • {new Date(payment.paymentDate).toLocaleDateString()}
                       </p>
                     </div>
@@ -428,24 +428,24 @@ export default function ExpenseDetail() {
           <CardContent className="space-y-3">
             {expense.submittedAt && (
               <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Submitted:</span>
-                <span className="text-slate-900 dark:text-white">
+                <span className="text-muted-foreground">Submitted:</span>
+                <span className="text-foreground">
                   {expense.submittedByName} • {new Date(expense.submittedAt).toLocaleString()}
                 </span>
               </div>
             )}
             {expense.approvedAt && (
               <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Approved:</span>
-                <span className="text-slate-900 dark:text-white">
+                <span className="text-muted-foreground">Approved:</span>
+                <span className="text-foreground">
                   {expense.approvedByName} • {new Date(expense.approvedAt).toLocaleString()}
                 </span>
               </div>
             )}
             {expense.paidDate && (
               <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Paid:</span>
-                <span className="text-slate-900 dark:text-white">
+                <span className="text-muted-foreground">Paid:</span>
+                <span className="text-foreground">
                   {new Date(expense.paidDate).toLocaleString()}
                 </span>
               </div>
@@ -461,7 +461,7 @@ export default function ExpenseDetail() {
             <CardTitle>Notes</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-slate-900 dark:text-white">{expense.notes}</p>
+            <p className="text-foreground">{expense.notes}</p>
           </CardContent>
         </Card>
       )}

@@ -152,8 +152,8 @@ export default function VideoList() {
     <div className="space-y-6 max-w-full mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Video Lessons</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Browse and manage instructional video content.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Video Lessons</h1>
+          <p className="text-sm text-muted-foreground mt-1">Browse and manage instructional video content.</p>
         </div>
         {(isAdmin || isTeacher) && (
           <Button
@@ -193,11 +193,11 @@ export default function VideoList() {
         </div>
       )}
 
-      <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex flex-col md:flex-row gap-4 items-center">
+      <div className="bg-card p-4 rounded-sm border border-border shadow-sm flex flex-col md:flex-row gap-4 items-center">
         {(isAdmin || isTeacher) && (
           <button
             onClick={toggleAll}
-            className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             {selectedIds.size === filteredVideos.length && filteredVideos.length > 0 ? (
               <CheckSquare className="h-4 w-4" />
@@ -208,7 +208,7 @@ export default function VideoList() {
           </button>
         )}
         <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             aria-label="Search video lessons"
             placeholder="Search by title or description..."
@@ -252,15 +252,15 @@ export default function VideoList() {
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="ml-3 text-slate-500">Loading videos...</span>
+          <span className="ml-3 text-muted-foreground">Loading videos...</span>
         </div>
       ) : filteredVideos.length === 0 ? (
-        <div className="text-center py-20 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm">
+        <div className="text-center py-20 bg-card border border-border rounded-sm shadow-sm">
           <Video className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600 mb-4" />
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white">
+          <h3 className="text-lg font-medium text-foreground">
             {hasNoVideos ? 'No videos yet' : 'No videos found'}
           </h3>
-          <p className="text-slate-500 mt-1">
+          <p className="text-muted-foreground mt-1">
             {hasNoVideos
               ? 'Add your first video lesson to get started.'
               : 'Try adjusting your filters or search query.'}

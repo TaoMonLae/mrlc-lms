@@ -70,8 +70,8 @@ export default function VendorsPage() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Vendors</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage suppliers and service providers.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Vendors</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage suppliers and service providers.</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           {hasPermission('manage_expenses') && (
@@ -86,7 +86,7 @@ export default function VendorsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Total Vendors</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Vendors</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{vendors.length}</div>
@@ -94,7 +94,7 @@ export default function VendorsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Active Vendors</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Active Vendors</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
@@ -104,7 +104,7 @@ export default function VendorsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Total Purchases</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Purchases</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -117,7 +117,7 @@ export default function VendorsPage() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search vendors..."
             value={searchTerm}
@@ -140,9 +140,9 @@ export default function VendorsPage() {
 
       {/* Vendors Grid */}
       {loading ? (
-        <div className="text-center py-8 text-slate-500">Loading...</div>
+        <div className="text-center py-8 text-muted-foreground">Loading...</div>
       ) : filteredVendors.length === 0 ? (
-        <div className="text-center py-8 text-slate-500">
+        <div className="text-center py-8 text-muted-foreground">
           {searchTerm || categoryFilter !== 'ALL'
             ? 'No vendors found matching your filters.'
             : 'No vendors yet. Add your first vendor to get started.'}
@@ -156,7 +156,7 @@ export default function VendorsPage() {
                   <div className="flex-1">
                     <CardTitle className="text-lg">{vendor.name}</CardTitle>
                     {vendor.code && (
-                      <p className="text-xs text-slate-500 mt-1">{vendor.code}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{vendor.code}</p>
                     )}
                   </div>
                   <Badge variant={vendor.isActive ? 'default' : 'secondary'}>
@@ -166,47 +166,47 @@ export default function VendorsPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {vendor.description && (
-                  <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2">
+                  <p className="text-sm text-muted-foreground line-clamp-2">
                     {vendor.description}
                   </p>
                 )}
 
                 <div className="space-y-2 text-sm">
                   {vendor.contactPerson && (
-                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                      <Building2 className="h-4 w-4 text-slate-400" />
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
                   <span>{vendor.contactPerson}</span>
                 </div>
               )}
               {vendor.email && (
-                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                  <Mail className="h-4 w-4 text-slate-400" />
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
                   <span className="truncate">{vendor.email}</span>
                 </div>
               )}
               {vendor.phone && (
-                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                  <Phone className="h-4 w-4 text-slate-400" />
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
                   <span>{vendor.phone}</span>
                 </div>
               )}
               {vendor.city && (
-                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                  <MapPin className="h-4 w-4 text-slate-400" />
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
                   <span>{vendor.city}{vendor.state && `, ${vendor.state}`}</span>
                 </div>
               )}
                 </div>
 
-                <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
+                <div className="pt-3 border-t border-border">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">Total Purchases</span>
+                    <span className="text-muted-foreground">Total Purchases</span>
                     <span className="font-semibold">
                       {formatMoney(vendor.totalPurchases || 0, currency)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">Expense Count</span>
+                    <span className="text-muted-foreground">Expense Count</span>
                     <span className="font-semibold">{vendor.purchaseCount || 0}</span>
                   </div>
                 </div>

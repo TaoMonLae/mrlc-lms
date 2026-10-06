@@ -103,7 +103,7 @@ export function MathField({
   return (
     <div className="space-y-2">
       {enabled && showToolbar && (
-        <div className="flex flex-wrap items-center gap-1 rounded-md border border-slate-200 dark:border-surface-raised bg-slate-50 dark:bg-surface-raised/40 p-1.5">
+        <div className="flex flex-wrap items-center gap-1 rounded-md border border-border bg-muted/50 p-1.5">
           <button
             type="button"
             onClick={() => insertAtCursor('x', true)}
@@ -112,14 +112,14 @@ export function MathField({
           >
             <Sigma className="h-3.5 w-3.5" /> Math
           </button>
-          <span className="w-px h-5 bg-slate-200 dark:bg-surface-raised mx-0.5" />
+          <span className="w-px h-5 bg-muted mx-0.5" />
           {SYMBOLS.map((sym) => (
             <button
               key={sym.label}
               type="button"
               onClick={() => insertMathSnippet(sym.snippet, sym.standalone)}
               title={`${sym.title} — ${sym.snippet}`}
-              className="min-w-[28px] h-7 px-1.5 rounded text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised hover:bg-slate-100 dark:hover:bg-surface-raised transition-colors"
+              className="min-w-[28px] h-7 px-1.5 rounded text-sm text-foreground bg-card border border-border hover:bg-muted transition-colors"
             >
               {sym.label}
             </button>
@@ -147,9 +147,9 @@ export function MathField({
       )}
 
       {hasMath && (
-        <div className="rounded-md border border-dashed border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo px-3 py-2">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Preview</p>
-          <div className="text-sm text-slate-900 dark:text-white leading-relaxed">
+        <div className="rounded-md border border-dashed border-border bg-card px-3 py-2">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Preview</p>
+          <div className="text-sm text-foreground leading-relaxed">
             <MathText>{value}</MathText>
           </div>
         </div>

@@ -36,11 +36,11 @@ export default function ClassPerformanceReport() {
     <div className="space-y-6 max-w-6xl mx-auto pb-10">
       <div className="print:hidden flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
-          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/reports" />} nativeButton={false}>
+          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/reports" />} nativeButton={false}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Reports
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Class Performance Comparison</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Class Performance Comparison</h1>
         </div>
 
         <div className="flex items-center gap-2">
@@ -51,7 +51,7 @@ export default function ClassPerformanceReport() {
       </div>
 
       {isLoading ? (
-        <div className="print:hidden flex items-center justify-center py-12 text-slate-500"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…</div>
+        <div className="print:hidden flex items-center justify-center py-12 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…</div>
       ) : error ? (
         <div className="print:hidden py-12 text-center text-sm text-red-600">{error}</div>
       ) : (
@@ -61,7 +61,7 @@ export default function ClassPerformanceReport() {
         filters={{ Scope: 'All Classes' }}
       >
         {rows.length === 0 ? (
-          <p className="text-sm text-slate-500 py-6 text-center">No classes with graded exams yet.</p>
+          <p className="text-sm text-muted-foreground py-6 text-center">No classes with graded exams yet.</p>
         ) : (
         <table className="w-full text-sm text-center border-collapse mt-4">
             <thead>
@@ -75,18 +75,18 @@ export default function ClassPerformanceReport() {
             <tbody>
               {rows.map((r, i) => (
                 <tr key={i}>
-                  <td className="px-4 py-3 border font-medium text-slate-900 text-left">{r.className}</td>
-                  <td className="px-4 py-3 border text-slate-700">{r.totalStudents}</td>
-                  {subjects.map((s) => <td key={s} className="px-4 py-3 border text-slate-700">{r.subjectAverages[s] != null ? r.subjectAverages[s] : '—'}</td>)}
-                  <td className="px-4 py-3 border text-right font-bold text-slate-900">{r.overall}</td>
+                  <td className="px-4 py-3 border font-medium text-foreground text-left">{r.className}</td>
+                  <td className="px-4 py-3 border text-foreground">{r.totalStudents}</td>
+                  {subjects.map((s) => <td key={s} className="px-4 py-3 border text-foreground">{r.subjectAverages[s] != null ? r.subjectAverages[s] : '—'}</td>)}
+                  <td className="px-4 py-3 border text-right font-bold text-foreground">{r.overall}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
                <tr>
-                  <td colSpan={2} className="px-4 py-3 border font-bold text-slate-900 text-right">School Average:</td>
-                  {subjects.map((s) => <td key={s} className="px-4 py-3 border font-bold text-slate-900">{data?.schoolAverages[s] ?? 0}</td>)}
-                  <td className="px-4 py-3 border font-bold text-slate-900 text-right">{data?.schoolOverall ?? 0}</td>
+                  <td colSpan={2} className="px-4 py-3 border font-bold text-foreground text-right">School Average:</td>
+                  {subjects.map((s) => <td key={s} className="px-4 py-3 border font-bold text-foreground">{data?.schoolAverages[s] ?? 0}</td>)}
+                  <td className="px-4 py-3 border font-bold text-foreground text-right">{data?.schoolOverall ?? 0}</td>
                </tr>
             </tfoot>
         </table>

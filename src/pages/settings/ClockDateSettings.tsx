@@ -92,7 +92,7 @@ export default function ClockDateSettings() {
     <form onSubmit={handleSubmit(onSubmit)} className="relative">
       <header className="grid border-b border-foreground lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="px-5 py-6 sm:px-7">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-academic-teal">Regional standard</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.13em] text-academic-teal">Regional standard</p>
           <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-foreground">Clock & date</h2>
           <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
             Set one dependable school time for schedules, attendance, reports and the application header.
@@ -100,7 +100,7 @@ export default function ClockDateSettings() {
         </div>
         <div className="border-t border-foreground bg-academic-navy-deep px-5 py-5 text-white lg:border-l lg:border-t-0 sm:px-7">
           <div className="flex items-center justify-between gap-4">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-academic-gold">Live school time</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.13em] text-academic-gold">Live school time</p>
             <Clock3 className="size-4 text-academic-gold" aria-hidden="true" />
           </div>
           <time dateTime={now.toISOString()} className="mt-4 block font-mono text-4xl font-semibold leading-none tracking-[-0.055em]">
@@ -109,14 +109,14 @@ export default function ClockDateSettings() {
           <p className="mt-3 text-sm font-medium text-white/90">
             {formatSchoolWeekday(now, timezone)} · {formatSchoolDate(now, timezone, dateFormat)}
           </p>
-          <p className="mt-2 truncate text-[10px] uppercase tracking-[0.09em] text-white/55">{formatTimeZoneLabel(timezone, now)}</p>
+          <p className="mt-2 truncate text-[11px] uppercase tracking-[0.09em] text-white/55">{formatTimeZoneLabel(timezone, now)}</p>
         </div>
       </header>
 
       <div className="divide-y divide-border">
         <section className="grid gap-4 px-5 py-6 md:grid-cols-[minmax(180px,0.75fr)_minmax(0,1.25fr)] md:gap-8 sm:px-7" aria-labelledby="timezone-label">
           <div>
-            <p className="font-mono text-[10px] text-academic-teal">01</p>
+            <p className="font-mono text-[11px] text-academic-teal">01</p>
             <h3 id="timezone-label" className="mt-1 flex items-center gap-2 text-sm font-semibold"><Globe2 className="size-4" aria-hidden="true" /> School time zone</h3>
             <p className="mt-2 text-xs leading-5 text-muted-foreground">The reference zone for the top-bar clock and date preview.</p>
           </div>
@@ -133,7 +133,7 @@ export default function ClockDateSettings() {
 
         <section className="grid gap-4 px-5 py-6 md:grid-cols-[minmax(180px,0.75fr)_minmax(0,1.25fr)] md:gap-8 sm:px-7" aria-labelledby="time-format-label">
           <div>
-            <p className="font-mono text-[10px] text-academic-teal">02</p>
+            <p className="font-mono text-[11px] text-academic-teal">02</p>
             <h3 id="time-format-label" className="mt-1 flex items-center gap-2 text-sm font-semibold"><Clock3 className="size-4" aria-hidden="true" /> Time notation</h3>
             <p className="mt-2 text-xs leading-5 text-muted-foreground">Choose the notation staff and learners see in the school header.</p>
           </div>
@@ -160,7 +160,7 @@ export default function ClockDateSettings() {
 
         <section className="grid gap-4 px-5 py-6 md:grid-cols-[minmax(180px,0.75fr)_minmax(0,1.25fr)] md:gap-8 sm:px-7" aria-labelledby="date-format-label">
           <div>
-            <p className="font-mono text-[10px] text-academic-teal">03</p>
+            <p className="font-mono text-[11px] text-academic-teal">03</p>
             <h3 id="date-format-label" className="mt-1 flex items-center gap-2 text-sm font-semibold"><CalendarDays className="size-4" aria-hidden="true" /> Date order</h3>
             <p className="mt-2 text-xs leading-5 text-muted-foreground">Use one predictable order across shared school views.</p>
           </div>
@@ -177,7 +177,7 @@ export default function ClockDateSettings() {
                   className={`relative min-h-20 border p-4 text-left transition-colors focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${active ? 'border-academic-teal bg-accent text-accent-foreground' : 'border-border bg-card hover:bg-muted/55'} sm:-ml-px sm:first:ml-0`}
                 >
                   <span className="font-mono text-sm font-semibold">{item.label}</span>
-                  <span className="mt-2 block text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">{item.note}</span>
+                  <span className="mt-2 block text-[11px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">{item.note}</span>
                   {active && <Check className="absolute right-3 top-3 size-4 text-academic-teal" aria-hidden="true" />}
                 </button>
               );
@@ -187,7 +187,7 @@ export default function ClockDateSettings() {
 
         <section className="grid gap-4 px-5 py-6 md:grid-cols-[minmax(180px,0.75fr)_minmax(0,1.25fr)] md:gap-8 sm:px-7" aria-labelledby="seconds-label">
           <div>
-            <p className="font-mono text-[10px] text-academic-teal">04</p>
+            <p className="font-mono text-[11px] text-academic-teal">04</p>
             <h3 id="seconds-label" className="mt-1 text-sm font-semibold">Clock precision</h3>
             <p className="mt-2 text-xs leading-5 text-muted-foreground">Seconds help with timed attendance and exams; hide them for a quieter header.</p>
           </div>

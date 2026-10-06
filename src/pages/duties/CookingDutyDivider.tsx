@@ -214,8 +214,8 @@ export default function CookingDutyDivider({
   };
 
   return (
-    <Card className="overflow-hidden rounded-none border-slate-300 dark:border-surface-raised">
-      <CardHeader className="border-b border-border bg-slate-50/70 dark:bg-surface-raised/30">
+    <Card className="overflow-hidden rounded-none border-input">
+      <CardHeader className="border-b border-border bg-muted/42">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <CardTitle className="flex items-center gap-2 text-lg"><ChefHat className="h-5 w-5 text-academic-teal" /> Cooking Duty Divider</CardTitle>
@@ -284,7 +284,7 @@ export default function CookingDutyDivider({
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{studentLabel(student)}</p>
                           <p className="mt-0.5 text-xs text-muted-foreground">{student.studentCode}</p>
-                          {role && <Badge variant="outline" className="mt-2 max-w-full border-academic-teal/30 bg-academic-teal/10 text-[10px] text-academic-teal">{role}</Badge>}
+                          {role && <Badge variant="outline" className="mt-2 max-w-full border-academic-teal/30 bg-academic-teal/10 text-[11px] text-academic-teal">{role}</Badge>}
                         </div>
                       </div>
                     </motion.button>
@@ -343,7 +343,7 @@ export default function CookingDutyDivider({
                                   <div className="min-w-0 flex-1">
                                     <p className="truncate text-sm font-semibold">{studentLabel(assignment.student)}</p>
                                     <p className="mt-0.5 text-xs text-muted-foreground">{assignment.student.studentCode}</p>
-                                    {role && <p className="mt-1 truncate text-[10px] font-medium uppercase tracking-wide text-academic-teal">{role}</p>}
+                                    {role && <p className="mt-1 truncate text-[11px] font-medium uppercase tracking-wide text-academic-teal">{role}</p>}
                                   </div>
                                 </div>
                                 {editable && (

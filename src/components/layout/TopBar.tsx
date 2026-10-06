@@ -168,7 +168,7 @@ export function TopBar() {
             <span className="block h-10 w-full rounded-sm border border-border bg-background py-2 pl-10 pr-14 text-sm text-foreground transition-colors hover:border-academic-teal">
               Search school records…
             </span>
-            <kbd className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm border border-border bg-card px-2 py-1 text-[10px] font-semibold tracking-[0.08em] text-muted-foreground">
+            <kbd className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm border border-border bg-card px-2 py-1 text-[11px] font-semibold tracking-[0.08em] text-muted-foreground">
               ⌘K
             </kbd>
           </button>
@@ -271,14 +271,14 @@ export function TopBar() {
 
           <DropdownMenuContent align="end" className="w-[min(20rem,calc(100vw-2rem))] p-0">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/10">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <div className="flex items-center gap-2">
                 <Bell className="h-4 w-4 text-aubergine-500" />
-                <span className="font-semibold text-sm text-slate-900 dark:text-white">
+                <span className="font-semibold text-sm text-foreground">
                   Notifications
                 </span>
                 {unreadCount > 0 && (
-                  <Badge className="h-4 px-1.5 text-[10px] bg-aubergine-600 text-white border-none">
+                  <Badge className="h-4 px-1.5 text-[11px] bg-aubergine-600 text-white border-none">
                     {unreadCount}
                   </Badge>
                 )}
@@ -294,9 +294,9 @@ export function TopBar() {
             </div>
 
             {/* List */}
-            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-white/10">
+            <div className="max-h-80 overflow-y-auto divide-y divide-border">
               {notifications.length === 0 && activeAnnouncements.length === 0 ? (
-                <div className="py-8 text-center text-sm text-slate-400">
+                <div className="py-8 text-center text-sm text-muted-foreground">
                   You're all caught up
                 </div>
               ) : (
@@ -306,21 +306,21 @@ export function TopBar() {
                     key={notification.id}
                     to={notification.href || '#'}
                     onClick={() => { void markNotificationRead(notification.id); setNotifOpen(false); }}
-                    className="flex flex-col gap-1 px-4 py-3 hover:bg-slate-50 dark:hover:bg-surface-raised"
+                    className="flex flex-col gap-1 px-4 py-3 hover:bg-muted/50"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span className="text-sm font-medium text-slate-900 dark:text-white">{notification.title}</span>
+                      <span className="text-sm font-medium text-foreground">{notification.title}</span>
                       {!notification.readAt && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-aubergine-500" />}
                     </div>
-                    <p className="text-xs leading-relaxed text-slate-500">{notification.message}</p>
-                    <span className="text-[10px] text-slate-400">{format(new Date(notification.createdAt), 'MMM d, yyyy')}</span>
+                    <p className="text-xs leading-relaxed text-muted-foreground">{notification.message}</p>
+                    <span className="text-[11px] text-muted-foreground">{format(new Date(notification.createdAt), 'MMM d, yyyy')}</span>
                   </Link>
                 ))}
                 {activeAnnouncements.map((ann) => (
                   <div
                     key={ann.id}
                     onClick={() => markAsViewed(ann.id)}
-                    className="cursor-pointer flex flex-col gap-1 px-4 py-3 hover:bg-slate-50 dark:hover:bg-surface-raised transition-colors"
+                    className="cursor-pointer flex flex-col gap-1 px-4 py-3 hover:bg-muted/50 transition-colors"
                   >
                     <Link
                       to={`/announcements/${ann.id}`}
@@ -332,7 +332,7 @@ export function TopBar() {
                       className="flex flex-col gap-1 w-full"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <span className="text-sm font-medium text-slate-900 dark:text-white line-clamp-1 flex-1">
+                        <span className="text-sm font-medium text-foreground line-clamp-1 flex-1">
                           {ann.title}
                         </span>
                         {ann.pinned && (
@@ -342,10 +342,10 @@ export function TopBar() {
                           <span className="h-2 w-2 rounded-full bg-aubergine-500 flex-shrink-0 mt-1.5" />
                         )}
                       </div>
-                      <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                         {ann.body}
                       </p>
-                      <span className="text-[10px] text-slate-400 mt-0.5">
+                      <span className="text-[11px] text-muted-foreground mt-0.5">
                         {format(new Date(ann.createdAt), "MMM d, yyyy")} ·{" "}
                         {ann.createdByName}
                       </span>
@@ -357,7 +357,7 @@ export function TopBar() {
             </div>
 
             {/* Footer */}
-            <div className="border-t border-slate-100 dark:border-white/10 px-4 py-2">
+            <div className="border-t border-border px-4 py-2">
               <Link
                 to="/notifications/settings"
                 onClick={() => setNotifOpen(false)}

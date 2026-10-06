@@ -38,7 +38,7 @@ type Row = {
 type Gradebook = { items: Item[]; weights: Record<string, number>; rows: Row[]; categories: string[] };
 
 const letterColor = (l: string | null) => {
-  if (!l) return 'bg-slate-100 text-slate-500';
+  if (!l) return 'bg-muted text-muted-foreground';
   if (l === 'A+' || l === 'A') return 'bg-emerald-100 text-emerald-700';
   if (l === 'B') return 'bg-blue-100 text-blue-700';
   if (l === 'C') return 'bg-amber-100 text-amber-700';
@@ -260,13 +260,13 @@ export default function GradebookPage() {
     <div className="mx-auto max-w-[1440px] space-y-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <span className="flex size-9 items-center justify-center rounded-sm bg-primary/10 text-primary">
               <BookOpenCheck className="h-5 w-5" />
             </span>
             Gradebook
           </h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Assignments, quizzes, exams and weighted grades.</p>
+          <p className="text-sm text-muted-foreground mt-1">Assignments, quizzes, exams and weighted grades.</p>
         </div>
         <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:w-auto">
           <div className="space-y-1.5">
@@ -296,7 +296,7 @@ export default function GradebookPage() {
       </div>
 
       {(classesError || (!classesLoading && classes.length === 0)) && (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100" role="status">
+        <div className="flex items-start gap-3 rounded-sm border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100" role="status">
           <AlertTriangle className="mt-0.5 size-5 shrink-0" />
           <div>
             <p className="font-semibold">{classesError ? 'Classes could not be loaded' : 'No classes are available'}</p>
@@ -305,8 +305,8 @@ export default function GradebookPage() {
         </div>
       )}
 
-      <Tabs defaultValue="summary" className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo">
-        <div className="border-b border-slate-200 px-4 pt-2 dark:border-surface-raised sm:px-6">
+      <Tabs defaultValue="summary" className="overflow-hidden rounded-sm border border-border bg-card shadow-sm">
+        <div className="border-b border-border px-4 pt-2 sm:px-6">
           <TabsList variant="line" aria-label="Gradebook sections" className="h-12 w-full justify-start gap-1 overflow-x-auto">
             <TabsTrigger value="summary" className="h-10 flex-none rounded-lg px-3 font-semibold data-active:text-primary data-active:after:bg-primary focus-visible:border-transparent focus-visible:bg-primary/10 focus-visible:ring-0 focus-visible:outline-none">Summary</TabsTrigger>
             {canManage && <TabsTrigger value="entry" className="h-10 flex-none rounded-lg px-3 font-semibold data-active:text-primary data-active:after:bg-primary focus-visible:border-transparent focus-visible:bg-primary/10 focus-visible:ring-0 focus-visible:outline-none">Grade Entry</TabsTrigger>}
@@ -318,18 +318,18 @@ export default function GradebookPage() {
         <TabsContent value="summary" className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 uppercase tracking-wider font-semibold text-[11px]">
+              <thead className="bg-muted/50 text-muted-foreground uppercase tracking-wider font-semibold text-[11px]">
                 <tr>
-                  <th className="px-6 py-4 min-w-[160px] sticky left-0 z-20 bg-slate-50 dark:bg-surface-raised">Student</th>
+                  <th className="px-6 py-4 min-w-[160px] sticky left-0 z-20 bg-muted/50">Student</th>
                   {data?.categories.map((c) => <th key={c} className="px-4 py-4 text-center">{CATEGORY_LABELS[c]}</th>)}
                   <th className="px-4 py-4 text-center">Overall</th>
                   <th className="px-4 py-4 text-center">Grade</th>
                   <th className="px-4 py-4 text-center">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-border">
                 {loading && (
-                  <tr><td colSpan={summaryColumnCount} className="px-6 py-14 text-center text-slate-500"><Loader2 className="mr-2 inline size-4 animate-spin" />Loading gradebook…</td></tr>
+                  <tr><td colSpan={summaryColumnCount} className="px-6 py-14 text-center text-muted-foreground"><Loader2 className="mr-2 inline size-4 animate-spin" />Loading gradebook…</td></tr>
                 )}
                 {!loading && loadError && (
                   <tr><td colSpan={summaryColumnCount}>
@@ -352,20 +352,20 @@ export default function GradebookPage() {
                   </td></tr>
                 )}
                 {!loading && !loadError && data?.rows.map((r) => (
-                  <tr key={r.studentId} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                    <td className="px-6 py-3 font-medium text-slate-900 dark:text-white sticky left-0 z-10 bg-white dark:bg-surface-indigo">
+                  <tr key={r.studentId} className="hover:bg-muted/50">
+                    <td className="px-6 py-3 font-medium text-foreground sticky left-0 z-10 bg-card">
                       <Link to={`/gradebook/students/${r.studentId}`} className="hover:text-aubergine-600 hover:underline">{r.name}</Link>
-                      <span className="text-xs text-slate-400 font-mono ml-1">{r.code}</span>
+                      <span className="text-xs text-muted-foreground font-mono ml-1">{r.code}</span>
                     </td>
                     {data.categories.map((c) => (
-                      <td key={c} className="px-4 py-3 text-center text-slate-600 dark:text-slate-300">{r.categoryAverages[c] != null ? `${r.categoryAverages[c]}%` : '—'}</td>
+                      <td key={c} className="px-4 py-3 text-center text-muted-foreground">{r.categoryAverages[c] != null ? `${r.categoryAverages[c]}%` : '—'}</td>
                     ))}
-                    <td className="px-4 py-3 text-center font-bold text-slate-900 dark:text-white">{r.overall != null ? `${r.overall}%` : '—'}</td>
+                    <td className="px-4 py-3 text-center font-bold text-foreground">{r.overall != null ? `${r.overall}%` : '—'}</td>
                     <td className="px-4 py-3 text-center"><Badge className={`${letterColor(r.letter)} border-0`}>{r.letter || '—'}</Badge></td>
                     <td className="px-4 py-3 text-center">
                       {r.warning ? (
                         <span className="inline-flex items-center gap-1 text-xs font-bold text-red-600"><AlertTriangle className="h-3.5 w-3.5" /> Warning</span>
-                      ) : r.overall != null ? <span className="text-xs text-emerald-600 font-semibold">On track</span> : <span className="text-xs text-slate-400">—</span>}
+                      ) : r.overall != null ? <span className="text-xs text-emerald-600 font-semibold">On track</span> : <span className="text-xs text-muted-foreground">—</span>}
                     </td>
                   </tr>
                 ))}
@@ -377,12 +377,12 @@ export default function GradebookPage() {
         {/* ── Grade Entry ── */}
         {canManage && (
         <TabsContent value="entry" className="space-y-6 p-4 sm:p-6">
-          <section aria-labelledby="add-grade-item-heading" className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 dark:border-surface-raised dark:bg-surface-raised/30 sm:p-5">
+          <section aria-labelledby="add-grade-item-heading" className="rounded-sm border border-border bg-muted/48 p-4 sm:p-5">
             <div className="mb-4 flex items-start gap-3">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-700 dark:bg-teal-400/15 dark:text-teal-300"><Plus className="size-4" /></span>
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-sm bg-teal-100 text-teal-700 dark:bg-teal-400/15 dark:text-teal-300"><Plus className="size-4" /></span>
               <div>
-                <h3 id="add-grade-item-heading" className="font-semibold text-slate-900 dark:text-white">Add grade item</h3>
-                <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Create an assignment, quiz, or exam for the selected class and subject.</p>
+                <h3 id="add-grade-item-heading" className="font-semibold text-foreground">Add grade item</h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">Create an assignment, quiz, or exam for the selected class and subject.</p>
               </div>
             </div>
             <form className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-[minmax(16rem,2fr)_minmax(9rem,1fr)_minmax(8rem,.75fr)_minmax(9rem,.9fr)_auto]" onSubmit={(event) => { event.preventDefault(); void createItem(); }}>
@@ -425,7 +425,7 @@ export default function GradebookPage() {
               <div className="space-y-1.5">
                 <Label htmlFor="grade-item-date">Date</Label>
                 <div className="relative">
-                  <CalendarDays className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                  <CalendarDays className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input id="grade-item-date" type="date" value={newItem.date} onChange={(event) => setNewItem((current) => ({ ...current, date: event.target.value }))} className="h-10 pl-9" />
                 </div>
               </div>
@@ -463,35 +463,35 @@ export default function GradebookPage() {
             </div>
 
             {loading ? (
-              <div className="rounded-xl border border-slate-200 py-14 text-center text-sm text-slate-500 dark:border-surface-raised"><Loader2 className="mr-2 inline size-4 animate-spin" />Loading grade items…</div>
+              <div className="rounded-sm border border-border py-14 text-center text-sm text-muted-foreground"><Loader2 className="mr-2 inline size-4 animate-spin" />Loading grade items…</div>
             ) : loadError ? (
-              <div className="rounded-xl border border-slate-200 dark:border-surface-raised"><EmptyState icon={AlertTriangle} title="Grade items could not be loaded" description="Try loading the selected class again." action={<Button variant="outline" onClick={() => void loadGradebook()}><RefreshCw className="size-4" />Try again</Button>} /></div>
+              <div className="rounded-sm border border-border"><EmptyState icon={AlertTriangle} title="Grade items could not be loaded" description="Try loading the selected class again." action={<Button variant="outline" onClick={() => void loadGradebook()}><RefreshCw className="size-4" />Try again</Button>} /></div>
             ) : !classId ? (
-              <div className="rounded-xl border border-dashed border-slate-300 dark:border-surface-raised"><EmptyState icon={BookOpenCheck} title="Select a class first" description="Choose a class above before creating grade items or entering marks." /></div>
+              <div className="rounded-sm border border-dashed border-input"><EmptyState icon={BookOpenCheck} title="Select a class first" description="Choose a class above before creating grade items or entering marks." /></div>
             ) : data?.items.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-300 dark:border-surface-raised"><EmptyState icon={ClipboardList} title="No grade items yet" description="Create the first item above, then enter marks for the whole class." action={<Button variant="outline" onClick={() => titleInputRef.current?.focus()}><Plus className="size-4" />Create first item</Button>} /></div>
+              <div className="rounded-sm border border-dashed border-input"><EmptyState icon={ClipboardList} title="No grade items yet" description="Create the first item above, then enter marks for the whole class." action={<Button variant="outline" onClick={() => titleInputRef.current?.focus()}><Plus className="size-4" />Create first item</Button>} /></div>
             ) : !activeItem ? (
-              <div className="rounded-xl border border-dashed border-slate-300 dark:border-surface-raised"><EmptyState icon={ClipboardList} title="Choose a grade item" description="Select an assignment, quiz, or exam above to enter learner marks." /></div>
+              <div className="rounded-sm border border-dashed border-input"><EmptyState icon={ClipboardList} title="Choose a grade item" description="Select an assignment, quiz, or exam above to enter learner marks." /></div>
             ) : !data?.rows.length ? (
-              <div className="rounded-xl border border-dashed border-slate-300 dark:border-surface-raised"><EmptyState icon={Users} title="No learners in this class" description="Enrol learners before entering marks for this item." /></div>
+              <div className="rounded-sm border border-dashed border-input"><EmptyState icon={Users} title="No learners in this class" description="Enrol learners before entering marks for this item." /></div>
             ) : (
-              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-surface-raised">
+              <div className="overflow-x-auto rounded-sm border border-border">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:bg-surface-raised/50">
+                  <thead className="bg-muted/50 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     <tr>
                       <th className="min-w-[220px] px-5 py-3">Learner</th>
                       <th className="w-[170px] px-4 py-3">Marks (/{activeItem.maxMarks})</th>
                       <th className="min-w-[280px] px-4 py-3">Teacher comment</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tbody className="divide-y divide-border">
                     {data.rows.map((row) => {
                       const markIsInvalid = invalidEntryIds.has(row.studentId);
                       return (
-                        <tr key={row.studentId} className="hover:bg-slate-50/80 dark:hover:bg-surface-raised/30">
-                          <td className="px-5 py-3 font-medium text-slate-900 dark:text-white">
+                        <tr key={row.studentId} className="hover:bg-muted/48">
+                          <td className="px-5 py-3 font-medium text-foreground">
                             <span className="block">{row.name}</span>
-                            <span className="font-mono text-xs font-normal text-slate-400">{row.code}</span>
+                            <span className="font-mono text-xs font-normal text-muted-foreground">{row.code}</span>
                           </td>
                           <td className="px-4 py-3 align-top">
                             <Input
@@ -531,15 +531,15 @@ export default function GradebookPage() {
         {/* ── Weights ── */}
         {canManage && (
         <TabsContent value="weights" className="p-4 sm:p-6">
-          <section className="max-w-2xl rounded-2xl border border-slate-200 bg-slate-50/70 p-5 dark:border-surface-raised dark:bg-surface-raised/30" aria-labelledby="category-weights-heading">
-            <h3 id="category-weights-heading" className="font-semibold text-slate-900 dark:text-white">Category weights</h3>
-            <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">Set how much each category contributes to the overall grade. Categories without marks are automatically excluded and the remaining weights are normalized.</p>
-            <div className="mt-5 divide-y divide-slate-200 dark:divide-slate-700/70">
+          <section className="max-w-2xl rounded-sm border border-border bg-muted/42 p-5" aria-labelledby="category-weights-heading">
+            <h3 id="category-weights-heading" className="font-semibold text-foreground">Category weights</h3>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">Set how much each category contributes to the overall grade. Categories without marks are automatically excluded and the remaining weights are normalized.</p>
+            <div className="mt-5 divide-y divide-border">
               {Object.keys(CATEGORY_LABELS).map((category) => {
                 const weightIsInvalid = parseCategoryWeight(weights[category]) == null;
                 return (
                   <div key={category} className="grid grid-cols-[1fr_7rem] items-center gap-4 py-3">
-                    <Label htmlFor={`weight-${category}`} className="text-slate-700 dark:text-slate-200">{CATEGORY_LABELS[category]}</Label>
+                    <Label htmlFor={`weight-${category}`} className="text-foreground">{CATEGORY_LABELS[category]}</Label>
                     <div className="relative">
                       <Input
                         id={`weight-${category}`}
@@ -553,13 +553,13 @@ export default function GradebookPage() {
                         onChange={(event) => setWeights((current) => ({ ...current, [category]: Number(event.target.value) }))}
                         className="h-9 pr-8 text-right"
                       />
-                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">%</span>
+                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
                     </div>
                   </div>
                 );
               })}
             </div>
-            <div className={`mt-4 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between ${weightTotal === 100 ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200' : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200'}`}>
+            <div className={`mt-4 flex flex-col gap-3 rounded-sm border p-4 sm:flex-row sm:items-center sm:justify-between ${weightTotal === 100 ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200' : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200'}`}>
               <div>
                 <p className="font-semibold">Total: {weightTotal}%</p>
                 <p className="mt-0.5 text-xs opacity-80">{weightTotal === 100 ? 'Weights are balanced and ready to save.' : 'A 100% total is recommended; other positive totals will be normalized.'}</p>

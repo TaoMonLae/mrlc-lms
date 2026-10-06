@@ -83,8 +83,8 @@ export default function FeeStructureNew() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">New Fee Structure</h1>
-          <p className="text-sm text-slate-500">Create a new fee structure for your school</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">New Fee Structure</h1>
+          <p className="text-sm text-muted-foreground">Create a new fee structure for your school</p>
         </div>
       </div>
 

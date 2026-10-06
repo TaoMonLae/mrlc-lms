@@ -125,10 +125,10 @@ export default function CasesDashboard() {
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
-      case 'URGENT': return <Badge variant="destructive" className="py-0 uppercase text-[10px]">Urgent</Badge>;
-      case 'HIGH': return <Badge className="bg-aubergine-100 text-aubergine-800 hover:bg-aubergine-100 dark:bg-aubergine-900/30 dark:text-aubergine-400 border-0 py-0 uppercase text-[10px]">High</Badge>;
-      case 'MEDIUM': return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 border-0 py-0 uppercase text-[10px]">Medium</Badge>;
-      case 'LOW': return <Badge className="bg-slate-100 text-slate-800 hover:bg-slate-100 dark:bg-surface-raised dark:text-slate-300 border-0 py-0 uppercase text-[10px]">Low</Badge>;
+      case 'URGENT': return <Badge variant="destructive" className="py-0 uppercase text-[11px]">Urgent</Badge>;
+      case 'HIGH': return <Badge className="bg-aubergine-100 text-aubergine-800 hover:bg-aubergine-100 dark:bg-aubergine-900/30 dark:text-aubergine-400 border-0 py-0 uppercase text-[11px]">High</Badge>;
+      case 'MEDIUM': return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 border-0 py-0 uppercase text-[11px]">Medium</Badge>;
+      case 'LOW': return <Badge className="bg-muted text-foreground hover:bg-muted border-0 py-0 uppercase text-[11px]">Low</Badge>;
       default: return null;
     }
   };
@@ -138,7 +138,7 @@ export default function CasesDashboard() {
       case 'OPEN': return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 border-0"><AlertTriangle className="w-3 h-3 mr-1"/> Open</Badge>;
       case 'FOLLOW_UP': return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 border-0"><Clock className="w-3 h-3 mr-1"/> Follow Up</Badge>;
       case 'RESOLVED': return <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 border-0"><CheckCircle2 className="w-3 h-3 mr-1"/> Resolved</Badge>;
-      case 'CLOSED': return <Badge variant="outline" className="text-slate-500 border-slate-300 dark:border-surface-raised">Closed</Badge>;
+      case 'CLOSED': return <Badge variant="outline" className="text-muted-foreground border-input">Closed</Badge>;
       default: return null;
     }
   };
@@ -147,8 +147,8 @@ export default function CasesDashboard() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Case Management</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Track student support and protection cases.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Case Management</h1>
+          <p className="text-sm text-muted-foreground mt-1">Track student support and protection cases.</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           {hasPermission('manage_cases') && (
@@ -159,10 +159,10 @@ export default function CasesDashboard() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-surface-raised flex flex-col xl:flex-row gap-4 items-center bg-slate-50/50 dark:bg-surface-raised/50">
+      <div className="bg-card rounded-sm border border-border shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-border flex flex-col xl:flex-row gap-4 items-center bg-muted/30">
           <div className="relative flex-1 w-full xl:w-auto">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Search by student, case number, or title..." 
               className="pl-9"
@@ -219,10 +219,10 @@ export default function CasesDashboard() {
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <span className="ml-3 text-slate-500">Loading cases...</span>
+            <span className="ml-3 text-muted-foreground">Loading cases...</span>
           </div>
         ) : filteredCases.length === 0 ? (
-          <div className="py-12 text-center text-slate-500">
+          <div className="py-12 text-center text-muted-foreground">
             <Shield className="h-12 w-12 mx-auto text-slate-200 mb-3" />
             <p className="text-lg font-medium">No cases found</p>
             <p className="text-sm">{searchTerm || statusFilter !== 'ALL' || priorityFilter !== 'ALL' || typeFilter !== 'ALL' ? 'Try adjusting your filters.' : 'Open your first case to get started.'}</p>
@@ -230,7 +230,7 @@ export default function CasesDashboard() {
         ) : (
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="text-xs text-slate-500 dark:text-slate-300 bg-slate-50 dark:bg-surface-raised uppercase">
+            <thead className="text-xs text-muted-foreground bg-muted/50 uppercase">
               <tr>
                 <th className="px-6 py-4 font-medium">Case Info</th>
                 <th className="px-6 py-4 font-medium">Student</th>
@@ -240,18 +240,18 @@ export default function CasesDashboard() {
                 <th className="px-6 py-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+            <tbody className="divide-y divide-border">
               {filteredCases.map((c) => (
-                <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
+                <tr key={c.id} className="hover:bg-muted/50 transition-colors">
                   <td className="px-6 py-4">
-                    <div className="font-medium text-slate-900 dark:text-white max-w-[200px] truncate" title={c.title}>
+                    <div className="font-medium text-foreground max-w-[200px] truncate" title={c.title}>
                       {c.type === 'PROTECTION' && <ShieldAlert className="inline-block w-4 h-4 mr-1 text-red-500" />}
-                      {!['PROTECTION'].includes(c.type) && <Shield className="inline-block w-4 h-4 mr-1 text-slate-400" />}
+                      {!['PROTECTION'].includes(c.type) && <Shield className="inline-block w-4 h-4 mr-1 text-muted-foreground" />}
                       {c.title}
                     </div>
-                    <div className="text-xs text-slate-500 mt-1 flex gap-2 items-center">
+                    <div className="text-xs text-muted-foreground mt-1 flex gap-2 items-center">
                        <span className="font-mono">{c.caseNumber}</span>
-                       <span className="text-[10px] uppercase tracking-wider">{c.type}</span>
+                       <span className="text-[11px] uppercase tracking-wider">{c.type}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 font-medium">
@@ -265,10 +265,10 @@ export default function CasesDashboard() {
                       {getPriorityBadge(c.priority)}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
-                    {c.assignedToName || <span className="text-slate-400 italic">Unassigned</span>}
+                  <td className="px-6 py-4 text-muted-foreground">
+                    {c.assignedToName || <span className="text-muted-foreground italic">Unassigned</span>}
                   </td>
-                  <td className="px-6 py-4 text-slate-500 dark:text-slate-300 whitespace-nowrap">
+                  <td className="px-6 py-4 text-muted-foreground whitespace-nowrap">
                     {formatDistanceToNow(new Date(c.openedAt))} ago
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -294,7 +294,7 @@ export default function CasesDashboard() {
               
               {filteredCases.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                  <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
                     No cases found matching your filters.
                   </td>
                 </tr>
@@ -306,17 +306,17 @@ export default function CasesDashboard() {
 
         {/* Mobile View */}
         {!loading && filteredCases.length > 0 && (
-        <div className="md:hidden divide-y divide-slate-200 dark:divide-slate-800">
+        <div className="md:hidden divide-y divide-border">
           {filteredCases.map(c => (
             <div key={c.id} className="p-4 space-y-3">
               <div className="flex justify-between items-start gap-2">
                 <div>
-                  <div className="font-medium text-slate-900 dark:text-white leading-tight">
+                  <div className="font-medium text-foreground leading-tight">
                     {c.type === 'PROTECTION' && <ShieldAlert className="inline-block w-4 h-4 mr-1 text-red-500" />}
-                    {!['PROTECTION'].includes(c.type) && <Shield className="inline-block w-4 h-4 mr-1 text-slate-400" />}
+                    {!['PROTECTION'].includes(c.type) && <Shield className="inline-block w-4 h-4 mr-1 text-muted-foreground" />}
                     {c.title}
                   </div>
-                  <div className="text-xs text-slate-500 mt-1 flex gap-2 items-center">
+                  <div className="text-xs text-muted-foreground mt-1 flex gap-2 items-center">
                     <span className="font-mono">{c.caseNumber}</span>
                   </div>
                 </div>
@@ -324,16 +324,16 @@ export default function CasesDashboard() {
               </div>
               
               <div className="text-sm">
-                <span className="text-slate-500">Student:</span>{' '}
+                <span className="text-muted-foreground">Student:</span>{' '}
                 <Link to={`/students/${c.studentId}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
                   {c.studentName}
                 </Link>
               </div>
 
-              <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-surface-raised">
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
                 <div className="flex flex-col gap-1">
                   {getPriorityBadge(c.priority)}
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-muted-foreground">
                     {formatDistanceToNow(new Date(c.openedAt))} ago
                   </span>
                 </div>
@@ -367,7 +367,7 @@ export default function CasesDashboard() {
               <Trash2 className="h-5 w-5" /> Delete Case
             </DialogTitle>
             <DialogDescription className="pt-1">
-              Are you sure you want to permanently delete <strong className="text-slate-900 dark:text-white">{caseToDelete?.title}</strong> ({caseToDelete?.caseNumber})? This will also remove all case notes and cannot be undone.
+              Are you sure you want to permanently delete <strong className="text-foreground">{caseToDelete?.title}</strong> ({caseToDelete?.caseNumber})? This will also remove all case notes and cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -227,7 +227,7 @@ export default function IncomeExpenseReport() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground"></div>
       </div>
     );
   }
@@ -235,7 +235,7 @@ export default function IncomeExpenseReport() {
   if (!data) {
     return (
       <div className="flex items-center justify-center h-96">
-        <p className="text-gray-500">No data available</p>
+        <p className="text-muted-foreground">No data available</p>
       </div>
     );
   }
@@ -256,7 +256,7 @@ export default function IncomeExpenseReport() {
       <div className="print:hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Income & Expense Report</h1>
-          <p className="text-gray-500">Analyze financial performance and trends</p>
+          <p className="text-muted-foreground">Analyze financial performance and trends</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Select value={year.toString()} onValueChange={(value) => setYear(parseInt(value))}>
@@ -297,7 +297,7 @@ export default function IncomeExpenseReport() {
               <div className="text-2xl font-bold text-green-600">
                 {formatMoney(data.income.total, currency)}
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Fees: {formatMoney(data.income.bySource.fees, currency)} + Donations: {formatMoney(data.income.bySource.donations, currency)}
               </p>
             </CardContent>
@@ -311,7 +311,7 @@ export default function IncomeExpenseReport() {
               <div className="text-2xl font-bold text-red-600">
                 {formatMoney(data.expenses.total, currency)}
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {data.expenses.byCategory.length} categories
               </p>
             </CardContent>
@@ -331,7 +331,7 @@ export default function IncomeExpenseReport() {
                 ) : (
                   <TrendingDown className="w-4 h-4 text-red-600 mr-1" />
                 )}
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   {data.summary.surplusRatio.toFixed(1)}% of income
                 </p>
               </div>
@@ -346,7 +346,7 @@ export default function IncomeExpenseReport() {
               <div className="text-sm font-semibold">
                 {new Date(data.period.startDate).toLocaleDateString()} - {new Date(data.period.endDate).toLocaleDateString()}
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 <Calendar className="w-3 h-3 inline mr-1" />
                 Fiscal Year {year}
               </p>
@@ -358,7 +358,7 @@ export default function IncomeExpenseReport() {
         <section className="print:hidden mb-6 grid border border-foreground bg-card lg:grid-cols-[minmax(280px,0.7fr)_minmax(0,1.3fr)]" aria-label="Income and expense analysis">
           <div className="border-b border-foreground lg:border-b-0 lg:border-r">
             <header className="border-b border-foreground px-5 py-4">
-              <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-academic-teal">Receipt composition</p>
+              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-academic-teal">Receipt composition</p>
               <h2 className="mt-1 text-base font-semibold">Income by source</h2>
             </header>
             <div>
@@ -382,7 +382,7 @@ export default function IncomeExpenseReport() {
 
           <div>
             <header className="border-b border-foreground px-5 py-4">
-              <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-academic-coral">Settled payments</p>
+              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-academic-coral">Settled payments</p>
               <h2 className="mt-1 text-base font-semibold">Expenses by category</h2>
             </header>
             <div className="px-3 py-5 sm:px-5">
@@ -401,7 +401,7 @@ export default function IncomeExpenseReport() {
 
         {/* Expenses by Category */}
         <div className="mb-8">
-          <h3 className="text-sm font-bold uppercase text-slate-800 border-b-2 border-slate-300 pb-2 mb-4">
+          <h3 className="text-sm font-bold uppercase text-foreground border-b-2 border-input pb-2 mb-4">
             Expenses by Category
           </h3>
           <table className="w-full text-sm">
@@ -438,11 +438,11 @@ export default function IncomeExpenseReport() {
 
         {/* Income Detail */}
         <div className="mb-8 page-break-inside-avoid">
-          <h3 className="text-sm font-bold uppercase text-slate-800 border-b-2 border-slate-300 pb-2 mb-4">
+          <h3 className="text-sm font-bold uppercase text-foreground border-b-2 border-input pb-2 mb-4">
             Income Detail ({data.income.detail.length} transactions)
           </h3>
           {data.income.detail.length === 0 ? (
-            <p className="text-sm text-slate-500">No income transactions recorded for this period.</p>
+            <p className="text-sm text-muted-foreground">No income transactions recorded for this period.</p>
           ) : (
             <table className="w-full text-sm">
               <thead>
@@ -479,11 +479,11 @@ export default function IncomeExpenseReport() {
 
         {/* Expense Detail */}
         <div className="page-break-inside-avoid">
-          <h3 className="text-sm font-bold uppercase text-slate-800 border-b-2 border-slate-300 pb-2 mb-4">
+          <h3 className="text-sm font-bold uppercase text-foreground border-b-2 border-input pb-2 mb-4">
             Expense Detail ({data.expenses.detail.length} transactions)
           </h3>
           {data.expenses.detail.length === 0 ? (
-            <p className="text-sm text-slate-500">No expense transactions recorded for this period.</p>
+            <p className="text-sm text-muted-foreground">No expense transactions recorded for this period.</p>
           ) : (
             <table className="w-full text-sm">
               <thead>

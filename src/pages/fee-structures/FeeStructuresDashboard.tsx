@@ -75,9 +75,9 @@ export default function FeeStructuresDashboard() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ACTIVE': return 'bg-green-100 text-green-800 border-green-200';
-      case 'DRAFT': return 'bg-slate-100 text-slate-800 border-slate-200';
+      case 'DRAFT': return 'bg-muted text-foreground border-border';
       case 'ARCHIVED': return 'bg-amber-100 text-amber-800 border-amber-200';
-      default: return 'bg-slate-100 text-slate-800 border-slate-200';
+      default: return 'bg-muted text-foreground border-border';
     }
   };
 
@@ -88,8 +88,8 @@ export default function FeeStructuresDashboard() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Fee Structures</h1>
-          <p className="text-sm text-slate-500">Manage fee types and academic year structures</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Fee Structures</h1>
+          <p className="text-sm text-muted-foreground">Manage fee types and academic year structures</p>
         </div>
         {hasPermission('manage_fee_structures') && (
           <Button render={<Link to="/fee-structures/new" />} nativeButton={false}>
@@ -103,7 +103,7 @@ export default function FeeStructuresDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Total Structures</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Structures</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
@@ -111,7 +111,7 @@ export default function FeeStructuresDashboard() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Active</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Active</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{stats.active}</div>
@@ -119,7 +119,7 @@ export default function FeeStructuresDashboard() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">This Year</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">This Year</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.thisYear}</div>
@@ -127,7 +127,7 @@ export default function FeeStructuresDashboard() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Total Assignments</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Assignments</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalAssignments}</div>
@@ -140,7 +140,7 @@ export default function FeeStructuresDashboard() {
         <CardContent className="pt-6">
           <div className="flex gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search structures..."
                 value={searchTerm}
@@ -181,33 +181,33 @@ export default function FeeStructuresDashboard() {
         <Card>
           <CardContent className="p-0">
             {filteredStructures.length === 0 ? (
-              <div className="text-center py-8 text-slate-500">
+              <div className="text-center py-8 text-muted-foreground">
                 No fee structures found. Create one to get started.
               </div>
             ) : (
               <table className="w-full">
-                <thead className="bg-slate-50 dark:bg-slate-800">
+                <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Academic Year</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Assignments</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Effective Period</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Academic Year</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Assignments</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Effective Period</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                <tbody className="divide-y divide-border">
                   {filteredStructures.map(structure => (
-                    <tr key={structure.id} className="hover:bg-slate-50 dark:hover:bg-slate-800">
+                    <tr key={structure.id} className="hover:bg-muted/50">
                       <td className="px-6 py-4">
                         <div>
-                          <div className="font-medium text-slate-900 dark:text-white">{structure.name}</div>
+                          <div className="font-medium text-foreground">{structure.name}</div>
                           {structure.description && (
-                            <div className="text-sm text-slate-500">{structure.description}</div>
+                            <div className="text-sm text-muted-foreground">{structure.description}</div>
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {structure.academicYear}
                         {structure.term && ` - ${structure.term}`}
                       </td>
@@ -216,13 +216,13 @@ export default function FeeStructuresDashboard() {
                           {structure.status}
                         </Badge>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
                           <Users className="h-4 w-4" />
                           {structure._count?.assignments || 0}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
                           {new Date(structure.effectiveFromDate).toLocaleDateString()}

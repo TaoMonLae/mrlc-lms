@@ -70,7 +70,7 @@ export default function StudentProfilePage() {
       </div>
 
       {loadError && (
-        <div className="no-print rounded-xl border border-rose-200 bg-rose-50 dark:bg-rose-900/10 dark:border-rose-900/30 p-4 text-sm text-rose-700 dark:text-rose-300">
+        <div className="no-print rounded-sm border border-rose-200 bg-rose-50 dark:bg-rose-900/10 dark:border-rose-900/30 p-4 text-sm text-rose-700 dark:text-rose-300">
           Couldn't load your profile right now. Please refresh the page or contact the administrative office if this keeps happening.
         </div>
       )}
@@ -89,9 +89,9 @@ export default function StudentProfilePage() {
           contactText="Print Profile"
           onContactClick={handlePrint}
         />
-        <div className="flex-1 w-full bg-white dark:bg-surface-indigo p-8 rounded-2xl border border-slate-200 dark:border-surface-raised shadow-sm relative overflow-hidden">
+        <div className="flex-1 w-full bg-card p-8 rounded-sm border border-border shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-aubergine-500/5 rounded-full -mr-16 -mt-16" />
-          <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm font-medium text-slate-500 dark:text-slate-300">
+          <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm font-medium text-muted-foreground">
             <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4" /> {student.studentId}</span>
             <span className="flex items-center gap-1.5"><BookOpen className="h-4 w-4" /> {student.class}</span>
             <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> Joined {student.enrollmentDate ? new Date(student.enrollmentDate).getFullYear() : '—'}</span>
@@ -104,8 +104,8 @@ export default function StudentProfilePage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-8">
           {/* General Information */}
-          <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
-            <CardHeader className="bg-slate-50 dark:bg-surface-raised/50 border-b border-slate-100 dark:border-surface-raised/50">
+          <Card className="border-border shadow-sm overflow-hidden">
+            <CardHeader className="bg-muted/50 border-b border-border">
               <CardTitle className="text-base flex items-center gap-2">
                 <User className="h-4 w-4 text-aubergine-600" /> General Information
               </CardTitle>
@@ -123,8 +123,8 @@ export default function StudentProfilePage() {
           </Card>
 
           {/* Contact Information */}
-          <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
-            <CardHeader className="bg-slate-50 dark:bg-surface-raised/50 border-b border-slate-100 dark:border-surface-raised/50">
+          <Card className="border-border shadow-sm overflow-hidden">
+            <CardHeader className="bg-muted/50 border-b border-border">
               <CardTitle className="text-base flex items-center gap-2">
                 <Mail className="h-4 w-4 text-aubergine-600" /> Contact Details
               </CardTitle>
@@ -141,8 +141,8 @@ export default function StudentProfilePage() {
           </Card>
 
           {/* Guardian Information */}
-          <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
-            <CardHeader className="bg-slate-50 dark:bg-surface-raised/50 border-b border-slate-100 dark:border-surface-raised/50">
+          <Card className="border-border shadow-sm overflow-hidden">
+            <CardHeader className="bg-muted/50 border-b border-border">
               <CardTitle className="text-base flex items-center gap-2">
                 <Users className="h-4 w-4 text-aubergine-600" /> Guardian Details
               </CardTitle>
@@ -160,7 +160,7 @@ export default function StudentProfilePage() {
 
         <div className="space-y-8">
           {/* Security Box */}
-          <div className="bg-blue-50 dark:bg-blue-900/10 p-6 rounded-2xl border border-blue-100 dark:border-blue-900/30 flex flex-col items-center text-center">
+          <div className="bg-blue-50 dark:bg-blue-900/10 p-6 rounded-sm border border-blue-100 dark:border-blue-900/30 flex flex-col items-center text-center">
             <div className="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full mb-4">
               <AlertCircle className="h-8 w-8" />
             </div>
@@ -171,30 +171,30 @@ export default function StudentProfilePage() {
           </div>
 
           {/* Academic Summary */}
-          <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
+          <Card className="border-border shadow-sm overflow-hidden">
             <CardHeader className="pb-4">
               <CardTitle className="text-sm font-bold">Academic Status</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <div className="flex items-center justify-between text-xs mb-2">
-                  <span className="text-slate-500 font-medium">Attendance Rate</span>
+                  <span className="text-muted-foreground font-medium">Attendance Rate</span>
                   <span className="text-emerald-600 font-bold">{student.attendanceRate}%</span>
                 </div>
-                <div className="h-1.5 w-full bg-slate-100 dark:bg-surface-raised rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                   <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(100, Math.max(0, student.attendanceRate))}%` }} />
                 </div>
               </div>
               <div>
-                <div className="flex items-center justify-between text-xs mb-2 border-t border-slate-100 dark:border-surface-raised pt-3">
-                  <span className="text-slate-500 font-medium font-bold uppercase tracking-tighter">Current Class</span>
+                <div className="flex items-center justify-between text-xs mb-2 border-t border-border pt-3">
+                  <span className="text-muted-foreground font-medium font-bold uppercase tracking-tighter">Current Class</span>
                   <span className="text-aubergine-600 font-bold">{student.class}</span>
                 </div>
               </div>
               <div>
-                <div className="flex items-center justify-between text-xs mb-2 border-t border-slate-100 dark:border-surface-raised pt-3">
-                  <span className="text-slate-500 font-medium font-bold uppercase tracking-tighter">Academic Year</span>
-                  <span className="text-slate-700 dark:text-slate-300 font-bold">{student.academicYear || fallbackAcademicYear}</span>
+                <div className="flex items-center justify-between text-xs mb-2 border-t border-border pt-3">
+                  <span className="text-muted-foreground font-medium font-bold uppercase tracking-tighter">Academic Year</span>
+                  <span className="text-foreground font-bold">{student.academicYear || fallbackAcademicYear}</span>
                 </div>
               </div>
             </CardContent>
@@ -209,8 +209,8 @@ function InfoItem({ label, value }: { label: string; value: string }) {
   const sanitizedValue = value ? sanitizeText(value) : value;
   return (
     <div className="space-y-1">
-      <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400 leading-none mb-1.5">{sanitizeText(label)}</p>
-      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{sanitizedValue}</p>
+      <p className="text-[11px] uppercase font-bold tracking-widest text-muted-foreground leading-none mb-1.5">{sanitizeText(label)}</p>
+      <p className="text-sm font-semibold text-foreground">{sanitizedValue}</p>
     </div>
   );
 }

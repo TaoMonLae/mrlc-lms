@@ -54,8 +54,8 @@ const splitFullName = (fullName: string) => {
   return { firstName: parts.slice(0, -1).join(' '), lastName: parts.at(-1) || '' };
 };
 
-const sectionClass = 'bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised p-6 shadow-sm';
-const headingClass = 'text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 border-b border-slate-100 dark:border-surface-raised pb-2';
+const sectionClass = 'bg-card rounded-sm border border-border p-6 shadow-sm';
+const headingClass = 'text-lg font-bold text-foreground mb-4 border-b border-border pb-2';
 
 export default function StudentForm({ initialData, isEdit = false }: StudentFormProps) {
   const { user } = useAuth();
@@ -265,21 +265,21 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
           <div className="mb-6 flex flex-col items-start gap-3">
             <Label>Profile Photo</Label>
             <div className="flex items-center gap-4">
-              <div className="h-24 w-24 rounded-full overflow-hidden bg-slate-100 dark:bg-surface-raised border border-slate-200 dark:border-surface-raised flex items-center justify-center">
+              <div className="h-24 w-24 rounded-full overflow-hidden bg-muted border border-border flex items-center justify-center">
                 {pendingProfilePhotoPreview ? (
                   <img src={pendingProfilePhotoPreview} alt="Profile preview" className="h-full w-full object-cover" />
                 ) : (
-                  <ImageIcon className="h-8 w-8 text-slate-400" />
+                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
                 )}
               </div>
               <div>
                 <Label htmlFor="profilePhoto" className="cursor-pointer">
-                  <div className="inline-flex items-center rounded-md border border-slate-200 dark:border-surface-raised px-4 py-2 text-sm font-medium hover:bg-slate-50 dark:hover:bg-surface-raised">
+                  <div className="inline-flex items-center rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted/50">
                     <UploadCloud className="mr-2 h-4 w-4" /> Choose Photo
                   </div>
                 </Label>
                 <input id="profilePhoto" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" className="hidden" onChange={handlePendingPhotoChange} />
-                <p className="mt-2 text-xs text-slate-500">PNG, JPG, WEBP, GIF, or SVG up to 5 MB.</p>
+                <p className="mt-2 text-xs text-muted-foreground">PNG, JPG, WEBP, GIF, or SVG up to 5 MB.</p>
               </div>
             </div>
           </div>
@@ -289,12 +289,12 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
           <div className="space-y-2">
             <Label htmlFor="studentId">Student ID</Label>
             <Input id="studentId" defaultValue={initialData?.studentCode || initialData?.studentId} placeholder="e.g. ST-2024-001" />
-            <p className="text-xs text-slate-500">Leave blank to auto-generate (e.g. ST-2026-001)</p>
+            <p className="text-xs text-muted-foreground">Leave blank to auto-generate (e.g. ST-2026-001)</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
             <Input id="email" type="email" defaultValue={initialData?.user?.email} placeholder="student@mrlc-student.edu" />
-            <p className="text-xs text-slate-500">Required if Student ID is blank</p>
+            <p className="text-xs text-muted-foreground">Required if Student ID is blank</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
@@ -428,7 +428,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
                 <SelectItem value="BOARDING">Boarding Student</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-slate-500">Boarding students can submit spending for their assigned daily duties.</p>
+            <p className="text-xs text-muted-foreground">Boarding students can submit spending for their assigned daily duties.</p>
           </div>
           <div className="space-y-2">
             <Label>Student Council Role</Label>
@@ -441,7 +441,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-slate-500">Shown on the student profile and duty-planning board.</p>
+            <p className="text-xs text-muted-foreground">Shown on the student profile and duty-planning board.</p>
           </div>
         </div>
       </div>
@@ -509,7 +509,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
         <Textarea id="notes" defaultValue={initialData?.notes} placeholder="Any background notes for staff…" rows={3} />
       </div>
 
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-surface-raised">
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
         <Button type="button" variant="outline" onClick={() => navigate('/students')} disabled={isSubmitting}>Cancel</Button>
         <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : (isEdit ? 'Save Changes' : 'Create Student')}

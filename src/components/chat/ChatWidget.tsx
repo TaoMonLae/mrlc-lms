@@ -177,7 +177,7 @@ export default function ChatWidget() {
       >
         <MessageSquare className="h-5 w-5" />
         {unread > 0 && (
-          <span className="absolute -top-1 -right-1 grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-canvas">
+          <span className="absolute -top-1 -right-1 grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[11px] font-bold text-white ring-2 ring-white dark:ring-canvas">
             {unread > 99 ? '99+' : unread}
           </span>
         )}
@@ -186,33 +186,33 @@ export default function ChatWidget() {
   }
 
   return (
-    <div className="fixed inset-x-3 bottom-3 z-50 flex h-[75vh] max-h-[560px] flex-col overflow-hidden rounded-sm border border-border bg-card shadow-[8px_8px_0_color-mix(in_srgb,var(--foreground)_14%,transparent)] dark:bg-surface-indigo sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-96">
-      <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2 dark:border-surface-raised">
+    <div className="fixed inset-x-3 bottom-3 z-50 flex h-[75vh] max-h-[560px] flex-col overflow-hidden rounded-sm border border-border bg-card shadow-[8px_8px_0_color-mix(in_srgb,var(--foreground)_14%,transparent)] sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-96">
+      <div className="flex items-center justify-between border-b border-border px-3 py-2">
         <div className="flex items-center gap-2">
-          {activeId && <button onClick={() => { setActiveId(null); setDetail(null); }} className="text-slate-500 hover:text-slate-700"><ArrowLeft className="h-4 w-4" /></button>}
-          <span className="font-semibold text-slate-900 dark:text-white">
+          {activeId && <button onClick={() => { setActiveId(null); setDetail(null); }} className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /></button>}
+          <span className="font-semibold text-foreground">
             {detail ? (
               <span className="flex flex-col leading-tight">
                 <span>{detail.title || detail.participants.filter((p) => p.id !== myId).map((p) => p.name).join(', ')}</span>
                 {(() => {
                   const others = detail.participants.filter((p) => p.id !== myId);
                   const anyOnline = others.some((o) => onlineUserIds.has(o.id));
-                  return <span className={`text-[10px] font-medium ${anyOnline ? 'text-emerald-600' : 'text-slate-400'}`}>{anyOnline ? 'Active now' : 'Offline'}</span>;
+                  return <span className={`text-[11px] font-medium ${anyOnline ? 'text-emerald-600' : 'text-muted-foreground'}`}>{anyOnline ? 'Active now' : 'Offline'}</span>;
                 })()}
               </span>
             ) : <span className="flex items-center gap-2"><MessageSquare className="h-4 w-4 text-aubergine-600" /> Messages</span>}
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <Link to={activeId ? `/chat` : '/chat'} title="Open full chat" className="text-slate-400 hover:text-slate-600"><Maximize2 className="h-4 w-4" /></Link>
-          <button onClick={() => setOpen(false)} aria-label="Close chat" className="text-slate-400 hover:text-slate-600"><X className="h-4 w-4" /></button>
+          <Link to={activeId ? `/chat` : '/chat'} title="Open full chat" className="text-muted-foreground hover:text-muted-foreground"><Maximize2 className="h-4 w-4" /></Link>
+          <button onClick={() => setOpen(false)} aria-label="Close chat" className="text-muted-foreground hover:text-muted-foreground"><X className="h-4 w-4" /></button>
         </div>
       </div>
 
       {!detail ? (
         <div className="flex-1 overflow-y-auto">
           {conversations.length === 0 ? (
-            <div className="grid h-full place-items-center px-6 text-center text-sm text-slate-400">
+            <div className="grid h-full place-items-center px-6 text-center text-sm text-muted-foreground">
               No conversations yet.
               <Link to="/chat" className="mt-2 text-aubergine-600 hover:underline">Open chat to start one</Link>
             </div>
@@ -223,7 +223,7 @@ export default function ChatWidget() {
             // fallback there.
             const avatarSrc = c.type === 'DIRECT' ? others[0]?.profilePhotoUrl : null;
             return (
-            <button key={c.id} onClick={() => openConversation(c.id)} className="flex w-full items-start gap-3 border-b border-slate-50 p-3 text-left hover:bg-slate-50 dark:border-surface-raised/50 dark:hover:bg-surface-raised/40">
+            <button key={c.id} onClick={() => openConversation(c.id)} className="flex w-full items-start gap-3 border-b border-border p-3 text-left hover:bg-muted/50">
               <div className="relative shrink-0">
                 <UserAvatar name={c.title} src={avatarSrc} className="h-9 w-9 text-xs" />
                 {others.some((p) => onlineUserIds.has(p.id)) && (
@@ -232,12 +232,12 @@ export default function ChatWidget() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-sm font-medium text-slate-900 dark:text-white">{c.title}</span>
-                  <span className="shrink-0 text-[10px] text-slate-400">{timeLabel(c.lastMessageAt)}</span>
+                  <span className="truncate text-sm font-medium text-foreground">{c.title}</span>
+                  <span className="shrink-0 text-[11px] text-muted-foreground">{timeLabel(c.lastMessageAt)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-xs text-slate-500">{c.lastMessage?.body ?? 'No messages yet'}</span>
-                  {c.unread > 0 && <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-aubergine-600 px-1 text-[10px] font-bold text-white">{c.unread}</span>}
+                  <span className="truncate text-xs text-muted-foreground">{c.lastMessage?.body ?? 'No messages yet'}</span>
+                  {c.unread > 0 && <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-aubergine-600 px-1 text-[11px] font-bold text-white">{c.unread}</span>}
                 </div>
               </div>
             </button>
@@ -247,22 +247,22 @@ export default function ChatWidget() {
       ) : (
         <>
           <div ref={scrollRef} className="flex-1 space-y-2 overflow-y-auto p-3">
-            {detail.messages.length === 0 ? <p className="py-8 text-center text-xs text-slate-400">No messages yet.</p> :
+            {detail.messages.length === 0 ? <p className="py-8 text-center text-xs text-muted-foreground">No messages yet.</p> :
               detail.messages.map((m) => {
                 const sticker = isStickerUrl(m.attachmentUrl) && !m.body;
                 return (
                 <div key={m.id} className={`flex ${m.mine ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[80%] text-sm ${sticker ? '' : `rounded-2xl px-3 py-1.5 ${m.mine ? 'bg-aubergine-600 text-white' : 'bg-slate-100 text-slate-800 dark:bg-surface-raised dark:text-slate-200'}`}`}>
-                    {!m.mine && <p className={`mb-0.5 text-[10px] font-bold uppercase tracking-wide ${sticker ? 'text-slate-500 dark:text-slate-400' : 'opacity-70'}`}>{m.sender.name}</p>}
+                  <div className={`max-w-[80%] text-sm ${sticker ? '' : `rounded-sm px-3 py-1.5 ${m.mine ? 'bg-aubergine-600 text-white' : 'bg-muted text-foreground'}`}`}>
+                    {!m.mine && <p className={`mb-0.5 text-[11px] font-bold uppercase tracking-wide ${sticker ? 'text-muted-foreground' : 'opacity-70'}`}>{m.sender.name}</p>}
                     {m.attachmentUrl && <img src={m.attachmentUrl} alt={sticker ? 'sticker' : 'attachment'} className={sticker ? 'h-24 w-24' : 'mb-1 max-h-40 rounded-lg'} />}
                     {m.expiresAt && (
-                      <div className={`mb-0.5 flex items-center gap-1.5 text-[9px] ${m.mine ? 'text-white/80' : 'text-slate-500'}`}>
+                      <div className={`mb-0.5 flex items-center gap-1.5 text-[11px] ${m.mine ? 'text-white/80' : 'text-muted-foreground'}`}>
                         <Clock className="h-3 w-3" /> {timeLeftShort(m.expiresAt)}
                         {canSave && m.attachmentUrl && <a href={m.attachmentUrl} download className="inline-flex items-center gap-0.5 underline"><Download className="h-3 w-3" /> Save</a>}
                       </div>
                     )}
                     {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
-                    <p className={`mt-0.5 text-[9px] ${m.mine ? 'text-right text-slate-400' : 'text-slate-400'} ${sticker ? '' : m.mine ? 'text-white/70' : ''}`}>{timeLabel(m.createdAt)}</p>
+                    <p className={`mt-0.5 text-[11px] ${m.mine ? 'text-right text-muted-foreground' : 'text-muted-foreground'} ${sticker ? '' : m.mine ? 'text-white/70' : ''}`}>{timeLabel(m.createdAt)}</p>
                   </div>
                 </div>
                 );
@@ -272,7 +272,7 @@ export default function ChatWidget() {
               if (!last?.mine) return null;
               const others = detail.participants.filter((p) => p.id !== myId);
               const seen = others.some((o) => o.lastReadAt && new Date(o.lastReadAt) >= new Date(last.createdAt));
-              return <p className="pr-1 text-right text-[10px] text-slate-400">{seen ? 'Seen' : 'Sent'}</p>;
+              return <p className="pr-1 text-right text-[11px] text-muted-foreground">{seen ? 'Seen' : 'Sent'}</p>;
             })()}
             {(() => {
               const names = activeId ? typingNames(activeId) : [];
@@ -280,23 +280,23 @@ export default function ChatWidget() {
               const label = names.length === 1 ? `${names[0]} is typing` : `${names.length} people typing`;
               return (
                 <div className="flex justify-start" aria-live="polite">
-                  <div className="flex items-center gap-1.5 rounded-2xl bg-slate-100 dark:bg-surface-raised px-2.5 py-1.5">
+                  <div className="flex items-center gap-1.5 rounded-sm bg-muted px-2.5 py-1.5">
                     <span className="flex gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:-0.3s]" />
-                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:-0.15s]" />
-                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.3s]" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.15s]" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce" />
                     </span>
-                    <span className="text-[10px] text-slate-500">{label}…</span>
+                    <span className="text-[11px] text-muted-foreground">{label}…</span>
                   </div>
                 </div>
               );
             })()}
           </div>
           {detail.oversight ? (
-            <div className="border-t border-slate-100 p-2 text-center text-[11px] text-slate-400 dark:border-surface-raised">Admin oversight — read only</div>
+            <div className="border-t border-border p-2 text-center text-[11px] text-muted-foreground">Admin oversight — read only</div>
           ) : (
-            <div className="flex items-center gap-1 border-t border-slate-100 p-2 dark:border-surface-raised">
-              <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" title="Camera (disappears in 24h)" onClick={() => setCamera(true)} disabled={sending}><Camera className="h-4 w-4 text-slate-500" /></Button>
+            <div className="flex items-center gap-1 border-t border-border p-2">
+              <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" title="Camera (disappears in 24h)" onClick={() => setCamera(true)} disabled={sending}><Camera className="h-4 w-4 text-muted-foreground" /></Button>
               <StickerPicker onSelect={sendSticker} />
               <Input value={draft} maxLength={5000} onChange={(e) => { setDraft(e.target.value); if (e.target.value.trim() && activeId) sendTyping(activeId); }} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Type a message…" className="h-9" disabled={sending} />
               <Button size="icon" className="h-9 w-9 shrink-0" onClick={send} disabled={sending || !draft.trim()}>{sending ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> : <Send className="h-4 w-4" />}</Button>

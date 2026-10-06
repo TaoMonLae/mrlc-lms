@@ -29,11 +29,11 @@ export default function MyPayroll() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
           <Wallet className="h-6 w-6 text-aubergine-600" />
           My Payroll
         </h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">
+        <p className="text-sm text-muted-foreground mt-1">
           Your own pay history — base salary, allowances, and deductions for each finalized pay period.
         </p>
       </div>
@@ -41,23 +41,23 @@ export default function MyPayroll() {
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="ml-3 text-slate-500">Loading…</span>
+          <span className="ml-3 text-muted-foreground">Loading…</span>
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">{error}</div>
+        <div className="rounded-sm border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">{error}</div>
       ) : slips.length === 0 ? (
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-12 text-center">
+        <div className="bg-card border border-border rounded-sm p-12 text-center">
           <Wallet className="h-12 w-12 mx-auto text-slate-200 mb-3" />
-          <p className="text-lg font-medium text-slate-900 dark:text-white">No payroll records yet</p>
-          <p className="text-sm text-slate-500">Your payslips will appear here once a payroll run including you has been finalized.</p>
+          <p className="text-lg font-medium text-foreground">No payroll records yet</p>
+          <p className="text-sm text-muted-foreground">Your payslips will appear here once a payroll run including you has been finalized.</p>
         </div>
       ) : (
         <>
-          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-card border border-border rounded-sm shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm border-collapse">
-                <thead className="bg-slate-50 dark:bg-surface-raised/50 border-b border-slate-100 dark:border-surface-raised">
-                  <tr className="text-slate-500 uppercase tracking-wider font-semibold text-[11px]">
+                <thead className="bg-muted/50 border-b border-border">
+                  <tr className="text-muted-foreground uppercase tracking-wider font-semibold text-[11px]">
                     <th className="px-6 py-4">Pay Period</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4 text-right">Base</th>
@@ -67,14 +67,14 @@ export default function MyPayroll() {
                     <th className="px-6 py-4 text-right">Payslip</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                <tbody className="divide-y divide-border">
                   {slips.map((s) => (
-                    <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
-                      <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                    <tr key={s.id} className="hover:bg-muted/50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-foreground">
                         {MONTHS[s.payrollRun.periodMonth - 1]} {s.payrollRun.periodYear}
                       </td>
                       <td className="px-6 py-4">
-                        <Badge className={STATUS_STYLES[s.payrollRun.status] || 'bg-slate-200 text-slate-600'}>{s.payrollRun.status}</Badge>
+                        <Badge className={STATUS_STYLES[s.payrollRun.status] || 'bg-muted text-muted-foreground'}>{s.payrollRun.status}</Badge>
                       </td>
                       <td className="px-6 py-4 text-right">{formatMoney(s.baseSalary, s.currency)}</td>
                       <td className="px-6 py-4 text-right">{formatMoney(s.allowances, s.currency)}</td>
@@ -91,8 +91,8 @@ export default function MyPayroll() {
               </table>
             </div>
           </div>
-          <p className="text-sm text-slate-500">
-            Total net pay across {slips.length} finalized pay period{slips.length === 1 ? '' : 's'}: <span className="font-semibold text-slate-700 dark:text-slate-300">{formatMoney(totalNet, currency)}</span>
+          <p className="text-sm text-muted-foreground">
+            Total net pay across {slips.length} finalized pay period{slips.length === 1 ? '' : 's'}: <span className="font-semibold text-foreground">{formatMoney(totalNet, currency)}</span>
           </p>
         </>
       )}

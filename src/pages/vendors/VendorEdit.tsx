@@ -144,8 +144,8 @@ export default function VendorEdit() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Edit Vendor</h1>
-          <p className="text-sm text-slate-500">Update vendor information</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Edit Vendor</h1>
+          <p className="text-sm text-muted-foreground">Update vendor information</p>
         </div>
       </div>
 

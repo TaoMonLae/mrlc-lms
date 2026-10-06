@@ -13,7 +13,7 @@ type Doc = {
 };
 
 const statusStyle = (s: string) =>
-  s === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : s === 'REISSUED' ? 'bg-slate-200 text-slate-600' : 'bg-red-100 text-red-700';
+  s === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : s === 'REISSUED' ? 'bg-muted text-muted-foreground' : 'bg-red-100 text-red-700';
 
 export default function StudentDocumentsPage() {
   const [docs, setDocs] = useState<Doc[]>([]);
@@ -38,32 +38,32 @@ export default function StudentDocumentsPage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
           <FileBadge className="h-6 w-6 text-aubergine-600" /> My Documents
         </h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Your official student card, report cards, transcripts and certificates.</p>
+        <p className="text-sm text-muted-foreground mt-1">Your official student card, report cards, transcripts and certificates.</p>
       </div>
 
       {loading ? (
-        <div className="py-16 text-center text-slate-500">Loading…</div>
+        <div className="py-16 text-center text-muted-foreground">Loading…</div>
       ) : docs.length === 0 ? (
-        <div className="bg-white dark:bg-surface-indigo border border-dashed border-slate-200 dark:border-surface-raised rounded-xl p-10 text-center text-slate-500">
+        <div className="bg-card border border-dashed border-border rounded-sm p-10 text-center text-muted-foreground">
           No documents have been issued to you yet.
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {docs.map((d) => (
-            <div key={d.id} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-5 flex flex-col">
+            <div key={d.id} className="bg-card border border-border rounded-sm shadow-sm p-5 flex flex-col">
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white">{officialDocumentLabel(d.type)}</h3>
-                  <p className="text-xs text-slate-400 font-mono mt-0.5">{d.documentNumber}</p>
+                  <h3 className="font-bold text-foreground">{officialDocumentLabel(d.type)}</h3>
+                  <p className="text-xs text-muted-foreground font-mono mt-0.5">{d.documentNumber}</p>
                 </div>
                 <Badge className={`${statusStyle(d.status)} border-0 shrink-0`}>{d.status}</Badge>
               </div>
-              <div className="text-xs text-slate-500 space-y-1 mb-4">
-                {d.term && <p>Term: <span className="font-medium text-slate-700 dark:text-slate-300">{d.term}</span></p>}
-                <p>Issued: <span className="font-medium text-slate-700 dark:text-slate-300">{new Date(d.issueDate).toLocaleDateString()}</span></p>
+              <div className="text-xs text-muted-foreground space-y-1 mb-4">
+                {d.term && <p>Term: <span className="font-medium text-foreground">{d.term}</span></p>}
+                <p>Issued: <span className="font-medium text-foreground">{new Date(d.issueDate).toLocaleDateString()}</span></p>
               </div>
               <div className="mt-auto flex gap-2">
                 <Button size="sm" className="bg-primary text-primary-foreground flex-1" render={<Link to={officialDocumentViewPath(d)} />} nativeButton={false}>

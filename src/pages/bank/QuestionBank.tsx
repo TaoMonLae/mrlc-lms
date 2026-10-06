@@ -11,8 +11,8 @@ import { Library, Plus, Search, CheckCircle2, Archive, Pencil, FolderTree } from
 const DIFFICULTY = ['EASY', 'MEDIUM', 'HARD'];
 const STATUS = ['DRAFT', 'UNDER_REVIEW', 'APPROVED', 'RETIRED', 'ARCHIVED'];
 const STATUS_COLOR: Record<string, string> = {
-  DRAFT: 'bg-slate-100 text-slate-600', UNDER_REVIEW: 'bg-amber-100 text-amber-700',
-  APPROVED: 'bg-emerald-100 text-emerald-700', RETIRED: 'bg-slate-200 text-slate-500', ARCHIVED: 'bg-red-100 text-red-700',
+  DRAFT: 'bg-muted text-muted-foreground', UNDER_REVIEW: 'bg-amber-100 text-amber-700',
+  APPROVED: 'bg-emerald-100 text-emerald-700', RETIRED: 'bg-muted text-muted-foreground', ARCHIVED: 'bg-red-100 text-red-700',
 };
 
 export default function QuestionBank() {
@@ -44,8 +44,8 @@ export default function QuestionBank() {
     <div className="max-w-5xl mx-auto space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><Library className="h-6 w-6 text-aubergine-600" /> Question Bank</h1>
-          <p className="text-sm text-slate-500 mt-1">{loading ? 'Loading questions…' : error ? 'Questions unavailable' : `${total} reusable questions.`}</p>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><Library className="h-6 w-6 text-aubergine-600" /> Question Bank</h1>
+          <p className="text-sm text-muted-foreground mt-1">{loading ? 'Loading questions…' : error ? 'Questions unavailable' : `${total} reusable questions.`}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => navigate('/bank/topics')}><FolderTree className="h-4 w-4 mr-1" /> Topics</Button>
@@ -55,17 +55,17 @@ export default function QuestionBank() {
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
         <div className="relative sm:col-span-2">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input aria-label="Search questions" className="pl-9" placeholder="Search text…" value={f.q} onChange={(e) => setF({ ...f, q: e.target.value, page: 1 })} />
         </div>
-        <select className="h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-3 text-sm" aria-label="Topic" value={f.topicId} onChange={(e) => setF({ ...f, topicId: e.target.value, page: 1 })}>
+        <select className="h-10 rounded-md border border-border bg-card px-3 text-sm" aria-label="Topic" value={f.topicId} onChange={(e) => setF({ ...f, topicId: e.target.value, page: 1 })}>
           <option value="">All topics</option>{topics.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
         <div className="grid grid-cols-2 gap-2">
-          <select className="h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" aria-label="Difficulty" value={f.difficulty} onChange={(e) => setF({ ...f, difficulty: e.target.value, page: 1 })}>
+          <select className="h-10 rounded-md border border-border bg-card px-2 text-sm" aria-label="Difficulty" value={f.difficulty} onChange={(e) => setF({ ...f, difficulty: e.target.value, page: 1 })}>
             <option value="">Difficulty</option>{DIFFICULTY.map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
-          <select className="h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" aria-label="Question status" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value, page: 1 })}>
+          <select className="h-10 rounded-md border border-border bg-card px-2 text-sm" aria-label="Question status" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value, page: 1 })}>
             <option value="">Status</option>{STATUS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
@@ -75,15 +75,15 @@ export default function QuestionBank() {
       {error && <LoadError message={error} onRetry={load} />}
       {!loading && !error && <div className="space-y-2">
         {items.map((q) => (
-          <div key={q.id} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div key={q.id} className="bg-card border border-border rounded-sm p-4 flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <Badge className={`${STATUS_COLOR[q.status] || ''} text-[9px]`}>{q.status}</Badge>
-                {q.difficulty && <Badge variant="outline" className="text-[9px]">{q.difficulty}</Badge>}
-                <Badge variant="outline" className="text-[9px]">{q.type}</Badge>
-                {q.topic && <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{q.topic.name}</span>}
+                <Badge className={`${STATUS_COLOR[q.status] || ''} text-[11px]`}>{q.status}</Badge>
+                {q.difficulty && <Badge variant="outline" className="text-[11px]">{q.difficulty}</Badge>}
+                <Badge variant="outline" className="text-[11px]">{q.type}</Badge>
+                {q.topic && <span className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest">{q.topic.name}</span>}
               </div>
-              <p className="text-sm text-slate-800 dark:text-slate-200 line-clamp-2">{q.text}</p>
+              <p className="text-sm text-foreground line-clamp-2">{q.text}</p>
             </div>
             <div className="flex gap-1 shrink-0">
               <Button variant="outline" size="sm" className="h-8" aria-label="Edit question" onClick={() => navigate(`/bank/${q.id}`)}><Pencil className="h-3.5 w-3.5" /></Button>
@@ -92,13 +92,13 @@ export default function QuestionBank() {
             </div>
           </div>
         ))}
-        {items.length === 0 && <div className="rounded-xl border border-dashed border-slate-200 dark:border-surface-raised p-10 text-center text-slate-500">No questions match.</div>}
+        {items.length === 0 && <div className="rounded-sm border border-dashed border-border p-10 text-center text-muted-foreground">No questions match.</div>}
       </div>}
 
       {!loading && !error && total > 50 && (
         <div className="flex justify-center gap-2">
           <Button variant="outline" size="sm" disabled={f.page <= 1} onClick={() => setF({ ...f, page: f.page - 1 })}>Prev</Button>
-          <span className="text-sm text-slate-500 self-center">Page {f.page}</span>
+          <span className="text-sm text-muted-foreground self-center">Page {f.page}</span>
           <Button variant="outline" size="sm" disabled={f.page * 50 >= total} onClick={() => setF({ ...f, page: f.page + 1 })}>Next</Button>
         </div>
       )}

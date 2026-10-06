@@ -16,7 +16,7 @@ export function VideoCard({ video, progress, isSelected = false, onSelect, showS
   const [failedThumbnail, setFailedThumbnail] = React.useState<string | null>(null);
   const completed = Boolean(progress?.isCompleted);
   const percent = video.duration && progress ? Math.max(0, Math.min(100, (progress.currentPosition / video.duration) * 100)) : 0;
-  return <article className={`group flex min-w-0 flex-col overflow-hidden rounded-xl border bg-card text-card-foreground transition-colors ${isSelected ? 'border-academic-teal ring-1 ring-academic-teal' : 'border-border hover:border-muted-foreground/40'}`}>
+  return <article className={`group flex min-w-0 flex-col overflow-hidden rounded-sm border bg-card text-card-foreground transition-colors ${isSelected ? 'border-academic-teal ring-1 ring-academic-teal' : 'border-border hover:border-muted-foreground/40'}`}>
     <div className="relative aspect-video overflow-hidden bg-[#141a20]">
       <Link to={`/videos/${video.id}`} aria-label={`Watch ${video.title}`} className="block h-full w-full focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-white">
         {thumbnail && failedThumbnail !== thumbnail ? <img src={thumbnail} alt="" width={480} height={270} loading="lazy" className="h-full w-full object-cover" onError={() => setFailedThumbnail(thumbnail)} /> : <div className="flex h-full items-center justify-center"><Video className="size-10 text-white/30" /></div>}

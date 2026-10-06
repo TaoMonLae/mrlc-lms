@@ -148,8 +148,8 @@ export default function FeeStructureEdit() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Edit Fee Structure</h1>
-          <p className="text-sm text-slate-500">Update fee structure details</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Edit Fee Structure</h1>
+          <p className="text-sm text-muted-foreground">Update fee structure details</p>
         </div>
       </div>
 

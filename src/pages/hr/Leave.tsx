@@ -19,7 +19,7 @@ const STATUS_STYLES: Record<string, string> = {
   PENDING: 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300',
   APPROVED: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300',
   REJECTED: 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300',
-  CANCELLED: 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-200',
+  CANCELLED: 'bg-muted text-muted-foreground',
 };
 
 export default function Leave() {
@@ -104,19 +104,19 @@ export default function Leave() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-amber-100 p-2 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"><CalendarCheck className="h-5 w-5" /></div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Leave</h1>
+          <h1 className="text-xl font-semibold text-foreground">Leave</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Dialog open={typeOpen} onOpenChange={setTypeOpen}>
             <DialogTrigger render={<Button variant="outline">Leave types</Button>} />
             <DialogContent>
               <DialogHeader><DialogTitle>Leave types</DialogTitle></DialogHeader>
-              <ul className="divide-y divide-slate-100 text-sm dark:divide-slate-800">
-                {types.length === 0 ? <li className="py-2 text-slate-400">None defined yet.</li> :
+              <ul className="divide-y divide-border text-sm">
+                {types.length === 0 ? <li className="py-2 text-muted-foreground">None defined yet.</li> :
                   types.map((t) => (
                     <li key={t.id} className="flex justify-between py-2">
                       <span>{t.name}</span>
-                      <span className="text-xs text-slate-400">{t.daysPerYear > 0 ? `${t.daysPerYear} days/yr` : 'uncapped'} · {t.paid ? 'paid' : 'unpaid'}</span>
+                      <span className="text-xs text-muted-foreground">{t.daysPerYear > 0 ? `${t.daysPerYear} days/yr` : 'uncapped'} · {t.paid ? 'paid' : 'unpaid'}</span>
                     </li>
                   ))}
               </ul>
@@ -124,8 +124,8 @@ export default function Leave() {
                 <div className="space-y-1 sm:col-span-2"><Label>Name</Label><Input value={typeForm.name} onChange={(e) => setTypeForm({ ...typeForm, name: e.target.value })} /></div>
                 <div className="space-y-1"><Label>Days/yr</Label><Input type="number" min="0" value={typeForm.daysPerYear} onChange={(e) => setTypeForm({ ...typeForm, daysPerYear: e.target.value })} /></div>
               </div>
-              <div className="flex items-center justify-between rounded-md border border-slate-200 p-3 dark:border-slate-700">
-                <div><Label>Paid leave</Label><p className="text-xs text-slate-500">Include this leave type as paid time off.</p></div>
+              <div className="flex items-center justify-between rounded-md border border-border p-3">
+                <div><Label>Paid leave</Label><p className="text-xs text-muted-foreground">Include this leave type as paid time off.</p></div>
                 <Switch checked={typeForm.paid} onCheckedChange={(paid) => setTypeForm({ ...typeForm, paid })} />
               </div>
               <DialogFooter><Button onClick={addType}><Plus className="mr-1 h-4 w-4" /> Add type</Button></DialogFooter>
@@ -150,7 +150,7 @@ export default function Leave() {
                     <SelectContent>{types.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
                   </Select>
                   {selectedBalance && (
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       {selectedBalance.remaining == null ? 'Uncapped allowance' : `${selectedBalance.remaining} of ${selectedBalance.daysPerYear} day(s) remaining`}
                     </p>
                   )}
@@ -180,9 +180,9 @@ export default function Leave() {
         </Select>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+      <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500 dark:bg-slate-900 dark:text-slate-400">
+          <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
             <tr>
               <th className="px-4 py-2">Employee</th>
               <th className="px-4 py-2">Type</th>
@@ -192,11 +192,11 @@ export default function Leave() {
               <th className="px-4 py-2 text-right">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {loading ? <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">Loading…</td></tr> :
-              requests.length === 0 ? <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">No leave requests</td></tr> :
+          <tbody className="divide-y divide-border">
+            {loading ? <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Loading…</td></tr> :
+              requests.length === 0 ? <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">No leave requests</td></tr> :
               requests.map((r) => (
-                <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/60">
+                <tr key={r.id} className="hover:bg-muted/50">
                   <td className="px-4 py-2">{r.employee ? `${r.employee.firstName} ${r.employee.lastName}` : '—'}</td>
                   <td className="px-4 py-2">{r.leaveType?.name ?? '—'}</td>
                   <td className="px-4 py-2">{format(new Date(r.startDate), 'd MMM')} – {format(new Date(r.endDate), 'd MMM yyyy')}</td>
@@ -210,7 +210,7 @@ export default function Leave() {
                       </div>
                     )}
                     {r.status === 'APPROVED' && (
-                      <Button size="sm" variant="outline" title="Cancel approved leave" onClick={() => decide(r.id, 'CANCELLED')}><X className="h-4 w-4 text-slate-500" /></Button>
+                      <Button size="sm" variant="outline" title="Cancel approved leave" onClick={() => decide(r.id, 'CANCELLED')}><X className="h-4 w-4 text-muted-foreground" /></Button>
                     )}
                   </td>
                 </tr>

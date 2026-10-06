@@ -67,11 +67,11 @@ export default function FeesReport() {
     <div className="space-y-6 max-w-6xl mx-auto pb-10">
       <div className="print:hidden flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
-          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/reports" />} nativeButton={false}>
+          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/reports" />} nativeButton={false}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Reports
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Fee Summary Report</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Fee Summary Report</h1>
         </div>
 
         <div className="flex items-center gap-2">
@@ -81,9 +81,9 @@ export default function FeesReport() {
         </div>
       </div>
 
-      <div className="print:hidden bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-wrap gap-4 items-end shadow-sm">
+      <div className="print:hidden bg-card border border-border rounded-sm p-4 flex flex-wrap gap-4 items-end shadow-sm">
          <div className="space-y-1.5 flex-1 min-w-[200px]">
-           <label className="text-xs font-semibold text-slate-500 uppercase">Billing Month</label>
+           <label className="text-xs font-semibold text-muted-foreground uppercase">Billing Month</label>
            <Select value={monthFilter} onValueChange={setMonthFilter}>
               <SelectTrigger><SelectValue placeholder="Select Month" /></SelectTrigger>
               <SelectContent>
@@ -93,7 +93,7 @@ export default function FeesReport() {
             </Select>
          </div>
          <div className="space-y-1.5 flex-1 min-w-[200px]">
-           <label className="text-xs font-semibold text-slate-500 uppercase">Class</label>
+           <label className="text-xs font-semibold text-muted-foreground uppercase">Class</label>
            <Select value={classFilter} onValueChange={setClassFilter}>
               <SelectTrigger><SelectValue placeholder="Select Class" /></SelectTrigger>
               <SelectContent>
@@ -103,7 +103,7 @@ export default function FeesReport() {
             </Select>
          </div>
          <div className="space-y-1.5 flex-1 min-w-[200px]">
-           <label className="text-xs font-semibold text-slate-500 uppercase">Payment Status</label>
+           <label className="text-xs font-semibold text-muted-foreground uppercase">Payment Status</label>
            <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger><SelectValue placeholder="Select Status" /></SelectTrigger>
               <SelectContent>
@@ -122,7 +122,7 @@ export default function FeesReport() {
       {filtersChanged && <p role="status" className="print:hidden text-sm text-muted-foreground">Filters changed. Apply filters to update the report below.</p>}
 
       {isLoading ? (
-        <div className="print:hidden flex items-center justify-center py-12 text-slate-500"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…</div>
+        <div className="print:hidden flex items-center justify-center py-12 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…</div>
       ) : error ? (
         <div className="print:hidden py-12 text-center text-sm text-red-600">{error}</div>
       ) : (
@@ -132,22 +132,22 @@ export default function FeesReport() {
         filters={{ Month: monthLabel, Class: classLabel, Status: statusLabel }}
       >
         <div className="mb-8 grid grid-cols-3 gap-6">
-           <div className="border border-slate-300 p-4 rounded">
-             <p className="text-xs text-slate-500 uppercase font-bold">Total Expected</p>
-             <p className="text-xl font-bold text-slate-900 mt-1">{formatMoney(data?.totalExpected ?? 0, cur)}</p>
+           <div className="border border-input p-4 rounded">
+             <p className="text-xs text-muted-foreground uppercase font-bold">Total Expected</p>
+             <p className="text-xl font-bold text-foreground mt-1">{formatMoney(data?.totalExpected ?? 0, cur)}</p>
            </div>
-           <div className="border border-slate-300 p-4 rounded bg-slate-50">
-             <p className="text-xs text-slate-500 uppercase font-bold">Total Collected</p>
-             <p className="text-xl font-bold text-slate-900 mt-1">{formatMoney(data?.totalCollected ?? 0, cur)}</p>
+           <div className="border border-input p-4 rounded bg-muted/50">
+             <p className="text-xs text-muted-foreground uppercase font-bold">Total Collected</p>
+             <p className="text-xl font-bold text-foreground mt-1">{formatMoney(data?.totalCollected ?? 0, cur)}</p>
            </div>
-           <div className="border border-slate-300 p-4 rounded">
-             <p className="text-xs text-slate-500 uppercase font-bold">Outstanding</p>
-             <p className="text-xl font-bold text-slate-900 mt-1 text-red-600">{formatMoney(data?.outstanding ?? 0, cur)}</p>
+           <div className="border border-input p-4 rounded">
+             <p className="text-xs text-muted-foreground uppercase font-bold">Outstanding</p>
+             <p className="text-xl font-bold text-foreground mt-1 text-red-600">{formatMoney(data?.outstanding ?? 0, cur)}</p>
            </div>
         </div>
 
         {rows.length === 0 ? (
-          <p className="text-sm text-slate-500 py-6 text-center">No fee records match this filter.</p>
+          <p className="text-sm text-muted-foreground py-6 text-center">No fee records match this filter.</p>
         ) : (
         <table className="w-full text-sm text-left border-collapse">
             <thead>
@@ -163,11 +163,11 @@ export default function FeesReport() {
             <tbody>
               {rows.map((r, i) => (
                 <tr key={i}>
-                  <td className="px-4 py-3 border font-medium text-slate-900">{r.studentName}</td>
-                  <td className="px-4 py-3 border text-slate-700">{r.className}</td>
-                  <td className="px-4 py-3 border text-right text-slate-700">{formatMoney(r.expected, cur)}</td>
-                  <td className="px-4 py-3 border text-right text-slate-700">{formatMoney(r.paid, cur)}</td>
-                  <td className={`px-4 py-3 border text-right ${r.balance > 0 ? 'font-bold text-amber-600' : 'text-slate-700'}`}>{formatMoney(r.balance, cur)}</td>
+                  <td className="px-4 py-3 border font-medium text-foreground">{r.studentName}</td>
+                  <td className="px-4 py-3 border text-foreground">{r.className}</td>
+                  <td className="px-4 py-3 border text-right text-foreground">{formatMoney(r.expected, cur)}</td>
+                  <td className="px-4 py-3 border text-right text-foreground">{formatMoney(r.paid, cur)}</td>
+                  <td className={`px-4 py-3 border text-right ${r.balance > 0 ? 'font-bold text-amber-600' : 'text-foreground'}`}>{formatMoney(r.balance, cur)}</td>
                   <td className={`px-4 py-3 border font-bold ${statusColor[r.status] || ''}`}>{r.status}</td>
                 </tr>
               ))}

@@ -89,14 +89,14 @@ export default function StaffProfile() {
   }
 
   if (loading || !emp || !edit) {
-    return <div className="py-20 text-center text-sm text-slate-400">Loading…</div>;
+    return <div className="py-20 text-center text-sm text-muted-foreground">Loading…</div>;
   }
 
   const deptDesignations = designations.filter((d) => !edit.departmentId || d.departmentId === edit.departmentId);
 
   return (
     <div className="space-y-6">
-      <Link to="/staff" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700">
+      <Link to="/staff" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Back to staff
       </Link>
 
@@ -143,8 +143,8 @@ export default function StaffProfile() {
       />
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-4 rounded-lg border border-slate-200 p-4 lg:col-span-2">
-          <h2 className="text-sm font-semibold text-slate-700">Details</h2>
+        <div className="space-y-4 rounded-lg border border-border p-4 lg:col-span-2">
+          <h2 className="text-sm font-semibold text-foreground">Details</h2>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label>First name</Label><Input value={edit.firstName} onChange={(e) => setEdit({ ...edit, firstName: e.target.value })} /></div>
             <div className="space-y-1"><Label>Last name</Label><Input value={edit.lastName} onChange={(e) => setEdit({ ...edit, lastName: e.target.value })} /></div>
@@ -185,13 +185,13 @@ export default function StaffProfile() {
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-lg border border-slate-200 p-4">
-            <h2 className="mb-2 text-sm font-semibold text-slate-700">Leave balance ({new Date().getFullYear()})</h2>
-            {balance.length === 0 ? <p className="text-xs text-slate-400">No leave types defined.</p> : (
+          <div className="rounded-lg border border-border p-4">
+            <h2 className="mb-2 text-sm font-semibold text-foreground">Leave balance ({new Date().getFullYear()})</h2>
+            {balance.length === 0 ? <p className="text-xs text-muted-foreground">No leave types defined.</p> : (
               <ul className="space-y-1 text-sm">
                 {balance.map((b) => (
                   <li key={b.leaveTypeId} className="flex justify-between">
-                    <span className="text-slate-600">{b.name}</span>
+                    <span className="text-muted-foreground">{b.name}</span>
                     <span className="font-medium">{b.remaining == null ? `${b.used} used` : `${b.remaining}/${b.daysPerYear} left`}</span>
                   </li>
                 ))}
@@ -201,15 +201,15 @@ export default function StaffProfile() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-slate-200 p-4">
-        <h2 className="mb-3 text-sm font-semibold text-slate-700">Payslips</h2>
-        {(!emp.payslips || emp.payslips.length === 0) ? <p className="text-xs text-slate-400">No payslips yet.</p> : (
+      <div className="rounded-lg border border-border p-4">
+        <h2 className="mb-3 text-sm font-semibold text-foreground">Payslips</h2>
+        {(!emp.payslips || emp.payslips.length === 0) ? <p className="text-xs text-muted-foreground">No payslips yet.</p> : (
           <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-left text-xs uppercase text-slate-500">
+            <thead className="text-left text-xs uppercase text-muted-foreground">
               <tr><th className="py-1">Period</th><th className="py-1 text-right">Base</th><th className="py-1 text-right">Allowances</th><th className="py-1 text-right">Deductions</th><th className="py-1 text-right">Net pay</th></tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-border">
               {emp.payslips.map((p: any) => (
                 <tr key={p.id}>
                   <td className="py-1">{p.payrollRun ? `${p.payrollRun.periodMonth}/${p.payrollRun.periodYear}` : '—'}</td>
@@ -225,15 +225,15 @@ export default function StaffProfile() {
         )}
       </div>
 
-      <div className="rounded-lg border border-slate-200 p-4">
-        <h2 className="mb-3 text-sm font-semibold text-slate-700">Leave history</h2>
-        {(!emp.leaveRequests || emp.leaveRequests.length === 0) ? <p className="text-xs text-slate-400">No leave requests.</p> : (
+      <div className="rounded-lg border border-border p-4">
+        <h2 className="mb-3 text-sm font-semibold text-foreground">Leave history</h2>
+        {(!emp.leaveRequests || emp.leaveRequests.length === 0) ? <p className="text-xs text-muted-foreground">No leave requests.</p> : (
           <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-left text-xs uppercase text-slate-500">
+            <thead className="text-left text-xs uppercase text-muted-foreground">
               <tr><th className="py-1">Type</th><th className="py-1">Dates</th><th className="py-1 text-right">Days</th><th className="py-1">Status</th></tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-border">
               {emp.leaveRequests.map((r: any) => (
                 <tr key={r.id}>
                   <td className="py-1">{r.leaveType?.name ?? '—'}</td>

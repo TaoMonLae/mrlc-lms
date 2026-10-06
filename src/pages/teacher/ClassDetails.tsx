@@ -197,7 +197,7 @@ export default function ClassDetails() {
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 px-2 text-slate-500"
+          className="h-8 px-2 text-muted-foreground"
           onClick={() => navigate('/teacher/classes')}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -206,15 +206,15 @@ export default function ClassDetails() {
         <Button variant="outline" onClick={() => navigate(`/classwork?class=${encodeURIComponent(id || '')}`)}><BookOpen className="mr-2 h-4 w-4" /> Classwork</Button>
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200 dark:border-surface-raised">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-border">
         <div className="space-y-1">
           <div className="flex min-w-0 flex-wrap items-center gap-3">
-            <h1 className="min-w-0 break-words text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight sm:text-3xl">{classInfo.name}</h1>
-            <Badge className="bg-aubergine-600 text-white border-none font-bold text-[10px] uppercase tracking-widest px-2 py-0.5">
+            <h1 className="min-w-0 break-words text-2xl font-black text-foreground uppercase tracking-tight sm:text-3xl">{classInfo.name}</h1>
+            <Badge className="bg-aubergine-600 text-white border-none font-bold text-[11px] uppercase tracking-widest px-2 py-0.5">
               {classInfo.level}
             </Badge>
           </div>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-slate-500 dark:text-slate-300 font-bold text-[11px] uppercase tracking-wider">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-muted-foreground font-bold text-[11px] uppercase tracking-wider">
             <div className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> {classInfo.totalStudents} Students</div>
             <div className="flex items-center gap-1.5"><ChevronRight className="h-3.5 w-3.5" /> {classInfo.room}</div>
             <div className="flex items-center gap-1.5"><ChevronRight className="h-3.5 w-3.5" /> {classInfo.academicYear}</div>
@@ -224,14 +224,14 @@ export default function ClassDetails() {
           <Button
             id="group-message-btn"
             variant="outline"
-            className="h-10 px-4 font-bold text-[11px] uppercase tracking-widest border-slate-200 dark:border-surface-raised"
+            className="h-10 px-4 font-bold text-[11px] uppercase tracking-widest border-border"
             onClick={handleGroupMessage}
           >
             <MessageSquare className="h-4 w-4 mr-2" /> Group Message
           </Button>
           <Button
             id="download-roll-call-btn"
-            className="h-10 px-6 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[11px] uppercase tracking-widest shadow-lg"
+            className="h-10 px-6 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[11px] uppercase tracking-widest shadow-none"
             onClick={handleDownloadRollCall}
           >
             <Download className="h-4 w-4 mr-2" /> Download Roll Call
@@ -240,14 +240,14 @@ export default function ClassDetails() {
       </div>
 
       <Tabs defaultValue="students" className="min-w-0 w-full">
-        <TabsList className="custom-scrollbar h-12 w-full max-w-2xl justify-start overflow-x-auto bg-slate-100/50 p-1 border border-slate-200 dark:border-surface-raised dark:bg-surface-indigo/50">
-          <TabsTrigger value="students" className="shrink-0 data-active:bg-white dark:data-active:bg-slate-800 data-active:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-slate-500 data-active:text-slate-900 dark:data-active:text-white">
+        <TabsList className="custom-scrollbar h-12 w-full max-w-2xl justify-start overflow-x-auto bg-muted/50 p-1 border border-border">
+          <TabsTrigger value="students" className="shrink-0 data-active:bg-white dark:data-active:bg-slate-800 data-active:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-muted-foreground data-active:text-foreground">
             <Users className="h-4 w-4 mr-2" /> Students
           </TabsTrigger>
-          <TabsTrigger value="attendance" className="shrink-0 data-active:bg-white dark:data-active:bg-slate-800 data-active:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-slate-500 data-active:text-slate-900 dark:data-active:text-white">
+          <TabsTrigger value="attendance" className="shrink-0 data-active:bg-white dark:data-active:bg-slate-800 data-active:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-muted-foreground data-active:text-foreground">
             <UserCheck className="h-4 w-4 mr-2" /> Attendance Summary
           </TabsTrigger>
-          <TabsTrigger value="exams" className="shrink-0 data-active:bg-white dark:data-active:bg-slate-800 data-active:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-slate-500 data-active:text-slate-900 dark:data-active:text-white">
+          <TabsTrigger value="exams" className="shrink-0 data-active:bg-white dark:data-active:bg-slate-800 data-active:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-muted-foreground data-active:text-foreground">
             <FileText className="h-4 w-4 mr-2" /> Exam History
           </TabsTrigger>
         </TabsList>
@@ -255,10 +255,10 @@ export default function ClassDetails() {
         <TabsContent value="students" className="mt-8 space-y-6">
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
             <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
                 placeholder="Search students..." 
-                className="pl-10 h-11 bg-white dark:bg-canvas border-slate-200 dark:border-surface-raised font-medium"
+                className="pl-10 h-11 bg-card border-border font-medium"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -268,10 +268,10 @@ export default function ClassDetails() {
                 id="class-details-filter-btn"
                 variant="outline"
                 size="icon"
-                className="h-11 w-11 border-slate-200 dark:border-surface-raised"
+                className="h-11 w-11 border-border"
                 onClick={() => setShowFilters(!showFilters)}
               >
-                <Filter className="h-4 w-4 text-slate-500" />
+                <Filter className="h-4 w-4 text-muted-foreground" />
               </Button>
               <Button
                 id="class-details-add-student-btn"
@@ -285,9 +285,9 @@ export default function ClassDetails() {
           </div>
 
           {showFilters && (
-            <div className="flex flex-col gap-4 p-4 bg-slate-50 dark:bg-surface-raised/40 rounded-lg border border-slate-200 dark:border-surface-raised sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-4 p-4 bg-muted/50 rounded-lg border border-border sm:flex-row sm:items-center">
               <div className="flex flex-wrap items-center gap-2">
-                <label className="text-xs font-bold text-slate-500 uppercase">Attendance:</label>
+                <label className="text-xs font-bold text-muted-foreground uppercase">Attendance:</label>
                 <Select value={attendanceFilter} onValueChange={setAttendanceFilter}>
                   <SelectTrigger className="h-8 w-32">
                     <SelectValue />
@@ -300,7 +300,7 @@ export default function ClassDetails() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="text-xs text-slate-400">
+              <div className="text-xs text-muted-foreground">
                 Showing {filteredStudents.length} of {students.length} students
               </div>
             </div>
@@ -308,7 +308,7 @@ export default function ClassDetails() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredStudents.map((student) => (
-              <Card key={student.id} className="group border-slate-200 dark:border-surface-raised overflow-hidden hover:shadow-md transition-shadow">
+              <Card key={student.id} className="group border-border overflow-hidden hover:shadow-none transition-shadow">
                 <CardContent className="p-0">
                   <div className="p-5 flex min-w-0 items-center gap-4">
                     <Avatar className="h-12 w-12 border-2 border-white dark:border-surface-raised shadow-sm">
@@ -318,27 +318,27 @@ export default function ClassDetails() {
                       <AvatarFallback>{student.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
-                      <h4 className="break-words font-bold text-slate-900 dark:text-white group-hover:text-aubergine-600 transition-colors">{student.name}</h4>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{student.studentId}</p>
+                      <h4 className="break-words font-bold text-foreground group-hover:text-aubergine-600 transition-colors">{student.name}</h4>
+                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">{student.studentId}</p>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 border-t border-slate-100 dark:border-surface-raised">
-                    <div className="p-4 border-r border-slate-100 dark:border-surface-raised text-center">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Attendance</p>
-                      <p className="text-sm font-black text-slate-800 dark:text-slate-200">{student.attendance}</p>
+                  <div className="grid grid-cols-2 border-t border-border">
+                    <div className="p-4 border-r border-border text-center">
+                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Attendance</p>
+                      <p className="text-sm font-black text-foreground">{student.attendance}</p>
                     </div>
                     <div className="p-4 text-center">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Last Exam</p>
-                      <p className="text-sm font-black text-slate-800 dark:text-slate-200">{student.lastExam}</p>
+                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Last Exam</p>
+                      <p className="text-sm font-black text-foreground">{student.lastExam}</p>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-slate-50 dark:bg-surface-raised/40 flex gap-2">
+                  <div className="p-4 bg-muted/50 flex gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 font-bold text-[10px] uppercase tracking-widest h-8 border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo"
+                      className="flex-1 font-bold text-[11px] uppercase tracking-widest h-8 border-border bg-card"
                       onClick={() => handleStudentProfile(student)}
                     >
                       Profile
@@ -346,7 +346,7 @@ export default function ClassDetails() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-slate-400 hover:text-aubergine-600"
+                      className="h-8 w-8 text-muted-foreground hover:text-aubergine-600"
                       title="Send message"
                       onClick={() => handleStudentMessage(student.userId)}
                     >
@@ -360,18 +360,18 @@ export default function ClassDetails() {
         </TabsContent>
 
         <TabsContent value="attendance" className="mt-8">
-           <Card className="border-slate-200 dark:border-surface-raised">
+           <Card className="border-border">
             <CardHeader>
               <CardTitle className="text-lg font-bold">Monthly Attendance Tracking</CardTitle>
               <CardDescription>Average monthly attendance rates for this class.</CardDescription>
             </CardHeader>
             <CardContent>
               {isLoadingAttendance ? (
-                <div className="flex items-center justify-center py-8 text-slate-400">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400"></div>
+                <div className="flex items-center justify-center py-8 text-muted-foreground">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-input"></div>
                 </div>
               ) : !attendanceData || attendanceData.rows.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 text-sm">
+                <div className="text-center py-8 text-muted-foreground text-sm">
                   No attendance records available for this class.
                 </div>
               ) : (
@@ -379,16 +379,16 @@ export default function ClassDetails() {
                   {attendanceData.rows.map((student) => (
                     <div key={student.studentId} className="space-y-2">
                       <div className="flex justify-between items-center text-sm">
-                        <span className="font-bold text-slate-700 dark:text-slate-300">{student.name}</span>
+                        <span className="font-bold text-foreground">{student.name}</span>
                         <span className="font-bold text-aubergine-600">{student.rate}%</span>
                       </div>
-                      <div className="h-2 w-full bg-slate-100 dark:bg-surface-raised rounded-full overflow-hidden">
+                      <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                         <div
                           className="h-full bg-emerald-500 rounded-full"
                           style={{ width: `${student.rate}%` }}
                         />
                       </div>
-                      <p className="text-[10px] font-medium text-slate-500">
+                      <p className="text-[11px] font-medium text-muted-foreground">
                         {student.present} present / {student.total} total days
                       </p>
                     </div>
@@ -401,44 +401,44 @@ export default function ClassDetails() {
 
         <TabsContent value="exams" className="mt-8">
           {isLoadingExams ? (
-            <div className="flex items-center justify-center py-8 text-slate-400">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400"></div>
+            <div className="flex items-center justify-center py-8 text-muted-foreground">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-input"></div>
             </div>
           ) : examsData.length === 0 ? (
-            <div className="text-center py-8 text-slate-400 text-sm">
+            <div className="text-center py-8 text-muted-foreground text-sm">
               No exams available for this class.
             </div>
           ) : (
             <div className="space-y-4">
               {examsData.map((exam) => (
-                <div key={exam.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl hover:border-aubergine-300 transition-colors">
+                <div key={exam.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-card border border-border rounded-sm hover:border-aubergine-300 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="h-10 w-10 shrink-0 rounded-lg bg-aubergine-100 dark:bg-aubergine-900/30 flex items-center justify-center text-aubergine-600">
                       <FileText className="h-5 w-5" />
                     </div>
                     <div>
-                      <h5 className="font-bold text-slate-900 dark:text-white uppercase text-xs">{exam.title}</h5>
-                      <p className="text-[10px] font-medium text-slate-500">{exam.date}</p>
+                      <h5 className="font-bold text-foreground uppercase text-xs">{exam.title}</h5>
+                      <p className="text-[11px] font-medium text-muted-foreground">{exam.date}</p>
                     </div>
                   </div>
                   <div className="mt-4 sm:mt-0 flex items-center gap-8">
                     <div className="text-center">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Average Score</p>
-                      <p className="text-sm font-black text-slate-900 dark:text-white">{exam.avg}</p>
+                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Average Score</p>
+                      <p className="text-sm font-black text-foreground">{exam.avg}</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Submissions</p>
-                      <p className="text-sm font-black text-slate-900 dark:text-white">{exam.submissions}/{exam.total}</p>
+                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Submissions</p>
+                      <p className="text-sm font-black text-foreground">{exam.submissions}/{exam.total}</p>
                     </div>
                     <div className="text-right">
-                      <Badge variant={exam.status === 'GRADED' ? 'secondary' : 'outline'} className={`font-bold text-[9px] uppercase tracking-tight ${exam.status === 'GRADED' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200' : ''}`}>
+                      <Badge variant={exam.status === 'GRADED' ? 'secondary' : 'outline'} className={`font-bold text-[11px] uppercase tracking-tight ${exam.status === 'GRADED' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200' : ''}`}>
                         {exam.status.replace('_', ' ')}
                       </Badge>
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-slate-400 hover:text-aubergine-600"
+                      className="h-8 w-8 text-muted-foreground hover:text-aubergine-600"
                       title="View exam details"
                       onClick={() => navigate(`/exam2/${exam.id}/analytics`)}
                     >
@@ -455,13 +455,13 @@ export default function ClassDetails() {
       {/* Message Modal */}
       {showMessageModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-surface-indigo rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+          <div className="bg-card rounded-sm shadow-none max-w-md w-full mx-4 p-6">
+            <h3 className="text-lg font-bold text-foreground mb-4">
               {selectedStudentId ? 'Send Message to Student' : 'Send Group Message'}
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 block">Subject</label>
+                <label className="text-sm font-bold text-foreground mb-1 block">Subject</label>
                 <Input
                   placeholder="Message subject"
                   className="w-full"
@@ -469,10 +469,10 @@ export default function ClassDetails() {
                 />
               </div>
               <div>
-                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 block">Message</label>
+                <label className="text-sm font-bold text-foreground mb-1 block">Message</label>
                 <textarea
                   placeholder="Type your message here..."
-                  className="w-full min-h-[120px] p-3 border border-slate-200 dark:border-surface-raised rounded-lg bg-white dark:bg-surface-indigo focus:ring-2 focus:ring-aubergine-500 focus:outline-none resize-none"
+                  className="w-full min-h-[120px] p-3 border border-border rounded-lg bg-card focus:ring-2 focus:ring-aubergine-500 focus:outline-none resize-none"
                   id="message-body"
                 />
               </div>

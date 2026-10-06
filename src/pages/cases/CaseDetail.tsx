@@ -54,7 +54,7 @@ export default function CaseDetail() {
       case 'URGENT': return <Badge variant="destructive" className="py-1 uppercase text-xs">Urgent</Badge>;
       case 'HIGH': return <Badge className="bg-aubergine-100 text-aubergine-800 hover:bg-aubergine-100 dark:bg-aubergine-900/30 dark:text-aubergine-400 border-0 py-1 uppercase text-xs">High</Badge>;
       case 'MEDIUM': return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 border-0 py-1 uppercase text-xs">Medium</Badge>;
-      case 'LOW': return <Badge className="bg-slate-100 text-slate-800 hover:bg-slate-100 dark:bg-surface-raised dark:text-slate-300 border-0 py-1 uppercase text-xs">Low</Badge>;
+      case 'LOW': return <Badge className="bg-muted text-foreground hover:bg-muted border-0 py-1 uppercase text-xs">Low</Badge>;
       default: return null;
     }
   };
@@ -65,7 +65,7 @@ export default function CaseDetail() {
       case 'IN_PROGRESS': return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 border-0 text-sm"><Clock className="w-4 h-4 mr-1"/> In Progress</Badge>;
       case 'FOLLOW_UP': return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 border-0 text-sm"><Clock className="w-4 h-4 mr-1"/> Follow Up</Badge>;
       case 'RESOLVED': return <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 border-0 text-sm"><CheckCircle2 className="w-4 h-4 mr-1"/> Resolved</Badge>;
-      case 'CLOSED': return <Badge variant="outline" className="text-slate-500 border-slate-300 dark:border-surface-raised text-sm">Closed</Badge>;
+      case 'CLOSED': return <Badge variant="outline" className="text-muted-foreground border-input text-sm">Closed</Badge>;
       default: return null;
     }
   };
@@ -119,7 +119,7 @@ export default function CaseDetail() {
   if (loadError) return <LoadError title="Case unavailable" message={loadError} onRetry={() => setLoadRevision(n => n + 1)} />;
 
   if (!caseData) {
-    return <div className="p-8 text-center text-slate-500">Loading case...</div>;
+    return <div className="p-8 text-center text-muted-foreground">Loading case...</div>;
   }
 
   // Normalize the API record (Prisma CaseRecord) into the shape this view uses.
@@ -157,18 +157,18 @@ export default function CaseDetail() {
     <div className="space-y-6 max-w-5xl mx-auto pb-10">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
-          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/cases" />} nativeButton={false}>
+          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/cases" />} nativeButton={false}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Cases
           </Button>
           <div className="flex items-center gap-3">
-             <div className={`p-3 rounded-xl border shadow-sm ${activeCase.type === 'PROTECTION' ? 'bg-red-50 border-red-100 dark:bg-red-900/20 dark:border-red-900/30 text-red-500' : 'bg-white dark:bg-surface-indigo border-slate-200 dark:border-surface-raised text-slate-500'}`}>
+             <div className={`p-3 rounded-sm border shadow-sm ${activeCase.type === 'PROTECTION' ? 'bg-red-50 border-red-100 dark:bg-red-900/20 dark:border-red-900/30 text-red-500' : 'bg-card border-border text-muted-foreground'}`}>
                 {activeCase.type === 'PROTECTION' ? <ShieldAlert className="h-8 w-8" /> : <Shield className="h-8 w-8" />}
              </div>
              <div>
-               <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{activeCase.title}</h1>
+               <h1 className="text-2xl font-bold tracking-tight text-foreground">{activeCase.title}</h1>
                <div className="flex items-center gap-2 mt-2">
-                 <span className="font-mono text-sm text-slate-500">{activeCase.caseNumber}</span>
+                 <span className="font-mono text-sm text-muted-foreground">{activeCase.caseNumber}</span>
                  <span className="text-slate-300 dark:text-slate-700">•</span>
                  <Link to={`/students/${activeCase.studentId}`} className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
                     {activeCase.studentName}
@@ -201,7 +201,7 @@ export default function CaseDetail() {
               <Trash2 className="h-5 w-5" /> Delete Case
             </DialogTitle>
             <DialogDescription className="pt-1">
-              Are you sure you want to permanently delete <strong className="text-slate-900 dark:text-white">{activeCase.title}</strong>? This will also remove all case notes and cannot be undone.
+              Are you sure you want to permanently delete <strong className="text-foreground">{activeCase.title}</strong>? This will also remove all case notes and cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -217,26 +217,26 @@ export default function CaseDetail() {
         
         {/* Main Content Area */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm p-6">
+          <div className="bg-card border border-border rounded-sm overflow-hidden shadow-sm p-6">
             <div className="flex justify-between items-start mb-6">
                <div className="space-y-4 w-full">
                   <div className="flex gap-2">
                     {getStatusBadge(activeCase.status)}
                     {getPriorityBadge(activeCase.priority)}
-                    <Badge variant="outline" className="text-slate-600 dark:text-slate-300 font-normal uppercase">{activeCase.type}</Badge>
+                    <Badge variant="outline" className="text-muted-foreground font-normal uppercase">{activeCase.type}</Badge>
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium text-slate-500 dark:text-slate-300 mb-1">Description / Concern</h3>
-                    <p className="text-slate-900 dark:text-slate-100 whitespace-pre-wrap">{activeCase.description}</p>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Description / Concern</h3>
+                    <p className="text-foreground whitespace-pre-wrap">{activeCase.description}</p>
                   </div>
                </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm">
-             <div className="p-4 border-b border-slate-200 dark:border-surface-raised bg-slate-50/50 dark:bg-surface-raised/50 flex items-center justify-between">
-                <h3 className="font-semibold text-slate-900 dark:text-white flex items-center">
-                  <MessageSquare className="w-4 h-4 mr-2 text-slate-500" /> Case Notes & Timeline
+          <div className="bg-card border border-border rounded-sm overflow-hidden shadow-sm">
+             <div className="p-4 border-b border-border bg-muted/30 flex items-center justify-between">
+                <h3 className="font-semibold text-foreground flex items-center">
+                  <MessageSquare className="w-4 h-4 mr-2 text-muted-foreground" /> Case Notes & Timeline
                 </h3>
              </div>
              <div className="p-6 space-y-8">
@@ -246,25 +246,25 @@ export default function CaseDetail() {
                   
                   {activeCase.notes.map((note) => (
                     <div key={note.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white dark:border-slate-900 bg-slate-100 dark:bg-surface-raised text-slate-500 shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm z-10">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white dark:border-slate-900 bg-muted text-muted-foreground shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm z-10">
                         {note.isPrivate ? <AlertCircle className="w-4 h-4 text-amber-500" /> : <FileText className="w-4 h-4" />}
                       </div>
                       
-                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm relative">
+                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-sm border border-border bg-card shadow-sm relative">
                         {/* Connecting Arrow */}
-                        <div className="absolute top-[15px] -left-2 w-2 h-2 bg-white dark:bg-surface-indigo border-t border-l border-slate-200 dark:border-surface-raised transform -rotate-45 md:group-even:hidden"></div>
-                        <div className="absolute top-[15px] -right-2 w-2 h-2 bg-white dark:bg-surface-indigo border-t border-r border-slate-200 dark:border-surface-raised transform rotate-45 hidden md:group-even:block"></div>
+                        <div className="absolute top-[15px] -left-2 w-2 h-2 bg-card border-t border-l border-border transform -rotate-45 md:group-even:hidden"></div>
+                        <div className="absolute top-[15px] -right-2 w-2 h-2 bg-card border-t border-r border-border transform rotate-45 hidden md:group-even:block"></div>
                         
                         <div className="flex items-center justify-between mb-1">
-                          <span className="font-medium text-sm text-slate-900 dark:text-white">{note.createdByName}</span>
-                          <span className="text-xs text-slate-500">{safeFormat(note.createdAt, 'MMM d, h:mm a')}</span>
+                          <span className="font-medium text-sm text-foreground">{note.createdByName}</span>
+                          <span className="text-xs text-muted-foreground">{safeFormat(note.createdAt, 'MMM d, h:mm a')}</span>
                         </div>
                         {note.isPrivate && (
-                           <span className="inline-block px-2 py-0.5 rounded text-[10px] uppercase font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 mb-2 border border-amber-200 dark:border-amber-800/50">
+                           <span className="inline-block px-2 py-0.5 rounded text-[11px] uppercase font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 mb-2 border border-amber-200 dark:border-amber-800/50">
                              Internal Only
                            </span>
                         )}
-                        <p className="text-sm text-slate-700 dark:text-slate-300">{note.note}</p>
+                        <p className="text-sm text-foreground">{note.note}</p>
                       </div>
                     </div>
                   ))}
@@ -273,19 +273,19 @@ export default function CaseDetail() {
                      <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white dark:border-slate-900 bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400 shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm z-10">
                         <User className="w-4 h-4" />
                       </div>
-                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-blue-100 bg-blue-50 dark:border-blue-900/50 dark:bg-blue-950/20 relative">
+                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-sm border border-blue-100 bg-blue-50 dark:border-blue-900/50 dark:bg-blue-950/20 relative">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="font-medium text-sm text-slate-900 dark:text-white">Case Opened</span>
-                          <span className="text-xs text-slate-500">{safeFormat(activeCase.openedAt, 'MMM d, yyyy')}</span>
+                          <span className="font-medium text-sm text-foreground">Case Opened</span>
+                          <span className="text-xs text-muted-foreground">{safeFormat(activeCase.openedAt, 'MMM d, yyyy')}</span>
                         </div>
-                        <p className="text-sm text-slate-600 dark:text-slate-300">Opened by {activeCase.openedByName}</p>
+                        <p className="text-sm text-muted-foreground">Opened by {activeCase.openedByName}</p>
                       </div>
                   </div>
 
                 </div>
 
-                <div className="pt-6 border-t border-slate-100 dark:border-surface-raised space-y-4">
-                  <h4 className="text-sm font-medium text-slate-900 dark:text-white flex items-center">
+                <div className="pt-6 border-t border-border space-y-4">
+                  <h4 className="text-sm font-medium text-foreground flex items-center">
                     <Plus className="w-4 h-4 mr-1" /> Add New Note
                   </h4>
                   <Textarea 
@@ -312,26 +312,26 @@ export default function CaseDetail() {
 
         {/* Sidebar Info */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-6 overflow-hidden">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider mb-4 border-b border-slate-100 dark:border-surface-raised pb-2">Case Details</h3>
+          <div className="bg-card border border-border rounded-sm shadow-sm p-6 overflow-hidden">
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4 border-b border-border pb-2">Case Details</h3>
             
             <dl className="space-y-4">
               <div>
-                <dt className="text-xs text-slate-500 dark:text-slate-300">Assigned To</dt>
-                <dd className="font-medium text-slate-900 dark:text-white">{activeCase.assignedToName || 'Unassigned'}</dd>
+                <dt className="text-xs text-muted-foreground">Assigned To</dt>
+                <dd className="font-medium text-foreground">{activeCase.assignedToName || 'Unassigned'}</dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-500 dark:text-slate-300">Opened By</dt>
-                <dd className="font-medium text-slate-900 dark:text-white">{activeCase.openedByName}</dd>
+                <dt className="text-xs text-muted-foreground">Opened By</dt>
+                <dd className="font-medium text-foreground">{activeCase.openedByName}</dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-500 dark:text-slate-300">Opened On</dt>
-                <dd className="font-medium text-slate-900 dark:text-white">{safeFormat(activeCase.openedAt, 'MMMM d, yyyy h:mm a')}</dd>
+                <dt className="text-xs text-muted-foreground">Opened On</dt>
+                <dd className="font-medium text-foreground">{safeFormat(activeCase.openedAt, 'MMMM d, yyyy h:mm a')}</dd>
               </div>
             </dl>
           </div>
           
-          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-xl shadow-sm p-6 overflow-hidden text-sm text-amber-800 dark:text-amber-300">
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-sm shadow-sm p-6 overflow-hidden text-sm text-amber-800 dark:text-amber-300">
              <AlertTriangle className="w-5 h-5 mb-2" />
              <p className="font-semibold mb-1">Privacy Notice</p>
              <p>Case data contains sensitive information. Do not share externally unless mandated by local safeguarding laws. Ensure notes accurately reflect facts.</p>

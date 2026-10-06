@@ -127,8 +127,8 @@ export default function FeesDashboard() {
     <div className="min-w-0 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Fees & Payments</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage student fees and track payments · {periodLabel}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Fees & Payments</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage student fees and track payments · {periodLabel}</p>
         </div>
         <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto">
           {hasPermission('manage_fees') && (
@@ -145,16 +145,16 @@ export default function FeesDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm text-center">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-300">Total Collected</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">{formatMoney(totalCollected, currency)}</p>
+        <div className="bg-card border border-border p-6 rounded-sm shadow-sm text-center">
+          <p className="text-sm font-medium text-muted-foreground">Total Collected</p>
+          <p className="text-3xl font-bold text-foreground mt-2">{formatMoney(totalCollected, currency)}</p>
         </div>
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm text-center">
-           <p className="text-sm font-medium text-slate-500 dark:text-slate-300">Total Outstanding</p>
-           <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">{formatMoney(totalOutstanding, currency)}</p>
+        <div className="bg-card border border-border p-6 rounded-sm shadow-sm text-center">
+           <p className="text-sm font-medium text-muted-foreground">Total Outstanding</p>
+           <p className="text-3xl font-bold text-foreground mt-2">{formatMoney(totalOutstanding, currency)}</p>
         </div>
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm text-center">
-           <p className="text-sm font-medium text-slate-500 dark:text-slate-300">Collection Rate</p>
+        <div className="bg-card border border-border p-6 rounded-sm shadow-sm text-center">
+           <p className="text-sm font-medium text-muted-foreground">Collection Rate</p>
            <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">
              {collectionRate}%
            </p>
@@ -164,7 +164,7 @@ export default function FeesDashboard() {
       {/* Paid / Partial / Unpaid student breakdown — click a chip to filter. */}
       <div className="flex flex-wrap gap-2">
         {[
-          { key: 'ALL', label: 'All', count: baseFilteredFees.length, cls: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200' },
+          { key: 'ALL', label: 'All', count: baseFilteredFees.length, cls: 'bg-muted text-foreground' },
           { key: 'PAID', label: 'Paid', count: paidCount, cls: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' },
           { key: 'PARTIAL', label: 'Partial', count: partialCount, cls: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' },
           { key: 'UNPAID', label: 'Unpaid', count: unpaidCount, cls: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
@@ -172,7 +172,7 @@ export default function FeesDashboard() {
           <button
             key={s.key}
             onClick={() => setStatusFilter(s.key)}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${s.cls} ${statusFilter === s.key ? 'ring-2 ring-offset-1 ring-slate-400 dark:ring-offset-canvas' : 'opacity-90 hover:opacity-100'}`}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${s.cls} ${statusFilter === s.key ? 'ring-2 ring-offset-1 ring-input dark:ring-offset-canvas' : 'opacity-90 hover:opacity-100'}`}
           >
             {s.label}
             <span className="rounded-full bg-white/60 px-1.5 dark:bg-black/20">{s.count}</span>
@@ -180,10 +180,10 @@ export default function FeesDashboard() {
         ))}
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-surface-raised flex flex-col md:flex-row gap-4 items-center bg-slate-50/50 dark:bg-surface-raised/50">
+      <div className="bg-card rounded-sm border border-border shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-border flex flex-col md:flex-row gap-4 items-center bg-muted/30">
           <div className="relative flex-1 w-full md:w-auto">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Search by student name or ID..." 
               className="pl-9"
@@ -200,7 +200,7 @@ export default function FeesDashboard() {
               }}
             >
               <SelectTrigger className="w-full md:w-[190px]">
-                <CalendarDays className="mr-2 h-4 w-4 text-slate-400" />
+                <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
                 <SelectValue placeholder="Billing month" />
               </SelectTrigger>
               <SelectContent>
@@ -237,7 +237,7 @@ export default function FeesDashboard() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="text-xs text-slate-500 dark:text-slate-300 bg-slate-50 dark:bg-surface-raised uppercase">
+            <thead className="text-xs text-muted-foreground bg-muted/50 uppercase">
               <tr>
                 <th className="px-6 py-4 font-medium">Student</th>
                 <th className="px-6 py-4 font-medium">Class</th>
@@ -248,28 +248,28 @@ export default function FeesDashboard() {
                 <th className="px-6 py-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+            <tbody className="divide-y divide-border">
               {loading && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
+                  <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
                     Loading fee records...
                   </td>
                 </tr>
               )}
               {!loading && !loadError && filteredFees.map((fee) => (
-                <tr key={fee.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
+                <tr key={fee.id} className="hover:bg-muted/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-700 dark:text-blue-300 font-semibold text-xs">
                         {fee.studentName.charAt(0)}
                       </div>
                       <div>
-                        <div className="font-medium text-slate-900 dark:text-white">{fee.studentName}</div>
-                        <div className="text-xs text-slate-500">{fee.studentIdNumber}</div>
+                        <div className="font-medium text-foreground">{fee.studentName}</div>
+                        <div className="text-xs text-muted-foreground">{fee.studentIdNumber}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
+                  <td className="px-6 py-4 text-muted-foreground">
                     {fee.class}
                   </td>
                   <td className="px-6 py-4">
@@ -277,13 +277,13 @@ export default function FeesDashboard() {
                     {fee.status === 'PARTIAL' && <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-0 dark:bg-amber-900/30 dark:text-amber-400 py-0.5">Partial</Badge>}
                     {fee.status === 'UNPAID' && <Badge className="bg-red-100 text-red-800 hover:bg-red-100 border-0 dark:bg-red-900/30 dark:text-red-400 py-0.5"><AlertCircle className="h-3 w-3 mr-1"/> Unpaid</Badge>}
                   </td>
-                  <td className="px-6 py-4 font-medium text-slate-900 dark:text-white text-right">
+                  <td className="px-6 py-4 font-medium text-foreground text-right">
                     {formatMoney(fee.totalDue, fee.currency || currency)}
                   </td>
-                  <td className="px-6 py-4 font-medium text-slate-900 dark:text-white text-right">
+                  <td className="px-6 py-4 font-medium text-foreground text-right">
                     {formatMoney(fee.balance, fee.currency || currency)}
                   </td>
-                  <td className="px-6 py-4 text-slate-500 dark:text-slate-300">
+                  <td className="px-6 py-4 text-muted-foreground">
                     {fee.lastPaymentDate ? format(new Date(fee.lastPaymentDate), 'MMM d, yyyy') : '-'}
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -304,7 +304,7 @@ export default function FeesDashboard() {
 
               {!loading && !loadError && filteredFees.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
+                  <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
                     No fee records found for {periodLabel.toLowerCase()} matching your filters.
                   </td>
                 </tr>

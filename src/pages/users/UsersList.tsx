@@ -210,10 +210,10 @@ export default function UsersList() {
 
   const getRoleBadgeColor = (role: string) => {
     switch(role) {
-      case 'ADMIN': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800';
+      case 'ADMIN': return 'bg-lavender text-accent-purple border-border';
       case 'TEACHER': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800';
       case 'STUDENT': return 'bg-aubergine-100 text-aubergine-800 dark:bg-aubergine-900/30 dark:text-aubergine-300 border-aubergine-200 dark:border-aubergine-800';
-      default: return 'bg-slate-100 text-slate-800 dark:bg-surface-raised dark:text-slate-300 border-slate-200 dark:border-surface-raised';
+      default: return 'bg-muted text-foreground border-border';
     }
   };
 
@@ -221,8 +221,8 @@ export default function UsersList() {
     <div className="space-y-6 max-w-full mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">User Management</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage user accounts and roles for the school system.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">User Management</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage user accounts and roles for the school system.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <Button variant="outline" onClick={() => setRoleManagementOpen(true)}>
@@ -236,9 +236,9 @@ export default function UsersList() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex flex-col md:flex-row gap-4 items-center">
+      <div className="bg-card p-4 rounded-sm border border-border shadow-sm flex flex-col md:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full md:w-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
             placeholder="Search by name, username, email, or role..." 
             className="pl-9"
@@ -276,10 +276,10 @@ export default function UsersList() {
         </div>
       </div>
 
-      <div className="hidden md:block bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm overflow-hidden">
+      <div className="hidden md:block bg-card border border-border rounded-sm shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 font-semibold">
+            <thead className="bg-muted/50 text-muted-foreground font-semibold">
               <tr>
                 <th className="px-6 py-4">User</th>
                 <th className="px-6 py-4">Role</th>
@@ -289,15 +289,15 @@ export default function UsersList() {
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+            <tbody className="divide-y divide-border text-foreground">
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
+                <tr key={user.id} className="hover:bg-muted/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <UserAvatar name={user.name} className="h-9 w-9 text-xs" />
                       <div>
-                        <div className="font-semibold text-slate-900 dark:text-white">{user.name}</div>
-                        <div className="text-xs text-slate-500 mt-1">@{user.username} {user.email && `• ${user.email}`}</div>
+                        <div className="font-semibold text-foreground">{user.name}</div>
+                        <div className="text-xs text-muted-foreground mt-1">@{user.username} {user.email && `• ${user.email}`}</div>
                       </div>
                     </div>
                   </td>
@@ -305,7 +305,7 @@ export default function UsersList() {
                     <RoleBadge role={user.role} />
                   </td>
                   <td className="px-6 py-4">
-                    <Badge variant={user.status === 'ACTIVE' ? 'default' : 'secondary'} className={user.status === 'ACTIVE' ? 'bg-emerald-500 text-white hover:bg-emerald-600' : 'bg-slate-500 text-white hover:bg-slate-600'}>
+                    <Badge variant={user.status === 'ACTIVE' ? 'default' : 'secondary'} className={user.status === 'ACTIVE' ? 'bg-emerald-500 text-white hover:bg-emerald-600' : 'bg-muted-foreground text-white hover:bg-slate-600'}>
                       {user.status}
                     </Badge>
                   </td>
@@ -321,16 +321,16 @@ export default function UsersList() {
                     ) : user.role === 'GUARDIAN' ? (
                       <Link to={`/users/${user.id}/edit`} className="text-academic-teal hover:underline">{user.guardianLinkCount} linked learner{user.guardianLinkCount === 1 ? '' : 's'}</Link>
                     ) : (
-                      <span className="text-slate-400 italic">None</span>
+                      <span className="text-muted-foreground italic">None</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-slate-500 gap-1">
+                  <td className="px-6 py-4 text-muted-foreground gap-1">
                     {user.lastLoginAt ? formatDistanceToNow(new Date(user.lastLoginAt), { addSuffix: true }) : 'Never'}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="h-8 w-8 p-0" />} nativeButton={true}>
-                        <MoreVertical className="h-4 w-4 text-slate-400" />
+                        <MoreVertical className="h-4 w-4 text-muted-foreground" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuGroup>
@@ -372,7 +372,7 @@ export default function UsersList() {
               
               {filteredUsers.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-slate-500">
+                  <td colSpan={6} className="px-6 py-10 text-center text-muted-foreground">
                      {loading ? 'Loading users…' : 'No users found matching your filters.'}
                   </td>
                 </tr>
@@ -385,23 +385,23 @@ export default function UsersList() {
       {/* Mobile Card View */}
       <div className="grid grid-cols-1 gap-3 md:hidden">
         {filteredUsers.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo py-10 text-center text-slate-500">
+          <div className="rounded-sm border border-border bg-card py-10 text-center text-muted-foreground">
             {loading ? 'Loading users…' : 'No users found matching your filters.'}
           </div>
         ) : (
           filteredUsers.map((user) => (
-            <div key={user.id} className="rounded-xl border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo p-4 shadow-sm space-y-3">
+            <div key={user.id} className="rounded-sm border border-border bg-card p-4 shadow-sm space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-3">
                   <UserAvatar name={user.name} className="h-9 w-9 text-xs" />
                   <div className="min-w-0">
-                    <div className="font-semibold text-slate-900 dark:text-white truncate">{user.name}</div>
-                    <div className="text-xs text-slate-500 mt-0.5 truncate">@{user.username}{user.email && ` • ${user.email}`}</div>
+                    <div className="font-semibold text-foreground truncate">{user.name}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5 truncate">@{user.username}{user.email && ` • ${user.email}`}</div>
                   </div>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="h-8 w-8 p-0 -mr-1 shrink-0" aria-label={`Options for ${user.name}`} />} nativeButton={true}>
-                    <MoreVertical className="h-4 w-4 text-slate-400" />
+                    <MoreVertical className="h-4 w-4 text-muted-foreground" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuGroup>
@@ -440,13 +440,13 @@ export default function UsersList() {
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <RoleBadge role={user.role} />
-                <Badge variant={user.status === 'ACTIVE' ? 'default' : 'secondary'} className={user.status === 'ACTIVE' ? 'bg-emerald-500 text-white hover:bg-emerald-600' : 'bg-slate-500 text-white hover:bg-slate-600'}>
+                <Badge variant={user.status === 'ACTIVE' ? 'default' : 'secondary'} className={user.status === 'ACTIVE' ? 'bg-emerald-500 text-white hover:bg-emerald-600' : 'bg-muted-foreground text-white hover:bg-slate-600'}>
                   {user.status}
                 </Badge>
               </div>
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-surface-raised text-sm">
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border text-sm">
                 <div>
-                  <span className="text-xs text-slate-500 block">Linked Profile</span>
+                  <span className="text-xs text-muted-foreground block">Linked Profile</span>
                   {user.teacherId ? (
                     <Link to={`/teachers/${user.teacherId}`} className="text-blue-600 hover:underline">Teacher Profile</Link>
                   ) : user.studentId ? (
@@ -454,12 +454,12 @@ export default function UsersList() {
                   ) : user.role === 'GUARDIAN' ? (
                     <Link to={`/users/${user.id}/edit`} className="text-academic-teal hover:underline">{user.guardianLinkCount} linked learner{user.guardianLinkCount === 1 ? '' : 's'}</Link>
                   ) : (
-                    <span className="text-slate-400 italic">None</span>
+                    <span className="text-muted-foreground italic">None</span>
                   )}
                 </div>
                 <div>
-                  <span className="text-xs text-slate-500 block">Last Login</span>
-                  <span className="text-slate-700 dark:text-slate-300">{user.lastLoginAt ? formatDistanceToNow(new Date(user.lastLoginAt), { addSuffix: true }) : 'Never'}</span>
+                  <span className="text-xs text-muted-foreground block">Last Login</span>
+                  <span className="text-foreground">{user.lastLoginAt ? formatDistanceToNow(new Date(user.lastLoginAt), { addSuffix: true }) : 'Never'}</span>
                 </div>
               </div>
             </div>
@@ -475,7 +475,7 @@ export default function UsersList() {
               Reset Password
             </DialogTitle>
             <DialogDescription className="pt-1">
-              Set a new password for <strong className="text-slate-900 dark:text-white">{resetUser?.name}</strong>. They will be required to change it on their next login.
+              Set a new password for <strong className="text-foreground">{resetUser?.name}</strong>. They will be required to change it on their next login.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-2">

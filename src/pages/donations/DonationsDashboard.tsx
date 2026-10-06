@@ -50,7 +50,7 @@ export default function DonationsDashboard() {
       case 'PENDING': return 'bg-amber-100 text-amber-800';
       case 'CANCELLED': return 'bg-red-100 text-red-800';
       case 'REFUNDED': return 'bg-red-100 text-red-800';
-      default: return 'bg-slate-100 text-slate-800';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -82,7 +82,7 @@ export default function DonationsDashboard() {
       case 'COMPLETED': return 'bg-blue-100 text-blue-800';
       case 'PAUSED': return 'bg-amber-100 text-amber-800';
       case 'CANCELLED': return 'bg-red-100 text-red-800';
-      default: return 'bg-slate-100 text-slate-800';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -90,8 +90,8 @@ export default function DonationsDashboard() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex flex-wrap justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Donations</h1>
-          <p className="text-sm text-slate-500">Track pledges, received gifts and campaigns. Cash totals exclude in-kind gifts and other currencies.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Donations</h1>
+          <p className="text-sm text-muted-foreground">Track pledges, received gifts and campaigns. Cash totals exclude in-kind gifts and other currencies.</p>
         </div>
         <div className="flex gap-2">
           {hasPermission('manage_campaigns') && (
@@ -113,7 +113,7 @@ export default function DonationsDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Heart className="h-4 w-4" />
               Total Donations
             </CardTitle>
@@ -124,7 +124,7 @@ export default function DonationsDashboard() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
               Cash received ({currency})
             </CardTitle>
@@ -135,7 +135,7 @@ export default function DonationsDashboard() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Processed</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Processed</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{formatMoney(stats.processedAmount, currency)}</div>
@@ -143,7 +143,7 @@ export default function DonationsDashboard() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Active Campaigns</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Active Campaigns</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.activeCampaigns}</div>
@@ -160,14 +160,14 @@ export default function DonationsDashboard() {
           {loading ? (
             <div className="flex justify-center items-center h-32">Loading...</div>
           ) : donations.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">No donations recorded</div>
+            <div className="text-center py-8 text-muted-foreground">No donations recorded</div>
           ) : (
             <div className="space-y-3">
               {donations.slice(0, 10).map((donation: any) => (
-                <div key={donation.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                <div key={donation.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
-                      <div className="font-medium text-slate-900 dark:text-white">
+                      <div className="font-medium text-foreground">
                         {donation.donor?.name || 'Unknown Donor'}
                       </div>
                       <Badge className={`${getStatusColor(donation.status)} text-xs`} variant="outline">
@@ -177,7 +177,7 @@ export default function DonationsDashboard() {
                         <Badge variant="outline" className="text-xs">{donation.donationType.replace('_', ' ')}</Badge>
                       )}
                     </div>
-                    <div className="text-sm text-slate-500 mt-1">
+                    <div className="text-sm text-muted-foreground mt-1">
                       {donation.purpose || 'General donation'} • {new Date(donation.donationDate).toLocaleDateString()}
                     </div>
                   </div>
@@ -226,30 +226,30 @@ export default function DonationsDashboard() {
           <CardContent>
             <div className="space-y-3">
               {campaigns.filter(c => c.status === 'ACTIVE').map((campaign: any) => (
-                <div key={campaign.id} className="p-4 border border-slate-200 dark:border-slate-700 rounded-lg">
+                <div key={campaign.id} className="p-4 border border-border rounded-lg">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <div className="font-medium text-slate-900 dark:text-white">{campaign.name}</div>
-                      <div className="text-sm text-slate-500">{campaign.description}</div>
+                      <div className="font-medium text-foreground">{campaign.name}</div>
+                      <div className="text-sm text-muted-foreground">{campaign.description}</div>
                     </div>
                     <Badge className={getCampaignStatusColor(campaign.status)} variant="outline">{campaign.status}</Badge>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-600 dark:text-slate-300">Goal</span>
+                      <span className="text-muted-foreground">Goal</span>
                       <span className="font-medium">{formatMoney(campaign.goalAmount, campaign.currency || currency)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-600 dark:text-slate-300">Raised</span>
+                      <span className="text-muted-foreground">Raised</span>
                       <span className="font-medium text-green-600">{formatMoney(campaign.raisedAmount, campaign.currency || currency)}</span>
                     </div>
-                    <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
                         className="h-full bg-green-500"
                         style={{ width: `${Math.min(100, (campaign.raisedAmount / campaign.goalAmount) * 100)}%` }}
                       ></div>
                     </div>
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-muted-foreground">
                       {((campaign.raisedAmount / campaign.goalAmount) * 100).toFixed(1)}% • {campaign._count?.donations || 0} donations
                     </div>
                   </div>

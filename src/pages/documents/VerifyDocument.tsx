@@ -34,8 +34,8 @@ export default function VerifyDocument() {
   }, [token]);
 
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 font-sans">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className="min-h-screen bg-muted flex items-center justify-center p-4 font-sans">
+      <div className="w-full max-w-lg bg-card rounded-sm shadow-none overflow-hidden">
         {/* Header */}
         <div className="bg-slate-900 text-white px-6 py-5 flex items-center gap-3">
           {result?.school.logoUrl ? (
@@ -51,14 +51,14 @@ export default function VerifyDocument() {
 
         <div className="p-6">
           {loading && (
-            <div className="py-10 text-center text-slate-500"><Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" /> Verifying…</div>
+            <div className="py-10 text-center text-muted-foreground"><Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" /> Verifying…</div>
           )}
 
           {!loading && (notFound || !result) && (
             <div className="py-8 text-center">
               <ShieldX className="h-14 w-14 text-red-500 mx-auto mb-3" />
-              <h2 className="text-lg font-bold text-slate-900">Document Not Found</h2>
-              <p className="text-sm text-slate-500 mt-1">No document matches this verification link. It may be invalid or mistyped.</p>
+              <h2 className="text-lg font-bold text-foreground">Document Not Found</h2>
+              <p className="text-sm text-muted-foreground mt-1">No document matches this verification link. It may be invalid or mistyped.</p>
             </div>
           )}
 
@@ -69,7 +69,7 @@ export default function VerifyDocument() {
                   <>
                     <ShieldCheck className="h-14 w-14 text-emerald-500 mx-auto mb-2" />
                     <h2 className="text-lg font-bold text-emerald-700">Valid Document</h2>
-                    <p className="text-sm text-slate-500">This is an authentic document issued by {result.school.name}.</p>
+                    <p className="text-sm text-muted-foreground">This is an authentic document issued by {result.school.name}.</p>
                   </>
                 ) : (
                   <>
@@ -77,19 +77,19 @@ export default function VerifyDocument() {
                     <h2 className="text-lg font-bold text-amber-700">
                       {result.status === 'CANCELLED' ? 'Cancelled Document' : result.status === 'EXPIRED' ? 'Expired Document' : 'Superseded Document'}
                     </h2>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-muted-foreground">
                       {result.status === 'CANCELLED'
                         ? 'This document has been cancelled and is no longer valid.'
                         : result.status === 'EXPIRED'
                           ? 'This student card has reached its valid-through date and is no longer active.'
                         : 'This document has been reissued; a newer version exists.'}
                     </p>
-                    {result.cancelledReason && <p className="text-xs text-slate-400 mt-1">Reason: {result.cancelledReason}</p>}
+                    {result.cancelledReason && <p className="text-xs text-muted-foreground mt-1">Reason: {result.cancelledReason}</p>}
                   </>
                 )}
               </div>
 
-              <div className="rounded-xl border border-slate-200 divide-y divide-slate-100 text-sm">
+              <div className="rounded-sm border border-border divide-y divide-border text-sm">
                 <Row label="Document Number" value={result.documentNumber} mono />
                 <Row label="Document Type" value={result.documentType} />
                 <Row label="Issued To" value={result.studentName} />
@@ -100,7 +100,7 @@ export default function VerifyDocument() {
                 <Row label="Status" value={result.status} />
               </div>
 
-              <p className="text-[11px] text-slate-400 text-center mt-5">
+              <p className="text-[11px] text-muted-foreground text-center mt-5">
                 Only non-sensitive verification details are shown. Grades and personal records are never disclosed on this page.
               </p>
             </>
@@ -114,8 +114,8 @@ export default function VerifyDocument() {
 function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex items-center justify-between px-4 py-2.5">
-      <span className="text-slate-500">{label}</span>
-      <span className={`font-semibold text-slate-900 ${mono ? 'font-mono text-xs' : ''}`}>{value}</span>
+      <span className="text-muted-foreground">{label}</span>
+      <span className={`font-semibold text-foreground ${mono ? 'font-mono text-xs' : ''}`}>{value}</span>
     </div>
   );
 }

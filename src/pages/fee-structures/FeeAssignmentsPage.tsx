@@ -61,8 +61,8 @@ export default function FeeAssignmentsPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Fee Assignments</h1>
-          <p className="text-sm text-slate-500">View and manage student fee assignments</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Fee Assignments</h1>
+          <p className="text-sm text-muted-foreground">View and manage student fee assignments</p>
         </div>
       </div>
 
@@ -70,7 +70,7 @@ export default function FeeAssignmentsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Total Assignments</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Assignments</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
@@ -78,7 +78,7 @@ export default function FeeAssignmentsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Pending</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Pending</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-amber-600">{stats.pending}</div>
@@ -86,7 +86,7 @@ export default function FeeAssignmentsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Paid</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Paid</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{stats.paid}</div>
@@ -94,7 +94,7 @@ export default function FeeAssignmentsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Outstanding</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Outstanding</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatMoney(stats.outstanding, currency)}</div>
@@ -119,35 +119,35 @@ export default function FeeAssignmentsPage() {
         <Card>
           <CardContent className="p-0">
             {filteredAssignments.length === 0 ? (
-              <div className="text-center py-8 text-slate-500">No assignments found</div>
+              <div className="text-center py-8 text-muted-foreground">No assignments found</div>
             ) : (
               <table className="w-full">
-                <thead className="bg-slate-50 dark:bg-slate-800">
+                <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Student</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Fee Item</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Amount</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Due Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Student</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Fee Item</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Amount</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Due Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Status</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                <tbody className="divide-y divide-border">
                   {filteredAssignments.map(assignment => (
-                    <tr key={assignment.id} className="hover:bg-slate-50 dark:hover:bg-slate-800">
+                    <tr key={assignment.id} className="hover:bg-muted/50">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-slate-400" />
-                          <span className="font-medium text-slate-900 dark:text-white">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium text-foreground">
                             {assignment.student?.preferredName || assignment.student?.user?.name || 'Student'}
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-500">{assignment.feeItem?.name}</td>
+                      <td className="px-6 py-4 text-sm text-muted-foreground">{assignment.feeItem?.name}</td>
                       <td className="px-6 py-4">
                         <div className="font-semibold">{formatMoney(assignment.outstandingAmount, currency)}</div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-500">
+                      <td className="px-6 py-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
                           {new Date(assignment.dueDate).toLocaleDateString()}

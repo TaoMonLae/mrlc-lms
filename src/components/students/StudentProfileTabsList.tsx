@@ -40,7 +40,7 @@ export function StudentProfileTabsList({ canViewFees, canViewCases }: { canViewF
   };
 
   return (
-    <div className="flex min-w-0 items-center border-b border-slate-200 dark:border-surface-raised px-2">
+    <div className="flex min-w-0 items-center border-b border-border px-2">
       {scroll.overflow && <Button type="button" variant="ghost" size="icon" className="shrink-0" aria-label="Scroll profile tabs left" disabled={!scroll.left} onClick={() => move(-1)}><ChevronLeft /></Button>}
       <div ref={scrollRef} className="min-w-0 flex-1 overflow-x-auto overscroll-x-contain" onScroll={updateScroll} onFocusCapture={revealFocusedTab}>
         <TabsList ref={listRef} variant="line" aria-label="Student profile sections" className="w-max min-w-full justify-start gap-0 p-0 group-data-horizontal/tabs:h-14">

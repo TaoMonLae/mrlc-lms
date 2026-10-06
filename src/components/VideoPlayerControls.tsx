@@ -241,7 +241,7 @@ export function VideoPlayerControls({ videoRef, duration, onProgress }: VideoPla
           </button>
           {showSpeedMenu && (
             <div
-              className="absolute bottom-full left-0 mb-2 bg-slate-900/95 rounded-lg shadow-xl overflow-hidden min-w-[60px]"
+              className="absolute bottom-full left-0 mb-2 bg-slate-900/95 rounded-lg shadow-none overflow-hidden min-w-[60px]"
               role="menu"
               aria-label="Playback speed options"
             >

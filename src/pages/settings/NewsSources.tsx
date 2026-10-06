@@ -98,16 +98,16 @@ export default function NewsSources() {
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-8">
       <div>
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
           <Rss className="h-5 w-5" /> News Sources
         </h2>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           Manage the RSS feeds used by News. Articles include a headline, summary, and source link.
           Students can read the full article here when the publisher includes it in the feed.
         </p>
       </div>
 
-      <form onSubmit={handleAdd} className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 dark:bg-surface-raised/30 p-4 rounded-xl border border-slate-200 dark:border-surface-raised">
+      <form onSubmit={handleAdd} className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-muted/50 p-4 rounded-sm border border-border">
         <div className="space-y-1.5">
           <Label htmlFor="src-name">Name</Label>
           <Input id="src-name" required placeholder="e.g. BBC World News" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
@@ -132,11 +132,11 @@ export default function NewsSources() {
         <Button variant="outline" onClick={load}>Retry loading sources</Button>
       </div>}
 
-      <div className="border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden">
+      <div className="border border-border rounded-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <caption className="sr-only">News sources and feed status</caption>
-            <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 dark:text-slate-300 border-b border-slate-200 dark:border-surface-raised">
+            <thead className="bg-muted/50 text-muted-foreground border-b border-border">
               <tr>
                 <th className="px-4 py-3 font-semibold">Source</th>
                 <th className="px-4 py-3 font-semibold">Category</th>
@@ -149,21 +149,21 @@ export default function NewsSources() {
             <tbody>
               {loading && <tr><td colSpan={6} className="px-4 py-8 text-center" role="status">Loading news sources…</td></tr>}
               {!loading && !loadError && sources.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500 text-sm italic">No sources yet — add one above.</td></tr>
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground text-sm italic">No sources yet — add one above.</td></tr>
               )}
               {sources.map((s) => (
-                <tr key={s.id} className="border-b border-slate-100 dark:border-surface-raised/50 hover:bg-slate-50 dark:hover:bg-surface-raised/20">
+                <tr key={s.id} className="border-b border-border hover:bg-muted/50">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-slate-900 dark:text-white">{s.name}</div>
-                    <div className="text-sm text-slate-600 dark:text-slate-300 truncate max-w-[280px]" title={s.feedUrl}>{s.feedUrl}</div>
+                    <div className="font-medium text-foreground">{s.name}</div>
+                    <div className="text-sm text-muted-foreground truncate max-w-[280px]" title={s.feedUrl}>{s.feedUrl}</div>
                   </td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{s.category || '—'}</td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{s._count.articles}</td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                  <td className="px-4 py-3 text-muted-foreground">{s.category || '—'}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{s._count.articles}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
                     {s.lastFetchedAt ? formatDistanceToNow(new Date(s.lastFetchedAt), { addSuffix: true }) : 'never'}
                   </td>
                   <td className="px-4 py-3">
-                    {!s.enabled ? <span className="text-slate-600 dark:text-slate-300">Disabled</span> : s.lastError ? (
+                    {!s.enabled ? <span className="text-muted-foreground">Disabled</span> : s.lastError ? (
                       <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400" title={s.lastError}>
                         <AlertCircle className="h-3.5 w-3.5" /> Error
                       </div>

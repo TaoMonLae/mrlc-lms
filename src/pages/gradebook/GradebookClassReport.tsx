@@ -73,10 +73,10 @@ export default function GradebookClassReport() {
     <div className="space-y-6 max-w-[1400px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <BarChart3 className="h-6 w-6 text-aubergine-600" /> Class Performance
           </h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Grade distribution, category averages and GED readiness across the class.</p>
+          <p className="text-sm text-muted-foreground mt-1">Grade distribution, category averages and GED readiness across the class.</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <Select value={classId} onValueChange={setClassId}>
@@ -93,7 +93,7 @@ export default function GradebookClassReport() {
         </div>
       </div>
 
-      {loading && <div className="py-16 text-center text-slate-500">Loading…</div>}
+      {loading && <div className="py-16 text-center text-muted-foreground">Loading…</div>}
 
       {!loading && report && (
         <>
@@ -105,41 +105,41 @@ export default function GradebookClassReport() {
               { label: 'Class Average', value: report.classAverage != null ? `${report.classAverage}%` : '—' },
               { label: 'Academic Warnings', value: report.warnings, warn: report.warnings > 0 },
             ].map((s) => (
-              <div key={s.label} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-5">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{s.label}</p>
-                <p className={`text-2xl font-bold mt-1 ${s.warn ? 'text-red-600' : 'text-slate-900 dark:text-white'}`}>{s.value}</p>
+              <div key={s.label} className="bg-card border border-border rounded-sm shadow-sm p-5">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{s.label}</p>
+                <p className={`text-2xl font-bold mt-1 ${s.warn ? 'text-red-600' : 'text-foreground'}`}>{s.value}</p>
               </div>
             ))}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Grade distribution */}
-            <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-6">
-              <h3 className="font-bold text-slate-900 dark:text-white mb-4 text-sm">Grade Distribution</h3>
+            <div className="bg-card border border-border rounded-sm shadow-sm p-6">
+              <h3 className="font-bold text-foreground mb-4 text-sm">Grade Distribution</h3>
               <div className="flex items-end gap-3 h-44">
                 {GRADES.map((g) => (
                   <div key={g} className="flex-1 flex flex-col items-center gap-1">
-                    <span className="text-xs font-semibold text-slate-500">{report.distribution[g] || 0}</span>
+                    <span className="text-xs font-semibold text-muted-foreground">{report.distribution[g] || 0}</span>
                     <div className="w-full rounded-t bg-aubergine-500" style={{ height: `${((report.distribution[g] || 0) / maxDist) * 130}px` }} />
-                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{g}</span>
+                    <span className="text-xs font-bold text-muted-foreground">{g}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Category averages */}
-            <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-6">
-              <h3 className="font-bold text-slate-900 dark:text-white mb-4 text-sm">Category Averages</h3>
+            <div className="bg-card border border-border rounded-sm shadow-sm p-6">
+              <h3 className="font-bold text-foreground mb-4 text-sm">Category Averages</h3>
               <div className="space-y-3">
                 {Object.keys(CATEGORY_LABELS).map((c) => {
                   const v = report.categoryAverages[c];
                   return (
                     <div key={c}>
                       <div className="flex justify-between text-xs mb-1">
-                        <span className="font-medium text-slate-600 dark:text-slate-300">{CATEGORY_LABELS[c]}</span>
-                        <span className="font-semibold text-slate-900 dark:text-white">{v != null ? `${v}%` : '—'}</span>
+                        <span className="font-medium text-muted-foreground">{CATEGORY_LABELS[c]}</span>
+                        <span className="font-semibold text-foreground">{v != null ? `${v}%` : '—'}</span>
                       </div>
-                      <div className="h-2 rounded-full bg-slate-100 dark:bg-surface-raised overflow-hidden">
+                      <div className="h-2 rounded-full bg-muted overflow-hidden">
                         <div className="h-full bg-aubergine-500" style={{ width: `${v ?? 0}%` }} />
                       </div>
                     </div>
@@ -150,22 +150,22 @@ export default function GradebookClassReport() {
           </div>
 
           {/* GED readiness distribution */}
-          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-6">
-            <h3 className="font-bold text-slate-900 dark:text-white mb-4 text-sm">GED Readiness Distribution</h3>
+          <div className="bg-card border border-border rounded-sm shadow-sm p-6">
+            <h3 className="font-bold text-foreground mb-4 text-sm">GED Readiness Distribution</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="text-slate-500 uppercase tracking-wider font-semibold text-[11px]">
+                <thead className="text-muted-foreground uppercase tracking-wider font-semibold text-[11px]">
                   <tr>
                     <th className="py-2 pr-4">Subject</th>
                     {Object.keys(STATUS_LABELS).map((st) => <th key={st} className="py-2 px-3 text-center">{STATUS_LABELS[st]}</th>)}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                <tbody className="divide-y divide-border">
                   {Object.keys(SUBJECT_LABELS).map((sub) => (
                     <tr key={sub}>
-                      <td className="py-2 pr-4 font-medium text-slate-900 dark:text-white">{SUBJECT_LABELS[sub]}</td>
+                      <td className="py-2 pr-4 font-medium text-foreground">{SUBJECT_LABELS[sub]}</td>
                       {Object.keys(STATUS_LABELS).map((st) => (
-                        <td key={st} className="py-2 px-3 text-center text-slate-600 dark:text-slate-300">{report.readinessDistribution?.[sub]?.[st] || 0}</td>
+                        <td key={st} className="py-2 px-3 text-center text-muted-foreground">{report.readinessDistribution?.[sub]?.[st] || 0}</td>
                       ))}
                     </tr>
                   ))}

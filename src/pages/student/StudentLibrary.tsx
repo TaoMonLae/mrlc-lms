@@ -46,7 +46,7 @@ function getFileIcon(type: string) {
     case 'DOCUMENT':
       return <FileText className="h-5 w-5 text-aubergine-500" />;
     default:
-      return <FileIcon className="h-5 w-5 text-slate-500" />;
+      return <FileIcon className="h-5 w-5 text-muted-foreground" />;
   }
 }
 
@@ -107,28 +107,28 @@ export default function StudentLibrary() {
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Library className="h-6 w-6 text-aubergine-600" />
             Digital Library
           </h1>
-          <p className="text-sm text-slate-500 mt-1">Access study materials, recorded lectures, and reading resources.</p>
+          <p className="text-sm text-muted-foreground mt-1">Access study materials, recorded lectures, and reading resources.</p>
         </div>
       </div>
 
       {/* Search & Filters */}
-      <div className="flex flex-col md:flex-row gap-4 bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm">
+      <div className="flex flex-col md:flex-row gap-4 bg-card p-4 rounded-sm border border-border shadow-sm">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search resources by title..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-10 border-slate-200 dark:border-surface-raised focus:ring-aubergine-600"
+            className="pl-10 h-10 border-border focus:ring-aubergine-600"
           />
         </div>
         <div className="flex items-center gap-3">
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[160px] h-10 border-slate-200 dark:border-surface-raised">
+            <SelectTrigger className="w-[160px] h-10 border-border">
               <div className="flex items-center gap-2">
                 <Filter className="h-3.5 w-3.5" />
                 <SelectValue placeholder="All Types" />
@@ -145,29 +145,29 @@ export default function StudentLibrary() {
 
       {/* Resources Grid */}
       {loading ? (
-        <div className="py-20 text-center text-sm text-slate-500">Loading library…</div>
+        <div className="py-20 text-center text-sm text-muted-foreground">Loading library…</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((res) => (
-            <Card key={res.id} className="group border-slate-200 dark:border-surface-raised hover:shadow-md transition-all overflow-hidden bg-white dark:bg-surface-indigo">
-              <CardHeader className="pb-3 border-b border-slate-50 dark:border-surface-raised/50 bg-slate-50/50 dark:bg-surface-raised/30">
+            <Card key={res.id} className="group border-border hover:shadow-none transition-all overflow-hidden bg-card">
+              <CardHeader className="pb-3 border-b border-border bg-muted/30">
                 <div className="flex justify-between items-start">
-                  <div className="p-2.5 bg-white dark:bg-surface-raised rounded-xl shadow-sm border border-slate-100 dark:border-surface-raised">
+                  <div className="p-2.5 bg-white dark:bg-surface-raised rounded-sm shadow-sm border border-border">
                     {getFileIcon(res.type)}
                   </div>
-                  <Badge variant="outline" className="text-[9px] uppercase tracking-widest font-bold border-none bg-aubergine-50 text-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-400 h-4 px-1.5">
+                  <Badge variant="outline" className="text-[11px] uppercase tracking-widest font-bold border-none bg-aubergine-50 text-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-400 h-4 px-1.5">
                     {(res.type || 'OTHER').toUpperCase()}
                   </Badge>
                 </div>
                 <div className="mt-3">
-                  <h3 className="font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-aubergine-600 transition-colors">{res.title}</h3>
+                  <h3 className="font-bold text-foreground line-clamp-1 group-hover:text-aubergine-600 transition-colors">{res.title}</h3>
                 </div>
               </CardHeader>
               <CardContent className="pt-4 space-y-4">
-                <p className="text-xs text-slate-500 line-clamp-2 min-h-[2rem]">{res.description || 'No description provided.'}</p>
+                <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2rem]">{res.description || 'No description provided.'}</p>
                 <div className="flex items-center gap-2 pt-2">
                   <Button
-                    className="flex-1 h-9 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-[10px] uppercase tracking-widest gap-2 disabled:opacity-50"
+                    className="flex-1 h-9 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-[11px] uppercase tracking-widest gap-2 disabled:opacity-50"
                     onClick={() => openResource(res)}
                     disabled={!res.externalUrl}
                   >
@@ -179,10 +179,10 @@ export default function StudentLibrary() {
           ))}
 
           {filtered.length === 0 && (
-            <div className="col-span-full py-20 text-center bg-white dark:bg-surface-indigo rounded-2xl border border-dashed border-slate-200 dark:border-surface-raised">
+            <div className="col-span-full py-20 text-center bg-card rounded-sm border border-dashed border-border">
               <BookOpen className="h-12 w-12 text-slate-200 mx-auto mb-4" />
               <h3 className="text-lg font-bold">No resources found</h3>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {resources.length === 0 ? 'Your teachers have not shared any resources yet.' : 'Try adjusting your search or filter.'}
               </p>
             </div>
@@ -191,12 +191,12 @@ export default function StudentLibrary() {
       )}
 
       {/* Copyright Notice */}
-      <div className="mt-4 pt-4 border-t border-slate-100 dark:border-surface-raised">
-        <div className="bg-slate-50 dark:bg-surface-raised/50 p-5 rounded-2xl border border-slate-100 dark:border-surface-raised flex items-start gap-4">
+      <div className="mt-4 pt-4 border-t border-border">
+        <div className="bg-muted/50 p-5 rounded-sm border border-border flex items-start gap-4">
           <FileText className="h-6 w-6 text-aubergine-500" />
           <div>
-            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-300 uppercase tracking-widest mb-1">Copyright Notice</h4>
-            <p className="text-xs text-slate-500 leading-relaxed">These materials are for private study only. Redistribution to third parties or online platforms is strictly prohibited.</p>
+            <h4 className="text-sm font-bold text-foreground uppercase tracking-widest mb-1">Copyright Notice</h4>
+            <p className="text-xs text-muted-foreground leading-relaxed">These materials are for private study only. Redistribution to third parties or online platforms is strictly prohibited.</p>
           </div>
         </div>
       </div>

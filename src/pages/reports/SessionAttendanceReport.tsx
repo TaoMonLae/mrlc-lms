@@ -147,8 +147,8 @@ export default function SessionAttendanceReport() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight dark:text-white uppercase sm:text-2xl">Session Attendance Report</h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">View attendance by subject and session.</p>
+          <h1 className="text-xl font-bold text-foreground tracking-tight uppercase sm:text-2xl">Session Attendance Report</h1>
+          <p className="text-sm text-muted-foreground mt-1 font-medium">View attendance by subject and session.</p>
         </div>
         <Button onClick={exportToCSV} disabled={!data || loading} variant="outline" size="sm" className="gap-2">
           <Download className="h-4 w-4" /> Export CSV
@@ -156,11 +156,11 @@ export default function SessionAttendanceReport() {
       </div>
 
       {/* Filters */}
-      <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
+      <Card className="border-border bg-card shadow-sm">
         <CardContent className="p-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <div className="flex min-w-0 flex-col gap-1.5">
-              <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Month</span>
+              <span className="text-[11px] font-black uppercase text-muted-foreground tracking-widest">Month</span>
               <Input
                 type="month"
                 value={month}
@@ -169,7 +169,7 @@ export default function SessionAttendanceReport() {
               />
             </div>
             <div className="flex min-w-0 flex-col gap-1.5">
-              <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Class</span>
+              <span className="text-[11px] font-black uppercase text-muted-foreground tracking-widest">Class</span>
               <Select value={classId} onValueChange={setClassId}>
                 <SelectTrigger className="h-10 w-full">
                   <SelectValue placeholder="All Classes" />
@@ -183,7 +183,7 @@ export default function SessionAttendanceReport() {
               </Select>
             </div>
             <div className="flex min-w-0 flex-col gap-1.5">
-              <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Subject</span>
+              <span className="text-[11px] font-black uppercase text-muted-foreground tracking-widest">Subject</span>
               <Select value={subjectId} onValueChange={setSubjectId}>
                 <SelectTrigger className="h-10 w-full">
                   <SelectValue placeholder="All Subjects" />
@@ -203,54 +203,54 @@ export default function SessionAttendanceReport() {
       {/* Overall Stats */}
       {data && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
+          <Card className="border-border bg-card shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                   <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Student-Subject Pairs</p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white">{data.overall.studentSubjectPairs}</p>
+                  <p className="text-[11px] font-bold uppercase text-muted-foreground tracking-wider">Student-Subject Pairs</p>
+                  <p className="text-xl font-bold text-foreground">{data.overall.studentSubjectPairs}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
+          <Card className="border-border bg-card shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                   <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Perfect Attendance</p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white">{data.overall.perfectCount}</p>
+                  <p className="text-[11px] font-bold uppercase text-muted-foreground tracking-wider">Perfect Attendance</p>
+                  <p className="text-xl font-bold text-foreground">{data.overall.perfectCount}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
+          <Card className="border-border bg-card shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
                   <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">At Risk (&lt;80%)</p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white">{data.overall.atRiskCount}</p>
+                  <p className="text-[11px] font-bold uppercase text-muted-foreground tracking-wider">At Risk (&lt;80%)</p>
+                  <p className="text-xl font-bold text-foreground">{data.overall.atRiskCount}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
+          <Card className="border-border bg-card shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                  <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                <div className="h-10 w-10 rounded-full bg-lavender flex items-center justify-center">
+                  <TrendingUp className="h-5 w-5 text-accent-purple" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Overall Rate</p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white">{data.overall.overallRate}%</p>
+                  <p className="text-[11px] font-bold uppercase text-muted-foreground tracking-wider">Overall Rate</p>
+                  <p className="text-xl font-bold text-foreground">{data.overall.overallRate}%</p>
                 </div>
               </div>
             </CardContent>
@@ -260,7 +260,7 @@ export default function SessionAttendanceReport() {
 
       {/* Subject Stats */}
       {data && data.subjectStats.length > 0 && (
-        <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
+        <Card className="border-border bg-card shadow-sm">
           <CardHeader>
             <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
               <BookOpen className="h-4 w-4" /> Subject Summary
@@ -269,12 +269,12 @@ export default function SessionAttendanceReport() {
           <CardContent>
             <div className="space-y-3">
               {data.subjectStats.map(stat => (
-                <div key={stat.subjectId} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-surface-raised/20 rounded-lg">
+                <div key={stat.subjectId} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-center gap-3">
                     <Badge className={`h-3 w-3 rounded-full p-0 ${stat.subjectColor.replace('bg-', 'bg-') || 'bg-blue-500'}`} />
                     <div>
-                      <p className="font-bold text-sm text-slate-900 dark:text-white">{stat.subjectName}</p>
-                      <p className="text-xs text-slate-500">{stat.totalStudents} students · {stat.totalSessions} sessions</p>
+                      <p className="font-bold text-sm text-foreground">{stat.subjectName}</p>
+                      <p className="text-xs text-muted-foreground">{stat.totalStudents} students · {stat.totalSessions} sessions</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -291,37 +291,37 @@ export default function SessionAttendanceReport() {
 
       {/* Detailed Table */}
       {data && data.rows.length > 0 ? (
-        <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm overflow-hidden">
+        <Card className="border-border bg-card shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-50 dark:bg-surface-raised/20 border-b border-slate-200 dark:border-surface-raised">
+              <thead className="bg-muted/50 border-b border-border">
                 <tr>
-                  <th className="text-left p-4 text-[10px] font-black uppercase tracking-wider text-slate-500">Student</th>
-                  <th className="text-left p-4 text-[10px] font-black uppercase tracking-wider text-slate-500">Subject</th>
-                  <th className="text-center p-4 text-[10px] font-black uppercase tracking-wider text-slate-500">Total</th>
-                  <th className="text-center p-4 text-[10px] font-black uppercase tracking-wider text-slate-500">Present</th>
-                  <th className="text-center p-4 text-[10px] font-black uppercase tracking-wider text-slate-500">Absent</th>
-                  <th className="text-center p-4 text-[10px] font-black uppercase tracking-wider text-slate-500">Late</th>
-                  <th className="text-center p-4 text-[10px] font-black uppercase tracking-wider text-slate-500">Excused</th>
-                  <th className="text-center p-4 text-[10px] font-black uppercase tracking-wider text-slate-500">Rate</th>
+                  <th className="text-left p-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground">Student</th>
+                  <th className="text-left p-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground">Subject</th>
+                  <th className="text-center p-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground">Total</th>
+                  <th className="text-center p-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground">Present</th>
+                  <th className="text-center p-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground">Absent</th>
+                  <th className="text-center p-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground">Late</th>
+                  <th className="text-center p-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground">Excused</th>
+                  <th className="text-center p-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground">Rate</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-border">
                 {data.rows.map((row, i) => (
-                  <tr key={`${row.studentId}-${row.subjectId}-${i}`} className="hover:bg-slate-50 dark:hover:bg-surface-raised/10 transition-colors">
+                  <tr key={`${row.studentId}-${row.subjectId}-${i}`} className="hover:bg-muted/50 transition-colors">
                     <td className="p-4">
                       <div>
-                        <p className="font-bold text-sm text-slate-900 dark:text-white">{row.studentName}</p>
-                        <p className="text-[10px] text-slate-500">{row.studentCode} · {row.className}</p>
+                        <p className="font-bold text-sm text-foreground">{row.studentName}</p>
+                        <p className="text-[11px] text-muted-foreground">{row.studentCode} · {row.className}</p>
                       </div>
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         <Badge className={`h-2 w-2 rounded-full p-0 ${row.subjectColor.replace('bg-', 'bg-') || 'bg-blue-500'}`} />
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{row.subjectName}</span>
+                        <span className="text-sm font-medium text-foreground">{row.subjectName}</span>
                       </div>
                     </td>
-                    <td className="p-4 text-center text-sm font-medium text-slate-600 dark:text-slate-400">{row.total}</td>
+                    <td className="p-4 text-center text-sm font-medium text-muted-foreground">{row.total}</td>
                     <td className="p-4 text-center text-sm font-medium text-emerald-600">{row.present}</td>
                     <td className="p-4 text-center text-sm font-medium text-red-600">{row.absent}</td>
                     <td className="p-4 text-center text-sm font-medium text-amber-600">{row.late}</td>
@@ -339,15 +339,15 @@ export default function SessionAttendanceReport() {
           </div>
         </Card>
       ) : loading ? (
-        <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
+        <Card className="border-border bg-card shadow-sm">
           <CardContent className="p-8 text-center">
-            <p className="text-slate-500">Loading report...</p>
+            <p className="text-muted-foreground">Loading report...</p>
           </CardContent>
         </Card>
       ) : (
-        <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
+        <Card className="border-border bg-card shadow-sm">
           <CardContent className="p-8 text-center">
-            <p className="text-slate-500">No attendance records found for the selected filters.</p>
+            <p className="text-muted-foreground">No attendance records found for the selected filters.</p>
           </CardContent>
         </Card>
       )}

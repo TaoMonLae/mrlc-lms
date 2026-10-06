@@ -81,24 +81,24 @@ export default function TeacherReports() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight dark:text-white uppercase tracking-tighter">Academic Reporting</h1>
-        <p className="text-sm text-slate-500 mt-1 font-medium">Generate insights and reports for your assigned modules and students.</p>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight uppercase tracking-tighter">Academic Reporting</h1>
+        <p className="text-sm text-muted-foreground mt-1 font-medium">Generate insights and reports for your assigned modules and students.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {reportTemplates.map((template) => (
-          <Card key={template.id} className="group border-slate-200 dark:border-surface-raised hover:border-aubergine-200 hover:shadow-lg transition-all duration-300">
+          <Card key={template.id} className="group border-border hover:border-aubergine-200 hover:shadow-none transition-all duration-300">
             <CardHeader className="p-6">
-              <div className="h-12 w-12 rounded-xl bg-aubergine-50 dark:bg-aubergine-900/20 flex items-center justify-center text-aubergine-600 mb-4 group-hover:scale-110 transition-transform">
+              <div className="h-12 w-12 rounded-sm bg-aubergine-50 dark:bg-aubergine-900/20 flex items-center justify-center text-aubergine-600 mb-4 group-hover:scale-110 transition-transform">
                 <template.icon className="h-6 w-6" />
               </div>
-              <Badge variant="outline" className="w-fit mb-2 font-bold text-[9px] uppercase tracking-widest border-slate-200 dark:border-surface-raised">
+              <Badge variant="outline" className="w-fit mb-2 font-bold text-[11px] uppercase tracking-widest border-border">
                 {template.type}
               </Badge>
-              <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100 group-hover:text-aubergine-600 transition-colors uppercase tracking-tight">
+              <CardTitle className="text-base font-bold text-foreground group-hover:text-aubergine-600 transition-colors uppercase tracking-tight">
                 {template.title}
               </CardTitle>
-              <CardDescription className="text-xs font-medium leading-relaxed mt-2 text-slate-500 dark:text-slate-300">
+              <CardDescription className="text-xs font-medium leading-relaxed mt-2 text-muted-foreground">
                 {template.description}
               </CardDescription>
             </CardHeader>
@@ -106,7 +106,7 @@ export default function TeacherReports() {
               <Button
                 id={`generate-report-${template.id}`}
                 onClick={() => navigate(template.route)}
-                className="w-full bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[10px] uppercase tracking-widest h-10 shadow-md hover:bg-slate-800"
+                className="w-full bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[11px] uppercase tracking-widest h-10 shadow-none hover:bg-slate-800"
               >
                 Configure & Generate
               </Button>
@@ -116,13 +116,13 @@ export default function TeacherReports() {
       </div>
 
       <div className="space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-200 dark:border-surface-raised pb-4">
-            <h3 className="font-bold text-slate-900 dark:text-white uppercase tracking-widest text-sm flex items-center gap-2">
+        <div className="flex items-center justify-between border-b border-border pb-4">
+            <h3 className="font-bold text-foreground uppercase tracking-widest text-sm flex items-center gap-2">
                 <FileText className="h-4 w-4 text-aubergine-600" /> Recently Generated
             </h3>
             <Button
               variant="ghost"
-              className="text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-aubergine-600 flex items-center gap-1"
+              className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest hover:text-aubergine-600 flex items-center gap-1"
               onClick={() => setShowHistory(!showHistory)}
             >
                 {showHistory ? "Hide" : "View History"}
@@ -133,18 +133,18 @@ export default function TeacherReports() {
         {showHistory && (
           <div className="grid grid-cols-1 gap-4">
             {generatedReports.map((report) => (
-                <div key={report.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl hover:border-slate-300 transition-colors">
+                <div key={report.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-card border border-border rounded-sm hover:border-input transition-colors">
                     <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 shrink-0 rounded-lg bg-slate-50 dark:bg-surface-raised flex items-center justify-center text-slate-400 border border-slate-100 dark:border-surface-raised">
+                        <div className="h-10 w-10 shrink-0 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground border border-border">
                             <BarChart3 className="h-5 w-5" />
                         </div>
                         <div>
-                            <h5 className="font-bold text-slate-800 dark:text-white uppercase text-xs">{report.reportName}</h5>
-                            <div className="flex items-center gap-3 mt-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            <h5 className="font-bold text-foreground uppercase text-xs">{report.reportName}</h5>
+                            <div className="flex items-center gap-3 mt-1 text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
                                 <span>{new Date(report.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</span>
-                                <span className="h-1 w-1 rounded-full bg-slate-300" />
+                                <span className="h-1 w-1 rounded-full bg-input" />
                                 <span>{report.reportType}</span>
-                                <span className="h-1 w-1 rounded-full bg-slate-300" />
+                                <span className="h-1 w-1 rounded-full bg-input" />
                                 <span>by {report.generatedByName}</span>
                             </div>
                         </div>
@@ -154,7 +154,7 @@ export default function TeacherReports() {
                           variant="outline"
                           size="sm"
                           disabled={!report.fileUrl}
-                          className="font-bold text-[10px] uppercase tracking-widest h-9 bg-white dark:bg-transparent border-slate-200 dark:border-surface-raised"
+                          className="font-bold text-[11px] uppercase tracking-widest h-9 bg-white dark:bg-transparent border-border"
                           onClick={() => {
                             if (report.fileUrl) {
                               window.open(report.fileUrl, '_blank');
@@ -168,7 +168,7 @@ export default function TeacherReports() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-9 w-9 text-slate-400 hover:text-aubergine-600"
+                          className="h-9 w-9 text-muted-foreground hover:text-aubergine-600"
                           title="View report details"
                         >
                             <ChevronRight className="h-4 w-4" />
@@ -177,7 +177,7 @@ export default function TeacherReports() {
                 </div>
             ))}
             {generatedReports.length === 0 && (
-                <div className="text-center py-8 text-slate-400 text-sm">
+                <div className="text-center py-8 text-muted-foreground text-sm">
                     No reports generated yet. Use the options above to create your first report.
                 </div>
             )}
@@ -189,7 +189,7 @@ export default function TeacherReports() {
         <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-aubergine-600/20 to-transparent pointer-events-none" />
         <CardContent className="p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
             <div className="space-y-4 max-w-lg">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 dark:bg-surface-indigo/10 rounded-full text-aubergine-400 font-bold text-[10px] uppercase tracking-widest">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 dark:bg-surface-indigo/10 rounded-full text-aubergine-400 font-bold text-[11px] uppercase tracking-widest">
                     <Info className="h-3 w-3" /> Security Policy Reminder
                 </div>
                 <h3 className="text-xl font-bold uppercase tracking-tight">Need Access to Sensitive Data?</h3>
@@ -199,7 +199,7 @@ export default function TeacherReports() {
                 </p>
             </div>
             <Button
-              className="bg-primary hover:bg-primary/90 text-primary-foreground border-none font-bold text-[11px] uppercase tracking-widest px-8 h-12 shadow-xl shrink-0"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground border-none font-bold text-[11px] uppercase tracking-widest px-8 h-12 shadow-none shrink-0"
               onClick={handleRequestAccess}
             >
                 Request Access Profile

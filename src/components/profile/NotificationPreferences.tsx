@@ -71,7 +71,7 @@ function PreferenceForm({ role, email }: { role?: string; email?: string }) {
   );
 
   // Flat preference rows and persistent actions adapt the installed React Bits Pro settings-form-1.
-  return <section id="notifications" aria-labelledby="notification-settings-title" className="scroll-mt-24 rounded-xl border border-border bg-card text-card-foreground">
+  return <section id="notifications" aria-labelledby="notification-settings-title" className="scroll-mt-24 rounded-sm border border-border bg-card text-card-foreground">
     <header className="border-b border-border px-5 py-6 sm:px-7">
       <h2 id="notification-settings-title" className="text-xl font-semibold tracking-tight">Your notifications</h2>
       <p className="mt-2 max-w-prose text-sm leading-6 text-muted-foreground">Choose how you hear from MRLC and which updates you receive.</p>

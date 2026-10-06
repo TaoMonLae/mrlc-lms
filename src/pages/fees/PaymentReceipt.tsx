@@ -23,7 +23,7 @@ const statusColor: Record<string, string> = {
   PARTIAL: 'bg-amber-100 text-amber-800',
   PENDING: 'bg-amber-100 text-amber-800',
   OVERDUE: 'bg-red-100 text-red-800',
-  WAIVED: 'bg-slate-100 text-slate-600',
+  WAIVED: 'bg-muted text-muted-foreground',
 };
 
 export default function PaymentReceipt() {
@@ -115,7 +115,7 @@ export default function PaymentReceipt() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <span className="ml-3 text-slate-500">Loading receipt...</span>
+        <span className="ml-3 text-muted-foreground">Loading receipt...</span>
       </div>
     );
   }
@@ -123,11 +123,11 @@ export default function PaymentReceipt() {
   if (!payment) {
     return (
       <div className="space-y-6 max-w-3xl mx-auto pb-10">
-        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to={backPath} />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to={backPath} />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           {backLabel}
         </Button>
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center text-slate-500 dark:bg-surface-indigo dark:border-surface-raised">
+        <div className="rounded-sm border border-dashed border-border bg-card p-10 text-center text-muted-foreground">
           Receipt {id} is not available from the live API yet.
         </div>
       </div>
@@ -145,11 +145,11 @@ export default function PaymentReceipt() {
     <div className="space-y-6 max-w-3xl mx-auto pb-10 print:max-w-none print:m-0 print:p-0">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 print:hidden">
         <div>
-          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to={backPath} />} nativeButton={false}>
+          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to={backPath} />} nativeButton={false}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             {backLabel}
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Receipt {payment.receiptNumber}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Receipt {payment.receiptNumber}</h1>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -173,22 +173,22 @@ export default function PaymentReceipt() {
       </div>
 
       {/* Receipt Paper */}
-      <div className="bg-white text-slate-900 border border-slate-200 shadow-sm p-4 sm:p-8 max-w-3xl mx-auto overflow-x-hidden print:border-none print:shadow-none print:p-0">
+      <div className="bg-white text-foreground border border-border shadow-sm p-4 sm:p-8 max-w-3xl mx-auto overflow-x-hidden print:border-none print:shadow-none print:p-0">
 
          {/* Header */}
-         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 border-b border-slate-200 pb-6 mb-6">
+         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 border-b border-border pb-6 mb-6">
             <div className="flex items-center gap-4 min-w-0">
               {brandingSettings.logoUrl ? (
                 <img src={brandingSettings.logoUrl} alt={schoolProfile.name} className="h-16 w-16 shrink-0 object-contain" />
               ) : (
-                <div className="h-16 w-16 shrink-0 bg-slate-100 flex items-center justify-center rounded-lg font-bold text-slate-400 text-2xl">
+                <div className="h-16 w-16 shrink-0 bg-muted flex items-center justify-center rounded-lg font-bold text-muted-foreground text-2xl">
                    {schoolProfile.name.charAt(0)}
                 </div>
               )}
               <div className="min-w-0">
-                <h2 className="text-xl font-bold text-slate-900">{schoolProfile.name}</h2>
-                <p className="text-sm text-slate-500 whitespace-pre-wrap">{schoolProfile.address}</p>
-                <div className="text-sm text-slate-500 mt-1 flex flex-wrap gap-x-4 gap-y-0.5">
+                <h2 className="text-xl font-bold text-foreground">{schoolProfile.name}</h2>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{schoolProfile.address}</p>
+                <div className="text-sm text-muted-foreground mt-1 flex flex-wrap gap-x-4 gap-y-0.5">
                    <span>Phone: {schoolProfile.phone}</span>
                    <span>Email: {schoolProfile.email}</span>
                 </div>
@@ -196,7 +196,7 @@ export default function PaymentReceipt() {
             </div>
             <div className="text-left sm:text-right shrink-0">
                <h1 className="text-2xl sm:text-3xl font-bold text-slate-300 uppercase tracking-widest">RECEIPT</h1>
-               <div className="mt-2 text-sm text-slate-600 break-all sm:break-normal">
+               <div className="mt-2 text-sm text-muted-foreground break-all sm:break-normal">
                  <p><span className="font-medium">No:</span> {payment.receiptNumber}</p>
                  <p><span className="font-medium">Date:</span> {format(new Date(payment.paymentDate || payment.paidDate || payment.createdAt), 'dd MMM yyyy')}</p>
                </div>
@@ -207,22 +207,22 @@ export default function PaymentReceipt() {
          </div>
 
          {payment.status === 'WAIVED' && (
-           <div className="mb-6 rounded border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-slate-600">
+           <div className="mb-6 rounded border border-border bg-muted/50 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
              This payment has been voided.
            </div>
          )}
 
          {/* Student Info */}
-         <div className="bg-slate-50 p-4 rounded border border-slate-100 mb-8">
+         <div className="bg-muted/50 p-4 rounded border border-border mb-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                <div>
-                  <p className="text-slate-500 mb-1">Received From</p>
-                  <p className="font-semibold text-slate-900 text-lg">{payment.studentName || 'Unknown Student'}</p>
+                  <p className="text-muted-foreground mb-1">Received From</p>
+                  <p className="font-semibold text-foreground text-lg">{payment.studentName || 'Unknown Student'}</p>
                </div>
                <div className="sm:text-right">
-                  <p className="text-slate-500 mb-1">Student Details</p>
-                  <p className="font-medium text-slate-900">{payment.studentIdNumber || '—'}</p>
-                  <p className="text-slate-600">{payment.class || '—'}</p>
+                  <p className="text-muted-foreground mb-1">Student Details</p>
+                  <p className="font-medium text-foreground">{payment.studentIdNumber || '—'}</p>
+                  <p className="text-muted-foreground">{payment.class || '—'}</p>
                </div>
             </div>
          </div>
@@ -230,37 +230,37 @@ export default function PaymentReceipt() {
          {/* Payment Details */}
          <div className="mb-8 overflow-x-auto">
             <table className="w-full text-sm">
-               <thead className="bg-slate-100 border-b border-slate-200">
+               <thead className="bg-muted border-b border-border">
                   <tr>
-                     <th className="py-3 px-4 text-left font-semibold text-slate-700">Description</th>
-                     <th className="py-3 px-4 text-right font-semibold text-slate-700">Amount</th>
+                     <th className="py-3 px-4 text-left font-semibold text-foreground">Description</th>
+                     <th className="py-3 px-4 text-right font-semibold text-foreground">Amount</th>
                   </tr>
                </thead>
                <tbody>
-                  <tr className="border-b border-slate-100">
+                  <tr className="border-b border-border">
                      <td className="py-4 px-4">{payment.paymentType || payment.description || 'Fee Payment'}</td>
                      <td className="py-4 px-4 text-right">
                        {formatMoney(gross, currency)}
                      </td>
                   </tr>
                   {discount > 0 && (
-                    <tr className="border-b border-slate-100 text-emerald-700">
+                    <tr className="border-b border-border text-emerald-700">
                        <td className="py-2 px-4">Discount</td>
                        <td className="py-2 px-4 text-right">-{formatMoney(discount, currency)}</td>
                     </tr>
                   )}
-                  <tr className="border-b border-slate-100">
-                     <td className="py-2 px-4 text-slate-600">Amount Due</td>
-                     <td className="py-2 px-4 text-right text-slate-900">{formatMoney(payment.amount || 0, currency)}</td>
+                  <tr className="border-b border-border">
+                     <td className="py-2 px-4 text-muted-foreground">Amount Due</td>
+                     <td className="py-2 px-4 text-right text-foreground">{formatMoney(payment.amount || 0, currency)}</td>
                   </tr>
-                  <tr className="border-b border-slate-100 text-slate-600">
+                  <tr className="border-b border-border text-muted-foreground">
                      <td className="py-2 px-4">Amount Paid</td>
                      <td className="py-2 px-4 text-right">{formatMoney(paidAmount, currency)}</td>
                   </tr>
                   {/* Total/Balance Row */}
-                  <tr className="bg-slate-50">
-                     <td className="py-4 px-4 text-right font-bold text-slate-900">{balance > 0 ? 'Balance Due' : 'Total Paid'}</td>
-                     <td className={`py-4 px-4 text-right font-bold text-lg ${balance > 0 ? 'text-red-600' : 'text-slate-900'}`}>
+                  <tr className="bg-muted/50">
+                     <td className="py-4 px-4 text-right font-bold text-foreground">{balance > 0 ? 'Balance Due' : 'Total Paid'}</td>
+                     <td className={`py-4 px-4 text-right font-bold text-lg ${balance > 0 ? 'text-red-600' : 'text-foreground'}`}>
                        {formatMoney(balance > 0 ? balance : paidAmount, currency)}
                      </td>
                   </tr>
@@ -270,25 +270,25 @@ export default function PaymentReceipt() {
 
          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 text-sm">
             <div>
-               <h4 className="font-semibold text-slate-900 mb-2">Payment Info</h4>
-               <p className="text-slate-600"><span className="font-medium">Method:</span> {(payment.paymentMethod || 'CASH').replace('_', ' ')}</p>
-               {payment.notes && <p className="text-slate-600 mt-1 whitespace-pre-wrap"><span className="font-medium">Remarks:</span> {payment.notes}</p>}
+               <h4 className="font-semibold text-foreground mb-2">Payment Info</h4>
+               <p className="text-muted-foreground"><span className="font-medium">Method:</span> {(payment.paymentMethod || 'CASH').replace('_', ' ')}</p>
+               {payment.notes && <p className="text-muted-foreground mt-1 whitespace-pre-wrap"><span className="font-medium">Remarks:</span> {payment.notes}</p>}
             </div>
 
             <div className="flex flex-col sm:flex-row items-center sm:items-end justify-center sm:justify-end gap-4 sm:gap-6">
               <div className="text-center shrink-0">
                 {qr && <img src={qr} alt="Payment verification QR" className="h-24 w-24 mx-auto" />}
-                <p className="text-[10px] text-slate-500 mt-1 flex items-center justify-center gap-1"><ShieldCheck className="h-3 w-3" /> Scan to verify</p>
-                <p className="text-[9px] text-slate-400 font-mono break-all max-w-[150px] mx-auto">{verifyUrl}</p>
+                <p className="text-[11px] text-muted-foreground mt-1 flex items-center justify-center gap-1"><ShieldCheck className="h-3 w-3" /> Scan to verify</p>
+                <p className="text-[11px] text-muted-foreground font-mono break-all max-w-[150px] mx-auto">{verifyUrl}</p>
               </div>
-              <div className="w-full max-w-[220px] sm:w-48 border-t border-slate-400 pt-2 text-center">
-                <p className="font-medium text-slate-900">Authorized Signature</p>
-                <p className="text-slate-500 text-xs mt-1">Processed by: {payment.recordedBy || 'Finance Office'}</p>
+              <div className="w-full max-w-[220px] sm:w-48 border-t border-input pt-2 text-center">
+                <p className="font-medium text-foreground">Authorized Signature</p>
+                <p className="text-muted-foreground text-xs mt-1">Processed by: {payment.recordedBy || 'Finance Office'}</p>
               </div>
             </div>
          </div>
 
-         <div className="mt-12 text-center text-xs text-slate-400 border-t border-slate-100 pt-4 print:mt-auto block">
+         <div className="mt-12 text-center text-xs text-muted-foreground border-t border-border pt-4 print:mt-auto block">
             This is a computer-generated receipt. No signature is required.
          </div>
       </div>
@@ -362,7 +362,7 @@ function VoidPaymentDialog({ payment, onClose, onVoided }: { payment: any; onClo
           <DialogTitle>Void Payment</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Voiding receipt {payment.receiptNumber || payment.id} removes it from collected and outstanding fee totals while keeping the receipt history visible.
           </p>
           <div className="space-y-2">
@@ -414,7 +414,7 @@ function RecordAdditionalPaymentDialog({ payment, currency, balance, onClose, on
           <DialogTitle>Record Additional Payment</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <p className="text-sm text-slate-500">Outstanding balance: <span className="font-semibold text-slate-900 dark:text-white">{formatMoney(balance, currency)}</span></p>
+          <p className="text-sm text-muted-foreground">Outstanding balance: <span className="font-semibold text-foreground">{formatMoney(balance, currency)}</span></p>
           <div className="space-y-2">
             <Label>Amount Received ({currency})</Label>
             <Input type="number" min="0" step="0.01" max={balance} value={amount} onChange={(e) => setAmount(e.target.value)} />

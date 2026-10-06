@@ -11,7 +11,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   ASSIGNMENT: 'Assignment', QUIZ: 'Quiz', MIDTERM: 'Midterm', FINAL: 'Final', MOCK_GED: 'Mock GED',
 };
 const letterColor = (l: string | null) => {
-  if (!l) return 'bg-slate-100 text-slate-500';
+  if (!l) return 'bg-muted text-muted-foreground';
   if (l === 'A+' || l === 'A') return 'bg-emerald-100 text-emerald-700';
   if (l === 'B') return 'bg-blue-100 text-blue-700';
   if (l === 'C') return 'bg-amber-100 text-amber-700';
@@ -46,7 +46,7 @@ export default function StudentProgress() {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <span className="ml-3 text-slate-500">Loading progress…</span>
+        <span className="ml-3 text-muted-foreground">Loading progress…</span>
       </div>
     );
   }
@@ -55,11 +55,11 @@ export default function StudentProgress() {
     return (
       <div className="max-w-5xl mx-auto space-y-4">
         {studentId && (
-          <Button variant="ghost" size="sm" className="-ml-3 text-slate-500" render={<Link to="/gradebook" />} nativeButton={false}>
+          <Button variant="ghost" size="sm" className="-ml-3 text-muted-foreground" render={<Link to="/gradebook" />} nativeButton={false}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Gradebook
           </Button>
         )}
-        <div className="bg-white dark:bg-surface-indigo border border-dashed border-slate-200 dark:border-surface-raised rounded-xl p-10 text-center text-slate-500">
+        <div className="bg-card border border-dashed border-border rounded-sm p-10 text-center text-muted-foreground">
           No grade data available yet.
         </div>
       </div>
@@ -71,7 +71,7 @@ export default function StudentProgress() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-10">
       {studentId && (
-        <Button variant="ghost" size="sm" className="-ml-3 text-slate-500" render={<Link to="/gradebook" />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 text-muted-foreground" render={<Link to="/gradebook" />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Gradebook
         </Button>
       )}
@@ -79,15 +79,15 @@ export default function StudentProgress() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <GraduationCap className="h-6 w-6 text-aubergine-600" /> {studentId ? data.student.name : 'My Progress'}
           </h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">{data.student.className} · {data.student.code}</p>
+          <p className="text-sm text-muted-foreground mt-1">{data.student.className} · {data.student.code}</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="text-center px-4 py-2 rounded-xl bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised shadow-sm">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Term Average</p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{data.termAverage != null ? `${data.termAverage}%` : '—'}</p>
+          <div className="text-center px-4 py-2 rounded-sm bg-card border border-border shadow-sm">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Term Average</p>
+            <p className="text-2xl font-bold text-foreground">{data.termAverage != null ? `${data.termAverage}%` : '—'}</p>
           </div>
           <Badge className={`${letterColor(data.letter)} border-0 text-base px-3 py-1.5`}>{data.letter || '—'}</Badge>
         </div>
@@ -95,7 +95,7 @@ export default function StudentProgress() {
 
       {/* Academic warnings */}
       {data.warnings.length > 0 && (
-        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 dark:bg-red-900/15 dark:border-red-900/40 p-4">
+        <div className="flex items-start gap-3 rounded-sm border border-red-200 bg-red-50 dark:bg-red-900/15 dark:border-red-900/40 p-4">
           <AlertTriangle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
           <div className="text-sm text-red-700 dark:text-red-300">
             <p className="font-bold">Academic warning</p>
@@ -105,33 +105,33 @@ export default function StudentProgress() {
       )}
 
       {/* GED readiness */}
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-6">
-        <h3 className="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2 text-sm"><Target className="h-4 w-4 text-aubergine-600" /> GED Readiness</h3>
+      <div className="bg-card border border-border rounded-sm shadow-sm p-6">
+        <h3 className="font-bold text-foreground mb-4 flex items-center gap-2 text-sm"><Target className="h-4 w-4 text-aubergine-600" /> GED Readiness</h3>
         <GedStageTracker readiness={data.gedReadiness} showStats={true} />
       </div>
 
       {/* Subject averages */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {data.subjects.length === 0 && (
-          <div className="md:col-span-2 bg-white dark:bg-surface-indigo border border-dashed border-slate-200 dark:border-surface-raised rounded-xl p-8 text-center text-slate-500">No graded subjects yet.</div>
+          <div className="md:col-span-2 bg-card border border-dashed border-border rounded-sm p-8 text-center text-muted-foreground">No graded subjects yet.</div>
         )}
         {data.subjects.map((s) => (
-          <div key={s.subjectId} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-5">
+          <div key={s.subjectId} className="bg-card border border-border rounded-sm shadow-sm p-5">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="font-bold text-slate-900 dark:text-white">{s.name}</h4>
+              <h4 className="font-bold text-foreground">{s.name}</h4>
               <div className="flex items-center gap-2">
                 {s.warning && <AlertTriangle className="h-4 w-4 text-red-500" />}
-                <span className="font-bold text-slate-900 dark:text-white">{s.average != null ? `${s.average}%` : '—'}</span>
+                <span className="font-bold text-foreground">{s.average != null ? `${s.average}%` : '—'}</span>
                 <Badge className={`${letterColor(s.letter)} border-0`}>{s.letter || '—'}</Badge>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
               {Object.entries(s.categoryAverages).map(([c, v]) => (
-                <span key={c} className="text-xs px-2 py-1 rounded-md bg-slate-50 dark:bg-surface-raised text-slate-600 dark:text-slate-300">
+                <span key={c} className="text-xs px-2 py-1 rounded-md bg-muted/50 text-muted-foreground">
                   {CATEGORY_LABELS[c] || c}: <span className="font-semibold">{v}%</span>
                 </span>
               ))}
-              {Object.keys(s.categoryAverages).length === 0 && <span className="text-xs text-slate-400">No marks yet</span>}
+              {Object.keys(s.categoryAverages).length === 0 && <span className="text-xs text-muted-foreground">No marks yet</span>}
             </div>
           </div>
         ))}
@@ -139,14 +139,14 @@ export default function StudentProgress() {
 
       {/* Progress trend */}
       {data.trend.length > 0 && (
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-6">
-          <h3 className="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2 text-sm"><TrendingUp className="h-4 w-4 text-aubergine-600" /> Progress Trend</h3>
+        <div className="bg-card border border-border rounded-sm shadow-sm p-6">
+          <h3 className="font-bold text-foreground mb-4 flex items-center gap-2 text-sm"><TrendingUp className="h-4 w-4 text-aubergine-600" /> Progress Trend</h3>
           <div className="flex items-end gap-2 h-40 overflow-x-auto">
             {data.trend.map((t, i) => (
               <div key={i} className="flex flex-col items-center gap-1 shrink-0" style={{ width: 44 }} title={`${t.title}: ${t.percent}%`}>
-                <span className="text-[10px] font-semibold text-slate-500">{t.percent}%</span>
+                <span className="text-[11px] font-semibold text-muted-foreground">{t.percent}%</span>
                 <div className="w-6 rounded-t bg-aubergine-500" style={{ height: `${(t.percent / maxTrend) * 110}px` }} />
-                <span className="text-[9px] text-slate-400 truncate w-full text-center">{new Date(t.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                <span className="text-[11px] text-muted-foreground truncate w-full text-center">{new Date(t.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
               </div>
             ))}
           </div>
@@ -155,13 +155,13 @@ export default function StudentProgress() {
 
       {/* Teacher comments */}
       {data.comments.length > 0 && (
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-6">
-          <h3 className="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2 text-sm"><MessageSquare className="h-4 w-4 text-aubergine-600" /> Teacher Comments</h3>
+        <div className="bg-card border border-border rounded-sm shadow-sm p-6">
+          <h3 className="font-bold text-foreground mb-4 flex items-center gap-2 text-sm"><MessageSquare className="h-4 w-4 text-aubergine-600" /> Teacher Comments</h3>
           <div className="space-y-3">
             {data.comments.map((c, i) => (
               <div key={i} className="border-l-2 border-aubergine-300 pl-3">
-                <p className="text-xs font-bold text-slate-500">{c.subject} · {c.item}</p>
-                <p className="text-sm text-slate-700 dark:text-slate-300">{c.comment}</p>
+                <p className="text-xs font-bold text-muted-foreground">{c.subject} · {c.item}</p>
+                <p className="text-sm text-foreground">{c.comment}</p>
               </div>
             ))}
           </div>

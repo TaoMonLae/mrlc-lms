@@ -74,9 +74,9 @@ export default function QuestionEditor() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-5 pb-12">
-      <Button variant="ghost" size="sm" className="-ml-2 text-slate-500" onClick={() => navigate('/bank')}><ArrowLeft className="h-4 w-4 mr-1" /> Bank</Button>
+      <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground" onClick={() => navigate('/bank')}><ArrowLeft className="h-4 w-4 mr-1" /> Bank</Button>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{editing ? 'Edit question' : 'New question'}</h1>
+        <h1 className="text-2xl font-bold text-foreground">{editing ? 'Edit question' : 'New question'}</h1>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setPreview(!preview)}><Eye className="h-4 w-4 mr-1" /> {preview ? 'Edit' : 'Preview'}</Button>
           <Button className="bg-primary text-primary-foreground" onClick={save}><Save className="h-4 w-4 mr-1" /> Save</Button>
@@ -84,15 +84,15 @@ export default function QuestionEditor() {
       </div>
 
       {preview ? (
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 space-y-3">
-          <p className="text-base font-medium text-slate-900 dark:text-white whitespace-pre-wrap">{f.text || '(no text)'}</p>
-          {f.passageText && <div className="whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed dark:border-surface-raised dark:bg-canvas">{f.passageText}</div>}
+        <div className="bg-card border border-border rounded-sm p-6 space-y-3">
+          <p className="text-base font-medium text-foreground whitespace-pre-wrap">{f.text || '(no text)'}</p>
+          {f.passageText && <div className="whitespace-pre-wrap rounded-lg border border-border bg-muted/50 p-4 text-sm leading-relaxed">{f.passageText}</div>}
           {f.imageUrl && <img src={f.imageUrl} alt="Question illustration" className="max-h-72 max-w-full rounded-lg object-contain" />}
           {isChoice && f.options.filter((o: any) => o.text).map((o: any, i: number) => (
-            <div key={i} className={`px-4 py-2 rounded-lg border ${o.isCorrect ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20' : 'border-slate-200 dark:border-surface-raised'}`}>{o.text}{o.isCorrect && ' ✓'}</div>
+            <div key={i} className={`px-4 py-2 rounded-lg border ${o.isCorrect ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20' : 'border-border'}`}>{o.text}{o.isCorrect && ' ✓'}</div>
           ))}
           {isDragDrop && (
-            <div className="rounded-lg border border-slate-200 p-3 text-sm leading-relaxed dark:border-surface-raised">
+            <div className="rounded-lg border border-border p-3 text-sm leading-relaxed">
               {splitDragText(dragParsed.text).map((seg, i) => seg.kind === 'text'
                 ? <span key={i}>{seg.text}</span>
                 : <span key={i} className="mx-1 inline-block rounded border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
@@ -100,22 +100,22 @@ export default function QuestionEditor() {
                   </span>)}
             </div>
           )}
-          {f.explanation && <p className="text-xs text-slate-500 italic">Explanation: {f.explanation}</p>}
+          {f.explanation && <p className="text-xs text-muted-foreground italic">Explanation: {f.explanation}</p>}
         </div>
       ) : (
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-5 space-y-4">
-          <div><Label>Question text</Label><textarea className="w-full min-h-[100px] rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas p-2 text-sm" value={f.text} onChange={(e) => setF({ ...f, text: e.target.value })} /></div>
-          <div><Label>Reading passage or source (optional)</Label><textarea className="w-full min-h-[100px] rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas p-2 text-sm" value={f.passageText} onChange={(e) => setF({ ...f, passageText: e.target.value })} placeholder="Shown beside the question in the student player." /></div>
+        <div className="bg-card border border-border rounded-sm p-5 space-y-4">
+          <div><Label>Question text</Label><textarea className="w-full min-h-[100px] rounded-md border border-border bg-card p-2 text-sm" value={f.text} onChange={(e) => setF({ ...f, text: e.target.value })} /></div>
+          <div><Label>Reading passage or source (optional)</Label><textarea className="w-full min-h-[100px] rounded-md border border-border bg-card p-2 text-sm" value={f.passageText} onChange={(e) => setF({ ...f, passageText: e.target.value })} placeholder="Shown beside the question in the student player." /></div>
           <div><Label>Question picture (optional)</Label><div className="mt-2"><QuestionImageField value={f.imageUrl} onChange={(imageUrl) => setF({ ...f, imageUrl })} /></div></div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div><Label>Type</Label><select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={f.type} onChange={(e) => { const type = e.target.value; setF({ ...f, type, options: type === 'TRUE_FALSE' ? [{ text: 'True', isCorrect: true }, { text: 'False', isCorrect: false }] : f.options }); }}>{TYPES.map((t) => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}</select></div>
-            <div><Label>Difficulty</Label><select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={f.difficulty} onChange={(e) => setF({ ...f, difficulty: e.target.value })}>{DIFFICULTY.map((d) => <option key={d} value={d}>{d}</option>)}</select></div>
+            <div><Label>Type</Label><select className="w-full h-10 rounded-md border border-border bg-card px-2 text-sm" value={f.type} onChange={(e) => { const type = e.target.value; setF({ ...f, type, options: type === 'TRUE_FALSE' ? [{ text: 'True', isCorrect: true }, { text: 'False', isCorrect: false }] : f.options }); }}>{TYPES.map((t) => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}</select></div>
+            <div><Label>Difficulty</Label><select className="w-full h-10 rounded-md border border-border bg-card px-2 text-sm" value={f.difficulty} onChange={(e) => setF({ ...f, difficulty: e.target.value })}>{DIFFICULTY.map((d) => <option key={d} value={d}>{d}</option>)}</select></div>
             <div><Label>Points</Label><Input type="number" value={f.defaultPoints} onChange={(e) => setF({ ...f, defaultPoints: e.target.value })} /></div>
             <div><Label>Time (s)</Label><Input type="number" value={f.estimatedTimeSeconds} onChange={(e) => setF({ ...f, estimatedTimeSeconds: e.target.value })} /></div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div><Label>Subject</Label><select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={f.subjectId} onChange={(e) => setF({ ...f, subjectId: e.target.value })}><option value="">—</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
-            <div><Label>Topic</Label><select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={f.topicId} onChange={(e) => setF({ ...f, topicId: e.target.value })}><option value="">—</option>{topics.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>
+            <div><Label>Subject</Label><select className="w-full h-10 rounded-md border border-border bg-card px-2 text-sm" value={f.subjectId} onChange={(e) => setF({ ...f, subjectId: e.target.value })}><option value="">—</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
+            <div><Label>Topic</Label><select className="w-full h-10 rounded-md border border-border bg-card px-2 text-sm" value={f.topicId} onChange={(e) => setF({ ...f, topicId: e.target.value })}><option value="">—</option>{topics.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>
             <div><Label>Subtopic</Label><Input value={f.subtopic} onChange={(e) => setF({ ...f, subtopic: e.target.value })} /></div>
           </div>
 
@@ -135,13 +135,13 @@ export default function QuestionEditor() {
           ) : isDragDrop ? (
             <div className="space-y-3">
               <div>
-                <Label>Passage <span className="font-normal text-slate-400">— wrap each word students must drag into place with double brackets, e.g. [[word]]</span></Label>
-                <textarea className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas p-2 text-sm"
+                <Label>Passage <span className="font-normal text-muted-foreground">— wrap each word students must drag into place with double brackets, e.g. [[word]]</span></Label>
+                <textarea className="w-full min-h-[80px] rounded-md border border-border bg-card p-2 text-sm"
                   placeholder={DRAG_DROP_PLACEHOLDER} value={f.dragBlankText} onChange={(e) => setF({ ...f, dragBlankText: e.target.value })} />
               </div>
               {dragParsed.blanks.length > 0 && (
-                <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 text-sm leading-relaxed dark:border-surface-raised dark:bg-canvas/50">
-                  <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Preview</p>
+                <div className="rounded-lg border border-border bg-muted/36 p-3 text-sm leading-relaxed">
+                  <p className="mb-1.5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Preview</p>
                   {splitDragText(dragParsed.text).map((seg, i) => seg.kind === 'text'
                     ? <span key={i}>{seg.text}</span>
                     : <span key={i} className="mx-1 inline-block rounded border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
@@ -150,7 +150,7 @@ export default function QuestionEditor() {
                 </div>
               )}
               <div>
-                <Label>Extra wrong words <span className="font-normal text-slate-400">(optional, comma-separated)</span></Label>
+                <Label>Extra wrong words <span className="font-normal text-muted-foreground">(optional, comma-separated)</span></Label>
                 <Input placeholder="e.g. red, tall" value={f.dragDistractors} onChange={(e) => setF({ ...f, dragDistractors: e.target.value })} />
               </div>
             </div>
@@ -158,7 +158,7 @@ export default function QuestionEditor() {
             <div><Label>Accepted answer(s)</Label><Input placeholder="Comma-separated for short answer" value={f.correctAnswer} onChange={(e) => setF({ ...f, correctAnswer: e.target.value })} /></div>
           )}
 
-          <div><Label>Explanation (shown after release)</Label><textarea className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas p-2 text-sm" value={f.explanation} onChange={(e) => setF({ ...f, explanation: e.target.value })} /></div>
+          <div><Label>Explanation (shown after release)</Label><textarea className="w-full min-h-[60px] rounded-md border border-border bg-card p-2 text-sm" value={f.explanation} onChange={(e) => setF({ ...f, explanation: e.target.value })} /></div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Tags (comma)</Label><Input value={f.tags} onChange={(e) => setF({ ...f, tags: e.target.value })} /></div>
             <div><Label>Language</Label><Input value={f.language} onChange={(e) => setF({ ...f, language: e.target.value })} /></div>
