@@ -197,10 +197,10 @@ A muted paper-and-ink ground with three hard-working accents, each with one job.
 - **Headline** (700, 1.5rem, tight tracking): Page titles (h1), sitting at the top of each workspace page.
 - **Title** (600, 1.125rem, -0.02em): Section headers inside ledgers, which sit on a dark bottom rule.
 - **Body** (400, 0.875rem, 1.5): Most UI text, table cells and form text. Inputs are 1rem on mobile to prevent zoom.
-- **Label** (600, 10 to 11px, 0.1 to 0.16em, uppercase): Teal micro-labels above titles, column headers, badges and meta lines.
+- **Label** (600, 11px, 0.07 to 0.16em, uppercase): Teal micro-labels above titles, column headers, badges and meta lines. 11px is the floor for any text in the school app.
 
 ### Named Rules
-**The Tracked Label Rule.** Uppercase with letter-spacing is reserved for labels of 11px or less. Headlines are never uppercase, and body text is never tracked.
+**The Tracked Label Rule.** Uppercase with letter-spacing is reserved for 11px labels. Headlines are never uppercase, and body text is never tracked.
 
 **The Script Room Rule.** When Burmese or Mon is active, headings go to line-height 1.6, running text to 1.9 and controls to 1.7, and tracking resets to normal. Never apply Latin tight leading to Myanmar script.
 
@@ -236,7 +236,7 @@ Decisive and rectangular. The primary button is a gold block you can't miss.
 - **Destructive:** A 10% red tint with Signal Red text, never a solid red block.
 
 ### Chips / Badges
-- **Style:** 20px tall, 4px corners, 10px uppercase text tracked 0.07em, weight 600. Status reads as a tinted fill with matching text.
+- **Style:** 20px tall, 4px corners, 11px uppercase text tracked 0.07em, weight 600. Status reads as a tinted fill with matching text.
 
 ### Cards / Containers
 - **Corner Style:** 4px (the `rounded-sm` default), or square for ledger strips.
@@ -274,12 +274,14 @@ Under it sit the connected metric strip and a shared-border notice board, whose 
 - **Do** keep one gold primary action per view, with navy text on gold.
 - **Do** use teal for whatever is selected, active, linked or focused.
 - **Do** build overviews from connected strips and shared-border grids on Sheet White, separated by 1px rules.
-- **Do** put a teal uppercase micro-label (10 to 11px, tracked 0.1 to 0.16em) above section titles.
+- **Do** put a teal uppercase micro-label (11px, tracked 0.1 to 0.16em) above section titles.
 - **Do** keep tabular numerals on for marks, fees, counts and dates.
 - **Do** test every new surface in Burmese and Mon and let the script line heights apply.
 - **Do** keep the dark theme blue-grey (Night Canvas #101720 and above).
 
 ### Don't:
+- **Don't** set text below 11px, or use generic `slate-*` / `gray-*` colours; use the theme tokens (`text-foreground`, `text-muted-foreground`, `bg-card`, `bg-muted`, `border-border`). `node scripts/codemods/fieldbook-tokens.mjs` converts stragglers.
+- **Don't** ship an icon-only button without an `aria-label`; `tests/unit/iconButtonLabels.test.ts` enforces it.
 - **Don't** use drop shadows, glows, blur or gradient panels in the school app.
 - **Don't** use radii above 8px, or pill-shaped buttons, on school-app surfaces.
 - **Don't** reintroduce purple or indigo gradients, or floating circular assistant buttons.
