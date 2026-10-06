@@ -241,13 +241,13 @@ export default function ClassDetails() {
 
       <Tabs defaultValue="students" className="min-w-0 w-full">
         <TabsList className="custom-scrollbar h-12 w-full max-w-2xl justify-start overflow-x-auto bg-muted/50 p-1 border border-border">
-          <TabsTrigger value="students" className="shrink-0 data-active:bg-white dark:data-active:bg-slate-800 data-active:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-muted-foreground data-active:text-foreground">
+          <TabsTrigger value="students" className="shrink-0 data-active:bg-white dark:data-active:bg-slate-800 data-active:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-muted-foreground data-active:text-foreground dark:data-active:text-foreground">
             <Users className="h-4 w-4 mr-2" /> Students
           </TabsTrigger>
-          <TabsTrigger value="attendance" className="shrink-0 data-active:bg-white dark:data-active:bg-slate-800 data-active:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-muted-foreground data-active:text-foreground">
+          <TabsTrigger value="attendance" className="shrink-0 data-active:bg-white dark:data-active:bg-slate-800 data-active:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-muted-foreground data-active:text-foreground dark:data-active:text-foreground">
             <UserCheck className="h-4 w-4 mr-2" /> Attendance Summary
           </TabsTrigger>
-          <TabsTrigger value="exams" className="shrink-0 data-active:bg-white dark:data-active:bg-slate-800 data-active:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-muted-foreground data-active:text-foreground">
+          <TabsTrigger value="exams" className="shrink-0 data-active:bg-white dark:data-active:bg-slate-800 data-active:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-muted-foreground data-active:text-foreground dark:data-active:text-foreground">
             <FileText className="h-4 w-4 mr-2" /> Exam History
           </TabsTrigger>
         </TabsList>

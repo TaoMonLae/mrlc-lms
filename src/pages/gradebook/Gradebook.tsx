@@ -308,9 +308,9 @@ export default function GradebookPage() {
       <Tabs defaultValue="summary" className="overflow-hidden rounded-sm border border-border bg-card shadow-sm">
         <div className="border-b border-border px-4 pt-2 sm:px-6">
           <TabsList variant="line" aria-label="Gradebook sections" className="h-12 w-full justify-start gap-1 overflow-x-auto">
-            <TabsTrigger value="summary" className="h-10 flex-none rounded-lg px-3 font-semibold data-active:text-primary data-active:after:bg-primary focus-visible:border-transparent focus-visible:bg-primary/10 focus-visible:ring-0 focus-visible:outline-none">Summary</TabsTrigger>
-            {canManage && <TabsTrigger value="entry" className="h-10 flex-none rounded-lg px-3 font-semibold data-active:text-primary data-active:after:bg-primary focus-visible:border-transparent focus-visible:bg-primary/10 focus-visible:ring-0 focus-visible:outline-none">Grade Entry</TabsTrigger>}
-            {canManage && <TabsTrigger value="weights" className="h-10 flex-none rounded-lg px-3 font-semibold data-active:text-primary data-active:after:bg-primary focus-visible:border-transparent focus-visible:bg-primary/10 focus-visible:ring-0 focus-visible:outline-none">Categories &amp; Weights</TabsTrigger>}
+            <TabsTrigger value="summary" className="h-10 flex-none rounded-lg px-3 font-semibold data-active:text-primary dark:data-active:text-primary data-active:after:bg-primary focus-visible:border-transparent focus-visible:bg-primary/10 focus-visible:ring-0 focus-visible:outline-none">Summary</TabsTrigger>
+            {canManage && <TabsTrigger value="entry" className="h-10 flex-none rounded-lg px-3 font-semibold data-active:text-primary dark:data-active:text-primary data-active:after:bg-primary focus-visible:border-transparent focus-visible:bg-primary/10 focus-visible:ring-0 focus-visible:outline-none">Grade Entry</TabsTrigger>}
+            {canManage && <TabsTrigger value="weights" className="h-10 flex-none rounded-lg px-3 font-semibold data-active:text-primary dark:data-active:text-primary data-active:after:bg-primary focus-visible:border-transparent focus-visible:bg-primary/10 focus-visible:ring-0 focus-visible:outline-none">Categories &amp; Weights</TabsTrigger>}
           </TabsList>
         </div>
 
