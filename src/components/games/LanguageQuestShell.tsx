@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode, useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
-import { BarChart3, BookOpenText, Brain, GraduationCap, Home, Info, Languages, LogOut, Menu, Moon, RefreshCw, Settings2, Sun, TriangleAlert, Trophy, Users } from 'lucide-react';
+import { ArrowLeft, BarChart3, BookOpenText, Brain, GraduationCap, Home, Info, Languages, LogOut, Menu, Moon, RefreshCw, Settings2, Sun, TriangleAlert, Trophy, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -86,6 +86,13 @@ function LanguageQuestShellContent() {
   const [systemDark, setSystemDark] = useState(false);
   const canManage = user?.role === 'ADMIN' || user?.role === 'TEACHER';
   const isAdmin = user?.role === 'ADMIN';
+  const lmsHref = user?.role === 'STUDENT'
+    ? '/student/dashboard'
+    : user?.role === 'TEACHER'
+      ? '/teacher/dashboard'
+      : user?.role === 'GUARDIAN'
+        ? '/family'
+        : '/dashboard';
   const classroomsHref = canManage
     ? '/games/language-quest/classrooms'
     : '/games/language-quest/profile#classrooms';
@@ -111,6 +118,19 @@ function LanguageQuestShellContent() {
         <div className="mx-auto flex min-h-18 max-w-[1600px] items-center gap-2 px-3 py-2 sm:px-5">
           <div className="shrink-0"><MrlcQuestBrand to="/games/language-quest" compact /></div>
           <div className="ml-auto flex min-w-0 items-center gap-1">
+            {!user?.isExternalLearner && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 shrink-0 gap-1.5 rounded-full border-[var(--lq-steel-border)] bg-white px-2.5 font-bold text-[var(--lq-signal-blue)] shadow-sm hover:bg-sky-50 sm:px-3 dark:border-slate-700 dark:bg-slate-900 dark:text-sky-300 dark:hover:bg-slate-800"
+                render={<Link to={lmsHref} aria-label="Return to LMS" />}
+                nativeButton={false}
+              >
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Return to LMS</span>
+                <span className="sm:hidden">LMS</span>
+              </Button>
+            )}
             <nav aria-label="Learning Quest" className="hidden shrink-0 items-center gap-1 lg:flex">
               <Button variant="ghost" size="sm" className={`h-10 gap-2 rounded-full px-3 font-bold text-[var(--lq-slate-caption)] ${pathIs('/games/language-quest/words') ? 'bg-sky-50 text-[var(--lq-signal-blue)] dark:bg-sky-500/10 dark:text-sky-300' : ''}`} title="My learned words" render={<Link to="/games/language-quest/words" aria-current={pathIs('/games/language-quest/words') ? 'page' : undefined} />} nativeButton={false}>
                 <BookOpenText className="h-4 w-4" /><span className="hidden 2xl:inline">My Words</span>

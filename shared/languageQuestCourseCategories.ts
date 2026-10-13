@@ -26,7 +26,9 @@ export function orderedLanguageQuestCategories<T extends { category?: string; la
   for (const course of courses) {
     const category = course.category?.trim()
       || languageQuestCategoryForLanguage(course.language || "");
-    groups.set(category, [...(groups.get(category) || []), course]);
+    const groupedCourses = groups.get(category);
+    if (groupedCourses) groupedCourses.push(course);
+    else groups.set(category, [course]);
   }
 
   const preferredOrder = new Map<string, number>(

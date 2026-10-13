@@ -1,25 +1,29 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { ArrowRight, BookOpen, Crown, Flame, Heart, LayoutGrid, Languages, Map, Sparkles, Star, Trophy, WholeWord } from 'lucide-react';
+import { ArrowRight, BookOpen, Crown, Flame, Heart, LayoutGrid, Languages, Map, Search, Sparkles, Star, Trophy, WholeWord, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { apiGet } from '@/src/lib/api';
 import type { LanguageQuestCourseSummary, LanguageQuestOverview } from '@/src/types/languageQuest';
 import { useAuth } from '@/src/providers/AuthProvider';
-import { LanguageQuestAchievements } from '@/src/components/games/LanguageQuestAchievements';
 import { LanguageQuestCourseFolders } from '@/src/components/games/LanguageQuestCourseFolder';
 import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
 import { orderedLanguageQuestCategories } from '@/shared/languageQuestCourseCategories';
-import { LanguageQuestRewardTrack } from '@/src/components/games/LanguageQuestRewards';
-import {
-  LanguageQuestEngagement,
-  LanguageQuestLanguageAlbums,
-} from '@/src/components/games/LanguageQuestEngagement';
-import { LanguageQuestLegendaryVault } from '@/src/components/games/LanguageQuestLegendaryRewards';
 import { QuestDepthStage, QuestReveal, QuestStaggeredText } from '@/src/components/games/LanguageQuestMotion';
+
+const LanguageQuestEngagement = lazy(() => import('@/src/components/games/LanguageQuestEngagement').then((module) => ({ default: module.LanguageQuestEngagement })));
+const LanguageQuestLanguageAlbums = lazy(() => import('@/src/components/games/LanguageQuestEngagement').then((module) => ({ default: module.LanguageQuestLanguageAlbums })));
+const LanguageQuestRewardTrack = lazy(() => import('@/src/components/games/LanguageQuestRewards').then((module) => ({ default: module.LanguageQuestRewardTrack })));
+const LanguageQuestLegendaryVault = lazy(() => import('@/src/components/games/LanguageQuestLegendaryRewards').then((module) => ({ default: module.LanguageQuestLegendaryVault })));
+const LanguageQuestAchievements = lazy(() => import('@/src/components/games/LanguageQuestAchievements').then((module) => ({ default: module.LanguageQuestAchievements })));
+
+function TabLoading() {
+  return <div role="status" className="py-8 text-center text-sm font-semibold text-[var(--lq-slate-caption)]">Loading your progress…</div>;
+}
 
 function HeroStat({ icon, value, label }: { icon: React.ReactNode; value: string | number; label: string }) {
   return (
@@ -71,11 +75,17 @@ function HeartRefillBar({
 }
 
 function CourseLibrary({ courses, progressSavedText }: { courses: LanguageQuestCourseSummary[]; progressSavedText: string }) {
-  const courseGroups = orderedLanguageQuestCategories(courses);
+  const [query, setQuery] = useState('');
+  const search = query.trim().toLocaleLowerCase();
+  const matchingCourses = search
+    ? courses.filter((course) => [course.title, course.description, course.language, course.category, course.code]
+      .some((value) => value?.toLocaleLowerCase().includes(search)))
+    : courses;
+  const courseGroups = orderedLanguageQuestCategories(matchingCourses);
 
   return (
     <section id="course-library" className="scroll-mt-28" aria-labelledby="language-quest-course-library-title">
-      <div className="mb-4 flex items-end justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--lq-signal-blue)]">Continue learning</p>
           <h2 id="language-quest-course-library-title" className="mt-1 text-xl font-bold text-[var(--lq-charcoal)] dark:text-white">Choose a course</h2>
@@ -83,11 +93,44 @@ function CourseLibrary({ courses, progressSavedText }: { courses: LanguageQuestC
         </div>
       </div>
 
+      {courses.length > 0 && (
+        <div className="mb-5 flex flex-wrap items-center gap-3">
+          <div className="relative w-full max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
+            <Input
+              type="search"
+              aria-label="Search courses"
+              placeholder="Search courses…"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              className="h-11 rounded-xl border-[var(--lq-steel-border)] bg-white pl-10 pr-10 dark:border-slate-700 dark:bg-slate-900"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                aria-label="Clear course search"
+                className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lq-signal-blue)] dark:hover:bg-slate-800"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
+            )}
+          </div>
+          {search && <p role="status" className="text-sm font-semibold text-[var(--lq-slate-caption)]">{matchingCourses.length} {matchingCourses.length === 1 ? 'course' : 'courses'} found</p>}
+        </div>
+      )}
+
       {courses.length === 0 ? (
         <div className="lq-card border border-dashed border-[var(--lq-steel-border)] p-12 text-center dark:border-slate-700">
           <BookOpen className="mx-auto h-11 w-11 text-[var(--lq-signal-blue)]/50" />
           <p className="mt-3 font-semibold text-[var(--lq-charcoal)] dark:text-slate-200">No published courses yet</p>
           <p className="mt-1 text-sm text-[var(--lq-slate-caption)]">A teacher or administrator can create the first course.</p>
+        </div>
+      ) : matchingCourses.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-[var(--lq-steel-border)] bg-white/60 px-6 py-10 text-center dark:border-slate-700 dark:bg-slate-900/40">
+          <p className="font-bold text-[var(--lq-charcoal)] dark:text-white">No courses match “{query.trim()}”</p>
+          <p className="mt-1 text-sm text-[var(--lq-slate-caption)]">Try a language, subject, or course name.</p>
+          <Button variant="outline" size="sm" className="mt-4" onClick={() => setQuery('')}>Show all courses</Button>
         </div>
       ) : (
         <LanguageQuestCourseFolders
@@ -210,7 +253,10 @@ export default function LanguageQuestHome() {
     );
   }
 
-  const nextCourse = data.courses.find((course) => course.progressPercent > 0 && !course.completed) ?? data.courses.find((course) => !course.completed) ?? data.courses[0];
+  const nextCourse = data.courses.find((course) => course.id === data.profile.activeCourseId && !course.completed)
+    ?? data.courses.find((course) => course.progressPercent > 0 && !course.completed)
+    ?? data.courses.find((course) => !course.completed)
+    ?? data.courses[0];
   const nextHref = nextCourse?.nextLessonId
     ? `/games/language-quest/lessons/${nextCourse.nextLessonId}`
     : nextCourse
@@ -316,27 +362,27 @@ export default function LanguageQuestHome() {
         </TabsContent>
 
         <TabsContent value="missions" className="outline-none">
-          <LanguageQuestEngagement onXpChanged={load} />
+          {activeTab === 'missions' && <Suspense fallback={<TabLoading />}><LanguageQuestEngagement onXpChanged={load} /></Suspense>}
         </TabsContent>
 
         <TabsContent value="cards" className="outline-none">
-          <LanguageQuestRewardTrack rewards={data.profile.rewards} bestStreak={data.profile.bestStreak} />
+          {activeTab === 'cards' && <Suspense fallback={<TabLoading />}><LanguageQuestRewardTrack rewards={data.profile.rewards} bestStreak={data.profile.bestStreak} /></Suspense>}
         </TabsContent>
 
         <TabsContent value="vault" className="outline-none">
-          <LanguageQuestLegendaryVault rewards={data.profile.rewards} expanded learnerName={user?.name || 'Learning Quest Learner'} />
+          {activeTab === 'vault' && <Suspense fallback={<TabLoading />}><LanguageQuestLegendaryVault rewards={data.profile.rewards} expanded learnerName={user?.name || 'Learning Quest Learner'} /></Suspense>}
         </TabsContent>
 
         <TabsContent value="albums" className="outline-none">
-          <LanguageQuestLanguageAlbums courses={data.courses} />
+          {activeTab === 'albums' && <Suspense fallback={<TabLoading />}><LanguageQuestLanguageAlbums courses={data.courses} /></Suspense>}
         </TabsContent>
 
         <TabsContent value="achievements" className="outline-none">
-          <LanguageQuestAchievements
+          {activeTab === 'achievements' && <Suspense fallback={<TabLoading />}><LanguageQuestAchievements
             learnerName={user?.name || 'Learning Quest Learner'}
             profile={data.profile}
             courses={data.courses}
-          />
+          /></Suspense>}
         </TabsContent>
       </Tabs>
     </div>
