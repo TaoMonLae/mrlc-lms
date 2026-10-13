@@ -1,91 +1,40 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router";
-import { ArrowRight, Menu, Moon, Sun, X } from "lucide-react";
-import Hero1 from "@/components/blocks/hero-1";
-import { useTheme } from "../components/theme-provider";
-import { useUser } from "../lib/permissions";
-import { useSettings } from "../providers/SettingsProvider";
-import "./landing.css";
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router';
+import { ArrowRight, BookOpen, Check, ChevronRight, Menu, Moon, Sun, X } from 'lucide-react';
+import { useTheme } from '../components/theme-provider';
+import { useUser } from '../lib/permissions';
+import { useSettings } from '../providers/SettingsProvider';
+import './landing.css';
 
-const navigation = [
-  { label: "Learning", href: "#learning-path" },
-  { label: "Learning Quest", href: "#learning-quest" },
-  { label: "School tools", href: "#school-tools" },
-  { label: "About MRLC", href: "/about" },
+const nav = [
+  ['The platform', '#platform'],
+  ['Learning Quest', '#learning-quest'],
+  ["What's new", '#whats-new'],
+  ['About MRLC', '#about'],
 ];
 
-const schoolTools = [
-  ["01", "Student records", "Profiles, contacts and academic history in one dependable record."],
-  ["02", "Attendance", "A quick daily register with patterns that are easy to follow up."],
-  ["03", "Classes & exams", "Plan lessons, run GED practice and return results clearly."],
-  ["04", "Learning library", "Keep physical and digital resources easy to find and share."],
-  ["05", "Fees & receipts", "Track contributions and give families a transparent payment history."],
-  ["06", "Reports", "Turn day-to-day activity into useful school and learner reports."],
+const work = [
+  ['Teach', 'Classes, timetables, homework and a shared library.'],
+  ['Assess', 'Question banks, exams, review, grading and progress.'],
+  ['Support', 'Attendance, student records, family access and reports.'],
 ];
 
-const rolePanels = [
-  {
-    number: "01",
-    title: "Students",
-    text: "Classes, learning resources and assessments together in one clear place.",
-    detail: "LEARN · PRACTISE · PROGRESS",
-    className: "bg-academic-gold text-academic-navy-deep",
-  },
-  {
-    number: "02",
-    title: "Families",
-    text: "Attendance, progress and school updates presented without searching through separate systems.",
-    detail: "ATTENDANCE · REPORTS · FEES",
-    className: "bg-academic-sky text-white",
-  },
-  {
-    number: "03",
-    title: "Educators",
-    text: "From the morning register to teaching, grading and follow-up with less administrative friction.",
-    detail: "TEACH · ASSESS · SUPPORT",
-    className: "bg-academic-teal text-white",
-  },
+const updates = [
+  ['13 Oct 2026', 'Supervised focus sessions', "Teachers can monitor assigned students' LMS sessions, adjust time and respond to release requests. The desktop kiosk companion is in supervised pilot; mobile and ChromeOS use web app focus reporting."],
+  ['6 Oct 2026', 'Better video and exam controls', 'Video lessons gained clearer player, fullscreen and bulk actions. Exam answer keys and response review follow staff permissions.'],
+  ['3 Oct 2026', 'Notifications with more control', "Staff can choose in-app and email delivery, select relevant topics and retry a failed save. Email depends on the school's configured email service."],
+  ['2 Oct 2026', 'Clearer exam work', 'Exam Studio, student answer review and navigation improvements help teachers author and review assessments.'],
 ];
 
-function BrandMark({ logoUrl, schoolName, compact = false }: { logoUrl: string | null; schoolName: string; compact?: boolean }) {
-  const defaultLogoUrl = "/icon-192.png";
-  const [configuredLogoFailed, setConfiguredLogoFailed] = useState(false);
-  const [defaultLogoFailed, setDefaultLogoFailed] = useState(false);
-
-  useEffect(() => {
-    setConfiguredLogoFailed(false);
-    setDefaultLogoFailed(false);
-  }, [logoUrl]);
-
-  const displayLogoUrl = logoUrl && !configuredLogoFailed
-    ? logoUrl
-    : defaultLogoFailed ? null : defaultLogoUrl;
-
-  return (
-    <span className="flex min-w-0 items-center gap-3">
-      {displayLogoUrl ? (
-        <img
-          src={displayLogoUrl}
-          alt=""
-          width={compact ? 36 : 44}
-          height={compact ? 36 : 44}
-          className={`${compact ? "size-9" : "size-11"} shrink-0 bg-white object-contain p-1`}
-          onError={() => {
-            if (logoUrl && displayLogoUrl === logoUrl) setConfiguredLogoFailed(true);
-            else setDefaultLogoFailed(true);
-          }}
-        />
-      ) : (
-        <span className={`${compact ? "text-base" : "text-lg"} shrink-0 border-y-2 border-current py-1 font-black tracking-[-0.05em]`} aria-hidden="true">
-          MRLC
-        </span>
-      )}
-      <span className="min-w-0 leading-tight">
-        <span className={`${compact ? "text-sm" : "text-base"} block truncate font-bold tracking-[-0.02em]`}>{schoolName}</span>
-        <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-current/60">GED school · Malaysia</span>
-      </span>
-    </span>
-  );
+function BrandMark({ logoUrl, schoolName }: { logoUrl: string | null; schoolName: string }) {
+  const [configuredFailed, setConfiguredFailed] = useState(false);
+  const [defaultFailed, setDefaultFailed] = useState(false);
+  useEffect(() => { setConfiguredFailed(false); setDefaultFailed(false); }, [logoUrl]);
+  const src = logoUrl && !configuredFailed ? logoUrl : defaultFailed ? null : '/icon-192.png';
+  return <span className="landing-brand">
+    {src ? <img src={src} alt="" width="42" height="42" onError={() => { if (src === logoUrl) setConfiguredFailed(true); else setDefaultFailed(true); }} /> : <span className="landing-brand-fallback" aria-hidden="true">MRLC</span>}
+    <span className="landing-brand-copy"><strong>{schoolName}</strong><small>GED School · Malaysia</small></span>
+  </span>;
 }
 
 export default function LandingPage() {
@@ -93,238 +42,81 @@ export default function LandingPage() {
   const { user } = useUser();
   const { schoolProfile, brandingSettings } = useSettings();
   const [menuOpen, setMenuOpen] = useState(false);
-  const schoolName = schoolProfile.name || "Mon Refugee Learning Centre";
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const schoolName = schoolProfile.name || 'Mon Refugee Learning Centre';
+  const portalHref = user?.role === 'GUARDIAN' ? '/family' : user ? '/dashboard' : '/login';
+  const portalLabel = user?.role === 'GUARDIAN' ? 'Open Family Portal' : user ? 'Open dashboard' : 'Sign in to MRLC';
+  const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const heroPhoto = brandingSettings.loginHeroUrl && !photoFailed ? brandingSettings.loginHeroUrl : null;
+  useEffect(() => setPhotoFailed(false), [brandingSettings.loginHeroUrl]);
+  const toggleTheme = () => setTheme(isDark ? 'light' : 'dark');
 
-  const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-
-  return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-academic-gold selection:text-academic-navy-deep">
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:bg-white focus:px-4 focus:py-3 focus:text-academic-navy-deep focus:shadow-lg"
-      >
-        Skip to content
-      </a>
-
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-academic-navy-deep text-white">
-        <div className="mx-auto flex h-[76px] max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-10">
-          <Link to="/" aria-label={`${schoolName} home`} className="min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-academic-gold focus-visible:ring-offset-2 focus-visible:ring-offset-academic-navy-deep">
-            <BrandMark logoUrl={brandingSettings.logoUrl} schoolName={schoolName} />
-          </Link>
-
-          <nav className="hidden items-center gap-8 lg:flex" aria-label="Main navigation">
-            {navigation.map((item) => (
-              item.href.startsWith("/") ? (
-                <Link key={item.href} to={item.href} className="text-sm font-semibold text-white/65 transition-colors duration-150 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-academic-gold">
-                  {item.label}
-                </Link>
-              ) : (
-                <a key={item.href} href={item.href} className="text-sm font-semibold text-white/65 transition-colors duration-150 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-academic-gold">
-                  {item.label}
-                </a>
-              )
-            ))}
-          </nav>
-
-          <div className="hidden items-stretch sm:flex">
-            <button
-              type="button"
-              onClick={() => setTheme(isDark ? "light" : "dark")}
-              aria-label={isDark ? "Use light theme" : "Use dark theme"}
-              className="grid size-12 place-items-center border-x border-white/10 text-white/65 transition-colors duration-150 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-academic-gold"
-            >
-              {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
-            </button>
-            <Link
-              to={user?.role === "GUARDIAN" ? "/family" : user ? "/dashboard" : "/login"}
-              className="inline-flex min-h-12 items-center gap-3 bg-academic-teal px-6 text-sm font-bold text-white transition-[background-color,transform] duration-150 hover:bg-white hover:text-academic-navy-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-academic-gold active:scale-[0.98]"
-            >
-              {user?.role === "GUARDIAN" ? "Family Portal" : user ? "Dashboard" : "Login"}
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setMenuOpen((open) => !open)}
-            aria-expanded={menuOpen}
-            aria-controls="mobile-navigation"
-            aria-label={menuOpen ? "Close navigation" : "Open navigation"}
-            className="grid size-11 shrink-0 place-items-center lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-academic-gold"
-          >
-            {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-          </button>
+  return <div className="landing">
+    <a className="landing-skip" href="#main-content">Skip to content</a>
+    <header className="landing-header">
+      <div className="landing-header-inner">
+        <Link to="/" className="landing-home" aria-label={schoolName + ' home'}><BrandMark logoUrl={brandingSettings.logoUrl} schoolName={schoolName} /></Link>
+        <nav className="landing-nav" aria-label="Main navigation">{nav.map(([label, href]) => href.startsWith('/') ? <Link key={href} to={href}>{label}</Link> : <a key={href} href={href}>{label}</a>)}</nav>
+        <div className="landing-header-actions">
+          <button className="landing-theme" type="button" onClick={toggleTheme} aria-label={isDark ? 'Use light theme' : 'Use dark theme'}>{isDark ? <Sun size={18} /> : <Moon size={18} />}</button>
+          <Link className="landing-header-cta" to={portalHref}>{portalLabel}<ArrowRight size={17} aria-hidden="true" /></Link>
         </div>
-
-        {menuOpen && (
-          <nav id="mobile-navigation" className="border-t border-white/10 bg-academic-navy-deep px-4 py-5 lg:hidden" aria-label="Mobile navigation">
-            <div className="flex flex-col">
-              {navigation.map((item) => (
-                item.href.startsWith("/") ? (
-                  <Link key={item.href} to={item.href} onClick={() => setMenuOpen(false)} className="border-b border-white/10 py-3 text-base font-semibold text-white/80 last:border-0">
-                    {item.label}
-                  </Link>
-                ) : (
-                  <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="border-b border-white/10 py-3 text-base font-semibold text-white/80 last:border-0">
-                    {item.label}
-                  </a>
-                )
-              ))}
-              <div className="mt-4 grid grid-cols-[44px_1fr] gap-3">
-                <button type="button" onClick={() => setTheme(isDark ? "light" : "dark")} aria-label={isDark ? "Use light theme" : "Use dark theme"} className="grid size-11 place-items-center border border-white/20">
-                  {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
-                </button>
-                <Link to={user?.role === "GUARDIAN" ? "/family" : user ? "/dashboard" : "/login"} className="inline-flex min-h-11 items-center justify-center gap-2 bg-academic-teal px-5 text-sm font-bold text-white">
-                  {user?.role === "GUARDIAN" ? "Open Family Portal" : user ? "Open Dashboard" : "Login to MRLC"}<ArrowRight className="size-4" />
-                </Link>
-              </div>
-            </div>
-          </nav>
-        )}
-      </header>
-
-      <main id="main-content">
-        <Hero1 authenticated={Boolean(user)} heroSrc={brandingSettings.loginHeroUrl} logoSrc={brandingSettings.logoUrl} schoolName={schoolName} />
-
-        <section className="border-b border-academic-navy-deep/15 bg-[#f4e9cc] px-5 py-8 text-academic-navy-deep sm:px-8" aria-label="MRLC mission">
-          <div className="mx-auto flex max-w-[1240px] flex-col gap-3 md:flex-row md:items-center md:gap-10">
-            <p className="shrink-0 text-[11px] font-bold uppercase tracking-[0.18em] text-academic-teal">Why we are here</p>
-            <p className="max-w-4xl text-balance text-xl font-bold leading-snug tracking-[-0.025em] sm:text-2xl">Learning should open a future. MRLC makes room for students to build one.</p>
-          </div>
-        </section>
-
-        <section id="learning-path" className="scroll-mt-20 px-5 py-20 sm:px-8 lg:py-28">
-          <div className="mx-auto max-w-[1240px]">
-            <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-academic-teal">A visible learning path</p>
-                <h2 className="mt-4 max-w-[11ch] text-balance text-4xl font-black leading-[0.96] tracking-[-0.045em] sm:text-6xl">Learners know what comes next.</h2>
-              </div>
-              <p className="max-w-2xl text-pretty text-base leading-7 text-muted-foreground sm:text-lg">
-                The MRLC portal supports the work around learning: classes, resources, attendance and feedback in one dependable place.
-              </p>
-            </div>
-
-            <div className="mt-12 grid overflow-hidden border border-academic-navy-deep bg-academic-navy-deep text-white lg:grid-cols-[1fr_0.9fr]">
-              <ol className="divide-y divide-white/15 px-6 sm:px-10">
-                {[
-                  ["01", "Start with today", "Open the timetable, join class and find the right resource without hunting."],
-                  ["02", "See progress clearly", "Attendance, assignments and feedback build one understandable learner story."],
-                  ["03", "Keep moving forward", "GED practice and learning resources make the next step easier to find."],
-                ].map(([number, title, text]) => (
-                  <li key={number} className="grid gap-3 py-7 sm:grid-cols-[4rem_1fr] sm:py-8">
-                    <span className="font-black tabular-nums text-academic-gold">{number}</span>
-                    <div>
-                      <h3 className="text-xl font-bold tracking-[-0.02em]">{title}</h3>
-                      <p className="mt-2 max-w-lg text-sm leading-6 text-white/65">{text}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-
-              <div className="flex flex-col justify-between bg-[#f4e9cc] p-6 text-academic-navy-deep sm:p-10">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-academic-teal">Inside the portal</p>
-                  <h3 className="mt-6 max-w-[14ch] text-balance text-3xl font-black leading-tight tracking-[-0.04em] sm:text-4xl">A connected view of school life.</h3>
-                </div>
-                <div className="mt-12 border-t border-academic-navy-deep/25">
-                  {["Teaching and classwork", "Attendance and progress", "Resources and support"].map((item, index) => (
-                    <div key={item} className="flex items-center gap-5 border-b border-academic-navy-deep/25 py-4">
-                      <span className="text-xs font-black tabular-nums text-academic-teal">0{index + 1}</span>
-                      <span className="font-semibold">{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="learning-quest" className="scroll-mt-20 overflow-hidden bg-[#d8eee8] px-5 py-16 text-academic-navy-deep sm:px-8 lg:py-20" aria-labelledby="learning-quest-title">
-          <div className="mx-auto grid max-w-[1240px] items-center gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
-            <div className="relative mx-auto flex min-h-[330px] w-full max-w-[440px] items-center justify-center overflow-hidden rounded-[2.5rem] bg-academic-teal sm:min-h-[420px]">
-              <span className="landing-quest-orbit absolute size-[270px] rounded-full border border-white/35 sm:size-[355px]" aria-hidden="true" />
-              <span className="landing-quest-orbit absolute size-[205px] rounded-full border border-white/30 sm:size-[270px]" aria-hidden="true" />
-              <img src="/games/word-connect/pip-study.png" alt="Pip reading a book" width="1188" height="1259" loading="lazy" className="landing-pip relative z-10 w-[80%] max-w-[350px] drop-shadow-[0_24px_20px_rgba(12,37,56,0.25)]" />
-              <span className="absolute bottom-5 left-6 text-[11px] font-black uppercase tracking-[0.18em] text-white/85">Meet Pip</span>
-            </div>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.17em] text-academic-teal">Learning Quest · Independent practice</p>
-              <h2 id="learning-quest-title" className="mt-5 max-w-[13ch] text-balance text-4xl font-black leading-[0.96] tracking-[-0.05em] sm:text-6xl">A little play. A lot of language.</h2>
-              <p className="mt-7 max-w-xl text-pretty text-base leading-8 text-academic-navy-deep/75 sm:text-lg">Pip welcomes learners into word games and vocabulary practice that make progress feel active. Choose a challenge, build a word and keep going at your own pace.</p>
-              <Link to="/language-quest" className="mt-8 inline-flex min-h-12 items-center gap-2 bg-academic-navy-deep px-6 text-sm font-bold text-white transition-[background-color,transform] duration-150 hover:bg-academic-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-academic-navy-deep focus-visible:ring-offset-2 focus-visible:ring-offset-[#d8eee8] active:scale-[0.98]">
-                Explore Learning Quest <ArrowRight className="size-4" aria-hidden="true" />
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        <section id="roles" className="scroll-mt-20 bg-academic-navy-deep text-white">
-          <div className="mx-auto max-w-[1440px] border-x border-white/10">
-            <div className="grid gap-8 border-b border-white/15 px-6 py-16 sm:px-10 lg:grid-cols-[1fr_0.9fr] lg:items-end lg:py-20">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-academic-gold">One school, three views</p>
-                <h2 className="mt-4 max-w-[13ch] text-balance text-4xl font-black leading-[0.96] tracking-[-0.045em] sm:text-6xl">The right information for every person.</h2>
-              </div>
-              <p className="max-w-xl text-pretty leading-7 text-white/65">Each role sees what helps them act, while private learner information stays protected.</p>
-            </div>
-
-            <div className="grid lg:grid-cols-3">
-              {rolePanels.map((role) => (
-                <article key={role.title} className={`flex min-h-[360px] flex-col border-b border-academic-navy-deep/25 p-7 lg:border-b-0 lg:border-r lg:last:border-r-0 sm:p-9 ${role.className}`}>
-                  <span className="text-sm font-black tabular-nums opacity-70">{role.number}</span>
-                  <h3 className="mt-10 text-4xl font-black tracking-[-0.04em]">{role.title}</h3>
-                  <p className="mt-5 max-w-sm text-base leading-7 opacity-80">{role.text}</p>
-                  {role.title === "Families" && <Link to={user?.role === "GUARDIAN" ? "/family" : "/login"} className="mt-6 inline-flex min-h-11 items-center gap-2 self-start text-sm font-bold underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Open Family Portal <ArrowRight className="size-4" /></Link>}
-                  <p className="mt-auto border-t border-current/25 pt-5 text-[10px] font-bold uppercase tracking-[0.16em]">{role.detail}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="school-tools" className="scroll-mt-20 px-5 py-20 sm:px-8 lg:py-28">
-          <div className="mx-auto max-w-[1240px]">
-            <div className="grid gap-12 lg:grid-cols-[0.65fr_1.35fr]">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-academic-teal">School tools</p>
-                <h2 className="mt-4 text-balance text-4xl font-black leading-[0.96] tracking-[-0.045em] sm:text-6xl">Admin fades. Teaching stays in focus.</h2>
-                <p className="mt-6 max-w-md text-pretty leading-7 text-muted-foreground">The portal keeps records, classes and reports together so staff can spend more time supporting learners.</p>
-              </div>
-
-              <div className="border-t border-border">
-                {schoolTools.map(([number, title, detail]) => (
-                  <div key={number} className="grid gap-3 border-b border-border py-6 sm:grid-cols-[3rem_12rem_1fr] sm:items-start">
-                    <span className="text-xs font-black tabular-nums text-academic-teal">{number}</span>
-                    <h3 className="font-bold tracking-[-0.02em]">{title}</h3>
-                    <p className="max-w-lg text-sm leading-6 text-muted-foreground">{detail}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="about" className="scroll-mt-20 border-t border-white/10 bg-academic-navy-deep px-5 py-20 text-white sm:px-8 lg:py-24">
-          <div className="mx-auto grid max-w-[1240px] gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-academic-gold">Private by design</p>
-              <h2 className="mt-5 max-w-[13ch] text-balance text-4xl font-black leading-[0.96] tracking-[-0.045em] sm:text-6xl">Built for the people who make MRLC work.</h2>
-              <p className="mt-6 max-w-2xl text-pretty leading-7 text-white/65">Role-based access and school-owned workflows support the people doing the work while protecting learner information.</p>
-            </div>
-            <Link to="/about" className="inline-flex min-h-12 items-center justify-center gap-2 bg-academic-gold px-7 text-sm font-bold text-academic-navy-deep transition-[background-color,transform] duration-150 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-academic-navy-deep active:scale-[0.98]">
-              About MRLC <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
-          </div>
-        </section>
-      </main>
-
-      <footer className="border-t border-border bg-background px-5 py-8 sm:px-8">
-        <div className="mx-auto flex max-w-[1240px] flex-col gap-5 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <BrandMark logoUrl={brandingSettings.logoUrl} schoolName={schoolName} compact />
-          <p>Purpose-built for MRLC GED School in Malaysia.</p>
+        <button className="landing-menu-button" type="button" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen} aria-controls="landing-mobile-nav" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}>{menuOpen ? <X size={22} /> : <Menu size={22} />}</button>
+      </div>
+      {menuOpen && <nav id="landing-mobile-nav" className="landing-mobile-nav" aria-label="Mobile navigation">
+        {nav.map(([label, href]) => href.startsWith('/') ? <Link key={href} to={href} onClick={() => setMenuOpen(false)}>{label}</Link> : <a key={href} href={href} onClick={() => setMenuOpen(false)}>{label}</a>)}
+        <Link to={portalHref} onClick={() => setMenuOpen(false)} className="landing-mobile-cta">{portalLabel}<ArrowRight size={17} /></Link>
+        <button type="button" onClick={toggleTheme}>{isDark ? 'Use light theme' : 'Use dark theme'}</button>
+      </nav>}
+    </header>
+    <main id="main-content">
+      <section className="landing-hero" aria-labelledby="landing-title"><div className="landing-hero-grid">
+        <div className="landing-hero-copy">
+          <h1 id="landing-title">One school day.<br /><em>Everyone in step.</em></h1>
+          <p>MRLC brings teaching, assessment, student support and school operations together for the Mon Refugee Learning Centre GED School in Malaysia.</p>
+          <div className="landing-hero-actions"><Link to={portalHref} className="landing-button landing-button-primary">{portalLabel}<ArrowRight size={18} /></Link><Link to="/language-quest" className="landing-button landing-button-secondary">Explore Learning Quest<ChevronRight size={18} /></Link></div>
+          <div className="landing-hero-foot"><span>For students</span><span>For families</span><span>For educators</span></div>
         </div>
-      </footer>
-    </div>
-  );
+        <div className="landing-hero-stage">
+          {heroPhoto && <img className="landing-hero-photo" src={heroPhoto} alt={schoolName + ' learning community'} onError={() => setPhotoFailed(true)} />}
+          <div className="landing-daybook" aria-label="Illustrative view of connected school work">
+            <div className="landing-daybook-top"><span><b>MRLC</b> school day</span><span>Illustrative view</span></div>
+            <div className="landing-daybook-intro"><span>Today, together</span><strong>One place for the next step.</strong></div>
+            <div className="landing-daybook-rows">
+              <div><span className="landing-daybook-icon"><BookOpen size={19} /></span><span><strong>Teaching</strong><small>Classes and resources, ready to use</small></span><Check size={17} /></div>
+              <div><span className="landing-daybook-icon">A</span><span><strong>Attendance</strong><small>A shared view for timely follow-up</small></span><Check size={17} /></div>
+              <div><span className="landing-daybook-icon">G</span><span><strong>GED practice</strong><small>Questions, review and progress</small></span><Check size={17} /></div>
+            </div>
+            <div className="landing-daybook-bottom"><span>Learning continues beyond the classroom</span><ArrowRight size={17} /></div>
+          </div>
+        </div>
+      </div></section>
+
+      <section id="platform" className="landing-platform" aria-labelledby="platform-title"><div className="landing-section-inner">
+        <div className="landing-section-heading"><h2 id="platform-title">The whole school, connected.</h2><p>From the first register to a finished report, the work stays linked to the learner it supports.</p></div>
+        <div className="landing-work-list">{work.map(([title, detail]) => <article key={title}><h3>{title}</h3><p>{detail}</p></article>)}</div>
+        <p className="landing-platform-note">Role-based access gives each person the school information they need.</p>
+      </div></section>
+
+      <section className="landing-people" aria-labelledby="people-title"><div className="landing-section-inner landing-people-grid">
+        <div><h2 id="people-title">A clearer next step for every person.</h2><p>One school platform, shaped around the different work of learning, caring and teaching.</p></div>
+        <div className="landing-people-list"><div><strong>Students</strong><p>Find classwork, resources, assessments and feedback.</p></div><div><strong>Families</strong><p>Follow linked learners' attendance, progress, fees and school updates.</p></div><div><strong>Educators</strong><p>Plan lessons, mark work and see where support is needed.</p></div></div>
+      </div></section>
+
+      <section id="learning-quest" className="landing-quest" aria-labelledby="quest-title"><div className="landing-section-inner landing-quest-grid">
+        <div className="landing-quest-art"><span>Learn<br />as you go.</span><img src="/games/word-connect/pip-study.png" alt="Pip reading a book" width="1188" height="1259" loading="lazy" /></div>
+        <div className="landing-quest-copy"><h2 id="quest-title">Learning has room to play.</h2><p>Learning Quest lets people browse published courses and practise with short lessons, word games and guided challenges. A separate learner account saves public learning progress.</p><Link to="/language-quest" className="landing-button landing-button-primary">Explore Learning Quest<ArrowRight size={18} /></Link></div>
+      </div></section>
+
+      <section id="whats-new" className="landing-updates" aria-labelledby="updates-title"><div className="landing-section-inner landing-updates-grid">
+        <div><h2 id="updates-title">What’s new at MRLC LMS.</h2><p>Recent work in the school platform, with the newest changes first.</p></div>
+        <div className="landing-update-list">{updates.map(([date, title, detail]) => <article key={title}><time>{date}</time><div><h3>{title}</h3><p>{detail}</p></div></article>)}</div>
+      </div></section>
+
+      <section id="about" className="landing-about" aria-labelledby="about-title"><div className="landing-section-inner landing-about-grid"><h2 id="about-title">A school before a system.</h2><div><p>Mon Refugee Learning Centre is a GED school serving refugee learners in Malaysia. MRLC LMS supports the people and daily work behind that mission, with learning, dignity and opportunity at its centre.</p><span>Mon Refugee Learning Centre · Malaysia</span></div></div></section>
+
+      <section className="landing-close" aria-labelledby="close-title"><div className="landing-section-inner landing-close-grid"><div><h2 id="close-title">Ready for the school day?</h2><p>Open your MRLC workspace, or revisit the school behind it.</p></div><div><Link to={portalHref} className="landing-button landing-button-gold">{portalLabel}<ArrowRight size={18} /></Link><a href="#about" className="landing-close-link">About MRLC <ArrowRight size={17} /></a></div></div></section>
+    </main>
+    <footer className="landing-footer"><div className="landing-section-inner"><BrandMark logoUrl={brandingSettings.logoUrl} schoolName={schoolName} /><p>Education · Dignity · Opportunity</p></div></footer>
+  </div>;
 }

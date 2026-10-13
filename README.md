@@ -22,6 +22,10 @@ MRLC LMS brings teaching, student records, assessment, communication, finance an
 
 ## Latest updates
 
+**October 13, 2026 · Supervised focus sessions**
+
+School student accounts now start or resume assigned LMS focus sessions. Teachers can monitor students in their classes, adjust time and respond to release requests; administrators can monitor all school students. The LMS reports focus, connection and presentation mode, with the limits of browser reporting explained in [Focus monitor](docs/focus-monitor.md). Mobile and ChromeOS setup is covered in [Focus sessions on iOS, Android, and ChromeOS](docs/mobile-chromeos-focus.md). The desktop kiosk companion has unsigned installers for supervised pilot testing, as described in [kiosk/README.md](kiosk/README.md). Recent October work also improved video lesson controls and exam answer-key permissions.
+
 **October 3, 2026 · Notifications and reliability**
 
 | Area | Current changes |
