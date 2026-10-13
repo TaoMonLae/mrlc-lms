@@ -6,7 +6,11 @@ import { asyncHandler } from './lib/asyncHandler';
 
 type Identity = { userId: string; role: string; sessionId?: string; externalLearner?: boolean };
 const identity = (req: express.Request) => (req as any).user as Identity;
-const heartbeatBody = z.object({ focused: z.boolean(), fullscreen: z.boolean() });
+const heartbeatBody = z.object({
+  focused: z.boolean(),
+  fullscreen: z.boolean(),
+  presentationMode: z.enum(['KIOSK', 'FULLSCREEN', 'WEB_APP', 'BROWSER']).optional(),
+});
 const durationBody = z.object({ minutesRemaining: z.number().int().min(0).max(480) });
 const watchBody = z.object({ sessionId: z.string().min(1).max(100), token: z.string().length(64).regex(/^[a-f0-9]+$/) });
 
@@ -48,7 +52,8 @@ export function registerFocusRoutes(app: express.Express, prisma: PrismaClient, 
   const serialise = (row: FocusSession) => ({
     id: row.id, startedAt: row.startedAt, endsAt: row.endsAt,
     lastHeartbeatAt: row.lastHeartbeatAt, isFocused: row.isFocused,
-    isFullscreen: row.isFullscreen, releaseRequestedAt: row.releaseRequestedAt,
+    isFullscreen: row.isFullscreen, presentationMode: row.presentationMode,
+    releaseRequestedAt: row.releaseRequestedAt,
     releasedAt: row.releasedAt,
     status: row.releasedAt ? 'RELEASED' : row.endsAt <= new Date() ? 'COMPLETED' : 'ACTIVE',
   });
@@ -96,12 +101,15 @@ export function registerFocusRoutes(app: express.Express, prisma: PrismaClient, 
     if (!row) return res.status(404).json({ error: 'Focus session not found' });
     if (row.releasedAt || row.endsAt <= new Date()) return res.json(serialise(row));
     const now = new Date();
-    const { focused, fullscreen } = parsed.data;
+    const { focused } = parsed.data;
+    // Older clients only send fullscreen. Keep accepting them during rollout.
+    const presentationMode = parsed.data.presentationMode || (parsed.data.fullscreen ? 'FULLSCREEN' : 'BROWSER');
+    const fullscreen = presentationMode === 'KIOSK' || presentationMode === 'FULLSCREEN';
     const events: string[] = [];
     // A state transition is evidence of a focus change, not proof of another tab.
     if (row.isFocused !== focused) events.push(focused ? 'FOCUS_RETURNED' : 'LMS_LOST_FOCUS');
     if (row.isFullscreen !== fullscreen) events.push(fullscreen ? 'FULLSCREEN_ENTERED' : 'FULLSCREEN_EXITED');
-    const updated = await db.focusSession.update({ where: { id: row.id }, data: { lastHeartbeatAt: now, isFocused: focused, isFullscreen: fullscreen } });
+    const updated = await db.focusSession.update({ where: { id: row.id }, data: { lastHeartbeatAt: now, isFocused: focused, isFullscreen: fullscreen, presentationMode } });
     if (events.length) await db.focusEvent.createMany({ data: events.map((type) => ({ sessionId: row.id, type })) });
     for (const type of events) if (type === 'LMS_LOST_FOCUS' || type === 'FULLSCREEN_EXITED') await warnStaff(row, type).catch(() => {});
     res.json(serialise(updated));

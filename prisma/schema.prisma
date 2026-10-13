@@ -449,6 +449,7 @@ model FocusSession {
   lastHeartbeatAt    DateTime?
   isFocused          Boolean  @default(true)
   isFullscreen       Boolean  @default(false)
+  presentationMode   String   @default("BROWSER")
   releaseRequestedAt DateTime?
   releasedAt         DateTime?
   approvedById       String?
