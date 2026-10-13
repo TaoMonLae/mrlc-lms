@@ -51,6 +51,7 @@ import sharp from "sharp";
 import { registerExamPhase2Routes } from "./examPhase2";
 import { registerClassworkRoutes } from "./classworkRoutes";
 import { registerFocusRoutes } from "./focusRoutes";
+import { pgDumpConnection } from "./lib/pgDumpConnection";
 import { registerVideoLearningRoutes, canReadVideo } from "./videoLearningRoutes";
 import { registerFinanceRoutes } from "./financeRoutes";
 import { registerDocumentRoutes } from "./documentRoutes";
@@ -535,12 +536,20 @@ function runBackup(): Promise<BackupArtifact> {
   return new Promise((resolve, reject) => {
     const dbUrl = process.env.DATABASE_URL;
     if (!dbUrl) return reject(new Error("DATABASE_URL is not set"));
+    let connection: ReturnType<typeof pgDumpConnection>;
+    try {
+      connection = pgDumpConnection(dbUrl);
+    } catch (error) {
+      return reject(error);
+    }
     fs.mkdirSync(BACKUP_DIR, { recursive: true });
     const stamp = backupStamp();
     const name = `mrlc-${stamp}.dump`;
     const filePath = path.join(BACKUP_DIR, name);
 
-    const dump = spawn("pg_dump", ["-Fc", "--no-owner", "--no-privileges", "-f", filePath, dbUrl]);
+    const dump = spawn("pg_dump", ["-Fc", "--no-owner", "--no-privileges", "-f", filePath, connection.url], {
+      env: { ...process.env, ...(connection.password !== undefined ? { PGPASSWORD: connection.password } : {}) },
+    });
     let stderr = "";
     dump.stderr.on("data", (d) => (stderr += d.toString()));
     dump.on("error", (err) =>
