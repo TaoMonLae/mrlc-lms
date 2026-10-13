@@ -1,9 +1,11 @@
 declare global {
   interface Window {
-    mrlcKiosk?: { readonly active: boolean };
+    mrlcKiosk?: { readonly isActive?: () => boolean; readonly active?: boolean };
   }
 }
 
 export function isMrlcKiosk(): boolean {
-  return typeof window !== 'undefined' && window.mrlcKiosk?.active === true;
+  if (typeof window === 'undefined') return false;
+  const marker = window.mrlcKiosk;
+  return typeof marker?.isActive === 'function' ? marker.isActive() === true : marker?.active === true;
 }

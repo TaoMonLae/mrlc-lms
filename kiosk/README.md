@@ -1,29 +1,44 @@
 # MRLC LMS Kiosk
 
-A Windows and macOS desktop companion for `https://gedmrlc.monrefugeelc.com`. It opens one LMS window in Electron kiosk mode, rejects off-site navigation and new windows, blocks common browser exit shortcuts, and checks the LMS focus-session API every five seconds. It closes only after the server reports that staff approved release or the assigned time ended.
+Desktop companion for Windows x64, Intel macOS, and Apple Silicon macOS. It opens `https://gedmrlc.monrefugeelc.com` in a single Electron window. The window stays closable while the student signs in. When the LMS confirms that student's active focus session, it enters full screen kiosk mode and stays there until a teacher or administrator approves release or the assigned time ends. Staff can adjust the remaining time in `/focus-monitor`.
 
-## Prepare the LMS
+The LMS must already have the focus-session API deployed (`/api/focus/session` and `/api/focus/watch`). The app needs a working HTTPS connection. It checks the server every five seconds. If the connection drops during a locked session, it remains locked and retries.
 
-Deploy the current MRLC-LMS code and run `npx prisma migrate deploy` on the server first. The kiosk uses `/api/focus/session` and `/api/focus/watch`. Staff approve release or change remaining time at `/focus-monitor`. The kiosk needs a working HTTPS certificate and a network connection to the LMS.
+## Student installation
 
-## Run from source
+Each Windows or macOS computer needs the app installed. The LMS website cannot install it automatically. A student can install the signed school release, or school IT can deploy it through device management. Open the app, sign in with a student account, and leave it running for the assigned session. Teacher and admin accounts do not start a student kiosk session.
+
+Unsigned **pilot** installers are available from the *Kiosk pilot installers* GitHub Actions workflow on the branch or pull request. They are for supervised testing, not schoolwide distribution. Windows SmartScreen and macOS Gatekeeper may warn or block them. The Mac DMG contains the app to drag into Applications; the Windows EXE is a per-user installer. Download the file matching the device architecture.
+
+For iOS, Android, and ChromeOS, use the LMS browser or installed web app. Those devices report focus and full-screen changes to staff, but this desktop kiosk cannot lock them. On student-owned computers, the operating system can still switch apps, force quit, or use another screen. This app controls its own window; it does not claim device-wide enforcement.
+
+## Build pilot installers
 
 ```sh
 cd kiosk
 npm ci
-npm start
+npm test
+npm run pilot:mac:arm64  # Apple Silicon Mac
+npm run pilot:mac:x64    # Intel Mac
+npm run pilot:win:x64    # Windows x64 runner
 ```
 
-The app opens immediately in kiosk mode. Use a supervised test computer and have a teacher or administrator ready to release the test student from the LMS. To point a development build at local HTTP, set `MRLC_LMS_URL=http://localhost:8000` and `MRLC_KIOSK_ALLOW_LOCALHOST=1`. Production accepts HTTPS only. The packaged app uses `config.json` as its default LMS origin.
+Installers are written to `kiosk/release/`. Build the Windows installer on Windows. The macOS pilot builds can be produced on their matching macOS architecture or by a macOS runner. GitHub Actions builds all three on matching runners and keeps the downloadable artifacts for 30 days.
 
-## Package
+To run from source for testing, use `npm start`. A pre-login window can be closed normally. To point a development build at local HTTP, set `MRLC_LMS_URL=http://localhost:8000` and `MRLC_KIOSK_ALLOW_LOCALHOST=1`; packaged production defaults to the HTTPS URL in `config.json`.
 
-On macOS, run `npm run pack:mac:arm64` for Apple Silicon or `npm run pack:mac:x64` for Intel. For Windows x64, run `npm run pack:win:x64`. Output is in `kiosk/out/`. Packaging on another OS can create the files, but a school should validate the app on actual Windows and macOS student devices.
+## Signed school release
 
-The packages created here are unsigned. Before distributing to students, sign the Windows executable and sign and notarize the macOS app using the school's certificates. Restrict installation and updates to school administrators.
+Do not publish the unsigned pilot as the school release. When certificates are available, use the `release:*` scripts. They fail early if signing credentials are absent, and `electron-builder` is configured to fail if signing does not happen.
+
+For macOS, provide a Developer ID identity via `CSC_LINK` and `CSC_KEY_PASSWORD`, or `CSC_NAME` for an identity already in the keychain. Also provide Apple notarization credentials using one of the supported `APPLE_API_KEY`/`APPLE_API_KEY_ID`/`APPLE_API_ISSUER`, `APPLE_ID`/`APPLE_APP_SPECIFIC_PASSWORD`/`APPLE_TEAM_ID`, or `APPLE_KEYCHAIN`/`APPLE_KEYCHAIN_PROFILE` sets. Run `npm run release:mac:arm64` and `npm run release:mac:x64` on macOS. Verify the signatures and notarization on a clean Mac before distribution.
+
+For Windows, provide `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD` (or `CSC_LINK` and `CSC_KEY_PASSWORD`) on a Windows build host, then run `npm run release:win:x64`. Verify the signature and install on a clean Windows computer. Keep certificate files and passwords out of Git and chat.
+
+The app does not self-update. To deploy a new version, build a signed installer with a higher version and distribute it through the school's normal software channel.
 
 ## Device policy and recovery
 
-Electron kiosk mode controls its own window. An unmanaged student account may still use operating system controls, another monitor, task switching, or force quit. For Windows desktop apps, use a managed kiosk account with [Shell Launcher](https://learn.microsoft.com/en-us/windows/configuration/kiosk/) on a supported edition and add application and keyboard restrictions; [Shell Launcher alone does not block other apps](https://learn.microsoft.com/en-us/windows/configuration/shell-launcher/). On macOS, use device management and a supported single-app or assessment configuration; this Electron app does not implement Apple's [Autonomous Single App Mode](https://support.apple.com/guide/deployment/autonomous-single-app-mode-payload-settings-dep8a42c4c4a/web).
+For managed Windows devices, use a kiosk account and application restrictions in addition to this app. [Shell Launcher alone does not block other apps](https://learn.microsoft.com/en-us/windows/configuration/shell-launcher/). For managed Macs, use school device management and a supported single-app or assessment configuration. This Electron app does not implement [Autonomous Single App Mode](https://support.apple.com/guide/deployment/autonomous-single-app-mode-payload-settings-dep8a42c4c4a/web).
 
-If the LMS or network is unavailable, the window stays locked and retries. If a student is unable to sign in or staff cannot release the session, a device administrator can use the operating system's management controls to stop the app. Keep that recovery procedure available at school.
+If the student has not signed in or the school server is down before lock, close the app normally. During a locked session, staff can release the student or set the remaining time to zero in `/focus-monitor`. If the network remains unavailable or staff cannot reach the monitor, a device administrator can use the operating system's management controls to stop the app. Keep that recovery procedure available during testing.
