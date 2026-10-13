@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { lazyWithRetry as lazy } from "./lib/lazyWithRetry";
 const AppLayout = lazy(() => import("./components/layout/AppLayout").then((module) => ({ default: module.AppLayout })));
 import { ExternalLearnerBoundary, ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { StudentFocusMonitor } from "./components/focus/StudentFocusMonitor";
 import { GameAccessGate } from "./components/games/GameAccessGate";
 const LoginPage = lazy(() => import("./pages/Login"));
 const SignupPage = lazy(() => import("./pages/Signup"));
@@ -271,6 +272,7 @@ const StudentFees = lazy(() => import("./pages/student/StudentFees"));
 const StudentVideos = lazy(() => import("./pages/student/StudentVideos"));
 
 const TeacherDashboard = lazy(() => import("./pages/teacher/TeacherDashboard"));
+const FocusMonitorPage = lazy(() => import("./pages/focus/FocusMonitorPage"));
 const TeacherClasses = lazy(() => import("./pages/teacher/TeacherClasses"));
 const ClassDetails = lazy(() => import("./pages/teacher/ClassDetails"));
 const TeacherAttendance = lazy(() => import("./pages/teacher/TeacherAttendance"));
@@ -317,6 +319,7 @@ export default function App() {
         <TooltipProvider>
           <BrowserRouter>
           <SeoMetadata />
+          <StudentFocusMonitor />
           <ReleaseUpdatesProvider>
           <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Loading page…</div>}>
           <ExternalLearnerBoundary>
@@ -381,6 +384,7 @@ export default function App() {
                 </Route>
 
                 <Route element={<ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']} />}>
+                  <Route path="/focus-monitor" element={<FocusMonitorPage />} />
                   <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
                   <Route path="/teacher/classes" element={<TeacherClasses />} />
                   <Route path="/teacher/classes/:id" element={<ClassDetails />} />

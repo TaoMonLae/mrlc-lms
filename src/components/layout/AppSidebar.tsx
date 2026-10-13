@@ -24,6 +24,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { useUser } from "@/src/lib/permissions";
 import { useSettings } from "@/src/providers/SettingsProvider";
 import { useAuth } from "@/src/providers/AuthProvider";
+import { isMrlcKiosk } from "@/src/lib/kiosk";
 import { useChat } from "@/src/providers/ChatProvider";
 import { useSocial } from "@/src/providers/SocialProvider";
 import "./AppSidebar.css";
@@ -295,7 +296,7 @@ export function AppSidebar() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
+            {!(user?.role === 'STUDENT' && isMrlcKiosk()) && <DropdownMenuItem
               id="logout-btn"
               className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
               onClick={handleLogout}
@@ -303,7 +304,7 @@ export function AppSidebar() {
             >
               <LogOut className="mr-2 h-4 w-4" />
               Log out
-            </DropdownMenuItem>
+            </DropdownMenuItem>}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarFooter>

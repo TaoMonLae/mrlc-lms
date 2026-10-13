@@ -167,6 +167,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       { title: "Student Duties", url: "/duties", icon: CalendarCheck },
       { title: "Cases", url: "/cases", icon: AlertCircle },
       { title: "Student Success", url: "/student-success", icon: HeartPulse },
+      { title: "Focus Monitor", url: "/focus-monitor", icon: ShieldAlert },
       { title: "Conduct", url: "/conduct", icon: ShieldAlert },
       { title: "Reports", url: "/reports", icon: BarChart3 },
     ],
@@ -205,6 +206,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
       { title: "Flashcards", url: "/flashcards", icon: Layers },
       { title: "Conduct", url: "/conduct", icon: ShieldAlert },
       { title: "Student Success", url: "/student-success", icon: HeartPulse },
+      { title: "Focus Monitor", url: "/focus-monitor", icon: ShieldAlert },
     ],
   },
   {

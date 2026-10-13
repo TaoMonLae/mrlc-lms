@@ -272,6 +272,8 @@ model User {
   notifications          Notification[]
   notificationPreference NotificationPreference?
   authSessions           AuthSession[]
+  focusSessions          FocusSession[] @relation("FocusStudent")
+  focusApprovals         FocusSession[] @relation("FocusApprover")
   passwordResetTokens    PasswordResetToken[]
   queuedEmails           EmailOutbox[]
 
@@ -433,6 +435,38 @@ model Student {
   @@index([studentCode])
   @@index([classId])
   @@index([studentCouncilRole])
+}
+
+// A supervised browser session belongs to one login. Browser focus signals are
+// advisory; browser APIs cannot identify or prevent other tabs.
+model FocusSession {
+  id                 String   @id @default(uuid())
+  authSessionId      String   @unique
+  studentUserId      String
+  student           User     @relation("FocusStudent", fields: [studentUserId], references: [id], onDelete: Cascade)
+  startedAt          DateTime @default(now())
+  endsAt             DateTime
+  lastHeartbeatAt    DateTime?
+  isFocused          Boolean  @default(true)
+  isFullscreen       Boolean  @default(false)
+  releaseRequestedAt DateTime?
+  releasedAt         DateTime?
+  approvedById       String?
+  approvedBy         User?    @relation("FocusApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  events             FocusEvent[]
+
+  @@index([studentUserId, startedAt])
+  @@index([endsAt, releasedAt])
+}
+
+model FocusEvent {
+  id        String       @id @default(uuid())
+  sessionId String
+  session   FocusSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  type      String
+  createdAt DateTime     @default(now())
+
+  @@index([sessionId, createdAt])
 }
 
 // Staff verify these links. A guardian can see only learners linked here.
