@@ -1,0 +1,1 @@
+ALTER TABLE "FocusSession" ADD COLUMN "presentationMode" TEXT NOT NULL DEFAULT 'BROWSER';

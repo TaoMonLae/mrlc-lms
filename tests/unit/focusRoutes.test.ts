@@ -12,7 +12,7 @@ test('focus time survives a second login and only assigned staff can change or r
         ? [...sessions.values()].find((row) => row.authSessionId === where.authSessionId) || null
         : sessions.get(where.id) || null,
       findFirst: async ({ where }: any) => [...sessions.values()].find((row) => row.studentUserId === where.studentUserId && !row.releasedAt && row.endsAt > where.endsAt.gt) || null,
-      create: async ({ data }: any) => { const row = { id: `focus-${sessions.size + 1}`, releasedAt: null, releaseRequestedAt: null, isFocused: true, isFullscreen: false, ...data }; sessions.set(row.id, row); return row; },
+      create: async ({ data }: any) => { const row = { id: `focus-${sessions.size + 1}`, releasedAt: null, releaseRequestedAt: null, isFocused: true, isFullscreen: false, presentationMode: 'BROWSER', ...data }; sessions.set(row.id, row); return row; },
       update: async ({ where, data }: any) => Object.assign(sessions.get(where.id), data),
     },
     focusEvent: { create: async ({ data }: any) => { events.push(data); }, createMany: async ({ data }: any) => { events.push(...data); } },
@@ -43,6 +43,14 @@ test('focus time survives a second login and only assigned staff can change or r
     assert.equal(sessions.size, 1);
     const invalidWatch = await send('/api/focus/watch', 'POST', '', { sessionId: first.id, token: '0'.repeat(64) });
     assert.equal(invalidWatch.statusCode, 403);
+
+    const webApp = await send('/api/focus/heartbeat', 'POST', 'STUDENT:student:login-2', { focused: true, fullscreen: false, presentationMode: 'WEB_APP' });
+    assert.equal(webApp.data.presentationMode, 'WEB_APP');
+    assert.equal(webApp.data.isFullscreen, false);
+    assert.equal(events.length, 0);
+    const fullScreen = await send('/api/focus/heartbeat', 'POST', 'STUDENT:student:login-2', { focused: true, fullscreen: true, presentationMode: 'FULLSCREEN' });
+    assert.equal(fullScreen.data.presentationMode, 'FULLSCREEN');
+    assert.ok(events.some((event) => event.type === 'FULLSCREEN_ENTERED'));
 
     const forbidden = await send('/api/focus/sessions/:id/time', 'PATCH', 'TEACHER:other-teacher:staff-1', { minutesRemaining: 90 }, first.id);
     assert.equal(forbidden.statusCode, 403);
