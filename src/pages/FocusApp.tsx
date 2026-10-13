@@ -18,13 +18,11 @@ function useFocusManifest() {
   useEffect(() => {
     const manifest = document.head.querySelector<HTMLLinkElement>('link[rel="manifest"]');
     const appleTitle = document.head.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-title"]');
-    const previousManifest = manifest?.getAttribute('href');
-    const previousTitle = appleTitle?.content;
     if (manifest) manifest.href = '/focus.webmanifest';
     if (appleTitle) appleTitle.content = 'MRLC Focus';
     return () => {
-      if (manifest && previousManifest) manifest.href = previousManifest;
-      if (appleTitle && previousTitle) appleTitle.content = previousTitle;
+      if (manifest) manifest.href = '/manifest.webmanifest';
+      if (appleTitle) appleTitle.content = 'MRLC LMS';
     };
   }, []);
 }
