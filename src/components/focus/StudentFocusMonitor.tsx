@@ -57,6 +57,7 @@ export function StudentFocusMonitor() {
     document.addEventListener('fullscreenchange', onChange);
     window.addEventListener('focus', onChange);
     window.addEventListener('blur', onChange);
+    window.addEventListener('mrlc-kiosk-statechange', onChange);
     const interval = window.setInterval(() => { setNow(Date.now()); void report(); }, 15_000);
     void report();
     return () => {
@@ -64,6 +65,7 @@ export function StudentFocusMonitor() {
       document.removeEventListener('fullscreenchange', onChange);
       window.removeEventListener('focus', onChange);
       window.removeEventListener('blur', onChange);
+      window.removeEventListener('mrlc-kiosk-statechange', onChange);
       window.clearInterval(interval);
     };
   }, [eligible, session?.id, session?.status, report]);
