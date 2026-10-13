@@ -22,7 +22,7 @@ const work = [
 ];
 
 const updates = [
-  ['13 Oct 2026', 'Supervised focus sessions', "Teachers can monitor assigned students' LMS sessions, adjust time and respond to release requests. The desktop kiosk companion is in supervised pilot; mobile and ChromeOS use web app focus reporting."],
+  ['13 Oct 2026', 'Supervised focus sessions', "Teachers can monitor assigned students' LMS sessions, adjust time and respond to release requests. The desktop kiosk companion is available as an unsigned beta for supervised testing; mobile and ChromeOS use web app focus reporting."],
   ['6 Oct 2026', 'Better video and exam controls', 'Video lessons gained clearer player, fullscreen and bulk actions. Exam answer keys and response review follow staff permissions.'],
   ['3 Oct 2026', 'Notifications with more control', "Staff can choose in-app and email delivery, select relevant topics and retry a failed save. Email depends on the school's configured email service."],
   ['2 Oct 2026', 'Clearer exam work', 'Exam Studio, student answer review and navigation improvements help teachers author and review assessments.'],

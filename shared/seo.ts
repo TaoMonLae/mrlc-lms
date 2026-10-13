@@ -37,11 +37,11 @@ export const PUBLIC_SEO_PAGES = [
   },
   {
     path: '/kiosk-downloads',
-    title: 'MRLC Kiosk Pilot Downloads | Windows & Mac',
+    title: 'MRLC Kiosk Beta Downloads | Windows & Mac',
     heading: 'A focused school session, on this computer.',
-    description: 'Choose the supervised MRLC Kiosk pilot installer for Windows x64, Apple Silicon Mac or Intel Mac, with setup guidance and current pilot limitations.',
-    summary: 'Find the current MRLC Kiosk pilot installers for Windows and Mac. These unsigned builds are for supervised school testing; read the setup guidance before installing.',
-    label: 'Kiosk pilot downloads',
+    description: 'Download the unsigned MRLC Kiosk beta for Windows x64, Apple Silicon Mac or Intel Mac, with setup guidance for supervised school testing.',
+    summary: 'Find the MRLC Kiosk beta installers for Windows and Mac. These unsigned builds are for supervised school testing; read the setup guidance before installing.',
+    label: 'Kiosk beta downloads',
   },
 ] as const;
 

@@ -8,7 +8,7 @@ The LMS must already have the focus-session API deployed (`/api/focus/session` a
 
 Each Windows or macOS computer needs the app installed. The LMS website cannot install it automatically. A student can install the signed school release, or school IT can deploy it through device management. Open the app, sign in with a student account, and leave it running for the assigned session. Teacher and admin accounts do not start a student kiosk session.
 
-Unsigned **pilot** installers are listed on the public [Kiosk downloads page](https://gedmrlc.monrefugeelc.com/kiosk-downloads), with links to the *Kiosk pilot installers* GitHub Actions artifacts. GitHub sign-in may be required; each artifact downloads as a ZIP containing the installer and expires after 30 days. They are for supervised testing, not schoolwide distribution. Windows SmartScreen and macOS Gatekeeper may warn or block them. The Mac DMG contains the app to drag into Applications; the Windows EXE is a per-user installer. Download the file matching the device architecture.
+Unsigned **beta** installers are listed on the public [Kiosk downloads page](https://gedmrlc.monrefugeelc.com/kiosk-downloads) and hosted in the [GitHub prerelease](https://github.com/TaoMonLae/mrlc-lms/releases/tag/kiosk-v0.2.0-beta.1). These direct downloads are for supervised testing, not schoolwide distribution. Windows SmartScreen and macOS Gatekeeper may warn or block them. The Mac DMG contains the app to drag into Applications; the Windows EXE is a per-user installer. Download the file matching the device architecture and verify it against `SHA256SUMS.txt` in the prerelease.
 
 For iOS, Android, and ChromeOS, use the LMS browser or installed web app. Those devices report focus and full-screen changes to staff, but this desktop kiosk cannot lock them. On student-owned computers, the operating system can still switch apps, force quit, or use another screen. This app controls its own window; it does not claim device-wide enforcement.
 
@@ -29,7 +29,7 @@ To run from source for testing, use `npm start`. A pre-login window can be close
 
 ## Signed school release
 
-Do not publish the unsigned pilot as the school release. When certificates are available, use the `release:*` scripts. They fail early if signing credentials are absent, and `electron-builder` is configured to fail if signing does not happen.
+Do not publish the unsigned beta as the signed school release. When certificates are available, use the `release:*` scripts. They fail early if signing credentials are absent, and `electron-builder` is configured to fail if signing does not happen.
 
 For macOS, provide a Developer ID identity via `CSC_LINK` and `CSC_KEY_PASSWORD`, or `CSC_NAME` for an identity already in the keychain. Also provide Apple notarization credentials using one of the supported `APPLE_API_KEY`/`APPLE_API_KEY_ID`/`APPLE_API_ISSUER`, `APPLE_ID`/`APPLE_APP_SPECIFIC_PASSWORD`/`APPLE_TEAM_ID`, or `APPLE_KEYCHAIN`/`APPLE_KEYCHAIN_PROFILE` sets. Run `npm run release:mac:arm64` and `npm run release:mac:x64` on macOS. Verify the signatures and notarization on a clean Mac before distribution.
 

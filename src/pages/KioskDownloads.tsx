@@ -6,30 +6,29 @@ import { useSettings } from '../providers/SettingsProvider';
 import './landing.css';
 import './kiosk-downloads.css';
 
-const buildHistory = 'https://github.com/TaoMonLae/mrlc-lms/actions/workflows/kiosk-pilot.yml';
-const buildRun = 'https://github.com/TaoMonLae/mrlc-lms/actions/runs/38334349265';
-const pilotExpires = new Date('2026-11-12T01:54:00Z');
+const releaseUrl = 'https://github.com/TaoMonLae/mrlc-lms/releases/tag/kiosk-v0.2.0-beta.1';
+const downloadBase = 'https://github.com/TaoMonLae/mrlc-lms/releases/download/kiosk-v0.2.0-beta.1';
 
 const installers = [
   {
     platform: 'Windows',
     device: 'Windows 10 or 11 · x64',
-    format: 'EXE installer inside a ZIP',
-    artifact: '11783873542',
+    format: 'EXE installer',
+    file: 'MRLC-LMS-Kiosk-0.2.0-beta.1-win-x64.exe',
     icon: Monitor,
   },
   {
     platform: 'Mac · Apple Silicon',
     device: 'M1, M2, M3, M4 or newer',
-    format: 'DMG installer inside a ZIP',
-    artifact: '11784440642',
+    format: 'DMG installer',
+    file: 'MRLC-LMS-Kiosk-0.2.0-beta.1-mac-arm64.dmg',
     icon: Laptop,
   },
   {
     platform: 'Mac · Intel',
     device: 'Mac with an Intel processor',
-    format: 'DMG installer inside a ZIP',
-    artifact: '11783594729',
+    format: 'DMG installer',
+    file: 'MRLC-LMS-Kiosk-0.2.0-beta.1-mac-x64.dmg',
     icon: Laptop,
   },
 ] as const;
@@ -39,7 +38,6 @@ export default function KioskDownloads() {
   const { schoolProfile, brandingSettings } = useSettings();
   const schoolName = schoolProfile.name || 'Mon Refugee Learning Centre';
   const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  const pilotAvailable = Date.now() < pilotExpires.getTime();
 
   return <div className="landing kiosk-downloads">
     <a className="landing-skip" href="#main-content">Skip to content</a>
@@ -61,11 +59,11 @@ export default function KioskDownloads() {
             <p>Install the MRLC Kiosk companion on a Windows or Mac computer. It opens the school LMS, then enters full-screen kiosk mode when a student’s assigned focus session begins.</p>
             <a className="kiosk-intro-link" href="#installers">Choose your installer <ArrowRight size={19} aria-hidden="true" /></a>
           </div>
-          <aside className="kiosk-pilot-note" aria-label="Pilot availability">
-            <span className="kiosk-status">Supervised pilot</span>
-            <h2>For testing with school staff.</h2>
-            <p>These installers are unsigned pilot builds, not the signed school release. Windows SmartScreen or macOS Gatekeeper may warn or block installation. Ask school IT before installing on a managed device.</p>
-            <div><span>{pilotAvailable ? 'Linked pilot build' : 'Last linked pilot'}</span><strong>Version 0.2.0 · 13 Oct 2026</strong></div>
+          <aside className="kiosk-pilot-note" aria-label="Beta release information">
+            <span className="kiosk-status">Unsigned beta</span>
+            <h2>For supervised testing with school staff.</h2>
+            <p>These beta installers are unsigned and are not the signed school release. Windows SmartScreen or macOS Gatekeeper may warn or block installation. Ask school IT before installing on a managed device.</p>
+            <div><span>Beta release</span><strong>Version 0.2.0-beta.1</strong></div>
           </aside>
         </div>
       </section>
@@ -74,20 +72,20 @@ export default function KioskDownloads() {
         <div className="landing-section-inner">
           <div className="kiosk-section-heading"><h2 id="installers-title">Choose your computer.</h2><p>Pick the operating system and processor on the device where the student will work.</p></div>
           <div className="kiosk-installer-list">
-            {installers.map(({ platform, device, format, artifact, icon: Icon }) => <article className="kiosk-installer" key={platform}>
+            {installers.map(({ platform, device, format, file, icon: Icon }) => <article className="kiosk-installer" key={platform}>
               <div className="kiosk-installer-icon"><Icon size={27} strokeWidth={1.7} aria-hidden="true" /></div>
               <div className="kiosk-installer-copy"><h3>{platform}</h3><p>{device}</p><small>{format}</small></div>
-              <a href={pilotAvailable ? `${buildRun}/artifacts/${artifact}` : buildHistory} target="_blank" rel="noopener noreferrer" className="landing-button landing-button-primary kiosk-download-button" aria-label={`${pilotAvailable ? 'Get' : 'Find current'} ${platform} pilot installer on GitHub`}>
-                {pilotAvailable ? <Download size={19} aria-hidden="true" /> : <ExternalLink size={18} aria-hidden="true" />}{pilotAvailable ? 'Get pilot installer' : 'Find current build'}
+              <a href={`${downloadBase}/${file}`} className="landing-button landing-button-primary kiosk-download-button" aria-label={`Download ${platform} beta installer from GitHub Releases`}>
+                <Download size={19} aria-hidden="true" />Download beta
               </a>
             </article>)}
           </div>
-          <p className="kiosk-download-help">GitHub sign-in may be required. Each link opens an artifact ZIP; extract it to find the EXE or DMG. Pilot artifacts are retained for 30 days. {pilotAvailable ? <>If a link has expired, <a href={buildHistory} target="_blank" rel="noopener noreferrer">check the latest build <ExternalLink size={14} aria-hidden="true" /></a>.</> : <>The 13 Oct pilot artifacts have expired; <a href={buildHistory} target="_blank" rel="noopener noreferrer">check the latest build <ExternalLink size={14} aria-hidden="true" /></a>.</>}</p>
+          <p className="kiosk-download-help">These files are hosted on GitHub Releases. <a href={`${downloadBase}/SHA256SUMS.txt`}>Check the SHA-256 file <ExternalLink size={14} aria-hidden="true" /></a> before installing. The beta does not update itself; install a newer version when school IT provides one.</p>
         </div>
       </section>
 
       <section className="kiosk-setup" aria-labelledby="setup-title"><div className="landing-section-inner kiosk-setup-grid">
-        <div><h2 id="setup-title">From installer to session.</h2><p>Keep a teacher or administrator available during the pilot so they can monitor and release the session when needed.</p></div>
+        <div><h2 id="setup-title">From installer to session.</h2><p>Keep a teacher or administrator available during the beta so they can monitor and release the session when needed.</p></div>
         <ol>
           <li><span>1</span><div><h3>Install the companion</h3><p>Open the EXE on Windows, or open the DMG and drag the app into Applications on Mac.</p></div></li>
           <li><span>2</span><div><h3>Sign in as a student</h3><p>Launch MRLC LMS Kiosk and use a school student account. The window can close normally before a focus session starts.</p></div></li>
@@ -101,6 +99,6 @@ export default function KioskDownloads() {
       </div></section>
     </main>
 
-    <footer className="landing-footer"><div className="landing-section-inner kiosk-footer"><PublicBrandMark logoUrl={brandingSettings.logoUrl} schoolName={schoolName} /><a href={buildHistory} target="_blank" rel="noopener noreferrer">Pilot build history <ExternalLink size={14} aria-hidden="true" /></a></div></footer>
+    <footer className="landing-footer"><div className="landing-section-inner kiosk-footer"><PublicBrandMark logoUrl={brandingSettings.logoUrl} schoolName={schoolName} /><a href={releaseUrl} target="_blank" rel="noopener noreferrer">Beta release notes <ExternalLink size={14} aria-hidden="true" /></a></div></footer>
   </div>;
 }
