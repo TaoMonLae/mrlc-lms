@@ -94,8 +94,8 @@ export default function KioskDownloads() {
       </div></section>
 
       <section className="kiosk-other" aria-labelledby="other-title"><div className="landing-section-inner kiosk-other-grid">
-        <div><h2 id="other-title">Using a phone, tablet or Chromebook?</h2><p>There is no desktop kiosk installer for iOS, Android or ChromeOS. Use the MRLC website or installed web app for focus reporting. Those devices can report focus and full-screen changes, but this companion cannot lock them.</p></div>
-        <Link to="/login" className="landing-button landing-button-secondary">Open school sign-in <ArrowRight size={18} aria-hidden="true" /></Link>
+        <div><h2 id="other-title">Using a phone, tablet or Chromebook?</h2><p>Open the MRLC Focus beta and add it to your home screen. It reports focus and connection status to staff, but it cannot lock a personal device. Students can still leave or close it.</p></div>
+        <Link to="/focus-app" className="landing-button landing-button-secondary">Open mobile focus beta <ArrowRight size={18} aria-hidden="true" /></Link>
       </div></section>
     </main>
 

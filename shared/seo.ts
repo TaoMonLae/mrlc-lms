@@ -43,6 +43,14 @@ export const PUBLIC_SEO_PAGES = [
     summary: 'Find the MRLC Kiosk beta installers for Windows and Mac. These unsigned builds are for supervised school testing; read the setup guidance before installing.',
     label: 'Kiosk beta downloads',
   },
+  {
+    path: '/focus-app',
+    title: 'MRLC Focus Beta | Mobile Study Sessions',
+    heading: 'Make space for learning.',
+    description: 'Open the voluntary MRLC Focus beta on a phone or tablet. School students can see their assigned session, request release and add it to their home screen.',
+    summary: 'MRLC Focus gives students a dedicated view of assigned study time on personal devices. It reports focus to staff but does not lock the device.',
+    label: 'Mobile focus beta',
+  },
 ] as const;
 
 export function normalizeSeoPath(pathname: string): string {

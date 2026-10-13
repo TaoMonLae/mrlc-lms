@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Maximize2, ShieldAlert, Timer } from 'lucide-react';
+import { useLocation } from 'react-router';
 import { useAuth } from '../../providers/AuthProvider';
 import { apiSend } from '../../lib/api';
 import { canRequestFocusFullscreen, getFocusPresentationMode } from '../../lib/focusPresentation';
@@ -12,6 +13,7 @@ type FocusSession = {
 };
 
 export function StudentFocusMonitor() {
+  const { pathname } = useLocation();
   const { user, isSessionVerified } = useAuth();
   const eligible = user?.role === 'STUDENT' && !user.isExternalLearner && !user.mustChangePassword && isSessionVerified;
   const [session, setSession] = useState<FocusSession | null>(null);
@@ -70,7 +72,7 @@ export function StudentFocusMonitor() {
     };
   }, [eligible, session?.id, session?.status, report]);
 
-  if (!eligible || (!session && !error)) return null;
+  if (pathname === '/focus-app' || !eligible || (!session && !error)) return null;
   const active = session?.status === 'ACTIVE' && new Date(session.endsAt).getTime() > now;
   const minutes = session ? Math.max(0, Math.ceil((new Date(session.endsAt).getTime() - now) / 60_000)) : 0;
   const canFullscreen = canRequestFocusFullscreen();

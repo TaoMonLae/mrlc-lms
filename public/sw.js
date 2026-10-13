@@ -6,7 +6,7 @@
  *   - SPA navigations: network-first, falling back to the cached app shell,
  *     then an offline page.
  */
-const VERSION = 'mrlc-v2';
+const VERSION = 'mrlc-v3';
 const STATIC_CACHE = `static-${VERSION}`;
 const FONT_CACHE = `fonts-${VERSION}`;
 const RESOURCE_CACHE = 'mrlc-learning-resources-v1';
@@ -14,6 +14,7 @@ const RESOURCE_CACHE = 'mrlc-learning-resources-v1';
 const PRECACHE = [
   '/',
   '/manifest.webmanifest',
+  '/focus.webmanifest',
   '/icon-192.png',
   '/icon-512.png',
   '/icon-maskable-512.png',

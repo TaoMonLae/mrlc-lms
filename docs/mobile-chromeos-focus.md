@@ -1,11 +1,11 @@
 # Focus sessions on iOS, Android, and ChromeOS
 
-The LMS is an installable web app at <https://gedmrlc.monrefugeelc.com>. The existing web app manifest opens it in a standalone window where the browser supports installation. A school student still signs in normally; that starts or resumes the assigned focus session. Teachers and administrators can adjust the session time and approve a release in the LMS monitor.
+The LMS has a dedicated voluntary [MRLC Focus beta](https://gedmrlc.monrefugeelc.com/focus-app) for personal phones and tablets. It is an installable web app with its own home-screen entry point, not an APK or App Store app. A school student signs in normally; that starts or resumes the assigned focus session. The focus page shows the remaining time, opens the learning dashboard and lets a student request release. Teachers and administrators can adjust time and approve release in the LMS monitor.
 
 ## Student-owned devices
 
-1. Open the LMS in the device browser and sign in.
-2. On iPhone or iPad, use Safari's Share menu and **Add to Home Screen**, then open the new LMS icon. On Android or ChromeOS, use the browser's **Install app** or **Add to Home screen** menu if offered.
+1. Open <https://gedmrlc.monrefugeelc.com/focus-app> in the device browser.
+2. On iPhone or iPad, use Safari's Share menu and **Add to Home Screen**, then open the new MRLC Focus icon. On Android or ChromeOS, use the browser's **Install app** or **Add to Home screen** menu if offered. Sign in with a school student account from the installed app; it may have a separate sign-in from your browser.
 3. Keep the LMS open during the assigned session. The LMS sends focus and connection status to staff. When the page loses focus, staff receive a warning; the warning cannot name the other tab or app.
 4. Request release in the LMS when needed. A teacher or administrator can approve the LMS session release.
 
