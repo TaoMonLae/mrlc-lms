@@ -33,7 +33,30 @@ Do not publish the unsigned pilot as the school release. When certificates are a
 
 For macOS, provide a Developer ID identity via `CSC_LINK` and `CSC_KEY_PASSWORD`, or `CSC_NAME` for an identity already in the keychain. Also provide Apple notarization credentials using one of the supported `APPLE_API_KEY`/`APPLE_API_KEY_ID`/`APPLE_API_ISSUER`, `APPLE_ID`/`APPLE_APP_SPECIFIC_PASSWORD`/`APPLE_TEAM_ID`, or `APPLE_KEYCHAIN`/`APPLE_KEYCHAIN_PROFILE` sets. Run `npm run release:mac:arm64` and `npm run release:mac:x64` on macOS. Verify the signatures and notarization on a clean Mac before distribution.
 
-For Windows, provide `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD` (or `CSC_LINK` and `CSC_KEY_PASSWORD`) on a Windows build host, then run `npm run release:win:x64`. Verify the signature and install on a clean Windows computer. Keep certificate files and passwords out of Git and chat.
+### Windows certificate and release
+
+The recommended Windows route is an **organization-validated (OV) Authenticode code-signing certificate** issued to the school's registered legal entity, with its private key held on a USB token. Order one from a public certificate authority such as [DigiCert](https://docs.digicert.com/en/certcentral/order-and-manage-certificates/request-certificates/request-a-code-signing-or-ev-code-signing-certificate/request-code-signing-certificate.html), Sectigo, or GlobalSign. In the order, choose **Code Signing**, the school's organization, and the **USB token** delivery option. Complete the authority's organization and contact verification. The certificate's publisher name will be the verified legal name, so confirm that name before ordering. A new OV certificate does not require the more expensive EV tier for this release, and neither tier guarantees an immediate SmartScreen pass.
+
+When the token arrives, use a trusted Windows x64 computer with Node.js 22, install the token software supplied by the authority, insert the token, and confirm that Windows can see the code-signing certificate:
+
+```powershell
+Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert |
+  Format-Table Subject, Thumbprint, NotAfter
+```
+
+If the authority installs it in the machine store, use `Cert:\LocalMachine\My` instead. Copy the 40-character **Thumbprint** shown for the school's certificate. In PowerShell, from this repository:
+
+```powershell
+cd kiosk
+npm ci
+npm test
+$env:MRLC_WIN_CERT_SHA1 = 'PASTE_THE_40_CHARACTER_THUMBPRINT_HERE'
+npm run release:win:x64
+```
+
+The token may ask for its PIN while signing. The release command signs the app and NSIS installer, then checks both Authenticode signatures and their certificate thumbprints. It stops if either check fails. The signed installer is `kiosk/release/MRLC-LMS-Kiosk-<version>-win-x64.exe`. Test installation and publisher display on a clean Windows computer before distributing it to students. Keep the token and PIN with authorized school staff; do not put the PIN, certificate keys, or token backups in Git or chat.
+
+An existing exportable PFX certificate is also supported with `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD` (or `CSC_LINK` and `CSC_KEY_PASSWORD`). New publicly trusted OV certificates normally use a hardware token or HSM, so do not order one expecting a PFX export. If the school's legal entity is in Malaysia, Microsoft [currently excludes Malaysia from Artifact Signing Public Trust eligibility](https://learn.microsoft.com/en-us/azure/artifact-signing/quickstart); the public CA route above is suitable.
 
 The app does not self-update. To deploy a new version, build a signed installer with a higher version and distribute it through the school's normal software channel.
 

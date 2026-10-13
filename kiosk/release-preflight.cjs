@@ -1,3 +1,5 @@
+const { windowsSigningConfig } = require('./windows-signing.cjs');
+
 const target = process.argv[2];
 const present = (name) => Boolean(process.env[name]?.trim());
 
@@ -10,10 +12,12 @@ if (target === 'mac') {
   if (signing && notarization) process.exit(0);
   console.error('macOS release requires a Developer ID signing identity and Apple notarization credentials. See kiosk/README.md.');
 } else if (target === 'win') {
-  const signing = present('WIN_CSC_LINK') || present('CSC_LINK');
-  const password = present('WIN_CSC_KEY_PASSWORD') || present('CSC_KEY_PASSWORD');
-  if (signing && password) process.exit(0);
-  console.error('Windows release requires a code-signing certificate link and password. See kiosk/README.md.');
+  try {
+    windowsSigningConfig(process.env);
+    process.exit(0);
+  } catch (error) {
+    console.error(error.message);
+  }
 } else {
   console.error('Choose mac or win.');
 }

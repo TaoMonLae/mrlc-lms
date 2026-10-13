@@ -14,7 +14,7 @@
     "pilot:win:x64": "electron-builder --win nsis --x64 --publish never",
     "release:mac:arm64": "node release-preflight.cjs mac && electron-builder --mac dmg --arm64 --publish never -c.forceCodeSigning=true",
     "release:mac:x64": "node release-preflight.cjs mac && electron-builder --mac dmg --x64 --publish never -c.forceCodeSigning=true",
-    "release:win:x64": "node release-preflight.cjs win && electron-builder --win nsis --x64 --publish never -c.forceCodeSigning=true"
+    "release:win:x64": "node release-win.cjs"
   },
   "devDependencies": {
     "electron": "44.7.0",
