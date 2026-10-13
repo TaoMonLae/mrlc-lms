@@ -9,8 +9,8 @@ documented in this repository:
 APP_URL="https://gedmrlc.monrefugeelc.com"
 ```
 
-The sitemap contains only the four public content pages: `/`, `/language-quest`,
-`/language-quest/about` and `/dictionary`. The shared registry in `shared/seo.ts`
+The sitemap contains only the five public content pages: `/`, `/language-quest`,
+`/language-quest/about`, `/dictionary` and `/kiosk-downloads`. The shared registry in `shared/seo.ts`
 also supplies their titles and descriptions. Add a page there only after making
 sure anonymous visitors can read it. `/about` currently requires a school
 account and is deliberately excluded, along with lessons, dashboards, account

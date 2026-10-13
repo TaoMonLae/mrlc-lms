@@ -8,7 +8,7 @@ test('sitemap and robots are served as crawler resources', async ({ request }) =
   expect(sitemap.headers()['content-type']).toContain('application/xml');
   const xml = await sitemap.text();
   const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => new URL(match[1]));
-  expect(urls.map(url => url.pathname)).toEqual(['/', '/language-quest', '/language-quest/about', '/dictionary']);
+  expect(urls.map(url => url.pathname)).toEqual(['/', '/language-quest', '/language-quest/about', '/dictionary', '/kiosk-downloads']);
   expect(new Set(urls.map(url => url.origin)).size).toBe(1);
   const robots = await request.get('/robots.txt');
   expect(robots.headers()['content-type']).toContain('text/plain');
@@ -30,10 +30,10 @@ test('private and token URLs are excluded before JavaScript runs', async ({ requ
 test.describe('without JavaScript', () => {
   test.use({ javaScriptEnabled: false });
   test('public pages contain readable text, links and canonical metadata', async ({ page }) => {
-    for (const path of ['/', '/language-quest', '/language-quest/about', '/dictionary?word=hello']) {
+    for (const path of ['/', '/language-quest', '/language-quest/about', '/dictionary?word=hello', '/kiosk-downloads']) {
       await page.goto(path);
       await expect(page.locator('main h1')).toBeVisible();
-      await expect(page.locator('nav[aria-label="Public pages"] a')).toHaveCount(4);
+      await expect(page.locator('nav[aria-label="Public pages"] a')).toHaveCount(5);
       await expect(page.locator('head meta[name="robots"]')).toHaveAttribute('content', 'index, follow, max-image-preview:large');
       const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
       expect(new URL(canonical!).pathname).toBe(path.split('?')[0]);

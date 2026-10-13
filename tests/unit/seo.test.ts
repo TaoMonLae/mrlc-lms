@@ -9,7 +9,7 @@ import { buildRobotsTxt, buildSitemap, registerSeoRoutes, renderSeoHtml } from '
 import { getPublicSeoPage, getSeoMetadata, getSiteOrigin } from '../../shared/seo';
 
 const ORIGIN = 'https://school.example:8443';
-const PUBLIC_PATHS = ['/', '/language-quest', '/language-quest/about', '/dictionary'];
+const PUBLIC_PATHS = ['/', '/language-quest', '/language-quest/about', '/dictionary', '/kiosk-downloads'];
 const PRIVATE_PATHS = [
   '/about', '/mon-language', '/updates', '/login', '/signup', '/forgot-password',
   '/reset-password?token=private-reset-token', '/unauthorized', '/dashboard',

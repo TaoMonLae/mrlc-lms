@@ -4,12 +4,14 @@ import { ArrowRight, BookOpen, Check, ChevronRight, Menu, Moon, Sun, X } from 'l
 import { useTheme } from '../components/theme-provider';
 import { useUser } from '../lib/permissions';
 import { useSettings } from '../providers/SettingsProvider';
+import PublicBrandMark from '../components/PublicBrandMark';
 import './landing.css';
 
 const nav = [
   ['The platform', '#platform'],
   ['Learning Quest', '#learning-quest'],
   ["What's new", '#whats-new'],
+  ['Kiosk downloads', '/kiosk-downloads'],
   ['About MRLC', '#about'],
 ];
 
@@ -25,17 +27,6 @@ const updates = [
   ['3 Oct 2026', 'Notifications with more control', "Staff can choose in-app and email delivery, select relevant topics and retry a failed save. Email depends on the school's configured email service."],
   ['2 Oct 2026', 'Clearer exam work', 'Exam Studio, student answer review and navigation improvements help teachers author and review assessments.'],
 ];
-
-function BrandMark({ logoUrl, schoolName }: { logoUrl: string | null; schoolName: string }) {
-  const [configuredFailed, setConfiguredFailed] = useState(false);
-  const [defaultFailed, setDefaultFailed] = useState(false);
-  useEffect(() => { setConfiguredFailed(false); setDefaultFailed(false); }, [logoUrl]);
-  const src = logoUrl && !configuredFailed ? logoUrl : defaultFailed ? null : '/icon-192.png';
-  return <span className="landing-brand">
-    {src ? <img src={src} alt="" width="42" height="42" onError={() => { if (src === logoUrl) setConfiguredFailed(true); else setDefaultFailed(true); }} /> : <span className="landing-brand-fallback" aria-hidden="true">MRLC</span>}
-    <span className="landing-brand-copy"><strong>{schoolName}</strong><small>GED School · Malaysia</small></span>
-  </span>;
-}
 
 export default function LandingPage() {
   const { theme, setTheme } = useTheme();
@@ -55,7 +46,7 @@ export default function LandingPage() {
     <a className="landing-skip" href="#main-content">Skip to content</a>
     <header className="landing-header">
       <div className="landing-header-inner">
-        <Link to="/" className="landing-home" aria-label={schoolName + ' home'}><BrandMark logoUrl={brandingSettings.logoUrl} schoolName={schoolName} /></Link>
+        <Link to="/" className="landing-home" aria-label={schoolName + ' home'}><PublicBrandMark logoUrl={brandingSettings.logoUrl} schoolName={schoolName} /></Link>
         <nav className="landing-nav" aria-label="Main navigation">{nav.map(([label, href]) => href.startsWith('/') ? <Link key={href} to={href}>{label}</Link> : <a key={href} href={href}>{label}</a>)}</nav>
         <div className="landing-header-actions">
           <button className="landing-theme" type="button" onClick={toggleTheme} aria-label={isDark ? 'Use light theme' : 'Use dark theme'}>{isDark ? <Sun size={18} /> : <Moon size={18} />}</button>
@@ -117,6 +108,6 @@ export default function LandingPage() {
 
       <section className="landing-close" aria-labelledby="close-title"><div className="landing-section-inner landing-close-grid"><div><h2 id="close-title">Ready for the school day?</h2><p>Open your MRLC workspace, or revisit the school behind it.</p></div><div><Link to={portalHref} className="landing-button landing-button-gold">{portalLabel}<ArrowRight size={18} /></Link><a href="#about" className="landing-close-link">About MRLC <ArrowRight size={17} /></a></div></div></section>
     </main>
-    <footer className="landing-footer"><div className="landing-section-inner"><BrandMark logoUrl={brandingSettings.logoUrl} schoolName={schoolName} /><p>Education · Dignity · Opportunity</p></div></footer>
+    <footer className="landing-footer"><div className="landing-section-inner"><PublicBrandMark logoUrl={brandingSettings.logoUrl} schoolName={schoolName} /><p>Education · Dignity · Opportunity</p></div></footer>
   </div>;
 }

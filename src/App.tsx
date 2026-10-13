@@ -306,6 +306,7 @@ import { ReleaseUpdatesProvider } from "./providers/ReleaseUpdatesProvider";
 import { I18nProvider } from "./i18n/I18nProvider";
 
 const LandingPage = lazy(() => import("./pages/Landing"));
+const KioskDownloads = lazy(() => import("./pages/KioskDownloads"));
 import CursorEffect from "./components/CursorEffect";
 import DynamicFavicon from "./components/DynamicFavicon";
 import SeoMetadata from "./components/SeoMetadata";
@@ -325,6 +326,7 @@ export default function App() {
           <ExternalLearnerBoundary>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/kiosk-downloads" element={<KioskDownloads />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/language-quest" element={<LanguageQuestPublic />} />

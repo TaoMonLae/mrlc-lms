@@ -35,6 +35,14 @@ export const PUBLIC_SEO_PAGES = [
     summary: 'Find definitions and vocabulary across English, Myanmar, Mon and Chinese. The dictionary is available to visitors without signing in.',
     label: 'Open the dictionary',
   },
+  {
+    path: '/kiosk-downloads',
+    title: 'MRLC Kiosk Pilot Downloads | Windows & Mac',
+    heading: 'A focused school session, on this computer.',
+    description: 'Choose the supervised MRLC Kiosk pilot installer for Windows x64, Apple Silicon Mac or Intel Mac, with setup guidance and current pilot limitations.',
+    summary: 'Find the current MRLC Kiosk pilot installers for Windows and Mac. These unsigned builds are for supervised school testing; read the setup guidance before installing.',
+    label: 'Kiosk pilot downloads',
+  },
 ] as const;
 
 export function normalizeSeoPath(pathname: string): string {
