@@ -21,7 +21,7 @@ export type AppRelease = {
  * the What's New screen appear once for every signed-in user on each device.
  */
 export const CURRENT_RELEASE: AppRelease = {
-  id: '2026-10-13-focus-and-learning-improvements',
+  id: '2026-10-13-mobile-focus-beta',
   version: 'October 2026 · Focus and learning',
   releasedAt: '2026-10-13T00:00:00.000Z',
   title: 'A clearer view of supervised learning',
@@ -41,12 +41,12 @@ export const CURRENT_RELEASE: AppRelease = {
     },
     {
       eyebrow: 'Device options',
-      title: 'Continue a supervised session across devices',
-      description: 'Mobile and ChromeOS learners can use the installed web app; a desktop kiosk companion is in supervised pilot.',
+      title: 'Open a focus view on your phone',
+      description: 'The voluntary MRLC Focus beta gives personal phones and tablets a dedicated view of assigned study time and release requests.',
       details: [
-        'An installed web app gives a cleaner view and reports presentation mode to staff.',
-        'The web app does not lock a personal device or prevent switching apps.',
-        'The unsigned desktop kiosk installers are for supervised testing, not schoolwide distribution.',
+        'Open the Focus beta from the kiosk downloads page and add it to your home screen.',
+        'The app reports focus and connection status; it does not lock a personal device or prevent switching apps.',
+        'The separate unsigned desktop kiosk beta remains for supervised Windows and Mac testing.',
       ],
       accent: 'blue',
       icon: 'cursor',

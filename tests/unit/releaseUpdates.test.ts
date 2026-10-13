@@ -20,10 +20,12 @@ test('release acknowledgement is stored separately for each user', () => {
   assert.equal(releaseStorageKey('student-1'), 'mrlc:release-seen:student-1');
 });
 
-test('the notification release is unseen after previous releases', () => {
+test('the mobile focus release is unseen after previous releases', () => {
   const storage = memoryStorage();
-  assert.equal(CURRENT_RELEASE.id, '2026-10-03-notifications-and-reliability');
+  assert.equal(CURRENT_RELEASE.id, '2026-10-13-mobile-focus-beta');
   for (const previousRelease of [
+    '2026-10-13-focus-and-learning-improvements',
+    '2026-10-03-notifications-and-reliability',
     '2026-10-02-exam-studio-and-student-experience',
     '2026-09-18-learning-and-student-life',
     '2026-09-05-timetable-teacher-integrity',
@@ -49,6 +51,7 @@ test('release updates never cover school login or other public entry routes', ()
   assert.equal(canAutoShowReleaseUpdates('/login'), false);
   assert.equal(canAutoShowReleaseUpdates('/language-quest'), false);
   assert.equal(canAutoShowReleaseUpdates('/language-quest/about'), false);
+  assert.equal(canAutoShowReleaseUpdates('/focus-app'), false);
   assert.equal(canAutoShowReleaseUpdates('/family'), false);
   assert.equal(canAutoShowReleaseUpdates('/verify/document-token'), false);
   assert.equal(canAutoShowReleaseUpdates('/dashboard'), true);
