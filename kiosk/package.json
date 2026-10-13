@@ -1,0 +1,19 @@
+{
+  "name": "mrlc-lms-kiosk",
+  "productName": "MRLC LMS Kiosk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Supervised desktop kiosk companion for MRLC-LMS",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.cjs",
+    "pack:mac:arm64": "electron-packager . MRLC-LMS-Kiosk --platform=darwin --arch=arm64 --out=out --overwrite --asar --app-bundle-id=org.monrefugeelc.mrlckiosk --ignore=^/out$",
+    "pack:mac:x64": "electron-packager . MRLC-LMS-Kiosk --platform=darwin --arch=x64 --out=out --overwrite --asar --app-bundle-id=org.monrefugeelc.mrlckiosk --ignore=^/out$",
+    "pack:win:x64": "electron-packager . MRLC-LMS-Kiosk --platform=win32 --arch=x64 --out=out --overwrite --asar --ignore=^/out$"
+  },
+  "devDependencies": {
+    "@electron/packager": "20.2.0",
+    "electron": "44.7.0"
+  }
+}

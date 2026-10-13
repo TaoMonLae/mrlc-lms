@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/src/providers/AuthProvider';
+import { isMrlcKiosk } from '@/src/lib/kiosk';
 import { useTheme } from '@/src/components/theme-provider';
 import { MrlcQuestBrand, TaoMonLaeCredit } from './MrlcQuestBrand';
 import {
@@ -151,7 +152,7 @@ function LanguageQuestShellContent() {
                   </DropdownMenuGroup>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive" onClick={signOut} className="min-h-10 gap-2.5 px-2"><LogOut /> Sign out</DropdownMenuItem>
+                {!(user?.role === 'STUDENT' && isMrlcKiosk()) && <DropdownMenuItem variant="destructive" onClick={signOut} className="min-h-10 gap-2.5 px-2"><LogOut /> Sign out</DropdownMenuItem>}
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -200,16 +201,16 @@ function LanguageQuestShellContent() {
             >
               {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
-            <Button
+            {!(user?.role === 'STUDENT' && isMrlcKiosk()) && <Button
               variant="ghost"
               size="icon"
-              className="hidden shrink-0 rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 lg:inline-flex dark:text-slate-400 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+              className="hidden shrink-0 rounded-xl text-[var(--lq-signal-blue)] hover:bg-rose-50 hover:text-rose-700 lg:inline-flex dark:text-sky-300 dark:hover:bg-rose-500/10 dark:hover:text-rose-300"
               onClick={signOut}
               aria-label="Sign out"
               title="Sign out"
             >
               <LogOut className="h-4 w-4" />
-            </Button>
+            </Button>}
           </div>
         </div>
       </header>

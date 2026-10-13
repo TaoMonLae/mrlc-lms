@@ -50,6 +50,7 @@ import JSZip from "jszip";
 import sharp from "sharp";
 import { registerExamPhase2Routes } from "./examPhase2";
 import { registerClassworkRoutes } from "./classworkRoutes";
+import { registerFocusRoutes } from "./focusRoutes";
 import { registerVideoLearningRoutes, canReadVideo } from "./videoLearningRoutes";
 import { registerFinanceRoutes } from "./financeRoutes";
 import { registerDocumentRoutes } from "./documentRoutes";
@@ -2248,6 +2249,7 @@ async function startServer() {
       req.originalUrl === "/api/settings" ||
       req.originalUrl.startsWith("/api/public/branding") ||
       req.originalUrl === "/api/chat/heartbeat" ||
+      req.originalUrl === "/api/focus/watch" ||
       req.originalUrl === "/api/chat/presence" ||
       req.originalUrl === "/api/chat/stream" ||
       (req.method === "GET" && req.originalUrl.startsWith("/api/chat/conversations")) ||
@@ -12292,6 +12294,7 @@ async function startServer() {
   registerLanguageQuestRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
   registerDailyQuestRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
   const gameControls = registerGameControlRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
+  registerFocusRoutes(app, prisma, authMiddleware, JWT_SECRET);
   registerWordTrailRoutes({
     app,
     prisma,

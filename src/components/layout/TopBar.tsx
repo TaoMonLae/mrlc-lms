@@ -102,7 +102,7 @@ export function TopBar() {
     const onPreferencesChanged = () => void refresh();
     window.addEventListener("notification-preferences-changed", onPreferencesChanged);
     void refresh();
-    const timer = setInterval(() => void refresh(), 60_000);
+    const timer = setInterval(() => void refresh(), user.role === 'ADMIN' || user.role === 'TEACHER' ? 15_000 : 60_000);
     return () => { controller.abort(); clearInterval(timer); window.removeEventListener("notification-preferences-changed", onPreferencesChanged); };
   }, [notifOpen, user?.id]);
 

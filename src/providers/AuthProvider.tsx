@@ -7,6 +7,7 @@ import React, {
   ReactNode,
 } from 'react';
 import type { User } from '../lib/permissions';
+import { isMrlcKiosk } from '../lib/kiosk';
 
 // ─── Context shape ────────────────────────────────────────────────────────────
 
@@ -203,6 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(() => {
+    if (user?.role === 'STUDENT' && isMrlcKiosk()) return;
     const token = sessionStorage.getItem('auth_token');
     void fetch('/api/auth/logout', { method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : {} }).catch(() => {});
     sessionStorage.removeItem('auth_token');
@@ -214,7 +216,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Dispatch custom event for other providers to listen to
     window.dispatchEvent(new Event('auth-state-changed'));
-  }, []);
+  }, [user?.role]);
 
   const updateUser = useCallback((patch: Partial<User>) => {
     setUser((prev) => (prev ? { ...prev, ...patch } : prev));
