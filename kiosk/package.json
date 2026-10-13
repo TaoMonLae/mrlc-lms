@@ -1,7 +1,7 @@
 {
   "name": "mrlc-lms-kiosk",
   "productName": "MRLC LMS Kiosk",
-  "version": "0.2.0",
+  "version": "0.2.0-beta.1",
   "private": true,
   "author": "MRLC",
   "description": "Supervised desktop kiosk companion for MRLC-LMS",
