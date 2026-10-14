@@ -41,6 +41,6 @@ The app does not self-update. To deploy a new version, build a signed installer 
 
 ## Device policy and recovery
 
-For managed Windows devices, use a kiosk account and application restrictions in addition to this app. [Shell Launcher alone does not block other apps](https://learn.microsoft.com/en-us/windows/configuration/shell-launcher/). For managed Macs, use school device management and a supported single-app or assessment configuration. This Electron app does not implement [Autonomous Single App Mode](https://support.apple.com/guide/deployment/autonomous-single-app-mode-payload-settings-dep8a42c4c4a/web).
+For school-managed Windows devices, follow the [Windows lockdown guide](WINDOWS_MANAGED_LOCKDOWN.md) to restrict the Windows key and other app-switching paths at the operating-system level. The kiosk app alone cannot intercept Windows-owned shortcuts. For managed Macs, use school device management and a supported single-app or assessment configuration. This Electron app does not implement [Autonomous Single App Mode](https://support.apple.com/guide/deployment/autonomous-single-app-mode-payload-settings-dep8a42c4c4a/web).
 
 If the student has not signed in or the school server is down before lock, close the app normally. During a locked session, staff can release the student or set the remaining time to zero in `/focus-monitor`. If the network remains unavailable or staff cannot reach the monitor, a device administrator can use the operating system's management controls to stop the app. Keep that recovery procedure available during testing.
