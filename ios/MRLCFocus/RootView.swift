@@ -294,7 +294,6 @@ private struct LearningView: View {
                 if let token = model.token {
                     LMSWebView(token: token, path: model.student?.mustChangePassword == true ? "/change-password" : "/student/dashboard")
                         .id(token)
-                        .ignoresSafeArea(edges: .bottom)
                 } else {
                     ContentUnavailableView("Sign in needed", systemImage: "person.crop.circle.badge.questionmark")
                 }
