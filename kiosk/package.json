@@ -28,6 +28,7 @@
     "files": ["main.cjs", "preload.cjs", "policy.cjs", "session-watcher.cjs", "offline.html", "config.json", "package.json"],
     "mac": {
       "target": "dmg",
+      "icon": "assets/icon.icns",
       "category": "public.app-category.education",
       "hardenedRuntime": true,
       "notarize": true,
@@ -35,6 +36,7 @@
     },
     "win": {
       "target": "nsis",
+      "icon": "assets/icon.ico",
       "artifactName": "MRLC-LMS-Kiosk-${version}-win-${arch}.${ext}"
     },
     "nsis": {

@@ -14,6 +14,8 @@ For iOS, Android, and ChromeOS, use the LMS browser or installed web app. Those 
 
 ## Build pilot installers
 
+The desktop icon is generated from the repository's `mrlcged logo.png` with `node scripts/generate-brand-icons.cjs`. The build uses `assets/icon.icns` on macOS and `assets/icon.ico` on Windows.
+
 ```sh
 cd kiosk
 npm ci

@@ -6,7 +6,7 @@
  *   - SPA navigations: network-first, falling back to the cached app shell,
  *     then an offline page.
  */
-const VERSION = 'mrlc-v3';
+const VERSION = 'mrlc-v4-brand';
 const STATIC_CACHE = `static-${VERSION}`;
 const FONT_CACHE = `fonts-${VERSION}`;
 const RESOURCE_CACHE = 'mrlc-learning-resources-v1';

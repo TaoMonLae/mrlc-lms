@@ -6,6 +6,8 @@ Native, voluntary focus companion for school students. It uses the existing LMS 
 
 Open `MRLCFocus.xcodeproj` in Xcode. The app targets iOS 17 or later and uses SwiftUI, WebKit, URLSession, and Keychain. No third-party packages are required. Choose the `MRLCFocus` scheme and an iPhone simulator or device. The app uses `https://gedmrlc.monrefugeelc.com`; it has no HTTP exception or development server setting.
 
+The app icon uses the school logo in `mrlcged logo.png`. Regenerate the iOS, desktop, and web icon sizes from that source with `node scripts/generate-brand-icons.cjs` at the repository root. The iOS export is opaque, as required for App Store icons.
+
 ## TestFlight build
 
 Sign in to the Apple developer team in Xcode. Xcode may request a registered iPhone when it tries to sign an archive for development. An App Store Connect export does not require a device ID. Build an unsigned archive, then let Xcode sign the exported IPA with the team's cloud managed Apple Distribution certificate and App Store provisioning profile:

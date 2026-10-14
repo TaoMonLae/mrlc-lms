@@ -4,9 +4,9 @@ import { useEffect } from "react";
 // whenever there's no custom school logo (or before the branding fetch
 // resolves), so the tab never ends up with a broken/empty icon.
 const DEFAULT_ICONS = [
-  { rel: "icon", href: "/favicon.ico", sizes: "any" },
-  { rel: "icon", href: "/favicon-32.png", sizes: "32x32", type: "image/png" },
-  { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+  { rel: "icon", href: "/favicon.ico?brand=2", sizes: "any" },
+  { rel: "icon", href: "/favicon-32.png?brand=2", sizes: "32x32", type: "image/png" },
+  { rel: "apple-touch-icon", href: "/apple-touch-icon.png?brand=2" },
 ];
 
 function mimeTypeFor(url: string): string | undefined {
