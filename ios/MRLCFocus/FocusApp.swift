@@ -8,6 +8,7 @@ struct MRLCFocusApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(model: model)
+                .preferredColorScheme(.light)
                 .task { await model.restore() }
                 .onChange(of: scenePhase) { _, phase in
                     guard model.student != nil else { return }

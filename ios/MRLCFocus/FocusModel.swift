@@ -136,9 +136,16 @@ final class FocusModel: ObservableObject {
         message = nil
         defer { busy = false }
         do {
+            var body: [String: Any] = [
+                "identifier": identifier,
+                "password": password,
+                "rememberMe": false
+            ]
+            let code = mfaCode.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !code.isEmpty { body["mfaCode"] = code }
             let response: LoginResponse = try await request(
                 "/api/auth/login", method: "POST",
-                body: ["identifier": identifier, "password": password, "rememberMe": false, "mfaCode": mfaCode],
+                body: body,
                 authenticated: false
             )
             if response.mfaRequired == true {
@@ -269,7 +276,7 @@ final class FocusModel: ObservableObject {
         let (data, response) = try await client.data(for: request)
         guard let response = response as? HTTPURLResponse else { throw FocusAPIError.message("Invalid server response.") }
         guard (200..<300).contains(response.statusCode) else {
-            if response.statusCode == 401 { throw FocusAPIError.message("Please sign in again.") }
+            if response.statusCode == 401 && authenticated { throw FocusAPIError.message("Please sign in again.") }
             let detail = try? JSONDecoder().decode(ErrorResponse.self, from: data)
             throw FocusAPIError.message(detail?.error ?? "Request failed (\(response.statusCode)).")
         }

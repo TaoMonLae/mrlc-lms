@@ -51,15 +51,16 @@ private struct SignInView: View {
     @State private var mfaCode = ""
 
     private var canSubmit: Bool {
-        !model.busy && !identifier.trimmingCharacters(in: .whitespaces).isEmpty && !password.isEmpty && (!model.mfaRequired || !mfaCode.isEmpty)
+        !model.busy && !identifier.trimmingCharacters(in: .whitespaces).isEmpty && !password.isEmpty && (!model.mfaRequired || mfaCode.trimmingCharacters(in: .whitespacesAndNewlines).count >= 6)
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                Image(systemName: "heart.text.square.fill")
-                    .font(.system(size: 38))
-                    .foregroundStyle(Palette.teal)
+                Image("BrandMark")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 56, height: 56)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 9) {
                     Text("MRLC FOCUS")
@@ -69,7 +70,7 @@ private struct SignInView: View {
                         .font(.largeTitle.bold())
                         .foregroundStyle(Palette.ink)
                     Text("Sign in with your school student account to see your assigned focus session.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Palette.ink.opacity(0.75))
                 }
                 VStack(alignment: .leading, spacing: 16) {
                     TextField("Email or username", text: $identifier)
@@ -78,16 +79,23 @@ private struct SignInView: View {
                         .autocorrectionDisabled()
                         .keyboardType(.emailAddress)
                         .textFieldStyle(.roundedBorder)
+                        .foregroundStyle(Palette.ink)
+                        .tint(Palette.teal)
                         .accessibilityLabel("School email or username")
                     SecureField("Password", text: $password)
                         .textContentType(.password)
                         .textFieldStyle(.roundedBorder)
+                        .foregroundStyle(Palette.ink)
+                        .tint(Palette.teal)
                     if model.mfaRequired {
                         TextField("Authentication code", text: $mfaCode)
                             .textContentType(.oneTimeCode)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
                             .textFieldStyle(.roundedBorder)
+                            .foregroundStyle(Palette.ink)
+                            .tint(Palette.teal)
+                            .accessibilityLabel("Authentication or recovery code")
                     }
                     Button {
                         Task { await model.signIn(identifier: identifier.trimmingCharacters(in: .whitespaces), password: password, mfaCode: mfaCode) }
@@ -119,7 +127,7 @@ private struct SignInView: View {
                 }
                 Text("This is a voluntary focus companion. It can report whether the app is active, but it cannot lock your iPhone or block other apps.")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Palette.ink.opacity(0.75))
             }
             .padding(24)
             .frame(maxWidth: 540)

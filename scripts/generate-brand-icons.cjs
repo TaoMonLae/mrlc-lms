@@ -58,6 +58,7 @@ function icns(entries) {
 
 async function main() {
   await write('ios/MRLCFocus/Assets.xcassets/AppIcon.appiconset/AppIcon.png', await icon(1024, { opaque: true }));
+  await write('ios/MRLCFocus/Assets.xcassets/BrandMark.imageset/BrandMark.png', await icon(192));
   await write('kiosk/assets/icon.png', await icon(1024));
 
   for (const size of [16, 32]) await write(`public/favicon-${size}.png`, await icon(size));
