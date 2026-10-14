@@ -1,6 +1,6 @@
 # MRLC LMS Kiosk 0.2.0-beta.1
 
-**Unsigned beta for supervised school testing.** This is not the signed school release. Ask school IT before installing it on a managed device.
+**Beta for supervised school testing.** The Mac installers are Developer ID signed and notarized by Apple. The Windows installer remains unsigned. Ask school IT before installing on a managed device.
 
 ## Installers
 
@@ -9,7 +9,7 @@
 - `MRLC-LMS-Kiosk-0.2.0-beta.1-mac-x64.dmg` — Intel Mac.
 - `SHA256SUMS.txt` — checksums for the three installers. Compare the downloaded file's SHA-256 hash before opening it.
 
-Windows SmartScreen and macOS Gatekeeper may warn or block these unsigned files. Device management policy may prevent installation. Do not disable school security settings to install this beta.
+The Mac DMGs and checksums were refreshed on 14 October 2026; re-download any earlier beta.1 Mac copy. Windows SmartScreen may warn or block the unsigned Windows EXE. Device management policy may prevent installation. Do not disable school security settings to install this beta.
 
 ## What to expect
 

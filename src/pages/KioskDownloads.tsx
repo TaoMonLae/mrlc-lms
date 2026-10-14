@@ -13,21 +13,21 @@ const installers = [
   {
     platform: 'Windows',
     device: 'Windows 10 or 11 · x64',
-    format: 'EXE installer',
+    format: 'EXE installer · unsigned beta',
     file: 'MRLC-LMS-Kiosk-0.2.0-beta.1-win-x64.exe',
     icon: Monitor,
   },
   {
     platform: 'Mac · Apple Silicon',
     device: 'M1, M2, M3, M4 or newer',
-    format: 'DMG installer',
+    format: 'DMG installer · signed and notarized',
     file: 'MRLC-LMS-Kiosk-0.2.0-beta.1-mac-arm64.dmg',
     icon: Laptop,
   },
   {
     platform: 'Mac · Intel',
     device: 'Mac with an Intel processor',
-    format: 'DMG installer',
+    format: 'DMG installer · signed and notarized',
     file: 'MRLC-LMS-Kiosk-0.2.0-beta.1-mac-x64.dmg',
     icon: Laptop,
   },
@@ -60,9 +60,9 @@ export default function KioskDownloads() {
             <a className="kiosk-intro-link" href="#installers">Choose your installer <ArrowRight size={19} aria-hidden="true" /></a>
           </div>
           <aside className="kiosk-pilot-note" aria-label="Beta release information">
-            <span className="kiosk-status">Unsigned beta</span>
+            <span className="kiosk-status">Mac beta · notarized</span>
             <h2>For supervised testing with school staff.</h2>
-            <p>These beta installers are unsigned and are not the signed school release. Windows SmartScreen or macOS Gatekeeper may warn or block installation. Ask school IT before installing on a managed device.</p>
+            <p>The Mac beta installers are Developer ID signed and notarized by Apple. The Windows beta is still unsigned and may trigger SmartScreen. Ask school IT before installing on a managed device.</p>
             <div><span>Beta release</span><strong>Version 0.2.0-beta.1</strong></div>
           </aside>
         </div>
