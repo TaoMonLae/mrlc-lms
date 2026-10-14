@@ -50,6 +50,10 @@ private struct SignInView: View {
     @State private var password = ""
     @State private var mfaCode = ""
 
+    private var canSubmit: Bool {
+        !model.busy && !identifier.trimmingCharacters(in: .whitespaces).isEmpty && !password.isEmpty && (!model.mfaRequired || !mfaCode.isEmpty)
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -99,10 +103,14 @@ private struct SignInView: View {
                         .foregroundStyle(.white)
                         .background(Palette.ink, in: RoundedRectangle(cornerRadius: 15))
                     }
-                    .disabled(model.busy || identifier.isEmpty || password.isEmpty || (model.mfaRequired && mfaCode.isEmpty))
+                    .disabled(!canSubmit)
+                    .opacity(canSubmit ? 1 : 0.55)
                 }
                 .padding(20)
                 .background(.white, in: RoundedRectangle(cornerRadius: 22))
+                Link("Account help or forgotten password", destination: FocusModel.origin.appending(path: "/forgot-password"))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Palette.teal)
                 if let message = model.message {
                     Label(message, systemImage: "exclamationmark.circle")
                         .font(.subheadline)

@@ -100,6 +100,8 @@ final class FocusModel: ObservableObject {
     @Published private(set) var message: String?
     @Published private(set) var lastSync: Date?
     private(set) var token: String?
+    private var refreshing = false
+    private var sendingHeartbeat = false
 
     private let client: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
@@ -163,7 +165,9 @@ final class FocusModel: ObservableObject {
     }
 
     func refreshSession() async {
-        guard let student, !student.mustChangePassword else { return }
+        guard let student, !student.mustChangePassword, !refreshing else { return }
+        refreshing = true
+        defer { refreshing = false }
         do {
             let current: FocusSession? = try await request("/api/focus/session")
             if let current {
@@ -180,7 +184,9 @@ final class FocusModel: ObservableObject {
     }
 
     func sendHeartbeat(focused: Bool) async {
-        guard token != nil, session?.isActive == true else { return }
+        guard token != nil, session?.isActive == true, !sendingHeartbeat else { return }
+        sendingHeartbeat = true
+        defer { sendingHeartbeat = false }
         do {
             let updated: FocusSession = try await request(
                 "/api/focus/heartbeat", method: "POST",
