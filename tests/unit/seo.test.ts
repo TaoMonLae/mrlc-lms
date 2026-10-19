@@ -113,6 +113,9 @@ test('public HTML includes unique metadata, canonical URLs, valid linked schema 
     assert.deepEqual(elements(document, 'a').map(link => link.getAttribute('href')), PUBLIC_PATHS);
     assert.ok(elements(document, 'script').some(script => script.getAttribute('src') === '/src/main.tsx'));
     assert.ok(elements(document, 'link').some(link => link.getAttribute('rel') === 'manifest'));
+    const manifests = elements(document, 'link').filter(link => link.getAttribute('rel') === 'manifest');
+    assert.equal(manifests.length, 1);
+    assert.equal(manifests[0].getAttribute('href'), path === '/focus-app' ? '/focus.webmanifest' : '/manifest.webmanifest');
     assert.doesNotMatch(html, /<!--seo:/);
   }
 });
