@@ -1,9 +1,18 @@
 import { expect, test } from '@playwright/test';
+import { CURRENT_RELEASE } from '../../src/data/releases';
 
 const adminEmail = process.env.SEED_ADMIN_EMAIL || 'admin@mrlc.edu';
 const adminPassword = process.env.SEED_ADMIN_PASSWORD || 'admin123';
 
 async function signIn(page: import('@playwright/test').Page) {
+  const login = await page.request.post('/api/auth/login', {
+    data: { identifier: adminEmail, password: adminPassword },
+  });
+  expect(login.ok()).toBeTruthy();
+  const { user } = await login.json();
+  await page.addInitScript(({ userId, releaseId }) => {
+    localStorage.setItem(`mrlc:release-seen:${userId}`, releaseId);
+  }, { userId: user.id, releaseId: CURRENT_RELEASE.id });
   await page.goto('/login');
   await page.getByLabel('Email or username').fill(adminEmail);
   await page.getByLabel('Password', { exact: true }).fill(adminPassword);

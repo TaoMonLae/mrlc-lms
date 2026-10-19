@@ -40,6 +40,10 @@ export default function NewsFeed() {
   const navigate = useNavigate();
   const location = useLocation();
   const [params, setParams] = useSearchParams();
+  const paramsRef = useRef(params);
+  useEffect(() => {
+    paramsRef.current = params;
+  }, [params]);
   const category =
     params.get("category") ||
     (location.state as { fromCategory?: string })?.fromCategory ||
@@ -120,11 +124,15 @@ export default function NewsFeed() {
   }, [query]);
 
   const updateFilters = (changes: Record<string, string>) => {
-    const next = new URLSearchParams(params);
-    next.set("category", category);
+    // Apply onto the latest params, including a change that has not re-rendered
+    // yet. Two quick updates otherwise share one snapshot and the second drops
+    // the first (search, then compact list).
+    const next = new URLSearchParams(paramsRef.current);
+    next.set("category", next.get("category") || category);
     Object.entries(changes).forEach(([key, value]) =>
       value ? next.set(key, value) : next.delete(key),
     );
+    paramsRef.current = next;
     setParams(next, { replace: true });
   };
   const handleSearch = (event: React.FormEvent) => {
