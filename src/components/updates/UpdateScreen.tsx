@@ -59,7 +59,7 @@ export function UpdateScreen({
 
         <aside className="relative isolate min-h-0 overflow-hidden bg-[#2727e6] p-6 text-white sm:p-8 lg:min-h-[620px] lg:p-10">
           <div aria-hidden="true" className="absolute -right-12 -top-16 size-52 rounded-full bg-[#ffda00]" />
-          <div aria-hidden="true" className="absolute -bottom-20 -left-20 size-64 rotate-12 rounded-[56px] bg-[#16ab59]" />
+          <div aria-hidden="true" className="absolute -bottom-40 -left-40 size-64 rotate-12 rounded-[56px] bg-[#16ab59] lg:-bottom-20 lg:-left-20" />
           <div aria-hidden="true" className="absolute bottom-20 right-[-3rem] size-36 rotate-45 bg-[#ffbac4]" />
 
           <div className="relative z-10 flex h-full flex-col justify-between gap-4 lg:gap-10">
@@ -77,11 +77,11 @@ export function UpdateScreen({
               </button>
             </div>
 
-            <div className="max-w-xs">
+            <div className="max-w-xs bg-[#2727e6]">
               <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ffda00]">
                 Release {String(step + 1).padStart(2, '0')} / {String(release.highlights.length).padStart(2, '0')}
               </p>
-              <p aria-hidden="true" className="mt-1 font-sans text-6xl font-medium leading-[0.78] tracking-[-0.08em] text-white/95 lg:mt-2 lg:text-[clamp(5rem,10vw,8.5rem)]">
+              <p aria-hidden="true" className="mt-1 font-sans text-6xl font-medium leading-[0.78] tracking-[-0.08em] text-white lg:mt-2 lg:text-[clamp(5rem,10vw,8.5rem)]">
                 {String(step + 1).padStart(2, '0')}
               </p>
               <p className="mt-7 hidden max-w-[24ch] text-base leading-6 text-white/80 lg:block">{release.summary}</p>
@@ -106,7 +106,7 @@ export function UpdateScreen({
         </aside>
 
         <section className="flex min-h-0 flex-col bg-white">
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-5 pt-8 sm:px-10 sm:pt-10 lg:px-14 lg:pb-8 lg:pt-14">
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-5 pt-8 sm:px-10 sm:pt-10 lg:px-14 lg:pb-8 lg:pt-14" tabIndex={0} aria-label="Release details">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={highlight.title}
