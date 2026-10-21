@@ -34,10 +34,7 @@ export function shuffle<T>(items: T[]): T[] {
   return copy;
 }
 
-/** Ignores case, surrounding space and repeated inner spaces; nothing looser. */
-export function normalizeAnswer(value: string): string {
-  return value.trim().toLowerCase().replace(/\s+/g, ' ');
-}
+export { matchesFlashcardAnswer } from '../../lib/flashcardAnswers';
 
 export function pad2(n: number): string {
   return String(n).padStart(2, '0');
