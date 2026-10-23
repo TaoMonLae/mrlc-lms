@@ -1129,7 +1129,8 @@ export function registerExamPhase2Routes(deps: Deps): void {
       let released = false;
       if (mode === "IMMEDIATE") released = ["SUBMITTED", "AUTO_SUBMITTED", "FINALIZED", "RELEASED"].includes(attempt.state);
       else if (mode === "SCHEDULED") released = !!(policy?.releaseAt && ["SUBMITTED", "AUTO_SUBMITTED", "FINALIZED", "RELEASED"].includes(attempt.state) && now >= new Date(policy.releaseAt).getTime());
-      else if (mode === "AFTER_GRADING") released = ["FINALIZED", "RELEASED"].includes(attempt.state);
+      else if (mode === "AFTER_GRADING") released = ["FINALIZED", "RELEASED"].includes(attempt.state)
+        || (["SUBMITTED", "AUTO_SUBMITTED"].includes(attempt.state) && attempt.gradingStatus === "COMPLETE");
       else if (mode === "HIDDEN") released = false;
 
       if (!released) { res.json({ released: false, state: attempt.state, message: "Results are not available yet." }); return; }
@@ -1170,6 +1171,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
             type: frozen.type,
             points: frozen.points,
             passageText: frozen.passageText ?? null,
+            imageUrl: frozen.imageUrl ?? null,
             explanation: frozen.explanation ?? question.explanation,
             options: correctedKey && question.type === "DRAG_DROP" && frozen.scoringOptions
               ? { ...frozen.scoringOptions, blanks: question.options?.blanks ?? frozen.scoringOptions.blanks }
@@ -1196,6 +1198,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
         };
         const optionLabel = (q: any, value: unknown) => {
           const raw = String(value ?? "");
+          if (!raw.trim()) return null;
           const matched = optionEntries(q).find((option) => option.key === raw);
           if (matched) return matched.label;
           const index = Number(raw);
@@ -1276,12 +1279,13 @@ export function registerExamPhase2Routes(deps: Deps): void {
           });
         };
         questions = reviewQs.map((q: any) => ({
-          id: q.id, text: q.text, passageText: q.passageText ?? null,
+          id: q.id, text: q.text, type: q.type, passageText: q.passageText ?? null, imageUrl: q.imageUrl ?? null,
           ...(showCorrect ? { correctAnswer: correctText(q), correctAnswers: correctAnswers(q) } : {}),
           ...(showExpl ? { explanation: q.explanation } : {}),
           yourAnswer: yourAnswerText(q, ansByQ[q.id]),
           dragDropRows: dragDropRows(q, ansByQ[q.id]),
           pointsAwarded: showScore ? ansByQ[q.id]?.pointsAwarded ?? null : undefined,
+          maxPoints: showScore ? q.points : undefined,
           feedback: showFeedback ? fbByQ[q.id]?.overallComment ?? null : undefined,
         }));
       }
@@ -1661,51 +1665,7 @@ function registerGradingAndOps(deps: any) {
     }
   });
 
-  // Submit / update a manual grade. SECURITY: blocked once finalized.
-  app.post("/api/grading/:attemptId/:questionId", authMiddleware, teacherGuard, attemptExamGuard(), gradingLimiter, async (req: any, res: any) => {
-    const { attemptId, questionId } = req.params; const b = req.body || {};
-    try {
-      const answer = await prisma.examAnswer.findUnique({ where: { attemptId_questionId: { attemptId, questionId } } });
-      if (!answer) { res.status(404).json({ error: "Question is not part of this attempt" }); return; }
-      const attempt = await prisma.examAttempt.findUnique({ where: { id: attemptId } });
-      if (!attempt || !["PENDING_GRADING", "SUBMITTED", "AUTO_SUBMITTED", "FINALIZED", "RELEASED"].includes(attempt.state)) {
-        res.status(409).json({ error: "Only submitted, valid attempts can be graded" }); return;
-      }
-      if (b.status !== undefined && !["PENDING", "IN_REVIEW", "GRADED", "MODERATED"].includes(b.status)) {
-        res.status(400).json({ error: "Invalid grading status" }); return;
-      }
-      const existing = await prisma.manualGrade.findFirst({ where: { attemptId, questionId } });
-      if (existing?.isFinalized) { res.status(409).json({ error: "Grade is finalized and locked" }); return; }
-      // Partial saves preserve feedback and marker assignments the editor did not send.
-      const merged = { ...existing, ...b, status: b.status || "GRADED" };
-      const rubric = merged.rubricId ? await prisma.gradingRubric.findUnique({ where: { id: merged.rubricId }, include: { criteria: true } }) : null;
-      if (merged.rubricId && (!rubric || rubric.examId !== attempt.examId || (rubric.questionId && rubric.questionId !== questionId))) {
-        res.status(400).json({ error: "Rubric does not belong to this exam and question" }); return;
-      }
-      let scores;
-      try { scores = manualGradeScores(merged, Number(answer.maxPoints ?? 0), rubric?.criteria || []); }
-      catch (err: any) { res.status(400).json({ error: err.message }); return; }
-      const data: any = {
-        ...scores, rubricId: merged.rubricId || null,
-        status: merged.status, graderId: user(req).userId,
-      };
-      for (const key of ["inlineFeedback", "overallComment", "overrideReason", "secondMarkerId", "moderationComment"]) {
-        if (b[key] !== undefined) data[key] = b[key] || null;
-      }
-      let grade: any;
-      if (existing) {
-        const updated = await prisma.manualGrade.updateMany({ where: { id: existing.id, isFinalized: false }, data });
-        if (updated.count !== 1) { res.status(409).json({ error: "Grade is finalized and locked" }); return; }
-        grade = await prisma.manualGrade.findUnique({ where: { id: existing.id } });
-      } else {
-        grade = await prisma.manualGrade.create({ data: { attemptId, questionId, ...data } });
-      }
-
-      await createAuditLog(user(req).userId, user(req).email, "GRADE", "MANUAL_GRADE", grade.id, `Graded Q ${questionId} on attempt ${attemptId} (status ${data.status}).`, ipOf(req), uaOf(req), "SUCCESS");
-      res.json(grade);
-    } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
-  });
-
+  // Register the literal /finalize action before the two-parameter save route.
   // Finalize a manual grade → lock + recompute attempt total (transactional).
   app.post("/api/grading/:gradeId/finalize", authMiddleware, teacherGuard, gradingLimiter, async (req: any, res: any) => {
     try {
@@ -1757,6 +1717,51 @@ function registerGradingAndOps(deps: any) {
       if (err?.http) { res.status(err.http).json({ error: err.message }); return; }
       logger.error(err); res.status(500).json({ error: "Internal Server Error" });
     }
+  });
+
+  // Submit / update a manual grade. SECURITY: blocked once finalized.
+  app.post("/api/grading/:attemptId/:questionId", authMiddleware, teacherGuard, attemptExamGuard(), gradingLimiter, async (req: any, res: any) => {
+    const { attemptId, questionId } = req.params; const b = req.body || {};
+    try {
+      const answer = await prisma.examAnswer.findUnique({ where: { attemptId_questionId: { attemptId, questionId } } });
+      if (!answer) { res.status(404).json({ error: "Question is not part of this attempt" }); return; }
+      const attempt = await prisma.examAttempt.findUnique({ where: { id: attemptId } });
+      if (!attempt || !["PENDING_GRADING", "SUBMITTED", "AUTO_SUBMITTED", "FINALIZED", "RELEASED"].includes(attempt.state)) {
+        res.status(409).json({ error: "Only submitted, valid attempts can be graded" }); return;
+      }
+      if (b.status !== undefined && !["PENDING", "IN_REVIEW", "GRADED", "MODERATED"].includes(b.status)) {
+        res.status(400).json({ error: "Invalid grading status" }); return;
+      }
+      const existing = await prisma.manualGrade.findFirst({ where: { attemptId, questionId } });
+      if (existing?.isFinalized) { res.status(409).json({ error: "Grade is finalized and locked" }); return; }
+      // Partial saves preserve feedback and marker assignments the editor did not send.
+      const merged = { ...existing, ...b, status: b.status || "GRADED" };
+      const rubric = merged.rubricId ? await prisma.gradingRubric.findUnique({ where: { id: merged.rubricId }, include: { criteria: true } }) : null;
+      if (merged.rubricId && (!rubric || rubric.examId !== attempt.examId || (rubric.questionId && rubric.questionId !== questionId))) {
+        res.status(400).json({ error: "Rubric does not belong to this exam and question" }); return;
+      }
+      let scores;
+      try { scores = manualGradeScores(merged, Number(answer.maxPoints ?? 0), rubric?.criteria || []); }
+      catch (err: any) { res.status(400).json({ error: err.message }); return; }
+      const data: any = {
+        ...scores, rubricId: merged.rubricId || null,
+        status: merged.status, graderId: user(req).userId,
+      };
+      for (const key of ["inlineFeedback", "overallComment", "overrideReason", "secondMarkerId", "moderationComment"]) {
+        if (b[key] !== undefined) data[key] = b[key] || null;
+      }
+      let grade: any;
+      if (existing) {
+        const updated = await prisma.manualGrade.updateMany({ where: { id: existing.id, isFinalized: false }, data });
+        if (updated.count !== 1) { res.status(409).json({ error: "Grade is finalized and locked" }); return; }
+        grade = await prisma.manualGrade.findUnique({ where: { id: existing.id } });
+      } else {
+        grade = await prisma.manualGrade.create({ data: { attemptId, questionId, ...data } });
+      }
+
+      await createAuditLog(user(req).userId, user(req).email, "GRADE", "MANUAL_GRADE", grade.id, `Graded Q ${questionId} on attempt ${attemptId} (status ${data.status}).`, ipOf(req), uaOf(req), "SUCCESS");
+      res.json(grade);
+    } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
   // Release results for an exam (bulk) → flips eligible attempts to RELEASED.

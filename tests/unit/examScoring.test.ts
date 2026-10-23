@@ -43,3 +43,11 @@ test('restored single-choice and numeric answers are scored despite empty choice
   assert.equal(scoreExamObjective({ type: 'NUMERIC', points: 2, correctAnswer: '10', numericTolerance: 0.2 }, { answerText: '10.1', selectedOptions: [] }).score, 2);
   assert.equal(scoreExamObjective({ type: 'MCQ', points: 4, correctAnswer: 'correct' }, { answerText: '', selectedOptions: [] }).score, 0);
 });
+
+test('negative marking applies equally to text and choice-array submissions', () => {
+  const question = { type: 'MCQ', points: 4, correctAnswer: 'right', negativePoints: 1 };
+  assert.equal(scoreExamObjective(question, { selectedOptions: ['wrong'] }).score, -1);
+  assert.equal(scoreExamObjective(question, { selectedOptions: ['right'] }).score, 4);
+  assert.equal(scoreExamObjective(question, { selectedOptions: [] }).score, 0);
+  assert.equal(scoreExamObjective({ ...question, minScore: -0.5 }, { selectedOptions: ['wrong'] }).score, -0.5);
+});

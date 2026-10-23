@@ -24,4 +24,14 @@ test('drag correction keeps the word bank and rescores against frozen bank order
   assert.throws(() => correctionData(original, { questionId: 'q', blankAnswers: ['invented'] }), /word bank/);
   const frozen = { points: 3, scoringOptions: original.options };
   assert.deepEqual(scoreWithCorrectedKey({ ...original, ...data }, { selectedOptions: { b0: '1' } }, frozen), { score: 3, correct: true, manual: false });
+  assert.deepEqual(scoreWithCorrectedKey({ ...original, ...data }, { selectedOptions: { b0: '0' } }, frozen), { score: 0, correct: false, manual: false });
+});
+
+test('correcting multiple drag blanks preserves every original tile identity', () => {
+  const original = { type: 'DRAG_DROP', points: 4, partialCredit: true, options: { blanks: [{ id: 'a', answer: 'red' }, { id: 'b', answer: 'blue' }], distractors: ['green'] } };
+  const corrected = { ...original, ...correctionData(original, { questionId: 'q', blankAnswers: ['blue', 'green'] }) };
+  const frozen = { points: 4, scoringOptions: original.options };
+  assert.equal(scoreWithCorrectedKey(corrected, { selectedOptions: { a: '1', b: '2' } }, frozen).score, 4);
+  assert.equal(scoreWithCorrectedKey(corrected, { selectedOptions: { a: '0', b: '1' } }, frozen).score, 0);
+  assert.equal(scoreWithCorrectedKey(corrected, { selectedOptions: { a: '1', b: '0' } }, frozen).score, 2);
 });

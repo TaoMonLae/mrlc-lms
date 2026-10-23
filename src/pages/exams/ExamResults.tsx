@@ -52,13 +52,14 @@ function TeacherReview({ examId }: { examId: string }) {
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
   const [search, setSearch] = useState('');
-  const [questionFilter, setQuestionFilter] = useState<'all' | 'attention'>('all');
+  const [questionFilter, setQuestionFilter] = useState<'all' | 'attention' | 'pending'>('all');
   const [params, setParams] = useSearchParams();
 
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError('');
+    setData(null);
     apiGet<ReviewData>(`/api/exams/${examId}/results`, { signal: controller.signal })
       .then(result => { if (!controller.signal.aborted) setData(result); })
       .catch((cause: Error) => { if (!controller.signal.aborted) setError(cause.message || 'Could not load student answers.'); })
@@ -69,7 +70,7 @@ function TeacherReview({ examId }: { examId: string }) {
   const attempts = data?.attempts ?? [];
   const selected = attempts.find(attempt => attempt.id === params.get('attemptId')) ?? attempts[0] ?? null;
   const filteredAttempts = attempts.filter(attempt => `${attempt.studentName} ${attempt.studentCode}`.toLowerCase().includes(search.toLowerCase().trim()));
-  const questions = useMemo(() => selected?.questions.filter(question => questionFilter === 'all' || needsAttention(question)) ?? [], [selected, questionFilter]);
+  const questions = useMemo(() => selected?.questions.filter(question => questionFilter === 'all' || (questionFilter === 'pending' ? question.status === 'PENDING' : needsAttention(question))) ?? [], [selected, questionFilter]);
   const incorrectCount = selected?.questions.filter(needsAttention).length ?? 0;
   const pendingCount = selected?.questions.filter(question => question.status === 'PENDING').length ?? 0;
   const correctCount = selected?.questions.filter(question => question.status === 'CORRECT').length ?? 0;
@@ -141,12 +142,13 @@ function TeacherReview({ examId }: { examId: string }) {
             </section>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="font-semibold text-foreground">Question review <span className="font-normal text-muted-foreground">{questions.length} of {selected.questions.length}</span></h2>
-              <div className="inline-flex rounded-sm border border-border bg-card p-1" aria-label="Filter questions">
-                <button type="button" onClick={() => setQuestionFilter('all')} aria-pressed={questionFilter === 'all'} className={`rounded-sm px-3 py-1.5 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-ring ${questionFilter === 'all' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>All questions</button>
-                <button type="button" onClick={() => setQuestionFilter('attention')} aria-pressed={questionFilter === 'attention'} className={`rounded-sm px-3 py-1.5 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-ring ${questionFilter === 'attention' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Incorrect & partial ({incorrectCount})</button>
+              <div className="inline-flex flex-wrap gap-1 rounded-sm border border-border bg-card p-1" aria-label="Filter questions">
+                <button type="button" onClick={() => setQuestionFilter('all')} aria-pressed={questionFilter === 'all'} className={`min-h-11 rounded-sm px-3 py-1.5 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-ring ${questionFilter === 'all' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>All questions</button>
+                <button type="button" onClick={() => setQuestionFilter('attention')} aria-pressed={questionFilter === 'attention'} className={`min-h-11 rounded-sm px-3 py-1.5 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-ring ${questionFilter === 'attention' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Incorrect & partial ({incorrectCount})</button>
+                <button type="button" onClick={() => setQuestionFilter('pending')} aria-pressed={questionFilter === 'pending'} className={`min-h-11 rounded-sm px-3 py-1.5 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-ring ${questionFilter === 'pending' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Pending grading ({pendingCount})</button>
               </div>
             </div>
-            {!questions.length && <div className="rounded-sm border border-border bg-card px-6 py-10 text-center text-sm text-muted-foreground">{questionFilter === 'attention' ? 'No incorrect or partially correct answers in this attempt.' : 'No answers are available for this attempt.'}</div>}
+            {!questions.length && <div className="rounded-sm border border-border bg-card px-6 py-10 text-center text-sm text-muted-foreground">{questionFilter === 'pending' ? 'All responses in this attempt have been graded.' : questionFilter === 'attention' ? 'No incorrect or partially correct answers in this attempt.' : 'No answers are available for this attempt.'}</div>}
             <div className="space-y-3">
               {questions.map(question => <article key={question.id} className="rounded-sm border border-border bg-card p-5 sm:p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
@@ -158,6 +160,7 @@ function TeacherReview({ examId }: { examId: string }) {
                 {question.imageUrl && <img src={question.imageUrl} alt="Question illustration" className="mt-4 max-h-72 max-w-full rounded-sm border border-border object-contain" />}
                 {question.blankRows.length > 0 ? <div className="mt-5 space-y-2">{question.blankRows.map(row => <div key={row.label} className="grid gap-2 border-t border-border pt-2 text-sm sm:grid-cols-[100px_1fr_1fr]"><span className="font-semibold text-muted-foreground">{row.label}</span><span><span className="block text-xs text-muted-foreground">Student answer</span>{row.student || 'No answer'}</span><span><span className="block text-xs text-muted-foreground">Correct answer</span><span className="font-medium text-emerald-700 dark:text-emerald-300">{row.correct}</span></span></div>)}</div> : <div className="mt-5 grid gap-3 sm:grid-cols-2"><div className="min-w-0 rounded-sm border border-border bg-muted/25 p-4"><p className="text-[11px] font-bold uppercase tracking-[.12em] text-muted-foreground">Student answer</p><p className="mt-2 whitespace-pre-wrap break-words text-sm text-foreground">{question.studentAnswer || 'No answer submitted'}</p></div><div className="min-w-0 rounded-sm border border-border bg-muted/25 p-4"><p className="text-[11px] font-bold uppercase tracking-[.12em] text-muted-foreground">{question.status === 'GRADED' || question.status === 'PENDING' ? 'Model answer' : 'Correct answer'}</p><p className="mt-2 whitespace-pre-wrap break-words text-sm font-medium text-emerald-700 dark:text-emerald-300">{question.correctAnswer || 'No answer key available'}</p></div></div>}
                 {question.explanation && <div className="mt-4 border-t border-border pt-3 text-sm text-muted-foreground"><span className="font-semibold text-foreground">Explanation: </span><MathText text={question.explanation} /></div>}
+                {question.status === 'PENDING' && <Button className="mt-4" variant="outline" render={<Link to={`/exam2/grade/${selected.id}/${question.id}?examId=${examId}&status=ALL`} />} nativeButton={false}>Grade this response</Button>}
               </article>)}
             </div>
           </main>}
