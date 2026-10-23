@@ -94,6 +94,29 @@ test('result-policy database failures do not release marks or answers', async ()
   assert.equal(data.questions, undefined);
 });
 
+test('after-grading policy releases fully auto-graded submissions', async () => {
+  for (const state of ['SUBMITTED', 'AUTO_SUBMITTED']) {
+    const h = harness({
+      examAttempt: { findUnique: async () => ({ id: 'a1', studentId: 's1', examId: 'e1', state, gradingStatus: 'COMPLETE', score: 5, exam: { totalMarks: 5 }, answers: [] }) },
+      examResultPolicy: { findUnique: async () => ({ releaseMode: 'AFTER_GRADING', showTeacherFeedback: false }) },
+    });
+    const { status, data } = await h.invoke('get', '/api/attempts/:attemptId/result');
+    assert.equal(status, 200);
+    assert.equal(data.released, true);
+    assert.equal(data.score, 5);
+  }
+});
+
+test('student review never turns an unanswered MCQ into its first option', async () => {
+  const h = harness({
+    examAttempt: { findUnique: async () => ({ id: 'a1', studentId: 's1', examId: 'e1', state: 'FINALIZED', exam: {}, answers: [{ questionId: 'q', answerText: '', selectedOptions: [] }], frozenContent: [{ id: 'q', type: 'MCQ', text: 'Pick', options: [{ key: 'Alpha', text: 'Alpha' }], correctAnswer: 'Alpha' }] }) },
+    examResultPolicy: { findUnique: async () => ({ releaseMode: 'IMMEDIATE', showTeacherFeedback: false, showCorrectAnswers: true }) },
+    question: { findMany: async () => [{ id: 'q', type: 'MCQ', options: ['Alpha'] }] },
+  });
+  const { data } = await h.invoke('get', '/api/attempts/:attemptId/result');
+  assert.equal(data.questions[0].yourAnswer, null);
+});
+
 for (const state of ['INVALIDATED', 'IN_PROGRESS', 'PAUSED', 'PENDING_GRADING']) {
   test(`scheduled release does not expose ${state} attempts`, async () => {
     const h = harness({

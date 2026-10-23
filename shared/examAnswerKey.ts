@@ -75,5 +75,6 @@ export function scoreWithCorrectedKey(question: any, answer: any, frozen?: any) 
       return frozen || Array.isArray(answer?.selectedOptions) ? [label] : [value, label];
     });
   }
-  return scoreExamObjective(source, answer);
+  return scoreExamObjective(source, answer,
+    question.type === 'DRAG_DROP' && frozen?.scoringOptions ? dragDropBank(frozen.scoringOptions) : undefined);
 }

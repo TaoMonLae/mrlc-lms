@@ -17,7 +17,7 @@ export function dragDropBank(options: any): DragBankItem[] {
   return labels.map((label, index) => ({ key: String(index), label }));
 }
 
-export function scoreExamObjective(question: any, answer: any): ExamScoreResult {
+export function scoreExamObjective(question: any, answer: any, originalDragBank?: DragBankItem[]): ExamScoreResult {
   const maximum = Number.isFinite(Number(question.points)) ? Math.max(0, Number(question.points)) : 0;
   const configuredFloor = question.minScore == null ? null : Number(question.minScore);
   const lowerBound = configuredFloor != null && Number.isFinite(configuredFloor)
@@ -40,7 +40,9 @@ export function scoreExamObjective(question: any, answer: any): ExamScoreResult 
   if (question.type === "DRAG_DROP") {
     const blanks: DragBlank[] = question.options && !Array.isArray(question.options) && Array.isArray(question.options.blanks)
       ? question.options.blanks : [];
-    const bank = dragDropBank(question.options);
+    // Key corrections change blank answers, but the submitted tile IDs still
+    // refer to the bank shown when the student started the attempt.
+    const bank = originalDragBank ?? dragDropBank(question.options);
     const bankLabels = Object.fromEntries(bank.map((item) => [item.key, item.label]));
     const placements = answer?.selectedOptions && !Array.isArray(answer.selectedOptions) && typeof answer.selectedOptions === "object"
       ? answer.selectedOptions as Record<string, unknown> : {};
@@ -74,7 +76,7 @@ export function scoreExamObjective(question: any, answer: any): ExamScoreResult 
         const weight = Number(weights[option]);
         return sum + (Number.isFinite(weight) ? weight : 0);
       }, 0);
-      const score = question.partialCredit ? raw * maximum : (exact ? maximum : 0);
+      const score = question.partialCredit ? raw * maximum : (exact ? maximum : wrongScore());
       const correct = acceptedSet.size ? exact : clamp(score) >= maximum;
       return { score: clamp(score), correct, manual: false };
     }
@@ -82,7 +84,7 @@ export function scoreExamObjective(question: any, answer: any): ExamScoreResult 
     if (acceptedSet.size) {
       const score = question.partialCredit
         ? maximum * Math.max(0, (correctChosen - wrongChosen) / acceptedSet.size)
-        : (exact ? maximum : 0);
+        : (exact ? maximum : wrongScore());
       return { score: clamp(score), correct: exact, manual: false };
     }
     return { score: 0, correct: false, manual: false };

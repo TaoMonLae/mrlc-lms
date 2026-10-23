@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { apiGet } from '../../lib/api';
 import { CheckCircle2, Clock, XCircle } from 'lucide-react';
+import MathText from '../../components/MathText';
 
 export default function ExamResultView() {
   const { attemptId } = useParams();
@@ -36,7 +37,7 @@ export default function ExamResultView() {
           ? 'Your answers are submitted. Results appear here once marking and release are complete.'
           : 'Return to your exams to check the status of this attempt.'}
       </p>
-      <Button onClick={() => navigate('/student/exams')}>Back to my exams</Button>
+      <div className="flex flex-wrap justify-center gap-2"><Button variant="outline" onClick={() => setRetry(n => n + 1)}>Check for results</Button><Button onClick={() => navigate('/student/exams')}>Back to my exams</Button></div>
     </div>
   );
 
@@ -52,20 +53,23 @@ export default function ExamResultView() {
       </div>
       {Array.isArray(data.questions) && data.questions.length > 0 && (
         <div className="space-y-3">
-          {data.questions.map((q: any) => (
-            <div key={q.id} className="bg-card border border-border rounded-sm p-5">
+          <h2 className="text-lg font-semibold">Answer review</h2>
+          {data.questions.map((q: any, index: number) => (
+            <article key={q.id} aria-label={`Question ${index + 1}`} className="bg-card border border-border rounded-sm p-5 min-w-0 break-words">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm"><h3 className="font-semibold">Question {index + 1}</h3>{q.pointsAwarded != null && <span className="tabular-nums text-muted-foreground">{q.pointsAwarded}{q.maxPoints != null ? ` / ${q.maxPoints}` : ''} pts</span>}</div>
               {q.passageText && (
                 <div className="mb-4 p-3 bg-muted/50 rounded-lg border border-border max-h-48 overflow-y-auto text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
                   <span className="font-bold block mb-1 uppercase tracking-wider text-[11px] text-muted-foreground">Passage</span>
-                  {q.passageText}
+                  <MathText text={q.passageText} />
                 </div>
               )}
-              <p className="font-medium text-foreground">{q.text}</p>
+              <p className="font-medium text-foreground whitespace-pre-wrap"><MathText text={q.text} /></p>
+              {q.imageUrl && <img src={q.imageUrl} alt="Question illustration" className="mt-3 max-h-80 max-w-full object-contain" />}
               {Array.isArray(q.dragDropRows) && q.dragDropRows.length > 0 ? (
                 <div className="mt-3 flex flex-col gap-2">
                   {q.dragDropRows.map((row: any, i: number) => (
                     <div key={i} className="flex flex-wrap items-center gap-2 text-sm">
-                      <span className={row.isCorrect ? 'font-black text-emerald-600' : 'font-black text-red-500'}>{row.isCorrect ? '✓' : '✕'}</span>
+                      {row.isCorrect ? <CheckCircle2 aria-label="Correct" className="h-4 w-4 text-emerald-700 dark:text-emerald-300" /> : <XCircle aria-label="Incorrect" className="h-4 w-4 text-destructive" />}
                       <span className="min-w-[70px] text-muted-foreground">{row.label}</span>
                       <span className={row.isCorrect ? 'font-semibold text-emerald-600' : row.your ? 'font-semibold text-red-500' : 'font-semibold text-muted-foreground'}>{row.your || '—'}</span>
                       {!row.isCorrect && <><span className="text-muted-foreground">→ correct:</span><span className="font-bold text-emerald-600">{row.correct}</span></>}
@@ -74,14 +78,13 @@ export default function ExamResultView() {
                 </div>
               ) : (
                 <>
-                  <p className="text-sm text-muted-foreground mt-2">Your answer: <span className="font-semibold">{q.yourAnswer || '—'}</span></p>
-                  {q.correctAnswer != null && <p className="text-sm text-emerald-600 mt-1">Correct: {q.correctAnswer}</p>}
+                  <p className="text-sm text-muted-foreground mt-3">Your answer</p><p className="mt-1 whitespace-pre-wrap leading-relaxed">{q.yourAnswer || 'No answer submitted'}</p>
+                  {q.correctAnswer != null && <div className="mt-3"><p className="text-sm text-muted-foreground">{['ESSAY', 'WRITTEN', 'EXTENDED', 'SHORT_ANSWER'].includes(q.type) ? 'Model answer' : 'Correct answer'}</p><p className="mt-1 whitespace-pre-wrap text-emerald-700 dark:text-emerald-300"><MathText text={q.correctAnswer} /></p></div>}
                 </>
               )}
-              {q.explanation && <p className="text-xs text-muted-foreground mt-2 italic">{q.explanation}</p>}
-              {q.feedback && <p className="text-xs text-aubergine-600 mt-2">Teacher: {q.feedback}</p>}
-              {q.pointsAwarded != null && <p className="text-xs font-bold text-muted-foreground mt-2">{q.pointsAwarded} pts</p>}
-            </div>
+              {q.explanation && <div className="text-sm text-muted-foreground mt-3 whitespace-pre-wrap"><span className="font-semibold">Explanation: </span><MathText text={q.explanation} /></div>}
+              {q.feedback && <div className="mt-4 border-t border-border pt-3"><h3 className="text-sm font-semibold">Teacher feedback</h3><p className="mt-1 whitespace-pre-wrap leading-relaxed">{q.feedback}</p></div>}
+            </article>
           ))}
         </div>
       )}

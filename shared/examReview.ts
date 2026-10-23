@@ -23,6 +23,7 @@ function optionsFor(question: any, frozen: any): ReviewOption[] {
 
 function labelFor(value: unknown, options: ReviewOption[]): string {
   const raw = String(value ?? '');
+  if (!raw.trim()) return '';
   const direct = options.find(option => option.key === raw || option.label === raw);
   if (direct) return direct.label;
   const index = Number(raw);
@@ -45,7 +46,7 @@ export function buildExamReviewQuestions(answers: any[], frozenContent: unknown,
     const options = optionsFor(current, snapshot);
     const corrected = Boolean(current?.answerKeyCorrectedAt);
     const key = corrected || !snapshot ? current : snapshot;
-    const answerValues = Array.isArray(answer?.selectedOptions)
+    const answerValues = Array.isArray(answer?.selectedOptions) && answer.selectedOptions.length > 0
       ? answer.selectedOptions.map(String)
       : answer?.answerText == null || String(answer.answerText).trim() === '' ? [] : [String(answer.answerText)];
     let accepted = Array.isArray(key?.correctAnswers) && key.correctAnswers.length

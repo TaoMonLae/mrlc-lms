@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { apiGet, apiSend } from '../../lib/api';
 import { Lock } from 'lucide-react';
 import { manualGradeScores } from '../../../shared/examGrading';
+import MathText from '../../components/MathText';
 
 const emptyForm = { score: '', overallComment: '', scoreOverride: '', overrideReason: '', secondMarkerScore: '', moderationComment: '' };
 export default function RubricGrading() {
@@ -22,10 +23,11 @@ export default function RubricGrading() {
   const saving = useRef(false);
   const [dirty, setDirty] = useState(false);
   const [savedMessage, setSavedMessage] = useState('');
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
     const controller = new AbortController();
-    setItem(null); setError(''); setCrit({}); setForm(emptyForm); setDirty(false); setSavedMessage('');
+    setItem(null); setError(''); setCrit({}); setForm(emptyForm); setDirty(false); setSavedMessage(''); setSaveError('');
     const qs = new URLSearchParams({ status: 'ALL' });
     if (params.get('examId')) qs.set('examId', params.get('examId')!);
     apiGet(`/api/grading/queue?${qs}`, { signal: controller.signal }).then((rows: any[]) => {
@@ -51,15 +53,18 @@ export default function RubricGrading() {
   const change = (key: string, value: string) => { setForm((current: any) => ({ ...current, [key]: value })); setDirty(true); setSavedMessage(''); };
   const save = async (status: string, finalize = false) => {
     if (saving.current || locked) return;
+    setSaveError('');
     let scores;
     try { scores = manualGradeScores({ ...form, status, criterionScores: crit }, maxPoints, criteria); }
-    catch (e: any) { toast.error(e.message); return; }
+    catch (e: any) { setSaveError(e.message); return; }
     if (finalize && !confirm('Finalize locks this grade and updates the attempt total. Continue?')) return;
     saving.current = true; setBusy(true);
+    let gradeSaved = false;
     try {
       const saved = await apiSend(`/api/grading/${attemptId}/${questionId}`, 'POST', { ...form, ...scores, status, rubricId: item.rubric?.id || null });
       setItem((current: any) => ({ ...current, ...saved }));
       setDirty(false);
+      gradeSaved = true;
       setSavedMessage(status === 'IN_REVIEW' ? 'Draft saved. You can return to finish marking.' : 'Grade saved. Finalize when marking is complete.');
       if (finalize) {
         await apiSend(`/api/grading/${saved.id}/finalize`, 'POST');
@@ -67,7 +72,11 @@ export default function RubricGrading() {
         setSavedMessage('Grade finalized and locked. Return to the queue to mark the next response.');
       }
       toast.success(finalize ? 'Grade finalized' : 'Saved');
-    } catch (e: any) { toast.error(e.message || 'Save failed'); }
+    } catch (e: any) {
+      setSaveError(gradeSaved && finalize
+        ? `Your grade was saved, but finalization failed. ${e.message || 'Check your connection.'} You can retry Finalize.`
+        : `Could not save your marking. ${e.message || 'Check your connection and retry.'} Your changes are still here.`);
+    }
     finally { saving.current = false; setBusy(false); }
   };
   const numberField = (key: string, label: string) => <div className="space-y-2"><Label htmlFor={key}>{label}</Label><Input id={key} type="number" min={0} max={maxPoints} step="any" value={form[key]} onChange={e => change(key, e.target.value)} /></div>;
@@ -77,7 +86,7 @@ export default function RubricGrading() {
       {error ? <div role="alert" className="rounded-lg border border-destructive/40 p-5"><p>{error}</p><Button variant="outline" className="mt-3" onClick={() => setRetry(n => n + 1)}>Retry</Button></div> : !item ? <p role="status" className="py-16 text-center text-muted-foreground">Loading response…</p> : <>
         <header className="space-y-1"><p className="text-sm text-muted-foreground">{item.attempt?.exam?.title}</p><h1 className="text-2xl font-bold">Grade response</h1><p>{[item.attempt?.student?.user?.firstName, item.attempt?.student?.user?.lastName].filter(Boolean).join(' ') || item.attempt?.student?.studentCode || 'Student'} · {maxPoints} points available</p></header>
         <section className="bg-card border border-border rounded-lg p-5 space-y-4">
-          <div><h2 className="text-sm font-semibold text-muted-foreground mb-2">Question</h2><p className="whitespace-pre-wrap break-words">{item.question?.text || 'Question unavailable'}</p>{item.question?.passageText && <p className="mt-3 whitespace-pre-wrap break-words text-sm text-muted-foreground">{item.question.passageText}</p>}{item.question?.imageUrl && <img src={item.question.imageUrl} alt="Question illustration" className="mt-3 max-h-80 max-w-full object-contain" />}</div>
+          <div><h2 className="text-sm font-semibold text-muted-foreground mb-2">Question</h2><p className="whitespace-pre-wrap break-words"><MathText text={item.question?.text || 'Question unavailable'} /></p>{item.question?.passageText && <p className="mt-3 whitespace-pre-wrap break-words text-sm text-muted-foreground"><MathText text={item.question.passageText} /></p>}{item.question?.imageUrl && <img src={item.question.imageUrl} alt="Question illustration" className="mt-3 max-h-80 max-w-full object-contain" />}</div>
           <div className="border-t border-border pt-4"><h2 className="text-sm font-semibold text-muted-foreground mb-2">Student answer</h2><p className="whitespace-pre-wrap break-words">{item.answer?.answerText || 'No written answer submitted.'}</p></div>
         </section>
         {locked && <div className="flex items-center gap-2 text-sm rounded-lg bg-muted p-3"><Lock className="h-4 w-4" /> This grade is finalized and locked.</div>}
@@ -89,6 +98,7 @@ export default function RubricGrading() {
           <p className="text-sm text-muted-foreground">Save a draft to continue later. Finalizing locks the mark and updates the attempt total; releasing results is a separate step.</p>
           <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => save('IN_REVIEW')}>Save draft</Button><Button onClick={() => save('GRADED')}>Save grade</Button><Button variant="outline" onClick={() => save('GRADED', true)}><Lock className="h-4 w-4 mr-1" /> Finalize</Button></div>
         </fieldset>
+        {saveError && <p role="alert" className="rounded-sm border border-destructive/40 p-3 text-sm text-destructive">{saveError}</p>}
         <p role="status" className="text-sm text-muted-foreground">{busy ? 'Saving…' : dirty ? 'Unsaved marking changes' : savedMessage}</p>
       </>}
     </div>

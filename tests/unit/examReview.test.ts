@@ -45,3 +45,20 @@ test('review shows each drag-and-drop blank against a corrected answer', () => {
   assert.equal(result.blankRows[0].student, 'new');
   assert.equal(result.status, 'CORRECT');
 });
+
+test('staff review retains text answers when the saved choice list is empty', () => {
+  const [result] = buildExamReviewQuestions(
+    [{ questionId: 'essay', answerText: 'First paragraph.\nSecond paragraph.', selectedOptions: [], pointsAwarded: null }],
+    [{ id: 'essay', type: 'ESSAY', points: 5 }], [],
+  ) as any[];
+  assert.equal(result.studentAnswer, 'First paragraph.\nSecond paragraph.');
+  assert.equal(result.status, 'PENDING');
+});
+
+test('blank answers never display the first option as a student response', () => {
+  const [result] = buildExamReviewQuestions(
+    [{ questionId: 'q', answerText: '', selectedOptions: [] }],
+    [{ id: 'q', type: 'MCQ', options: [{ key: 'A', text: 'Alpha' }] }], [],
+  ) as any[];
+  assert.equal(result.studentAnswer, null);
+});
