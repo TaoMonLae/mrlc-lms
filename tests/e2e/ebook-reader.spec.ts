@@ -33,7 +33,10 @@ async function epubFixture() {
   return zip.generateAsync({ type: 'nodebuffer' });
 }
 
-async function fixture(page: Page, format: 'PDF' | 'EPUB', savedPage = '1') {
+async function fixture(page: Page, format: 'PDF' | 'EPUB', savedPage = '1', options?: {
+  contentDelayMs?: number;
+  requestEvents?: string[];
+}) {
   const user = { id: 'reader-teacher', role: 'TEACHER', firstName: 'Teacher', lastName: 'Reader', name: 'Teacher Reader', isActive: true, cursorEffect: 'NONE' };
   const body = format === 'PDF' ? await pdfFixture() : await epubFixture();
   const writes: { location: string; percent: number }[] = [];
@@ -42,15 +45,19 @@ async function fixture(page: Page, format: 'PDF' | 'EPUB', savedPage = '1') {
     sessionStorage.setItem('auth_user', JSON.stringify(user));
     localStorage.setItem(`mrlc:release-seen:${user.id}`, release);
   }, { user, release: CURRENT_RELEASE.id });
-  await page.route('**/api/**', route => {
+  await page.route('**/api/**', async route => {
     const path = new URL(route.request().url()).pathname;
     if (path === '/api/auth/me') return route.fulfill({ json: { user } });
     if (path.endsWith('/stream')) return route.fulfill({ contentType: 'text/event-stream', body: ': fixture\n\n' });
     if (path === '/api/ebooks/reader-fixture/content') {
       expect(route.request().headers().authorization).toBe('Bearer reader-test');
+      options?.requestEvents?.push('content-start');
+      if (options?.contentDelayMs) await new Promise(resolve => setTimeout(resolve, options.contentDelayMs));
+      options?.requestEvents?.push('content-finished');
       return route.fulfill({ body, contentType: format === 'PDF' ? 'application/pdf' : 'application/epub+zip' });
     }
     if (path === '/api/ebooks/reader-fixture/progress') {
+      options?.requestEvents?.push('progress');
       if (route.request().method() === 'PUT') writes.push(route.request().postDataJSON());
       return route.fulfill({ json: { location: format === 'PDF' ? savedPage : '', percent: null } });
     }
@@ -60,6 +67,14 @@ async function fixture(page: Page, format: 'PDF' | 'EPUB', savedPage = '1') {
   await page.goto('/elibrary/reader-fixture/read');
   return writes;
 }
+
+test('EPUB requests saved position while the archive downloads', async ({ page }) => {
+  const requestEvents: string[] = [];
+  await fixture(page, 'EPUB', '1', { contentDelayMs: 800, requestEvents });
+  await expect(page.getByRole('button', { name: 'Next page', exact: true })).toBeEnabled();
+  expect(requestEvents.indexOf('progress')).toBeGreaterThanOrEqual(0);
+  expect(requestEvents.indexOf('progress')).toBeLessThan(requestEvents.indexOf('content-finished'));
+});
 
 test('PDF scrolls through pages, resumes correctly, handles keys and bounds rendering', async ({ page }, info) => {
   const writes = await fixture(page, 'PDF', '3');

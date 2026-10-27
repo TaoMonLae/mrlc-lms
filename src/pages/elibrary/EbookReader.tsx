@@ -5,7 +5,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 // import yields a Worker constructor that works in both dev and build, with the
 // correct module type and matching version (and stays same-origin for CSP).
 import PdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?worker';
-import ePub, { type Book, type Rendition } from 'epubjs';
+import type { Book, Rendition } from 'epubjs';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import {
@@ -140,11 +140,35 @@ function LazyPdfPage({ pageNumber, width, height, aspectRatio, root, thumbnail =
 
 async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}, timeoutMs = 30000) {
   const controller = new AbortController();
+  const onAbort = () => controller.abort();
+  if (init.signal?.aborted) controller.abort();
+  else init.signal?.addEventListener('abort', onAbort, { once: true });
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetch(input, { ...init, signal: controller.signal });
   } finally {
     window.clearTimeout(timeout);
+    init.signal?.removeEventListener('abort', onAbort);
+  }
+}
+
+async function fetchEpubBuffer(id: string, token: string, signal: AbortSignal): Promise<ArrayBuffer> {
+  const controller = new AbortController();
+  const onAbort = () => controller.abort();
+  if (signal.aborted) controller.abort();
+  else signal.addEventListener('abort', onAbort, { once: true });
+  // Keep the timeout active through the body download, not just the headers.
+  const timeout = window.setTimeout(() => controller.abort(), 90_000);
+  try {
+    const response = await fetch(`/api/ebooks/${id}/content`, {
+      headers: authHeaders(token),
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error('Could not load the book file.');
+    return await response.arrayBuffer();
+  } finally {
+    window.clearTimeout(timeout);
+    signal.removeEventListener('abort', onAbort);
   }
 }
 
@@ -201,7 +225,7 @@ export default function EbookReader() {
   const canMakeFlashcards = user?.role === 'ADMIN' || user?.role === 'TEACHER';
 
   const [meta, setMeta] = useState<EbookMeta | null>(null);
-  const [epubBlob, setEpubBlob] = useState<Blob | null>(null);
+  const [epubData, setEpubData] = useState<{ buffer: ArrayBuffer; savedLocation: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -335,6 +359,7 @@ export default function EbookReader() {
   // can start rendering without waiting for a full blob download.
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     (async () => {
       try {
         if (!id) throw new Error('This e-book is not available.');
@@ -343,20 +368,23 @@ export default function EbookReader() {
         setLoading(true);
         setError(null);
         setMeta(null);
-        setEpubBlob(null);
+        setEpubData(null);
 
         const headers = { Authorization: `Bearer ${token}` };
-        const metaRes = await fetchWithTimeout(`/api/ebooks/${id}`, { headers });
+        const metaRes = await fetchWithTimeout(`/api/ebooks/${id}`, { headers, signal: controller.signal });
         if (!metaRes.ok) throw new Error('This e-book is not available.');
         const m: EbookMeta = await metaRes.json();
-
-        if (!cancelled) setMeta(m);
+        if (cancelled) return;
+        setMeta(m);
 
         if (m.format.toUpperCase() === 'EPUB') {
-          const fileRes = await fetchWithTimeout(`/api/ebooks/${id}/content`, { headers }, 90000);
-          if (!fileRes.ok) throw new Error('Could not load the book file.');
-          const b = await fileRes.blob();
-          if (!cancelled) setEpubBlob(b);
+          // The archive, saved position, and EPUB engine can load together.
+          const [buffer, progress] = await Promise.all([
+            fetchEpubBuffer(id, token, controller.signal),
+            fetchProgress(id, token),
+            import('epubjs'),
+          ]);
+          if (!cancelled) setEpubData({ buffer, savedLocation: progress?.location || null });
         }
       } catch (e: any) {
         if (!cancelled) {
@@ -367,7 +395,7 @@ export default function EbookReader() {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; controller.abort(); };
   }, [id, token]);
 
   const handleDownload = async () => {
@@ -468,8 +496,8 @@ export default function EbookReader() {
               Back to E-Library
             </Button>
           </div>
-        ) : meta && meta.format.toUpperCase() === 'EPUB' && epubBlob ? (
-          <EpubView id={meta.id} token={token} blob={epubBlob} bookTitle={meta.title} canMakeFlashcards={canMakeFlashcards} isFullscreen={isFullscreen} onSelection={revealFullscreenControls} onContentClick={isFullscreen ? revealEpubControls : closeReaderMenus} />
+        ) : meta && meta.format.toUpperCase() === 'EPUB' && epubData ? (
+          <EpubView id={meta.id} token={token} buffer={epubData.buffer} savedLocation={epubData.savedLocation} bookTitle={meta.title} canMakeFlashcards={canMakeFlashcards} isFullscreen={isFullscreen} onSelection={revealFullscreenControls} onContentClick={isFullscreen ? revealEpubControls : closeReaderMenus} />
         ) : meta && meta.format.toUpperCase() === 'PDF' ? (
           <PdfView id={meta.id} token={token} bookTitle={meta.title} canMakeFlashcards={canMakeFlashcards} onSelection={revealFullscreenControls} />
         ) : meta && ['CBR', 'CBZ'].includes(meta.format.toUpperCase()) ? (
@@ -1686,8 +1714,8 @@ function EpubChapterPreview({ book, chapter, index, root, active, onSelect }: {
   );
 }
 
-function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen, onSelection, onContentClick }: {
-  id: string; token: string | null; blob: Blob; bookTitle: string; canMakeFlashcards: boolean;
+function EpubView({ id, token, buffer, savedLocation, bookTitle, canMakeFlashcards, isFullscreen, onSelection, onContentClick }: {
+  id: string; token: string | null; buffer: ArrayBuffer; savedLocation: string | null; bookTitle: string; canMakeFlashcards: boolean;
   isFullscreen: boolean; onSelection: () => void; onContentClick?: () => void;
 }) {
   const viewerRef = useRef<HTMLDivElement>(null);
@@ -1825,15 +1853,16 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
 
   useEffect(() => {
     let destroyed = false;
+    let locationIdleHandle: number | undefined;
+    let locationTimer: number | undefined;
     const contentCleanups = new Set<() => void>();
     (async () => {
       try {
         setReady(false);
         setErr(null);
-        const savedProgress = await fetchProgress(id, token);
-        const buf = await blob.arrayBuffer();
+        const { default: ePub } = await import('epubjs');
         if (destroyed || !viewerRef.current) return;
-        const book = ePub(buf as any);
+        const book = ePub(buffer as any);
         bookRef.current = book;
         const rendition = book.renderTo(viewerRef.current, {
           width: '100%',
@@ -1920,20 +1949,28 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
           if (contents?.window?.getSelection?.()?.toString().trim()) onSelectionRef.current();
           else onContentClickRef.current?.();
         });
-        await rendition.display(savedProgress?.location || undefined);
-        // Build a lightweight location map so reflowable EPUBs report a real
-        // 0-100 reading percentage. Do this after first display so opening the
-        // book is not blocked by pagination of every chapter.
-        book.locations.generate(1600).then(() => {
-          const location: any = rendition.currentLocation();
-          const cfi = location?.start?.cfi;
-          if (!cfi) return;
-          const percentage = Number((book.locations as any).percentageFromCfi(cfi));
-          if (Number.isFinite(percentage)) debouncedSaveProgress(cfi, Math.round(percentage * 1000) / 10);
-        }).catch(() => {});
+        await rendition.display(savedLocation || undefined);
         if (!destroyed) {
           setReady(true);
           highlights.forEach(applyHighlight);
+        }
+        // Index the rest of the book when the browser has time. Generating
+        // locations immediately after first display delays the first usable page.
+        const generateLocations = () => {
+          if (destroyed) return;
+          book.locations.generate(1600).then(() => {
+            if (destroyed) return;
+            const location: any = rendition.currentLocation();
+            const cfi = location?.start?.cfi;
+            if (!cfi) return;
+            const percentage = Number((book.locations as any).percentageFromCfi(cfi));
+            if (Number.isFinite(percentage)) debouncedSaveProgress(cfi, Math.round(percentage * 1000) / 10);
+          }).catch(() => {});
+        };
+        if (typeof window.requestIdleCallback === 'function') {
+          locationIdleHandle = window.requestIdleCallback(generateLocations, { timeout: 5000 });
+        } else {
+          locationTimer = window.setTimeout(generateLocations, 1000);
         }
         book.loaded.navigation
           .then((nav: any) => {
@@ -1954,12 +1991,14 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards, isFullscreen,
 
     return () => {
       destroyed = true;
+      if (locationIdleHandle !== undefined) window.cancelIdleCallback(locationIdleHandle);
+      window.clearTimeout(locationTimer);
       contentCleanups.forEach((cleanup) => cleanup());
       contentCleanups.clear();
       try { rendRef.current?.destroy(); bookRef.current?.destroy(); } catch { /* noop */ }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [blob]);
+  }, [buffer]);
 
   useEffect(() => {
     appearanceRef.current = appearance;
