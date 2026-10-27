@@ -23,10 +23,12 @@ test('teacher can isolate pending answers and open the correct marking form', as
     exam: { id: 'e1', title: 'Science checkpoint', className: 'GED', subject: 'Science', studentCount: 1 },
     attempts: [{ id: 'a1', studentName: 'Ada Lee', studentCode: 'S1', attemptNumber: 1, score: null, totalMarks: 10, status: 'NEEDS_GRADING', completedAt: null, questions: [
       { ...common, id: 'q1', number: 1, text: 'Explain evaporation.', studentAnswer: 'Water becomes vapour.\nHeat adds energy.', pointsAwarded: null, status: 'PENDING' },
-      { ...common, id: 'q2', number: 2, text: 'Explain condensation.', studentAnswer: 'Water vapour cools.', pointsAwarded: 4, status: 'GRADED' },
+      { ...common, id: 'q2', number: 2, text: 'Explain condensation.', studentAnswer: 'Water vapour cools.', pointsAwarded: 4, status: 'PARTIAL' },
     ] }],
   } }));
   await page.goto('/exams/e1/results');
+  await expect(page.getByLabel('Answer summary')).toContainText('1 partial');
+  await expect(page.getByText('Model answer', { exact: true })).toHaveCount(2);
   await page.getByRole('button', { name: 'Pending grading (1)', exact: true }).click();
   await expect(page.getByText('Explain evaporation.', { exact: true })).toBeVisible();
   await expect(page.getByText('Explain condensation.', { exact: true })).toHaveCount(0);

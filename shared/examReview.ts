@@ -4,6 +4,24 @@ type ReviewOption = { key: string; label: string };
 
 const manualTypes = new Set(['SHORT_ANSWER', 'ESSAY', 'WRITTEN', 'EXTENDED']);
 
+export type AnswerSummary = { correct: number; incorrect: number; partial: number; pending: number; total: number };
+
+export function answerStatus(answer: { isCorrect?: boolean | null; pointsAwarded?: number | null; maxPoints?: number | null } | null | undefined): 'CORRECT' | 'INCORRECT' | 'PARTIAL' | 'PENDING' {
+  if (!answer || (answer.isCorrect == null && answer.pointsAwarded == null)) return 'PENDING';
+  if (answer.isCorrect === true) return 'CORRECT';
+  const awarded = answer.pointsAwarded == null ? null : Number(answer.pointsAwarded);
+  const max = Number(answer.maxPoints ?? 0);
+  if (awarded != null && max > 0 && awarded >= max) return 'CORRECT';
+  if (awarded != null && awarded > 0) return 'PARTIAL';
+  return 'INCORRECT';
+}
+
+export function summarizeExamAnswers(answers: Array<{ isCorrect?: boolean | null; pointsAwarded?: number | null; maxPoints?: number | null }>): AnswerSummary {
+  const summary: AnswerSummary = { correct: 0, incorrect: 0, partial: 0, pending: 0, total: answers.length };
+  for (const answer of answers) summary[answerStatus(answer).toLowerCase() as 'correct' | 'incorrect' | 'partial' | 'pending']++;
+  return summary;
+}
+
 function optionsFor(question: any, frozen: any): ReviewOption[] {
   if (Array.isArray(frozen?.options) && frozen.options.length) {
     return frozen.options.map((option: any, index: number) => ({
@@ -58,12 +76,11 @@ export function buildExamReviewQuestions(answers: any[], frozenContent: unknown,
     const manual = manualTypes.has(type) || Boolean(snapshot?.requiresManualGrading ?? current?.requiresManualGrading);
     const points = Number(snapshot?.points ?? current?.points ?? 0);
     const awarded = answer?.pointsAwarded == null ? null : Number(answer.pointsAwarded);
-    const status = !answer
-      ? manual ? 'PENDING' : 'INCORRECT'
-      : answer?.isCorrect == null && awarded == null ? 'PENDING'
-      : manual ? 'GRADED'
-      : answer.isCorrect === true ? 'CORRECT'
-      : awarded != null && awarded > 0 ? 'PARTIAL' : 'INCORRECT';
+    const status = !answer && !manual ? 'INCORRECT' : answerStatus({
+      isCorrect: answer?.isCorrect,
+      pointsAwarded: awarded,
+      maxPoints: answer?.maxPoints ?? points,
+    });
 
     let studentAnswer = answerValues.map(value => labelFor(value, options)).join(', ') || null;
     // Corrected legacy keys use canonical option indexes; the attempt's

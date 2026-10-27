@@ -1,4 +1,5 @@
 import { manualGradeScores } from "./shared/examGrading";
+import { summarizeExamAnswers } from "./shared/examReview";
 import { examAvailability } from "./shared/examAvailability";
 import express from "express";
 import crypto from "crypto";
@@ -1650,13 +1651,21 @@ function registerGradingAndOps(deps: any) {
         },
         orderBy: { createdAt: "asc" },
       });
-      // Fetch all answers once, retaining the attempt's original maximum marks.
-      const answers = rows.length ? await prisma.examAnswer.findMany({ where: { OR: rows.map((g: any) => ({ attemptId: g.attemptId, questionId: g.questionId })) } }) : [];
+      // Fetch all answers for each attempt so the queue can show objective results
+      // alongside the written responses that still need marking.
+      const attemptIds = [...new Set(rows.map((g: any) => g.attemptId))];
+      const answers = attemptIds.length ? await prisma.examAnswer.findMany({ where: { attemptId: { in: attemptIds } } }) : [];
       const answerMap = new Map(answers.map((a: any) => [`${a.attemptId}:${a.questionId}`, a]));
+      const answersByAttempt = new Map<string, any[]>();
+      for (const answer of answers) {
+        const attemptAnswers = answersByAttempt.get(answer.attemptId) ?? [];
+        attemptAnswers.push(answer);
+        answersByAttempt.set(answer.attemptId, attemptAnswers);
+      }
       const out = rows.map((g: any) => {
         const ans: any = answerMap.get(`${g.attemptId}:${g.questionId}`);
         const frozen = Array.isArray(g.attempt?.frozenContent) ? g.attempt.frozenContent.find((q: any) => q.id === g.questionId) : null;
-        return { ...g, question: frozen ? { ...g.question, ...frozen } : g.question, answer: ans ? { answerText: ans.answerText, selectedOptions: ans.selectedOptions, maxPoints: ans.maxPoints } : null };
+        return { ...g, question: frozen ? { ...g.question, ...frozen } : g.question, answer: ans ? { answerText: ans.answerText, selectedOptions: ans.selectedOptions, maxPoints: ans.maxPoints } : null, answerSummary: summarizeExamAnswers(answersByAttempt.get(g.attemptId) ?? []) };
       });
       res.json(out);
     } catch (err: any) {

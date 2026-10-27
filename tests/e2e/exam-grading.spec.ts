@@ -5,7 +5,7 @@ async function fixture(page: Page, rubric = false) {
   const user = { id: 'grading-teacher', role: 'TEACHER', firstName: 'Teacher', lastName: 'Test', isActive: true, cursorEffect: 'NONE' };
   const flags = { failed: false, missing: false, failFinalize: false };
   const writes: any[] = [];
-  const row: any = { id: 'g1', attemptId: 'a1', questionId: 'q1', status: 'IN_REVIEW', score: null, isFinalized: false, question: { text: 'Explain evaporation.', points: 10 }, answer: { answerText: 'Liquid water changes to vapour when heated.', maxPoints: 5 }, attempt: { exam: { title: 'Science checkpoint' }, student: { user: { firstName: 'Ada', lastName: 'Lee' } } }, rubric: rubric ? { id: 'r1', title: 'Explanation rubric', criteria: [{ id: 'c1', label: 'Understanding', maxScore: 3 }, { id: 'c2', label: 'Clarity', maxScore: 2 }] } : null };
+  const row: any = { id: 'g1', attemptId: 'a1', questionId: 'q1', status: 'IN_REVIEW', score: null, isFinalized: false, question: { text: 'Explain evaporation.', points: 10 }, answer: { answerText: 'Liquid water changes to vapour when heated.', maxPoints: 5 }, answerSummary: { correct: 2, incorrect: 1, partial: 1, pending: 1, total: 5 }, attempt: { exam: { id: 'e1', title: 'Science checkpoint' }, student: { user: { firstName: 'Ada', lastName: 'Lee' } } }, rubric: rubric ? { id: 'r1', title: 'Explanation rubric', criteria: [{ id: 'c1', label: 'Understanding', maxScore: 3 }, { id: 'c2', label: 'Clarity', maxScore: 2 }] } : null };
   await page.addInitScript(({ user, release }) => { sessionStorage.setItem('auth_token', 'test'); sessionStorage.setItem('auth_user', JSON.stringify(user)); localStorage.setItem(`mrlc:release-seen:${user.id}`, release); }, { user, release: CURRENT_RELEASE.id });
   await page.route('**/api/**', async route => {
     const path = new URL(route.request().url()).pathname;
@@ -21,11 +21,18 @@ async function fixture(page: Page, rubric = false) {
 test('teacher sees answer context, saves zero and returns to the same queue filter', async ({ page }, info) => {
   const { writes } = await fixture(page);
   await page.goto('/exam2/grading?examId=e1&status=IN_REVIEW');
+  await expect(page.getByRole('link').filter({ hasText: 'Ada Lee' })).toContainText('2 correct');
+  await expect(page.getByRole('link').filter({ hasText: 'Ada Lee' })).toContainText('1 incorrect');
   await page.getByRole('link').filter({ hasText: 'Ada Lee' }).click();
   await expect(page.getByText('Explain evaporation.', { exact: true })).toBeVisible();
   await expect(page.getByText('Ada Lee · 5 points available')).toBeVisible();
+  await expect(page.getByLabel('Answer summary')).toContainText('1 to grade');
+  await expect(page.getByRole('link', { name: 'Review all answers' })).toHaveAttribute('href', '/exams/e1/results?attemptId=a1');
   await page.getByLabel('Score (out of 5)').fill('0');
   await page.getByLabel('Feedback for the student').fill('Please explain how heat changes water.');
+  page.once('dialog', dialog => dialog.dismiss());
+  await page.getByRole('link', { name: 'Review all answers' }).click();
+  await expect(page).toHaveURL(/\/exam2\/grade\/a1\/q1/);
   await page.getByRole('button', { name: 'Save grade', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Grade saved.' })).toBeVisible();
   expect(writes[0].score).toBe(0);
@@ -60,6 +67,8 @@ test('unfinished rubric saves as draft and finalization requires complete marks'
   page.once('dialog', dialog => dialog.accept());
   await page.getByRole('button', { name: 'Finalize', exact: true }).click();
   await expect(page.getByText('This grade is finalized and locked.')).toBeVisible();
+  await expect(page.getByLabel('Answer summary')).toContainText('0 to grade');
+  await expect(page.getByLabel('Answer summary')).toContainText('2 partial');
   expect(writes[1].score).toBe(1.5);
   await expect(page.getByRole('button', { name: 'Save grade', exact: true })).toBeDisabled();
 });

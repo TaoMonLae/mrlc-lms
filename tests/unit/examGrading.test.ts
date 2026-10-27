@@ -47,10 +47,16 @@ test('grading rejects invalidated attempts and foreign rubrics without writes', 
   assert.equal((await other.invoke('post', '/api/grading/:attemptId/:questionId', { rubricId: 'r1' })).status, 400); assert.equal(other.written(), undefined);
 });
 test('grading queue batches answers, uses frozen prompt, and excludes invalid attempts', async () => {
-  let scope: any; let reads = 0;
-  const h = harness({ manualGrade: { findMany: async (args: any) => { scope = args.where; return [{ attemptId: 'a1', questionId: 'q1', question: { text: 'Edited' }, attempt: { frozenContent: [{ id: 'q1', text: 'Original' }] } }]; } }, examAnswer: { findMany: async () => { reads++; return [{ attemptId: 'a1', questionId: 'q1', maxPoints: 5, answerText: 'Response' }]; } } });
+  let scope: any; let answerScope: any; let reads = 0;
+  const h = harness({ manualGrade: { findMany: async (args: any) => { scope = args.where; return [{ attemptId: 'a1', questionId: 'q1', question: { text: 'Edited' }, attempt: { frozenContent: [{ id: 'q1', text: 'Original' }] } }]; } }, examAnswer: { findMany: async (args: any) => { reads++; answerScope = args.where; return [
+    { attemptId: 'a1', questionId: 'q1', maxPoints: 5, answerText: 'Response', pointsAwarded: null },
+    { attemptId: 'a1', questionId: 'q2', maxPoints: 1, isCorrect: true, pointsAwarded: 1 },
+    { attemptId: 'a1', questionId: 'q3', maxPoints: 1, isCorrect: false, pointsAwarded: 0 },
+  ]; } } });
   const { data } = await h.invoke('get', '/api/grading/queue');
   assert.equal(reads, 1); assert.equal(data[0].question.text, 'Original'); assert.equal(data[0].answer.maxPoints, 5); assert.ok(scope.attempt.state.notIn.includes('INVALIDATED'));
+  assert.deepEqual(answerScope, { attemptId: { in: ['a1'] } });
+  assert.deepEqual(data[0].answerSummary, { correct: 1, incorrect: 1, partial: 0, pending: 1, total: 3 });
 });
 test('missing grading tables return unavailable instead of a false empty queue', async () => {
   const h = harness({ manualGrade: { findMany: async () => { throw { code: 'P2021' }; } } });

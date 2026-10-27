@@ -8,6 +8,8 @@ import { apiGet, apiSend } from '../../lib/api';
 import { Lock } from 'lucide-react';
 import { manualGradeScores } from '../../../shared/examGrading';
 import MathText from '../../components/MathText';
+import AttemptAnswerSummary from './AttemptAnswerSummary';
+import { answerStatus } from '../../../shared/examReview';
 
 const emptyForm = { score: '', overallComment: '', scoreOverride: '', overrideReason: '', secondMarkerScore: '', moderationComment: '' };
 export default function RubricGrading() {
@@ -50,6 +52,10 @@ export default function RubricGrading() {
   const criteria = item?.rubric?.criteria || [];
   const locked = item?.isFinalized;
   const maxPoints = item?.answer?.maxPoints ?? item?.question?.points ?? 0;
+  const reviewExamId = item?.attempt?.exam?.id ?? params.get('examId');
+  const confirmLeave = (event: React.MouseEvent) => {
+    if (busy || (dirty && !confirm('Leave without saving your marking changes?'))) event.preventDefault();
+  };
   const change = (key: string, value: string) => { setForm((current: any) => ({ ...current, [key]: value })); setDirty(true); setSavedMessage(''); };
   const save = async (status: string, finalize = false) => {
     if (saving.current || locked) return;
@@ -68,7 +74,17 @@ export default function RubricGrading() {
       setSavedMessage(status === 'IN_REVIEW' ? 'Draft saved. You can return to finish marking.' : 'Grade saved. Finalize when marking is complete.');
       if (finalize) {
         await apiSend(`/api/grading/${saved.id}/finalize`, 'POST');
-        setItem((current: any) => ({ ...current, isFinalized: true, status: 'FINALIZED' }));
+        const finalScore = scores.scoreOverride ?? scores.score;
+        setItem((current: any) => {
+          const summary = current.answerSummary;
+          const nextSummary = summary && summary.pending > 0 ? { ...summary } : summary;
+          if (nextSummary && nextSummary !== summary) {
+            nextSummary.pending--;
+            const category = answerStatus({ pointsAwarded: finalScore, maxPoints });
+            nextSummary[category.toLowerCase()]++;
+          }
+          return { ...current, isFinalized: true, status: 'FINALIZED', answerSummary: nextSummary };
+        });
         setSavedMessage('Grade finalized and locked. Return to the queue to mark the next response.');
       }
       toast.success(finalize ? 'Grade finalized' : 'Saved');
@@ -82,7 +98,7 @@ export default function RubricGrading() {
   const numberField = (key: string, label: string) => <div className="space-y-2"><Label htmlFor={key}>{label}</Label><Input id={key} type="number" min={0} max={maxPoints} step="any" value={form[key]} onChange={e => change(key, e.target.value)} /></div>;
   return (
     <div className="max-w-4xl mx-auto space-y-5 pb-10 text-foreground">
-      <Button variant="ghost" disabled={busy} render={<Link to={back} onClick={e => { if (busy || (dirty && !confirm('Leave without saving your marking changes?'))) e.preventDefault(); }} />} nativeButton={false}>Back to grading queue</Button>
+      <Button variant="ghost" disabled={busy} render={<Link to={back} onClick={confirmLeave} />} nativeButton={false}>Back to grading queue</Button>
       {error ? <div role="alert" className="rounded-lg border border-destructive/40 p-5"><p>{error}</p><Button variant="outline" className="mt-3" onClick={() => setRetry(n => n + 1)}>Retry</Button></div> : !item ? <p role="status" className="py-16 text-center text-muted-foreground">Loading response…</p> : <>
         <header className="space-y-1"><p className="text-sm text-muted-foreground">{item.attempt?.exam?.title}</p><h1 className="text-2xl font-bold">Grade response</h1><p>{[item.attempt?.student?.user?.firstName, item.attempt?.student?.user?.lastName].filter(Boolean).join(' ') || item.attempt?.student?.studentCode || 'Student'} · {maxPoints} points available</p></header>
         <section className="bg-card border border-border rounded-lg p-5 space-y-4">
@@ -92,6 +108,7 @@ export default function RubricGrading() {
         {locked && <div className="flex items-center gap-2 text-sm rounded-lg bg-muted p-3"><Lock className="h-4 w-4" /> This grade is finalized and locked.</div>}
         <fieldset disabled={locked || busy} className="space-y-5 border border-border rounded-lg bg-card p-5 min-w-0">
           <legend className="px-2 font-semibold">Marking</legend>
+          {item.answerSummary && <section aria-labelledby="grading-answer-progress" className="rounded-md border border-border bg-muted/25 p-4 space-y-2"><div className="flex flex-wrap items-center justify-between gap-2"><h2 id="grading-answer-progress" className="text-sm font-semibold">Answers in this attempt ({item.answerSummary.total})</h2>{reviewExamId && <Link className="text-sm font-medium text-primary underline-offset-4 hover:underline" to={`/exams/${reviewExamId}/results?attemptId=${attemptId}`} onClick={confirmLeave}>Review all answers</Link>}</div><AttemptAnswerSummary summary={item.answerSummary} /><p className="text-xs text-muted-foreground">Correct and incorrect answers include automatically scored questions. Written answers count as to grade until finalized.</p></section>}
           {criteria.length ? <div className="space-y-3"><h2 className="font-semibold">{item.rubric.title}</h2>{criteria.map((c: any) => <div key={c.id} className="flex items-center justify-between gap-4 rounded-md border border-border p-3"><div><Label htmlFor={`criterion-${c.id}`}>{c.label} · {c.maxScore} points</Label>{c.description && <p className="text-sm text-muted-foreground mt-1">{c.description}</p>}</div><Input id={`criterion-${c.id}`} type="number" className="w-24 shrink-0" min={0} max={c.maxScore} step="any" value={crit[c.id] ?? ''} onChange={e => { setCrit(p => ({ ...p, [c.id]: e.target.value })); setDirty(true); setSavedMessage(''); }} /></div>)}<p className="text-sm text-muted-foreground">Mark every criterion to save a grade. Leave unfinished marks blank when saving a draft.</p></div> : numberField('score', `Score (out of ${maxPoints})`)}
           <div className="space-y-2"><Label htmlFor="overallComment">Feedback for the student</Label><textarea id="overallComment" className="w-full min-h-28 rounded-md border border-input bg-background p-3 text-sm" placeholder="Explain what went well and what to work on next." value={form.overallComment} onChange={e => change('overallComment', e.target.value)} /></div>
           <details open={Boolean(form.scoreOverride !== '' || form.secondMarkerScore !== '' || form.moderationComment)}><summary className="cursor-pointer text-sm font-medium">Moderation and score override</summary><div className="grid sm:grid-cols-2 gap-4 mt-4">{numberField('scoreOverride', 'Score override')}<div className="space-y-2"><Label htmlFor="overrideReason">Override reason</Label><Input id="overrideReason" value={form.overrideReason} onChange={e => change('overrideReason', e.target.value)} /></div>{numberField('secondMarkerScore', 'Second marker score')}<div className="space-y-2"><Label htmlFor="moderationComment">Moderation note</Label><Input id="moderationComment" value={form.moderationComment} onChange={e => change('moderationComment', e.target.value)} /></div></div></details>
