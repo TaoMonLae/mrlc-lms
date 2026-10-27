@@ -1,6 +1,26 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildExamReviewQuestions } from '../../shared/examReview';
+import { buildExamReviewQuestions, summarizeExamAnswers } from '../../shared/examReview';
+
+test('attempt summary separates correct, incorrect, partial, and unmarked answers', () => {
+  assert.deepEqual(summarizeExamAnswers([
+    { isCorrect: true, pointsAwarded: 2, maxPoints: 2 },
+    { isCorrect: false, pointsAwarded: 0, maxPoints: 2 },
+    { isCorrect: false, pointsAwarded: 1, maxPoints: 2 },
+    { isCorrect: null, pointsAwarded: null, maxPoints: 4 },
+    { isCorrect: null, pointsAwarded: 4, maxPoints: 4 },
+    { isCorrect: null, pointsAwarded: 0, maxPoints: 4 },
+  ]), { correct: 2, incorrect: 2, partial: 1, pending: 1, total: 6 });
+});
+
+test('marked written answers appear in the correct or incorrect review counts', () => {
+  const frozen = [{ id: 'a', type: 'ESSAY', points: 4 }, { id: 'b', type: 'ESSAY', points: 4 }];
+  const answers = [
+    { questionId: 'a', isCorrect: null, pointsAwarded: 4 },
+    { questionId: 'b', isCorrect: null, pointsAwarded: 0 },
+  ];
+  assert.deepEqual(buildExamReviewQuestions(answers, frozen, []).map((question: any) => question.status), ['CORRECT', 'INCORRECT']);
+});
 
 test('review uses the corrected key in canonical order while showing the student’s shuffled choice', () => {
   const answers = [{ questionId: 'q1', selectedOptions: ['Cold'], answerText: null, isCorrect: false, pointsAwarded: 0 }];

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { AlertCircle, ArrowLeft, BarChart3, CheckCircle2, ClipboardCheck, Clock3, Loader2, Search, XCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import MathText from '../../components/MathText';
 import { apiGet } from '../../lib/api';
@@ -29,6 +29,7 @@ const displayScore = (value: number | null) => value == null ? 'Pending' : Strin
 const dateLabel = (value: string | null) => value ? new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—';
 const questionType = (value: string) => value.replaceAll('_', ' ').toLowerCase();
 const needsAttention = (question: ReviewQuestion) => question.status === 'INCORRECT' || question.status === 'PARTIAL';
+const isWrittenQuestion = (question: ReviewQuestion) => ['SHORT_ANSWER', 'ESSAY', 'WRITTEN', 'EXTENDED'].includes(question.type);
 
 function StudentResultsRedirect({ examId }: { examId: string }) {
   const navigate = useNavigate();
@@ -71,7 +72,8 @@ function TeacherReview({ examId }: { examId: string }) {
   const selected = attempts.find(attempt => attempt.id === params.get('attemptId')) ?? attempts[0] ?? null;
   const filteredAttempts = attempts.filter(attempt => `${attempt.studentName} ${attempt.studentCode}`.toLowerCase().includes(search.toLowerCase().trim()));
   const questions = useMemo(() => selected?.questions.filter(question => questionFilter === 'all' || (questionFilter === 'pending' ? question.status === 'PENDING' : needsAttention(question))) ?? [], [selected, questionFilter]);
-  const incorrectCount = selected?.questions.filter(needsAttention).length ?? 0;
+  const incorrectCount = selected?.questions.filter(question => question.status === 'INCORRECT').length ?? 0;
+  const partialCount = selected?.questions.filter(question => question.status === 'PARTIAL').length ?? 0;
   const pendingCount = selected?.questions.filter(question => question.status === 'PENDING').length ?? 0;
   const correctCount = selected?.questions.filter(question => question.status === 'CORRECT').length ?? 0;
 
@@ -121,7 +123,7 @@ function TeacherReview({ examId }: { examId: string }) {
                 const active = selected?.id === attempt.id;
                 return <button key={attempt.id} type="button" aria-current={active ? 'true' : undefined} onClick={() => selectAttempt(attempt.id)} className={`w-full border-b border-border px-4 py-3.5 text-left last:border-b-0 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring ${active ? 'bg-teal-50 dark:bg-teal-400/10' : 'hover:bg-muted/50'}`}>
                   <span className="flex items-start justify-between gap-2"><span className="min-w-0 font-semibold text-foreground">{attempt.studentName}</span><span className="shrink-0 text-sm font-semibold tabular-nums text-foreground">{displayScore(attempt.score)}{attempt.score != null ? ` / ${attempt.totalMarks}` : ''}</span></span>
-                  <span className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground"><span>{dateLabel(attempt.completedAt)}{attempt.attemptNumber > 1 ? ` · Try ${attempt.attemptNumber}` : ''}</span><span className={wrong ? 'font-semibold text-rose-700 dark:text-rose-300' : 'font-medium'}>{wrong ? `${wrong} to review` : '—'}</span></span>
+                  <span className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground"><span>{dateLabel(attempt.completedAt)}{attempt.attemptNumber > 1 ? ` · Try ${attempt.attemptNumber}` : ''}</span><span className={wrong ? 'font-semibold text-rose-700 dark:text-rose-300' : 'font-medium'}>{wrong ? `${wrong} incorrect/partial` : '—'}</span></span>
                 </button>;
               })}
               {!filteredAttempts.length && <p className="px-4 py-8 text-center text-sm text-muted-foreground">No students match that search.</p>}
@@ -136,7 +138,8 @@ function TeacherReview({ examId }: { examId: string }) {
               </div>
               <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-4 text-sm" aria-label="Answer summary">
                 <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="size-4" />{correctCount} correct</span>
-                <span className="inline-flex items-center gap-1.5 font-medium text-rose-700 dark:text-rose-300"><XCircle className="size-4" />{incorrectCount} incorrect or partial</span>
+                <span className="inline-flex items-center gap-1.5 font-medium text-rose-700 dark:text-rose-300"><XCircle className="size-4" />{incorrectCount} incorrect</span>
+                <span className="inline-flex items-center gap-1.5 font-medium text-orange-700 dark:text-orange-300">{partialCount} partial</span>
                 {pendingCount > 0 && <span className="inline-flex items-center gap-1.5 font-medium text-amber-700 dark:text-amber-300"><Clock3 className="size-4" />{pendingCount} pending</span>}
               </div>
             </section>
@@ -144,7 +147,7 @@ function TeacherReview({ examId }: { examId: string }) {
               <h2 className="font-semibold text-foreground">Question review <span className="font-normal text-muted-foreground">{questions.length} of {selected.questions.length}</span></h2>
               <div className="inline-flex flex-wrap gap-1 rounded-sm border border-border bg-card p-1" aria-label="Filter questions">
                 <button type="button" onClick={() => setQuestionFilter('all')} aria-pressed={questionFilter === 'all'} className={`min-h-11 rounded-sm px-3 py-1.5 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-ring ${questionFilter === 'all' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>All questions</button>
-                <button type="button" onClick={() => setQuestionFilter('attention')} aria-pressed={questionFilter === 'attention'} className={`min-h-11 rounded-sm px-3 py-1.5 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-ring ${questionFilter === 'attention' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Incorrect & partial ({incorrectCount})</button>
+                <button type="button" onClick={() => setQuestionFilter('attention')} aria-pressed={questionFilter === 'attention'} className={`min-h-11 rounded-sm px-3 py-1.5 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-ring ${questionFilter === 'attention' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Incorrect & partial ({incorrectCount + partialCount})</button>
                 <button type="button" onClick={() => setQuestionFilter('pending')} aria-pressed={questionFilter === 'pending'} className={`min-h-11 rounded-sm px-3 py-1.5 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-ring ${questionFilter === 'pending' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Pending grading ({pendingCount})</button>
               </div>
             </div>
@@ -158,9 +161,9 @@ function TeacherReview({ examId }: { examId: string }) {
                 {question.passageText && <div className="mt-4 border-l-2 border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground"><p className="mb-1 text-[11px] font-bold uppercase tracking-widest">Passage</p><MathText text={question.passageText} /></div>}
                 <div className="mt-4 text-base font-medium leading-relaxed text-foreground"><MathText text={question.text} /></div>
                 {question.imageUrl && <img src={question.imageUrl} alt="Question illustration" className="mt-4 max-h-72 max-w-full rounded-sm border border-border object-contain" />}
-                {question.blankRows.length > 0 ? <div className="mt-5 space-y-2">{question.blankRows.map(row => <div key={row.label} className="grid gap-2 border-t border-border pt-2 text-sm sm:grid-cols-[100px_1fr_1fr]"><span className="font-semibold text-muted-foreground">{row.label}</span><span><span className="block text-xs text-muted-foreground">Student answer</span>{row.student || 'No answer'}</span><span><span className="block text-xs text-muted-foreground">Correct answer</span><span className="font-medium text-emerald-700 dark:text-emerald-300">{row.correct}</span></span></div>)}</div> : <div className="mt-5 grid gap-3 sm:grid-cols-2"><div className="min-w-0 rounded-sm border border-border bg-muted/25 p-4"><p className="text-[11px] font-bold uppercase tracking-[.12em] text-muted-foreground">Student answer</p><p className="mt-2 whitespace-pre-wrap break-words text-sm text-foreground">{question.studentAnswer || 'No answer submitted'}</p></div><div className="min-w-0 rounded-sm border border-border bg-muted/25 p-4"><p className="text-[11px] font-bold uppercase tracking-[.12em] text-muted-foreground">{question.status === 'GRADED' || question.status === 'PENDING' ? 'Model answer' : 'Correct answer'}</p><p className="mt-2 whitespace-pre-wrap break-words text-sm font-medium text-emerald-700 dark:text-emerald-300">{question.correctAnswer || 'No answer key available'}</p></div></div>}
+                {question.blankRows.length > 0 ? <div className="mt-5 space-y-2">{question.blankRows.map(row => <div key={row.label} className="grid gap-2 border-t border-border pt-2 text-sm sm:grid-cols-[100px_1fr_1fr]"><span className="font-semibold text-muted-foreground">{row.label}</span><span><span className="block text-xs text-muted-foreground">Student answer</span>{row.student || 'No answer'}</span><span><span className="block text-xs text-muted-foreground">Correct answer</span><span className="font-medium text-emerald-700 dark:text-emerald-300">{row.correct}</span></span></div>)}</div> : <div className="mt-5 grid gap-3 sm:grid-cols-2"><div className="min-w-0 rounded-sm border border-border bg-muted/25 p-4"><p className="text-[11px] font-bold uppercase tracking-[.12em] text-muted-foreground">Student answer</p><p className="mt-2 whitespace-pre-wrap break-words text-sm text-foreground">{question.studentAnswer || 'No answer submitted'}</p></div><div className="min-w-0 rounded-sm border border-border bg-muted/25 p-4"><p className="text-[11px] font-bold uppercase tracking-[.12em] text-muted-foreground">{isWrittenQuestion(question) ? 'Model answer' : 'Correct answer'}</p><p className="mt-2 whitespace-pre-wrap break-words text-sm font-medium text-emerald-700 dark:text-emerald-300">{question.correctAnswer || 'No answer key available'}</p></div></div>}
                 {question.explanation && <div className="mt-4 border-t border-border pt-3 text-sm text-muted-foreground"><span className="font-semibold text-foreground">Explanation: </span><MathText text={question.explanation} /></div>}
-                {question.status === 'PENDING' && <Button className="mt-4" variant="outline" render={<Link to={`/exam2/grade/${selected.id}/${question.id}?examId=${examId}&status=ALL`} />} nativeButton={false}>Grade this response</Button>}
+                {question.status === 'PENDING' && <Link className={buttonVariants({ variant: 'outline', className: 'mt-4' })} to={`/exam2/grade/${selected.id}/${question.id}?examId=${examId}&status=ALL`}>Grade this response</Link>}
               </article>)}
             </div>
           </main>}

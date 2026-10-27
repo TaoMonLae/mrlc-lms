@@ -4,6 +4,7 @@ import { apiGet } from '../../lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ClipboardCheck } from 'lucide-react';
+import AttemptAnswerSummary from './AttemptAnswerSummary';
 
 export default function ManualGradingQueue() {
   const [params, setParams] = useSearchParams();
@@ -51,6 +52,7 @@ export default function ManualGradingQueue() {
                   <p className="font-bold text-foreground truncate">{g.attempt?.student?.user ? `${g.attempt.student.user.firstName} ${g.attempt.student.user.lastName}` : g.attempt?.student?.studentCode}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{g.attempt?.exam?.title} · {g.question?.type} · {g.answer?.maxPoints ?? g.question?.points ?? 0} points</p>
                   <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{g.answer?.answerText || '— no answer —'}</p>
+                  <div className="mt-3"><AttemptAnswerSummary summary={g.answerSummary} /></div>
                 </div>
                 <Badge variant={g.status === 'FINALIZED' ? 'secondary' : 'outline'} className={g.isFinalized ? 'bg-muted text-muted-foreground' : 'border-border text-foreground'}>{g.status}</Badge>
               </div>
