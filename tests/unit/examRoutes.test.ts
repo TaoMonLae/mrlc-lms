@@ -35,6 +35,19 @@ test('expiry reconciliation still rejects other sessions', async () => {
   assert.equal(result.data.error, 'SESSION_CONFLICT');
   assert.equal(h.transactions(), 0);
 });
+
+test('idle check-ins update liveness without writing duplicate answer snapshots', async () => {
+  let checkIns = 0;
+  const h = harness({
+    examAttempt: { findUnique: async () => ({ id: 'a1', studentId: 's1', state: 'IN_PROGRESS', sessionToken: 'token', selectedQuestionIds: ['q1'], serverDeadline: new Date(Date.now() + 60_000) }) },
+    $transaction: async (fn: any) => fn({ examAttempt: { updateMany: async () => { checkIns++; return { count: 1 }; } } }),
+  });
+  const result = await h.invoke('post', '/api/attempts/:attemptId/save', { sessionToken: 'token', reason: 'AUTOSAVE', answers: [] });
+  assert.equal(result.status, 200);
+  assert.equal(checkIns, 1);
+  assert.ok(result.data.remainingSeconds > 0);
+  assert.ok(result.data.lastSavedAt);
+});
 test('availability endpoint applies assignment limits and excludes classmates not assigned', async () => {
   const exam = { id: 'e1', title: 'Assigned', status: 'PUBLISHED', attemptLimit: 1, availableUntil: new Date(Date.now() - 60000) };
   const h = harness({
@@ -59,6 +72,32 @@ test('starting fails closed if assignment permissions cannot be loaded', async (
   const result = await h.invoke('post', '/api/exam2/:examId/start');
   assert.equal(result.status, 500);
   assert.equal(h.transactions(), 0);
+});
+
+test('a concurrent start cannot create a second active attempt when retakes are allowed', async () => {
+  let creates = 0;
+  const tx: any = {
+    examAttempt: {
+      findMany: async () => [{ id: 'already-started', state: 'IN_PROGRESS', attemptNumber: 1 }],
+      create: async ({ data }: any) => { creates++; return { id: 'duplicate', ...data }; },
+    },
+    question: { findMany: async () => [{ id: 'q1', type: 'MCQ', text: 'Choose', points: 1, options: ['A'], correctAnswer: '0' }] },
+    examQuestion: { findMany: async () => [] },
+    examBlueprintRule: { findMany: async () => [] },
+    attemptEvent: { create: async () => {} },
+  };
+  const h = harness({
+    exam: { findUnique: async () => ({ id: 'e1', classId: 'c1', status: 'PUBLISHED', durationMinutes: 30, attemptLimit: 2 }) },
+    examAssignment: { findUnique: async () => null, count: async () => 0 },
+    examAttempt: { findFirst: async () => null },
+    examAccommodation: { findMany: async () => [] },
+    examAnswer: { findMany: async () => [] },
+    $transaction: async (fn: any) => fn(tx),
+  });
+  const result = await h.invoke('post', '/api/exam2/:examId/start');
+  assert.equal(result.status, 409);
+  assert.match(result.data.error, /active attempt/i);
+  assert.equal(creates, 0);
 });
 
 test('released results retain written and single-choice answers alongside empty selectedOptions', async () => {
@@ -92,6 +131,18 @@ test('result-policy database failures do not release marks or answers', async ()
   assert.equal(data.released, undefined);
   assert.equal(data.score, undefined);
   assert.equal(data.questions, undefined);
+});
+
+test('a previously voided attempt stays hidden even if an older action changed its state', async () => {
+  const h = harness({
+    examAttempt: { findUnique: async () => ({ id: 'a1', studentId: 's1', state: 'AUTO_SUBMITTED', invalidatedAt: new Date(), score: 10, exam: {}, answers: [] }) },
+    examResultPolicy: { findUnique: async () => ({ releaseMode: 'IMMEDIATE', showTeacherFeedback: false }) },
+  });
+  const { status, data } = await h.invoke('get', '/api/attempts/:attemptId/result');
+  assert.equal(status, 200);
+  assert.equal(data.released, false);
+  assert.equal(data.state, 'INVALIDATED');
+  assert.equal(data.score, undefined);
 });
 
 test('after-grading policy releases fully auto-graded submissions', async () => {

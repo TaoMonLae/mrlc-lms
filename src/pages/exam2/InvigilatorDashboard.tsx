@@ -12,6 +12,7 @@ const STATE_COLOR: Record<string, string> = {
   AUTO_SUBMITTED: 'bg-blue-100 text-blue-700', PENDING_GRADING: 'bg-lavender text-accent-purple',
   FINALIZED: 'bg-muted text-foreground', RELEASED: 'bg-muted text-foreground', INVALIDATED: 'bg-red-100 text-red-700',
 };
+const ACTION_CLASS = 'min-h-11 px-3 text-xs sm:min-h-8 sm:px-2';
 
 export default function InvigilatorDashboard() {
   const { examId } = useParams();
@@ -42,7 +43,12 @@ export default function InvigilatorDashboard() {
     if (busy) return;
     if (action === 'EXTRA_TIME') { const m = window.prompt('Extra minutes?', '10'); if (!m) return; extra.minutes = Number(m); if (!Number.isInteger(extra.minutes) || extra.minutes < 1 || extra.minutes > 1440) { toast.error('Enter a whole number of minutes between 1 and 1440.'); return; } }
     if (action === 'INCIDENT_NOTE') { const note = window.prompt('Incident note'); if (!note) return; extra.note = note; }
-    if (['INVALIDATE', 'FORCE_SUBMIT', 'REOPEN'].includes(action) && !confirm(`${action.replace('_', ' ')} this attempt?`)) return;
+    const confirmation = action === 'REOPEN'
+      ? 'Reopen this attempt for 15 minutes? Existing marks and feedback will be cleared.'
+      : action === 'FORCE_SUBMIT'
+        ? 'Submit this student’s saved answers? Changes that have not reached the server may not be included.'
+        : action === 'INVALIDATE' ? 'Void this attempt? It will be excluded from results.' : null;
+    if (confirmation && !confirm(confirmation)) return;
     setBusy(true);
     try { await apiSend(`/api/attempts/${attemptId}/invigilate`, 'POST', { action, ...extra }); toast.success(`${action.replaceAll('_', ' ')} applied`); await load(); }
     catch (e: any) { toast.error(e.message || 'Action failed'); }
@@ -70,27 +76,29 @@ export default function InvigilatorDashboard() {
       <div className="bg-card border border-border rounded-sm overflow-x-auto">
         <table className="w-full min-w-[900px] text-sm">
           <thead className="bg-muted/50 text-[11px] uppercase tracking-widest text-muted-foreground">
-            <tr><th className="text-left px-4 py-3">Student</th><th className="px-3">State</th><th className="px-3">Time left</th><th className="px-3">Last save</th><th className="px-3">Conn</th><th className="px-3">Warnings</th><th className="px-3">IP</th><th className="px-3">Actions</th></tr>
+            <tr><th className="text-left px-4 py-3">Student</th><th className="px-3">State</th><th className="px-3">Time left</th><th className="px-3">Last check-in</th><th className="px-3">Connection</th><th className="px-3">Warnings</th><th className="px-3">IP</th><th className="px-3">Actions</th></tr>
           </thead>
           <tbody className="divide-y divide-border">
             {data.students.map((s: any) => (
               <tr key={s.studentId} className="hover:bg-muted/50">
                 <td className="px-4 py-3 font-semibold text-foreground">{s.name}</td>
-                <td className="px-3 text-center"><Badge className={`${STATE_COLOR[s.state] || ''} text-[11px]`}>{s.state.replace('_', ' ')}</Badge></td>
+                <td className="px-3 text-center"><Badge className={`${STATE_COLOR[s.state] || ''} text-[11px]`}>{s.state.replaceAll('_', ' ')}</Badge></td>
                 <td className="px-3 text-center font-mono"><span className="inline-flex items-center gap-1"><Clock className="h-3 w-3 text-muted-foreground" />{fmt(s.remainingSeconds)}</span></td>
                 <td className="px-3 text-center text-xs text-muted-foreground">{s.lastSavedAt ? new Date(s.lastSavedAt).toLocaleTimeString() : '—'}</td>
-                <td className="px-3 text-center">{s.disconnected ? <WifiOff className="h-4 w-4 text-red-500 mx-auto" /> : <Wifi className="h-4 w-4 text-emerald-500 mx-auto" />}</td>
+                <td className="px-3 text-center">{s.state !== 'IN_PROGRESS' ? '—' : s.disconnected ? <WifiOff aria-label="Disconnected" className="h-4 w-4 text-destructive mx-auto" /> : <Wifi aria-label="Connected" className="h-4 w-4 text-academic-teal mx-auto" />}</td>
                 <td className="px-3 text-center">{s.securityWarnings > 0 ? <span className="inline-flex items-center gap-1 text-amber-600 font-bold"><ShieldAlert className="h-3.5 w-3.5" />{s.securityWarnings}</span> : '0'}</td>
                 <td className="px-3 text-center text-[11px] text-muted-foreground font-mono">{s.ipAddress || '—'}</td>
                 <td className="px-3 py-2">
                   {s.attemptId ? (
                     <fieldset disabled={busy || !!loadError} aria-label={`Actions for ${s.name}`} className="flex flex-wrap gap-1">
-                      <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => act(s.attemptId, 'EXTRA_TIME')}>+Time</Button>
-                      <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => act(s.attemptId, s.state === 'PAUSED' ? 'RESUME' : 'PAUSE')}>{s.state === 'PAUSED' ? 'Resume' : 'Pause'}</Button>
-                      <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => act(s.attemptId, 'FORCE_SUBMIT')}>Submit</Button>
-                      <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => act(s.attemptId, 'REOPEN')}>Reopen</Button>
-                      <Button size="sm" variant="outline" className="h-7 text-[11px] text-red-600" onClick={() => act(s.attemptId, 'INVALIDATE')}>Void</Button>
-                      <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => act(s.attemptId, 'INCIDENT_NOTE')}>Note</Button>
+                      {['IN_PROGRESS', 'PAUSED'].includes(s.state) && <>
+                        <Button size="sm" variant="outline" className={ACTION_CLASS} onClick={() => act(s.attemptId, 'EXTRA_TIME')}>+Time</Button>
+                        <Button size="sm" variant="outline" className={ACTION_CLASS} onClick={() => act(s.attemptId, s.state === 'PAUSED' ? 'RESUME' : 'PAUSE')}>{s.state === 'PAUSED' ? 'Resume' : 'Pause'}</Button>
+                        <Button size="sm" variant="outline" className={ACTION_CLASS} onClick={() => act(s.attemptId, 'FORCE_SUBMIT')}>Submit</Button>
+                      </>}
+                      {['SUBMITTED', 'AUTO_SUBMITTED', 'PENDING_GRADING', 'FINALIZED'].includes(s.state) && <Button size="sm" variant="outline" className={ACTION_CLASS} onClick={() => act(s.attemptId, 'REOPEN')}>Reopen</Button>}
+                      {s.state !== 'INVALIDATED' && <Button size="sm" variant="outline" className={`${ACTION_CLASS} text-destructive`} onClick={() => act(s.attemptId, 'INVALIDATE')}>Void</Button>}
+                      <Button size="sm" variant="outline" className={ACTION_CLASS} onClick={() => act(s.attemptId, 'INCIDENT_NOTE')}>Note</Button>
                     </fieldset>
                   ) : <span className="text-xs text-muted-foreground">—</span>}
                 </td>

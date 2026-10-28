@@ -219,6 +219,7 @@ test('restored answers count toward progress and Studio blanks work in the live 
 });
 
 test('exam catalogue and invigilator recover failed loads without showing false empty states', async ({ page }, info) => {
+  await page.clock.install();
   await fixture(page, 'TEACHER');
   let failed = true;
   await page.route('**/api/exams', route => route.fulfill(failed ? { status: 503, json: { error: 'Temporarily unavailable' } } : { json: [{ id: 'exam-a', title: 'Science checkpoint', status: 'PUBLISHED' }] }));
@@ -238,13 +239,69 @@ test('exam catalogue and invigilator recover failed loads without showing false 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   await page.screenshot({ path: info.outputPath('invigilator-responsive.png'), fullPage: true });
   failed = true;
+  await page.clock.fastForward(10_000);
   await expect(page.getByRole('alert')).toContainText('out of date', { timeout: 15000 });
   await expect(page.getByRole('button', { name: '+Time', exact: true })).toBeDisabled();
   await expect(page.getByText('Ada Lee')).toBeVisible();
 });
 
+test('idle students keep checking in, receive extra time, and notice invigilator pauses', async ({ page }) => {
+  const { writes } = await fixture(page, 'STUDENT', 60);
+  await page.clock.install();
+  let paused = false;
+  await page.route('**/api/attempts/attempt-a/save', route => route.fulfill(paused
+    ? { status: 409, json: { error: 'ATTEMPT_PAUSED' } }
+    : { json: { ok: true, remainingSeconds: 180, lastSavedAt: new Date().toISOString() } }));
+  // Keep tracking writes even though this test overrides the fixture's save route.
+  page.on('request', request => {
+    if (new URL(request.url()).pathname === '/api/attempts/attempt-a/save') writes.push({ path: '/api/attempts/attempt-a/save', body: request.postDataJSON() });
+  });
+  await page.goto('/exam2/attempts/attempt-a/play');
+  await expect(page.getByLabel('Time remaining: 01:00', { exact: true })).toBeVisible();
+  await page.clock.fastForward(8_000);
+  await expect.poll(() => writes.filter(write => write.path.endsWith('/save')).length).toBe(1);
+  expect(writes.find(write => write.path.endsWith('/save'))?.body.answers).toEqual([]);
+  await expect(page.getByLabel('Time remaining: 03:00', { exact: true })).toBeVisible();
+  paused = true;
+  await page.clock.fastForward(8_000);
+  await expect(page.getByRole('heading', { name: 'Session locked' })).toBeVisible();
+  await expect(page.getByText('This attempt has been paused. Resume it from My Exams before continuing.')).toBeVisible();
+});
+
+test('invigilator actions match attempt state and explain what reopening clears', async ({ page }, info) => {
+  const { writes } = await fixture(page, 'TEACHER');
+  const states = ['IN_PROGRESS', 'PAUSED', 'FINALIZED', 'RELEASED', 'INVALIDATED'];
+  await page.route('**/api/exams/exam-a/invigilator', route => route.fulfill({ json: {
+    summary: { notStarted: 0, inProgress: 1, paused: 1, submitted: 2, disconnected: 0 },
+    students: states.map((state, index) => ({ studentId: `s${index}`, name: `Student ${index + 1}`, attemptId: `a${index}`, state, remainingSeconds: state === 'IN_PROGRESS' || state === 'PAUSED' ? 120 : null, securityWarnings: 0 })),
+  } }));
+  await page.goto('/exam2/exam-a/invigilator');
+  const active = page.getByRole('group', { name: 'Actions for Student 1', exact: true });
+  const paused = page.getByRole('group', { name: 'Actions for Student 2', exact: true });
+  const marked = page.getByRole('group', { name: 'Actions for Student 3', exact: true });
+  const released = page.getByRole('group', { name: 'Actions for Student 4', exact: true });
+  const voided = page.getByRole('group', { name: 'Actions for Student 5', exact: true });
+  await expect(active.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
+  await expect(active.getByRole('button', { name: 'Reopen', exact: true })).toHaveCount(0);
+  await expect(paused.getByRole('button', { name: 'Resume', exact: true })).toBeVisible();
+  await expect(marked.getByRole('button', { name: 'Reopen', exact: true })).toBeVisible();
+  await expect(marked.getByRole('button', { name: 'Submit', exact: true })).toHaveCount(0);
+  await expect(released.getByRole('button', { name: 'Reopen', exact: true })).toHaveCount(0);
+  await expect(voided.getByRole('button')).toHaveCount(1);
+  await expect(voided.getByRole('button', { name: 'Note', exact: true })).toBeVisible();
+  page.once('dialog', async dialog => {
+    expect(dialog.message()).toContain('Existing marks and feedback will be cleared');
+    await dialog.dismiss();
+  });
+  await marked.getByRole('button', { name: 'Reopen', exact: true }).click();
+  expect(writes.filter(write => write.path.endsWith('/invigilate'))).toHaveLength(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+  await page.screenshot({ path: info.outputPath('invigilator-actions.png'), fullPage: true });
+});
+
 test('completed submission cannot trigger an unload save while the result screen is loading', async ({ page }) => {
   const { writes } = await fixture(page);
+  await page.clock.install();
   // Keep the lazy result route suspended so the player's unload listener is
   // still mounted when a browser reload/navigation occurs after submission.
   await page.route('**/ExamResultView.tsx*', route => route.fulfill({ contentType: 'application/javascript', body: 'await new Promise(resolve => { window.releaseExamResult = resolve; }); export default function Result() { return null; }' }));
@@ -254,6 +311,9 @@ test('completed submission cannot trigger an unload save while the result screen
   await page.getByRole('button', { name: 'Submit exam' }).click();
   await expect.poll(() => writes.filter(w => w.path.endsWith('/submit')).length).toBe(1);
   await expect.poll(() => page.evaluate(() => sessionStorage.getItem('exam_attempt_session_attempt-a'))).toBeNull();
+  const savesAfterSubmit = writes.filter(write => write.path.endsWith('/save')).length;
+  await page.clock.fastForward(16_000);
+  expect(writes.filter(write => write.path.endsWith('/save'))).toHaveLength(savesAfterSubmit);
   const saveRequest = page.waitForRequest(request => request.url().endsWith('/save'), { timeout: 500 }).then(() => true, () => false);
   await page.evaluate(() => window.dispatchEvent(new Event('beforeunload')));
   const unloadSaved = await saveRequest;

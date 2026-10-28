@@ -61,6 +61,7 @@ export default function ExamPlayer() {
   const [loadError, setLoadError] = useState('');
   const saveInFlight = useRef<Promise<boolean> | null>(null);
   const submitPending = useRef(false);
+  const attemptFinished = useRef(false);
   const countdownDeadline = useRef<number | null>(null);
   const [timerTick, setTimerTick] = useState(0);
   const lastAutoSubmit = useRef(0);
@@ -80,6 +81,13 @@ export default function ExamPlayer() {
   const timerArmed = useRef(false);
   const fullscreenEntered = useRef(false);
   const lastIntegrityEvent = useRef<Record<string, number>>({});
+
+  const openResult = useCallback(() => {
+    attemptFinished.current = true;
+    dirty.current.clear();
+    sessionStorage.removeItem(`exam_attempt_session_${attemptId}`);
+    navigate(`/exam2/attempts/${attemptId}/result`, { replace: true });
+  }, [attemptId, navigate]);
 
   const post = useCallback(async (path: string, body?: any) => {
     try {
@@ -102,10 +110,9 @@ export default function ExamPlayer() {
       else setBlocked(data.message || data.error || 'Could not load attempt');
       setLoading(false); return;
     }
-    if (data.autoSubmitted) { toast.info('Time expired — your attempt was submitted.'); navigate(`/exam2/attempts/${attemptId}/result`); return; }
+    if (data.autoSubmitted) { toast.info('Time expired — your attempt was submitted.'); openResult(); return; }
     if (data.attempt?.state !== 'IN_PROGRESS') {
-      sessionStorage.removeItem(`exam_attempt_session_${attemptId}`);
-      navigate(`/exam2/attempts/${attemptId}/result`, { replace: true });
+      openResult();
       return;
     }
     setQuestions(data.questions || []);
@@ -123,7 +130,7 @@ export default function ExamPlayer() {
     setAnswers(map);
     setLoading(false);
     } catch { setLoadError('Could not load your exam. Check your connection and retry.'); setLoading(false); }
-  }, [attemptId, navigate]);
+  }, [attemptId, openResult]);
 
   useEffect(() => { loadState(); }, [loadState]);
 
@@ -138,7 +145,7 @@ export default function ExamPlayer() {
   }, [loading, blocked, loadError]);
 
   const save = useCallback(async (reason: string) => {
-    if (!attemptId) return false;
+    if (!attemptId || attemptFinished.current) return false;
     // Serialize saves so a slow older answer cannot overwrite a newer one.
     while (saveInFlight.current) { if (!(await saveInFlight.current)) return false; }
     const performSave = async (): Promise<boolean> => {
@@ -153,7 +160,8 @@ export default function ExamPlayer() {
     if (ok) { setSaveError(''); toSave.forEach((qid) => { if ((answerVersions.current[qid] || 0) === savedVersions[qid]) dirty.current.delete(qid); }); setSavedAt(data.lastSavedAt || new Date().toISOString()); if (typeof data.remainingSeconds === 'number') { if (data.remainingSeconds > 0) timerArmed.current = true; countdownDeadline.current = timerArmed.current ? Date.now() + data.remainingSeconds * 1000 : null; setRemaining(data.remainingSeconds); } return true; }
     if (status === 409 && data.error === 'SESSION_CONFLICT') { setBlocked('This attempt was opened in another window or device. This session is now read-only.'); return false; }
     if (status === 409 && data.error === 'ATTEMPT_PAUSED') { setBlocked('This attempt has been paused. Resume it from My Exams before continuing.'); return false; }
-    if (status === 409 && (data.error === 'TIME_EXPIRED' || data.autoSubmitted)) { toast.info('Time expired — submitted.'); navigate(`/exam2/attempts/${attemptId}/result`); return false; }
+    if (status === 409 && (data.error === 'TIME_EXPIRED' || data.autoSubmitted || ['SUBMITTED', 'AUTO_SUBMITTED', 'PENDING_GRADING', 'FINALIZED', 'RELEASED'].includes(data.state))) { toast.info('Your attempt has been submitted.'); openResult(); return false; }
+    if (status === 409 && data.state === 'INVALIDATED') { setBlocked('This attempt has been voided by your teacher.'); return false; }
     setSaveError(data.error || 'Your answers could not be saved. Please retry.');
     if (reason !== 'AUTOSAVE') toast.error(data.error || 'Your answers could not be saved. Check your connection and try again.');
     return false;
@@ -161,12 +169,14 @@ export default function ExamPlayer() {
     const pending = performSave();
     saveInFlight.current = pending;
     try { return await pending; } finally { if (saveInFlight.current === pending) saveInFlight.current = null; }
-  }, [attemptId, sessionToken, post, navigate]);
+  }, [attemptId, sessionToken, post, openResult]);
 
   // autosave loop (every 8s)
   useEffect(() => {
     if (loading || blocked || loadError) return;
-    const t = setInterval(() => { if (dirty.current.size && !saveInFlight.current && !submitPending.current && (!countdownDeadline.current || Date.now() < countdownDeadline.current)) void save('AUTOSAVE'); }, 8000);
+    // Empty saves are lightweight check-ins: an idle reader stays connected,
+    // receives time extensions, and notices a teacher pause or submission.
+    const t = setInterval(() => { if (!attemptFinished.current && !saveInFlight.current && !submitPending.current && (!countdownDeadline.current || Date.now() < countdownDeadline.current)) void save('AUTOSAVE'); }, 8000);
     return () => clearInterval(t);
   }, [loading, blocked, loadError, save]);
 
@@ -176,7 +186,7 @@ export default function ExamPlayer() {
     // unload saves were rejected with 401. keepalive fetch preserves auth while
     // still allowing the browser to finish the request during navigation.
     const h = () => {
-      if (!dirty.current.size) return;
+      if (attemptFinished.current || !dirty.current.size) return;
       void fetch(`/api/attempts/${attemptId}/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
@@ -240,7 +250,7 @@ export default function ExamPlayer() {
   };
 
   const handleSubmit = async (auto = false) => {
-    if (submitPending.current) return;
+    if (submitPending.current || attemptFinished.current) return;
     submitPending.current = true;
     setSubmitting(true);
     try {
@@ -258,10 +268,8 @@ export default function ExamPlayer() {
       } else if (ok || ['SUBMITTED', 'AUTO_SUBMITTED', 'PENDING_GRADING', 'FINALIZED', 'RELEASED'].includes(data.state)) {
         // The final snapshot is now persisted. Result-route recovery can reload
         // the page; its unload handler must not try to save a completed exam.
-        dirty.current.clear();
-        sessionStorage.removeItem(`exam_attempt_session_${attemptId}`);
         toast.success(data.autoSubmitted ? 'Time expired — your exam was submitted.' : 'Exam submitted.');
-        navigate(`/exam2/attempts/${attemptId}/result`);
+        openResult();
       } else {
         if (data.error === 'SESSION_CONFLICT' || data.error === 'ATTEMPT_PAUSED') setBlocked(data.message || data.error);
         setSaveError(data.error || 'Could not submit. Please retry.');
