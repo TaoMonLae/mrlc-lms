@@ -5,6 +5,7 @@ import express from "express";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
+import { Prisma } from "@prisma/client";
 import { composeQuestionSet, freezeAttempt, dragDropBank, seededShuffle } from "./examBank";
 import { analyticsQuestionConfig, analyticsSelectedValues, analyzeDistractorResponses, hasAnalyticsResponse } from "./shared/examAnalytics";
 import { scoreExamObjective } from "./shared/examScoring";
@@ -631,6 +632,9 @@ export function registerExamPhase2Routes(deps: Deps): void {
         try {
           attempt = await prisma.$transaction(async (tx: any) => {
         const priorAttempts = await tx.examAttempt.findMany({ where: { studentId: student.id, examId }, select: { state: true, attemptNumber: true } });
+        if (priorAttempts.some((a: any) => ["IN_PROGRESS", "PAUSED"].includes(a.state))) {
+          throw Object.assign(new Error("An active attempt already exists. Resume it from My Exams."), { http: 409 });
+        }
         const used = priorAttempts.filter((a: any) => a.state !== "INVALIDATED").length;
         if (used >= limit) throw Object.assign(new Error("No attempts remaining"), { http: 409 });
         const attemptNumber = priorAttempts.reduce((max: number, a: any) => Math.max(max, a.attemptNumber || 0), 0) + 1;
@@ -855,8 +859,12 @@ export function registerExamPhase2Routes(deps: Deps): void {
           data: { lastSavedAt },
         });
         if (claimed.count !== 1) throw Object.assign(new Error("Attempt changed during save"), { examTransition: true });
-        const saved = await persistAnswerPayload(tx, attempt, answers, reason, true, ipOf(req), uaOf(req));
-        lastSavedAt = saved.now;
+        // An idle player's check-in needs the lock and timestamp, without a
+        // duplicate copy of every answer or another snapshot/event row.
+        if (answers.length || reason !== "AUTOSAVE") {
+          const saved = await persistAnswerPayload(tx, attempt, answers, reason, true, ipOf(req), uaOf(req));
+          lastSavedAt = saved.now;
+        }
       });
       res.json({ ok: true, lastSavedAt: lastSavedAt.toISOString(), remainingSeconds: remainingSeconds({ ...attempt }), serverTime: new Date().toISOString() });
     } catch (err: any) {
@@ -1121,6 +1129,13 @@ export function registerExamPhase2Routes(deps: Deps): void {
       const attempt = await prisma.examAttempt.findUnique({ where: { id: req.params.attemptId }, include: { exam: true, answers: true } });
       if (!attempt) { res.status(404).json({ error: "Attempt not found" }); return; }
       if (!student || attempt.studentId !== student.id) { res.status(403).json({ error: "Forbidden" }); return; }
+
+      // Older invigilator actions could change state after a void. The void
+      // timestamp still excludes that attempt from released results.
+      if (attempt.invalidatedAt) {
+        res.json({ released: false, state: "INVALIDATED", message: "This attempt was voided by your teacher." });
+        return;
+      }
 
       // A missing policy keeps legacy defaults; a failed lookup must never
       // turn a hidden/scheduled policy into immediate release.
@@ -1918,8 +1933,10 @@ function registerGradingAndOps(deps: any) {
   app.get("/api/exams/:id/invigilator", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try {
       const examId = req.params.id;
-      const assignments = await prisma.examAssignment.findMany({ where: { examId }, include: { student: { include: { user: true } } } }).catch(() => []);
-      const attempts = await prisma.examAttempt.findMany({ where: { examId }, include: { student: { include: { user: true } } } }).catch(() => []);
+      const [assignments, attempts] = await Promise.all([
+        prisma.examAssignment.findMany({ where: { examId }, include: { student: { include: { user: true } } } }),
+        prisma.examAttempt.findMany({ where: { examId }, include: { student: { include: { user: true } } } }),
+      ]);
       const byStudent: Record<string, any> = {};
       const activeStates = new Set(["IN_PROGRESS", "PAUSED"]);
       for (const attempt of attempts) {
@@ -1936,20 +1953,30 @@ function registerGradingAndOps(deps: any) {
 
       const now = Date.now();
       const currentAttempts = Object.values(byStudent) as any[];
-      const rows = assignments.length
+      let rows = assignments.length
         ? assignments.map((assignment: any) => ({ student: assignment.student, attempt: byStudent[assignment.studentId] }))
         : currentAttempts.map((attempt: any) => ({ student: attempt.student, attempt }));
+      if (!assignments.length) {
+        const exam = await prisma.exam.findUnique({ where: { id: examId }, select: { classId: true } });
+        if (!exam) { res.status(404).json({ error: "Exam not found" }); return; }
+        if (exam.classId) {
+          const roster = await prisma.student.findMany({ where: { classId: exam.classId }, include: { user: true } });
+          const rosterIds = new Set(roster.map((student: any) => student.id));
+          rows = [...roster.map((student: any) => ({ student, attempt: byStudent[student.id] })), ...rows.filter((row: any) => !rosterIds.has(row.student?.id))];
+        }
+      }
       const live = await Promise.all(rows.map(async (r: any) => {
         const at = r.attempt;
         let lastEvent: any = null;
         if (at) lastEvent = await prisma.attemptEvent.findFirst({ where: { attemptId: at.id }, orderBy: { createdAt: "desc" } });
-        const disconnected = at && ["IN_PROGRESS"].includes(at.state) && at.lastSavedAt && (now - new Date(at.lastSavedAt).getTime() > 90_000);
+        const lastCheckIn = at?.lastSavedAt ?? at?.startedAt ?? at?.createdAt;
+        const disconnected = at?.state === "IN_PROGRESS" && lastCheckIn && (now - new Date(lastCheckIn).getTime() > 90_000);
         return {
           studentId: r.student?.id,
           name: `${r.student?.user?.firstName ?? ""} ${r.student?.user?.lastName ?? ""}`.trim() || r.student?.studentCode,
           attemptId: at?.id || null,
           state: at?.state || "NOT_STARTED",
-          remainingSeconds: at?.serverDeadline ? remainingSeconds(at) : null,
+          remainingSeconds: at?.serverDeadline && activeStates.has(at.state) ? remainingSeconds(at) : null,
           lastSavedAt: at?.lastSavedAt || null,
           disconnected: !!disconnected,
           securityWarnings: at?.securityWarnings || 0,
@@ -1985,10 +2012,8 @@ function registerGradingAndOps(deps: any) {
         if (["IN_PROGRESS", "PAUSED"].includes(attempt.state)) {
           await finalizeSubmission(attemptId, true, ipOf(req), uaOf(req));
         } else if (!["SUBMITTED", "AUTO_SUBMITTED", "PENDING_GRADING", "FINALIZED", "RELEASED"].includes(attempt.state)) {
-          await prisma.examAttempt.update({
-            where: { id: attemptId },
-            data: { state: "AUTO_SUBMITTED", isCompleted: true, autoSubmitted: true, submittedAt: new Date(), completedAt: new Date(), sessionToken: null },
-          });
+          res.status(409).json({ error: "Only an active attempt can be force submitted" });
+          return;
         }
         await prisma.attemptEvent.create({ data: { attemptId, type: evType, actorId: user(req).userId, actorRole: user(req).role, payload: b, ipAddress: ipOf(req), userAgent: uaOf(req) } }).catch(() => {});
         await createAuditLog(user(req).userId, user(req).email, "INVIGILATE", "EXAM_ATTEMPT", attemptId, `Invigilator action ${action}${b.note ? `: ${b.note}` : ""}.`, ipOf(req), uaOf(req), "SUCCESS");
@@ -2034,7 +2059,12 @@ function registerGradingAndOps(deps: any) {
           await tx.examAnswer.updateMany({ where: { attemptId }, data: { isCorrect: null, pointsAwarded: null, autoScore: null, manualScore: null, gradingState: null } });
           await tx.manualGrade.updateMany({
             where: { attemptId },
-            data: { status: "PENDING", isFinalized: false, finalizedAt: null, finalizedById: null, score: null, scoreOverride: null, graderId: null },
+            data: {
+              status: "PENDING", isFinalized: false, finalizedAt: null, finalizedById: null,
+              score: null, scoreOverride: null, graderId: null, criterionScores: Prisma.DbNull,
+              overallComment: null, inlineFeedback: Prisma.DbNull, overrideReason: null,
+              secondMarkerScore: null, secondMarkerId: null, moderationComment: null,
+            },
           });
         });
       } else if (Object.keys(data).length) {
