@@ -86,9 +86,6 @@ export function registerVolunteerDocumentRoutes(app: Express, ctx: VolunteerDocu
     if (validated.success === false) { res.status(400).json({ error: validated.error }); return; }
     const input = validated.data;
     if (!input.signatoryUserId) { res.status(400).json({ error: 'Choose the school account authorized to sign this document.' }); return; }
-    if (Boolean(input.organizationSignatoryUserId) !== Boolean(input.organizationSignatoryName)) {
-      res.status(400).json({ error: 'Choose an organization signatory account and title, or leave the organization signatory blank.' }); return;
-    }
     try {
       const ids = [input.signatoryUserId, input.organizationSignatoryUserId].filter((id): id is string => Boolean(id));
       const [profile, staff] = await Promise.all([
@@ -102,6 +99,10 @@ export function registerVolunteerDocumentRoutes(app: Express, ctx: VolunteerDocu
         if (!name || name.length > 120) throw new VolunteerSigningError('The selected account needs a full name of 120 characters or fewer before it can sign documents.');
         return name;
       };
+      const uploadedSignature = input.organizationSignatureImage ? {
+        imageDataUrl: await normalizeVolunteerSignature(input.organizationSignatureImage),
+        uploadedAt: new Date().toISOString(), uploadedById: user.userId,
+      } : undefined;
       const payload: VolunteerDocumentPayload = {
         version: 2,
         organization: { name: VOLUNTEER_ORGANIZATION_NAME },
@@ -116,7 +117,8 @@ export function registerVolunteerDocumentRoutes(app: Express, ctx: VolunteerDocu
         },
         signatory: { name: selected(input.signatoryUserId), title: input.signatoryTitle },
         organizationSignatory: input.organizationSignatoryUserId
-          ? { name: selected(input.organizationSignatoryUserId), title: input.organizationSignatoryTitle! } : null,
+          ? { name: selected(input.organizationSignatoryUserId), title: input.organizationSignatoryTitle! }
+          : uploadedSignature ? { name: input.organizationSignatoryName!, title: input.organizationSignatoryTitle!, uploadedSignature } : null,
       };
       const prefix: Record<VolunteerDocumentType, string> = {
         VOLUNTEER_APPRECIATION_LETTER: 'VAL', VOLUNTEER_APPRECIATION_CERTIFICATE: 'VAC', PART_TIME_VOLUNTEER_CONFIRMATION: 'PVC',
@@ -260,6 +262,10 @@ export function registerVolunteerDocumentRoutes(app: Express, ctx: VolunteerDocu
         school: { name: payload.school.name, program: payload.school.program, logoUrl: payload.school.logoUrl,
           address: payload.school.address, contactEmail: payload.school.contactEmail, contactPhone: payload.school.contactPhone },
         hoursPerWeek: payload.volunteer.hoursPerWeek, totalHours: payload.volunteer.totalHours,
+        ...(payload.organizationSignatory?.uploadedSignature ? { uploadedOrganizationSignature: {
+          name: payload.organizationSignatory.name, title: payload.organizationSignatory.title,
+          uploadedAt: payload.organizationSignatory.uploadedSignature.uploadedAt,
+        } } : {}),
         signatures: document.signatures.map(signature => ({ slot: signature.slot,
           signerName: signature.signerName, signerTitle: signature.signerTitle, signedAt: signature.signedAt })),
       });

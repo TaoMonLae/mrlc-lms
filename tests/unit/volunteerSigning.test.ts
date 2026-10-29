@@ -269,3 +269,32 @@ test('historical chop snapshots remain bound to existing signatures and private 
   assert.equal(publicRecord.data.valid, true);
   assert.ok(!JSON.stringify(publicRecord.data).includes('chop'));
 });
+
+
+test('manual MRO signature requires permission and remains bound to MRLC signing without an MRO account', async () => {
+  const { send, documents } = setup();
+  const external = { ...input, organizationSignatoryName: 'External MRO Director', organizationSignatoryTitle: 'President', organizationSignatureImage: await markImage(), organizationSignatureConsent: true };
+  for (const patch of [{ organizationSignatureConsent: false }, { organizationSignatureImage: '' }, { organizationSignatoryName: '' }, { organizationSignatureImage: 'https://example.test/signature.png' }, { organizationSignatoryUserId: 'staff-id' }]) {
+    assert.equal((await send('/api/volunteer-documents', 'POST', 'admin-id', { ...external, ...patch })).statusCode, 400);
+  }
+  assert.equal((await send('/api/volunteer-documents', 'POST', 'teacher-id', external)).statusCode, 403);
+  const created = await send('/api/volunteer-documents', 'POST', 'admin-id', external);
+  assert.equal(created.statusCode, 201);
+  const document = created.data;
+  assert.equal(document.organizationSignatoryUserId, null);
+  assert.equal(document.signingStatus, 'PENDING');
+  assert.equal(document.payload.organizationSignatory.name, 'External MRO Director');
+  assert.equal(document.payload.organizationSignatory.uploadedSignature.uploadedById, 'admin-id');
+  assert.equal((await send('/api/verify/volunteer/:token', 'GET', null, undefined, { token: document.verifyToken })).data.valid, false);
+  const signed = await send('/api/volunteer-documents/:id/sign', 'POST', 'teacher-id', { slot: 'SCHOOL', consent: true, imageDataUrl: await markImage(), contentHash: document.contentHash }, { id: document.id });
+  assert.equal(signed.statusCode, 200);
+  assert.equal(signed.data.signingStatus, 'SIGNED');
+  const verified = await send('/api/verify/volunteer/:token', 'GET', null, undefined, { token: document.verifyToken });
+  assert.equal(verified.data.valid, true);
+  assert.equal(verified.data.uploadedOrganizationSignature.name, 'External MRO Director');
+  assert.equal(verified.data.signatures.length, 1);
+  assert.deepEqual(Object.keys(verified.data.uploadedOrganizationSignature).sort(), ['name', 'title', 'uploadedAt']);
+  for (const secret of ['imageDataUrl', 'uploadedById', 'admin-id', 'base64']) assert.ok(!JSON.stringify(verified.data).includes(secret));
+  documents.get(document.id).payload.organizationSignatory.name = 'Changed name';
+  assert.equal((await send('/api/verify/volunteer/:token', 'GET', null, undefined, { token: document.verifyToken })).data.valid, false);
+});

@@ -54,6 +54,8 @@ export interface VolunteerDocumentInput {
   organizationSignatoryName?: string;
   organizationSignatoryTitle?: string;
   organizationSignatoryUserId?: string;
+  organizationSignatureImage?: string;
+  organizationSignatureConsent?: boolean;
 }
 
 export interface VolunteerDocumentPayload {
@@ -79,7 +81,7 @@ export interface VolunteerDocumentPayload {
     totalHours: number | null;
   };
   signatory: { name: string; title: string };
-  organizationSignatory: { name: string; title: string } | null;
+  organizationSignatory: { name: string; title: string; uploadedSignature?: { imageDataUrl: string; uploadedAt: string; uploadedById: string } } | null;
 }
 
 export interface VolunteerDocumentRecord {
@@ -122,6 +124,7 @@ export interface VolunteerDocumentVerification {
   totalHours: number | null;
   signingStatus?: VolunteerSigningStatus;
   signatures?: VolunteerSignatureSummary[];
+  uploadedOrganizationSignature?: { name: string; title: string; uploadedAt: string };
 }
 
 export function isVolunteerDocumentType(value: unknown): value is VolunteerDocumentType {
@@ -174,6 +177,14 @@ export function validateVolunteerDocumentInput(value: unknown, now = new Date())
       return { success: false, error: 'Choose a valid authorized signatory account.' };
     }
   }
+  if (body.organizationSignatoryUserId && !text.organizationSignatoryName) return { success: false, error: 'Enter the MRO signatory name and title.' };
+  const externalMro = Boolean(text.organizationSignatoryName && !body.organizationSignatoryUserId);
+  if (externalMro && (body.organizationSignatureConsent !== true || typeof body.organizationSignatureImage !== 'string' || !body.organizationSignatureImage)) {
+    return { success: false, error: 'Upload the MRO signature and confirm permission to use it.' };
+  }
+  if (body.organizationSignatureImage != null && body.organizationSignatureImage !== '' && (!externalMro || typeof body.organizationSignatureImage !== 'string' || body.organizationSignatureImage.length > 2_796_304)) {
+    return { success: false, error: 'Provide a signature image up to 2 MB for a manually entered MRO signatory only.' };
+  }
   const validMonth = (month: unknown): month is string => typeof month === 'string' && /^(19|20|21)\d{2}-(0[1-9]|1[0-2])$/.test(month);
   if (!validMonth(body.fromMonth) || !validMonth(body.toMonth)) return { success: false, error: 'From and To must be valid months in YYYY-MM format.' };
   if (body.fromMonth > body.toMonth) return { success: false, error: 'The To month must be on or after the From month.' };
@@ -195,6 +206,7 @@ export function validateVolunteerDocumentInput(value: unknown, now = new Date())
       signatoryUserId: (body.signatoryUserId as string | undefined) || undefined,
       organizationSignatoryName: text.organizationSignatoryName, organizationSignatoryTitle: text.organizationSignatoryTitle,
       organizationSignatoryUserId: (body.organizationSignatoryUserId as string | undefined) || undefined,
+      ...(externalMro ? { organizationSignatureImage: body.organizationSignatureImage as string, organizationSignatureConsent: true } : {}),
     },
   };
 }

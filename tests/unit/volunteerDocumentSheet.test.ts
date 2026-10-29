@@ -140,3 +140,19 @@ test('partial draft month selections never print malformed service dates', () =>
     assertNoChop(html);
   }
 });
+
+
+test('manual MRO signatures print on every template with upload provenance and no account-signing claim', () => {
+  for (const type of TYPES) {
+    const html = render(type, {
+      payload: { ...payload, organizationSignatory: { name: 'External MRO Director', title: 'President', uploadedSignature: { imageDataUrl: signatureImage, uploadedAt: '2026-10-30T01:30:00.000Z', uploadedById: 'private-admin' } } },
+      signatures: [schoolSignature], signingStatus: 'SIGNED',
+    });
+    assert.ok(html.includes('Uploaded signature of External MRO Director'));
+    assert.ok(html.includes('MRO signature supplied by administrator'));
+    assert.equal((html.match(/Digitally signed/g) || []).length, 1);
+    assert.ok(!html.includes('private-admin'));
+    assert.ok(!html.includes('Awaiting authorized signature'));
+    assertNoChop(html);
+  }
+});

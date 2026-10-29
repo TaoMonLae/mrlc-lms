@@ -88,6 +88,9 @@ export function volunteerSigningStatus(document: VolunteerSigningContent & {
   const contentHash = volunteerContentHash(document);
   const signed = (slot: string, userId?: string | null) => Boolean(userId && document.signatures?.some(signature =>
     signature.slot === slot && signature.signerUserId === userId && signature.contentHash === contentHash));
+  const uploaded = payload.organizationSignatory?.uploadedSignature;
+  const hasUploadedMro = !document.organizationSignatoryUserId && Boolean(uploaded?.uploadedById
+    && uploaded.imageDataUrl?.startsWith('data:image/png;base64,') && Number.isFinite(Date.parse(uploaded.uploadedAt)));
   return signed('SCHOOL', document.signatoryUserId)
-    && (!payload.organizationSignatory || signed('ORGANIZATION', document.organizationSignatoryUserId)) ? 'SIGNED' : 'PENDING';
+    && (!payload.organizationSignatory || hasUploadedMro || signed('ORGANIZATION', document.organizationSignatoryUserId)) ? 'SIGNED' : 'PENDING';
 }

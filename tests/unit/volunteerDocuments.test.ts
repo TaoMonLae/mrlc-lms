@@ -28,7 +28,7 @@ test('volunteer document validation requires honest service months and bounded f
   assert.equal(validateVolunteerDocumentInput({ ...input, contributions: 'x'.repeat(501) }, now).success, false);
   assert.equal(validateVolunteerDocumentInput({ ...input, type: 'VOLUNTEER_APPRECIATION_LETTER', contributions: 'x'.repeat(1200) }, now).success, true);
   assert.equal(validateVolunteerDocumentInput({ ...input, type: 'PART_TIME_VOLUNTEER_CONFIRMATION', contributions: 'x'.repeat(1201) }, now).success, false);
-  const normalized = validateVolunteerDocumentInput({ ...input, recipientName: ' A\n\t Volunteer ', organizationSignatoryName: ' MRO\n Director ', organizationSignatoryTitle: ' School\t Director ' }, now);
+  const normalized = validateVolunteerDocumentInput({ ...input, recipientName: ' A\n\t Volunteer ', organizationSignatoryUserId: 'mro-staff', organizationSignatoryName: ' MRO\n Director ', organizationSignatoryTitle: ' School\t Director ' }, now);
   assert.equal(normalized.success, true);
   if (normalized.success) {
     assert.equal(normalized.data.recipientName, 'A Volunteer');

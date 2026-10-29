@@ -74,6 +74,7 @@ export default function VolunteerDocuments() {
   const [cancelError, setCancelError] = useState('');
   const [cancelling, setCancelling] = useState(false);
   const [options, setOptions] = useState<VolunteerSigningOptions>({ signatories: [] });
+  const [mroUploadBusy, setMroUploadBusy] = useState(false);
   const [optionsLoading, setOptionsLoading] = useState(false);
   const [optionsError, setOptionsError] = useState('');
   const [signTarget, setSignTarget] = useState<{ document: VolunteerDocumentRecord; slot: VolunteerSignatureSlot } | null>(null);
@@ -116,7 +117,7 @@ export default function VolunteerDocuments() {
     signLock.current = false; issueLock.current = false;
     setSignTarget(null); setSignature(null); setSignConsent(false); setSignReady(false); setSignLoading(false); setCaptureBusy(false); setSigning(false);
     setCancelTarget(null); setCancelling(false); setIssued(null); setIssuing(false); setReviewed(false); setFullPreviewOpen(false);
-    setForm({ ...EMPTY_FORM }); setOptions({ signatories: [] }); setBranding({});
+    setMroUploadBusy(false); setForm({ ...EMPTY_FORM }); setOptions({ signatories: [] }); setBranding({});
     setDocuments([]); setSignError(''); setIssueError(''); setCancelError(''); setCancelReason(''); setOptionsError(''); setLoadError(''); setQuery(''); setStatusFilter('ALL');
   }, [identityKey]);
 
@@ -157,7 +158,8 @@ export default function VolunteerDocuments() {
     },
     signatory: { name: form.signatoryName.trim(), title: form.signatoryTitle.trim() },
     organizationSignatory: form.organizationSignatoryName?.trim() || form.organizationSignatoryTitle?.trim()
-      ? { name: form.organizationSignatoryName?.trim() || '', title: form.organizationSignatoryTitle?.trim() || '' } : null,
+      ? { name: form.organizationSignatoryName?.trim() || '', title: form.organizationSignatoryTitle?.trim() || '',
+          ...(form.organizationSignatureImage ? { uploadedSignature: { imageDataUrl: form.organizationSignatureImage, uploadedAt: '', uploadedById: '' } } : {}) } : null,
   }), [form, branding]);
 
   const filteredDocuments = useMemo(() => {
@@ -169,7 +171,7 @@ export default function VolunteerDocuments() {
 
   const issueDocument = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (issueLock.current || optionsLoading) return;
+    if (issueLock.current || optionsLoading || mroUploadBusy) return;
     if (optionsError) { setIssueError('Reload the signing options before creating a document.'); return; }
     const identity = identityKey;
     const result = validateVolunteerDocumentInput({
@@ -318,16 +320,19 @@ export default function VolunteerDocuments() {
               <Field label="Position / title *" id="volunteer-signatory-title"><Input id="volunteer-signatory-title" value={form.signatoryTitle} onChange={event => setField('signatoryTitle', event.target.value)} placeholder="e.g. Programme Coordinator" required maxLength={120} /></Field>
             </div><p className="mt-2 text-xs text-muted-foreground">Only this staff account can add the MRLC signature. Their account name is printed on the document.</p></div>
             <details className="border-t border-border pt-4"><summary className="cursor-pointer text-sm font-semibold focus-visible:outline-2 focus-visible:outline-ring">Add an MRO signatory (optional)</summary><div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <Field label="MRO authorized staff account" id="volunteer-mro-signatory"><select id="volunteer-mro-signatory" className={`${selectStyle} w-full`} value={form.organizationSignatoryUserId || ''} onChange={event => chooseSignatory('ORGANIZATION', event.target.value)} disabled={optionsLoading}><option value="">No second signatory</option>{options.signatories.map(person => <option key={person.id} value={person.id}>{person.name} · {person.role.replaceAll('_', ' ')}</option>)}</select></Field>
-              <Field label="MRO position / title" id="volunteer-mro-title"><Input id="volunteer-mro-title" value={form.organizationSignatoryTitle} onChange={event => setField('organizationSignatoryTitle', event.target.value)} maxLength={120} /></Field>
-            </div><p className="mt-2 text-xs text-muted-foreground">Choose an account and enter their title to request a second signature.</p></details>
+              <Field label="MRO signatory full name" id="volunteer-mro-signatory"><Input id="volunteer-mro-signatory" value={form.organizationSignatoryName} onChange={event => { setField('organizationSignatoryName', event.target.value); setField('organizationSignatureConsent', false); }} maxLength={120} /></Field>
+              <Field label="MRO position / title" id="volunteer-mro-title"><Input id="volunteer-mro-title" value={form.organizationSignatoryTitle} onChange={event => { setField('organizationSignatoryTitle', event.target.value); setField('organizationSignatureConsent', false); }} maxLength={120} /></Field>
+            </div><p className="mt-2 text-xs text-muted-foreground">Enter the MRO signatory’s name and title, then upload their signature. No platform account is required.</p>
+              <div className="mt-3"><SignatureCapture key={identityKey} id="volunteer-mro-signature" uploadOnly value={form.organizationSignatureImage || null} onChange={value => { setField('organizationSignatureImage', value || ''); setField('organizationSignatureConsent', false); }} onBusyChange={setMroUploadBusy} disabled={issuing} /></div>
+              <label className="mt-3 flex items-start gap-3 text-sm"><input type="checkbox" className="mt-1 size-4" checked={Boolean(form.organizationSignatureConsent)} onChange={event => setField('organizationSignatureConsent', event.target.checked)} disabled={!form.organizationSignatureImage || mroUploadBusy} /><span>I have permission from this MRO signatory to use their signature on this document.</span></label>
+            </details>
           </fieldset>
           <div className="space-y-4 border-t border-border bg-muted/30 p-5">
             <h2 className="text-base font-semibold">3. Review and request signatures</h2>
-            <label className="flex cursor-pointer items-start gap-3 text-sm leading-5"><input type="checkbox" checked={reviewed} onChange={event => { setReviewed(event.target.checked); setIssueError(''); }} disabled={issuing || optionsLoading} className="mt-0.5 size-4 shrink-0 accent-[var(--academic-teal)]" required /><span>I have reviewed the preview and confirmed the name, service dates, contributions and signatories.</span></label>
+            <label className="flex cursor-pointer items-start gap-3 text-sm leading-5"><input type="checkbox" checked={reviewed} onChange={event => { setReviewed(event.target.checked); setIssueError(''); }} disabled={issuing || mroUploadBusy || optionsLoading} className="mt-0.5 size-4 shrink-0 accent-[var(--academic-teal)]" required /><span>I have reviewed the preview and confirmed the name, service dates, contributions and signatories.</span></label>
             <p className="text-xs leading-5 text-muted-foreground">The document becomes valid after every assigned signatory signs. Its verification link shows the volunteer’s name, role, service dates, recorded hours, signatories and signing dates. Cancel and create a new document to correct these details.</p>
             {issueError && <p role="alert" className="text-sm text-destructive">{issueError}</p>}
-            <Button type="submit" disabled={issuing || optionsLoading || Boolean(optionsError) || !reviewed} className="w-full">{issuing ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}{issuing ? 'Creating document…' : 'Create for signing'}</Button>
+            <Button type="submit" disabled={issuing || mroUploadBusy || optionsLoading || Boolean(optionsError) || !reviewed} className="w-full">{issuing ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}{issuing ? 'Creating document…' : 'Create for signing'}</Button>
           </div>
         </form>
 

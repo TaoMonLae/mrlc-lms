@@ -132,7 +132,7 @@ export default function VolunteerDocumentSheet({
 
         <div className="volunteer-signatures">
           <Signature name={payload.signatory.name} title={payload.signatory.title} organization={payload.school.name} signature={schoolSignature} draft={draft} signingRequested={payload.version === 2} />
-          {payload.organizationSignatory && <Signature name={payload.organizationSignatory.name} title={payload.organizationSignatory.title} organization={payload.organization.name} signature={organizationSignature} draft={draft} signingRequested={payload.version === 2} />}
+          {payload.organizationSignatory && <Signature name={payload.organizationSignatory.name} title={payload.organizationSignatory.title} organization={payload.organization.name} signature={organizationSignature} uploadedSignature={payload.organizationSignatory.uploadedSignature} draft={draft} signingRequested={payload.version === 2} />}
         </div>
 
         <footer className="volunteer-sheet-footer">
@@ -169,16 +169,18 @@ function ServiceHours({ hoursPerWeek, totalHours }: { hoursPerWeek: number | nul
   ].filter(Boolean).join(' · ')}</p>;
 }
 
-function Signature({ name, title, organization, signature, draft, signingRequested }: {
+function Signature({ name, title, organization, signature, uploadedSignature, draft, signingRequested }: {
   name: string;
   title: string;
   organization: string;
   signature?: VolunteerDocumentSignature;
+  uploadedSignature?: NonNullable<VolunteerDocumentPayload['organizationSignatory']>['uploadedSignature'];
   draft: boolean;
   signingRequested: boolean;
 }) {
   return <div className="volunteer-signature">
     <div className="volunteer-signature-marks">
+      {uploadedSignature && <img className="volunteer-signature-image" data-volunteer-signature src={uploadedSignature.imageDataUrl} alt={`Uploaded signature of ${name}`} />}
       {signature && <img className="volunteer-signature-image" data-volunteer-signature src={signature.imageDataUrl} alt={`Signature of ${signature.signerName}`} />}
     </div>
     <div className="volunteer-signature-line" />
@@ -186,6 +188,7 @@ function Signature({ name, title, organization, signature, draft, signingRequest
     <p>{signature?.signerTitle || title || '[Position / title]'}</p>
     <p className="volunteer-signature-organization">{organization}</p>
     {signature ? <p className="volunteer-signature-audit">Digitally signed<br /><time dateTime={signature.signedAt}>{formatVolunteerSignedAt(signature.signedAt)}</time></p>
+      : uploadedSignature ? <p className="volunteer-signature-audit">MRO signature supplied by administrator{!draft && <><br />Uploaded <time dateTime={uploadedSignature.uploadedAt}>{formatVolunteerSignedAt(uploadedSignature.uploadedAt)}</time></>}</p>
       : signingRequested && <p className="volunteer-signature-audit">{draft ? 'Signature added by the authorized account' : 'Awaiting authorized signature'}</p>}
   </div>;
 }

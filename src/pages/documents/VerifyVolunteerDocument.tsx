@@ -64,7 +64,7 @@ export default function VerifyVolunteerDocument() {
               <VerificationRow label="Document number" value={result.documentNumber} />
               <VerificationRow label="Issued on" value={formatVolunteerIssueDate(result.issueDate)} />
               <VerificationRow label="Status" value={result.valid ? 'Active' : result.status === 'CANCELLED' ? 'Cancelled' : result.status === 'REISSUED' ? 'Reissued' : awaitingSignatures ? 'Awaiting signatures' : 'Not verified'} />
-              <VerificationRow label="Digital signatures" value={result.signingStatus === 'SIGNED' ? 'Complete' : result.signingStatus === 'PENDING' ? 'Pending' : 'Not recorded for this document'} />
+              <VerificationRow label="Signatures" value={result.signingStatus === 'SIGNED' ? 'Complete' : result.signingStatus === 'PENDING' ? 'Pending' : 'Not recorded for this document'} />
             </dl>
             {Boolean(result.signatures?.length) && <section className="mt-6" aria-labelledby="volunteer-verified-signatures">
               <h3 id="volunteer-verified-signatures" className="text-sm font-semibold">Recorded signatories</h3>
@@ -75,6 +75,11 @@ export default function VerifyVolunteerDocument() {
                   <p className="mt-1 text-xs text-muted-foreground">Signed <time dateTime={signature.signedAt}>{formatVolunteerSignedAt(signature.signedAt)}</time></p>
                 </li>)}
               </ul>
+            </section>}
+            {result.uploadedOrganizationSignature && <section className="mt-6 text-sm" aria-label="MRO signatory">
+              <h3 className="font-semibold">{result.uploadedOrganizationSignature.name}</h3>
+              <p>{result.uploadedOrganizationSignature.title} · {result.organization.name}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Signature supplied by administrator · Uploaded {formatVolunteerSignedAt(result.uploadedOrganizationSignature.uploadedAt)}</p>
             </section>}
             <p className="mt-6 text-xs leading-relaxed text-muted-foreground">Compare the recipient, service period and document number above with the original. Verification confirms the recorded volunteer service; it does not certify academic qualifications or paid employment.</p>
           </>}

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { hasVisibleSignatureStrokes } from './signaturePixels';
 
 export interface SignatureCaptureProps {
+  uploadOnly?: boolean;
   value: string | null;
   onChange: (dataUrl: string | null) => void;
   onBusyChange?: (busy: boolean) => void;
@@ -45,10 +46,10 @@ function hasSignature(canvas: HTMLCanvasElement): boolean {
 }
 
 /** Capture only. The parent must review, authorize and submit the resulting image. */
-export default function SignatureCapture({ value, onChange, onBusyChange, disabled = false, id }: SignatureCaptureProps) {
+export default function SignatureCapture({ value, onChange, onBusyChange, disabled = false, id, uploadOnly = false }: SignatureCaptureProps) {
   const generatedId = useId();
   const captureId = id || `signature-${generatedId}`;
-  const [mode, setMode] = useState<'draw' | 'upload'>('draw');
+  const [mode, setMode] = useState<'draw' | 'upload'>(uploadOnly ? 'upload' : 'draw');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [drawing, setDrawing] = useState(false);
@@ -268,13 +269,13 @@ export default function SignatureCapture({ value, onChange, onBusyChange, disabl
   return <div id={captureId} className="space-y-3">
     <div className="flex flex-wrap items-center justify-between gap-2">
       <div className="flex gap-2" role="group" aria-label="Signature input method">
-        <Button type="button" size="sm" variant={mode === 'draw' ? 'default' : 'outline'} aria-pressed={mode === 'draw'} disabled={disabled || busy || drawing} onClick={() => setMode('draw')}><PenLine aria-hidden="true" />Draw</Button>
+        {!uploadOnly && <Button type="button" size="sm" variant={mode === 'draw' ? 'default' : 'outline'} aria-pressed={mode === 'draw'} disabled={disabled || busy || drawing} onClick={() => setMode('draw')}><PenLine aria-hidden="true" />Draw</Button>}
         <Button type="button" size="sm" variant={mode === 'upload' ? 'default' : 'outline'} aria-pressed={mode === 'upload'} disabled={disabled || busy || drawing} onClick={() => setMode('upload')}><Upload aria-hidden="true" />Upload</Button>
       </div>
       <Button type="button" size="sm" variant="ghost" disabled={disabled || busy || drawing || (!hasMarks && !value)} onClick={clear}><Eraser aria-hidden="true" />Clear signature</Button>
     </div>
     <p id={`${captureId}-instructions`} className="text-xs leading-5 text-muted-foreground">
-      {mode === 'draw' ? 'Draw your signature below using a mouse, finger or pen. For keyboard input, choose Upload. Clear the signature to start again.' : 'Upload a clear image of your own signature. PNG, JPG or WebP, up to 2 MB and 4 megapixels. A transparent PNG works best.'}
+      {mode === 'draw' ? 'Draw your signature below using a mouse, finger or pen. For keyboard input, choose Upload. Clear the signature to start again.' : `Upload a clear image of ${uploadOnly ? 'the authorized MRO signatory’s' : 'your own'} signature. PNG, JPG or WebP, up to 2 MB and 4 megapixels. A transparent PNG works best.`}
     </p>
     <div className="relative overflow-hidden rounded-sm border border-input bg-white">
       <canvas ref={canvasRef} role="img" aria-label={mode === 'draw' ? 'Signature drawing area' : 'Signature preview'} aria-describedby={`${captureId}-instructions`} aria-disabled={disabled || busy || mode !== 'draw'}
@@ -287,7 +288,7 @@ export default function SignatureCapture({ value, onChange, onBusyChange, disabl
       {busy && <span className="absolute inset-0 flex items-center justify-center gap-2 bg-white/90 text-sm text-slate-700" role="status"><Loader2 className="size-4 animate-spin" aria-hidden="true" />Preparing signature…</span>}
     </div>
     {mode === 'upload' && <div>
-      <input ref={fileRef} id={`${captureId}-file`} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" aria-label="Upload your signature image" disabled={disabled || busy} onChange={upload} tabIndex={-1} />
+      <input ref={fileRef} id={`${captureId}-file`} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" aria-label={uploadOnly ? 'Upload MRO signature image' : 'Upload your signature image'} disabled={disabled || busy} onChange={upload} tabIndex={-1} />
       <Button type="button" variant="outline" size="sm" disabled={disabled || busy} onClick={() => fileRef.current?.click()}><Upload aria-hidden="true" />Choose signature image</Button>
     </div>}
     {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
