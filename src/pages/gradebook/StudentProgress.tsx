@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { ArrowLeft, TrendingUp, AlertTriangle, MessageSquare, Target, GraduationCap } from 'lucide-react';
+import { ArrowLeft, TrendingUp, AlertTriangle, MessageSquare, Target, GraduationCap, LoaderCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -45,7 +45,7 @@ export default function StudentProgress() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <LoaderCircle className="h-8 w-8 animate-spin text-aubergine-600" aria-hidden="true" />
         <span className="ml-3 text-muted-foreground">Loading progress…</span>
       </div>
     );
@@ -105,7 +105,7 @@ export default function StudentProgress() {
       )}
 
       {/* GED readiness */}
-      <div className="bg-card border border-border rounded-sm shadow-sm p-6">
+      <div className="bg-card border border-border rounded-sm shadow-sm p-4 sm:p-6">
         <h3 className="font-bold text-foreground mb-4 flex items-center gap-2 text-sm"><Target className="h-4 w-4 text-aubergine-600" /> GED Readiness</h3>
         <GedStageTracker readiness={data.gedReadiness} showStats={true} />
       </div>

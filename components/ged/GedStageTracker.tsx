@@ -1,4 +1,3 @@
-import React from 'react';
 import { Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -54,15 +53,15 @@ function CompactGedChip({ item, showStats }: { item: GedReadinessItem; showStats
   const subjectLabel = GED_SUBJECT_LABELS[item.subject];
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo">
-      <span className="text-xs font-bold text-slate-600 dark:text-slate-300 min-w-[50px]">
+    <div className="flex items-center gap-2 rounded-sm border border-border bg-card px-3 py-2">
+      <span className="min-w-[50px] text-xs font-bold text-foreground">
         {subjectLabel}
       </span>
-      <Badge variant="outline" className={`${stage?.style} border text-[10px] font-semibold`}>
+      <Badge variant="outline" className={`${stage?.style} border text-[11px] font-semibold`}>
         {stage?.label}
       </Badge>
       {showStats && item.attemptCount && item.attemptCount > 0 && (
-        <span className="text-[10px] text-slate-500">
+        <span className="text-xs text-muted-foreground">
           {item.examAverage}% ({item.attemptCount})
         </span>
       )}
@@ -75,24 +74,24 @@ function GedStageRow({ item, showStats }: { item: GedReadinessItem; showStats: b
   const subjectLabel = GED_SUBJECT_LABELS[item.subject];
 
   return (
-    <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+    <div className="min-w-0 border-b border-border pb-4 last:border-b-0 last:pb-0">
+      <div className="mb-3 flex min-w-0 flex-wrap items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="text-sm font-bold text-foreground">
             {subjectLabel}
           </span>
           {showStats && item.attemptCount && item.attemptCount > 0 && (
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-muted-foreground">
               Avg: {item.examAverage}% across {item.attemptCount} {item.attemptCount === 1 ? 'exam' : 'exams'}
             </span>
           )}
         </div>
         {item.note && (
-          <span className="text-xs text-slate-500 italic">"{item.note}"</span>
+          <span className="min-w-0 break-words text-xs italic text-muted-foreground">"{item.note}"</span>
         )}
       </div>
 
-      <div className="flex items-center gap-1">
+      <ol className="grid min-w-0 grid-cols-2 gap-2 min-[360px]:grid-cols-3 sm:grid-cols-6" aria-label={`${subjectLabel} GED readiness stages`}>
         {GED_STAGES.map((stage, index) => {
           const step = index + 1;
           const isActive = step === currentStep;
@@ -100,42 +99,24 @@ function GedStageRow({ item, showStats }: { item: GedReadinessItem; showStats: b
           const isPending = step > currentStep;
 
           return (
-            <React.Fragment key={stage.status}>
-              <div className="flex items-center">
+            <li key={stage.status} aria-current={isActive ? 'step' : undefined} className={`min-w-0 border-t-2 px-1 pt-2 text-center ${isActive ? 'border-aubergine-600' : isCompleted ? 'border-emerald-500' : 'border-border'}`}>
                 <div
                   className={`
-                    w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors
+                    mx-auto flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold
                     ${isCompleted ? 'bg-emerald-500 text-white' : ''}
-                    ${isActive ? 'bg-aubergine-600 text-white ring-4 ring-aubergine-100 dark:ring-aubergine-900/30' : ''}
-                    ${isPending ? 'bg-slate-100 text-slate-400 dark:bg-slate-700 dark:text-slate-500' : ''}
+                    ${isActive ? 'bg-aubergine-600 text-white' : ''}
+                    ${isPending ? 'bg-muted text-muted-foreground' : ''}
                   `}
                 >
                   {isCompleted ? <Check className="w-4 h-4" /> : step}
                 </div>
-                {step < GED_STAGES.length && (
-                  <div
-                    className={`
-                      w-8 h-0.5 transition-colors
-                      ${step < currentStep ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-surface-raised'}
-                    `}
-                  />
-                )}
-              </div>
-            </React.Fragment>
+                <span className={`mt-2 block break-words text-xs font-semibold leading-4 ${isActive ? 'text-aubergine-700 dark:text-aubergine-300' : 'text-muted-foreground'}`}>
+                  {stage.label}
+                </span>
+            </li>
           );
         })}
-      </div>
-
-      <div className="flex justify-between mt-2 px-0.5">
-        {GED_STAGES.map((stage) => (
-          <span
-            key={stage.status}
-            className="text-[9px] font-medium text-slate-400 uppercase tracking-wider w-8 text-center"
-          >
-            {stage.label.split(' ')[0]}
-          </span>
-        ))}
-      </div>
+      </ol>
     </div>
   );
 }

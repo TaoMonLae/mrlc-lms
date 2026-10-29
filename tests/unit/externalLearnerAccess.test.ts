@@ -98,6 +98,15 @@ test("external learner API access uses an explicit method and route allowlist", 
   }
 });
 
+test("signed-in external learners can open public volunteer verification without access to document management", () => {
+  assert.equal(isExternalLearnerAppPathAllowed('/verify/volunteer/' + 'a'.repeat(48)), true);
+  assert.equal(isExternalLearnerAppPathAllowed('/verify/volunteer/invalid-token'), true);
+  for (const path of ['/documents/volunteers', '/documents/volunteer/record/print', '/verify/volunteer/token/edit']) {
+    assert.equal(isExternalLearnerAppPathAllowed(path), false);
+  }
+  assert.equal(isExternalLearnerApiRequestAllowed('POST', '/api/volunteer-documents'), false);
+});
+
 test("Learning Quest leaderboard includes active non-admin learners globally", () => {
   assert.deepEqual(
     languageQuestGlobalLeaderboardWhere(),

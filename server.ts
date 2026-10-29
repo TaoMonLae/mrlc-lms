@@ -55,6 +55,7 @@ import { pgDumpConnection } from "./lib/pgDumpConnection";
 import { registerVideoLearningRoutes, canReadVideo } from "./videoLearningRoutes";
 import { registerFinanceRoutes } from "./financeRoutes";
 import { registerDocumentRoutes } from "./documentRoutes";
+import { registerVolunteerDocumentRoutes } from "./volunteerDocumentRoutes";
 import { registerReportRoutes } from "./reportRoutes";
 import { registerElibraryRoutes } from "./elibraryRoutes";
 import { registerHrRoutes } from "./hrRoutes";
@@ -2173,23 +2174,13 @@ async function startServer() {
       const mediaUrl = `/uploads/videos/${filename}`;
       const lesson = await prisma.videoLesson.findFirst({
         where: { OR: [{ videoUrl: mediaUrl }, { captionsUrl: mediaUrl }, { thumbnailUrl: mediaUrl }] },
-        select: { visibility: true, status: true, classId: true },
       });
       if (!lesson) {
         res.status(404).json({ error: "Video file not found" });
         return;
       }
 
-      let allowed = jwtUser.role === "ADMIN" ||
-        jwtUser.role === "TEACHER" ||
-        (jwtUser.role === "STUDENT" &&
-          lesson.status === "PUBLISHED" &&
-          ["ALL", "STUDENTS"].includes(lesson.visibility));
-      if (allowed && jwtUser.role === "STUDENT" && lesson.classId) {
-        const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId }, select: { classId: true } });
-        allowed = student?.classId === lesson.classId;
-      }
-      if (!allowed) {
+      if (!await canReadVideo(prisma, jwtUser, lesson)) {
         res.status(403).json({ error: "Forbidden" });
         return;
       }
@@ -12158,6 +12149,7 @@ async function startServer() {
   });
 
   registerDocumentRoutes(app, { PROFILE_PHOTO_DIR, WARNING_THRESHOLD, authMiddleware, buildStudentProgress, canAccessTeacherClass, createAuditLog, fullName, getStudentForReq, getTeacherClassIds, logger, prisma, reportRole, requirePermission, round1, studentOnly });
+  registerVolunteerDocumentRoutes(app, { prisma, authMiddleware, createAuditLog, logger, APP_URL });
 
   // ── Vite / Static serving ───────────────────────────────────────────────────
   // ── Scheduled daily backup (runs only when enabled in Settings) ───────────────

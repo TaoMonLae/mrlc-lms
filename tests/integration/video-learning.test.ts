@@ -64,7 +64,9 @@ test('video learning permissions, privacy, completion and integration', { skip: 
     });
     await t.test('individually assigned quizzes are hidden from other students', async () => {
       await db.examAssignment.create({ data: { examId: exams[0], studentId: students[0] } });
-      assert.equal((await ok(await request(3, 'STUDENT', `${path}/learning`))).quiz, null);
+      const hiddenLearning = await ok(await request(3, 'STUDENT', `${path}/learning`));
+      assert.equal(hiddenLearning.quiz, null);
+      assert.equal(hiddenLearning.examId, null);
       const report = await ok(await request(1, 'TEACHER', `${path}/learning/report`));
       assert.equal(report.find((r: any) => r.studentId === students[1]).quiz, 'not_assigned');
     });

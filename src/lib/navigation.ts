@@ -117,6 +117,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       { title: "Admissions", url: "/admissions", icon: UserPlus },
       { title: "Teachers", url: "/teachers", icon: UserSquare2 },
       { title: "Staff", url: "/staff", icon: UserSquare2 },
+      { title: "Volunteer Documents", url: "/documents/volunteers", icon: FileText },
       { title: "Users & Roles", url: "/users", icon: Briefcase },
     ],
   },
@@ -493,6 +494,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     url: "/documents",
     icon: FileText,
     roles: ["ADMIN", "TEACHER"],
+  },
+  {
+    title: "Volunteer Documents",
+    url: "/documents/volunteers",
+    icon: FileText,
+    roles: ["ADMIN"],
   },
   {
     title: "Library",

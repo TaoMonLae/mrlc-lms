@@ -19,11 +19,18 @@ export function AppLayout() {
   const { user } = useAuth();
   const reduceMotion = useReducedMotion();
   const takingExam = /^\/exam2\/attempts\/[^/]+\/play\/?$/.test(location.pathname);
+  const printingExam = /^\/exam2\/[^/]+\/print\/?$/.test(location.pathname);
   const playingWordConnect = /^\/games\/word-connect\/play\/[^/]+\/?$/.test(location.pathname);
 
   // Force a password change before any app page is reachable.
   if (user?.mustChangePassword) {
     return <Navigate to="/change-password" replace />;
+  }
+
+  // Printed exams must stay in the document flow. The normal app shell fixes
+  // its height to the viewport and scrolls inside <main>, which clips PDFs.
+  if (printingExam) {
+    return <main className="min-h-screen bg-background p-4 sm:p-6 print:min-h-0 print:bg-white print:p-0"><Outlet /></main>;
   }
 
   return (

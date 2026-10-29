@@ -85,7 +85,7 @@ export function registerVideoLearningRoutes({ app, prisma, authMiddleware, canMa
     const quizStatus = releasedPass ? 'passed' : attempts.some(a => a.isCompleted) ? 'submitted' : attempts.length ? 'in_progress' : 'not_started';
     const submission = student && availableHomework ? await prisma.homeworkSubmission.findUnique({ where: { homeworkId_studentId: { homeworkId: availableHomework.id, studentId: student.id } }, select: { status: true } }) : null;
     const watch = await prisma.videoProgress.findUnique({ where: { userId_videoId: { userId: actor(req).userId, videoId: video.id } } });
-    res.json({ ...config, homeworkId: availableHomework?.id ?? null,
+    res.json({ ...config, examId: availableExam?.id ?? null, homeworkId: availableHomework?.id ?? null,
       quiz: availableExam ? { id: availableExam.id, title: availableExam.title, status: quizStatus, href: isStudent ? `/exams/${availableExam.id}/take` : `/exams/${availableExam.id}` } : null,
       homework: availableHomework ? { id: availableHomework.id, title: availableHomework.title, status: submission?.status ?? 'not_submitted', href: isStudent ? `/student/homework?assignment=${availableHomework.id}` : `/teacher/homework/${availableHomework.id}` } : null,
       learningComplete: !!watch?.isCompleted && (!config.requireQuiz || releasedPass),

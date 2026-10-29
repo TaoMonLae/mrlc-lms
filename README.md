@@ -22,6 +22,14 @@ MRLC LMS brings teaching, student records, assessment, communication, finance an
 
 ## Latest updates
 
+**October 30, 2026 · Volunteer documents**
+
+Administrators can open **People → Volunteer Documents** (`/documents/volunteers`) to issue an A4 landscape Certificate of Appreciation, a portrait Letter of Appreciation, or Proof of Part-Time Volunteering. Each template names Mon Refugee Organization and Mon Refugee Learning Centre (GED Program), includes required From/To month-year fields, and supports recorded service hours and an optional second signatory. Volunteers do not need student accounts.
+
+Review the draft before issuing. Issued records keep a snapshot, a unique document number and a QR verification link; cancellation keeps the record and marks its public verification page invalid. Anyone with the link can see the recipient, role, service period and recorded hours. Internal audit information and cancellation reasons remain private. Open an issued record and use **Print / Save PDF** for export.
+
+Apply migration `20261030010000_volunteer_documents` with `npx prisma migrate deploy`, regenerate the client with `npx prisma generate`, and rebuild/restart the app. Set `APP_URL` to the public HTTPS origin before issuing documents, since printed QR codes use this address. The migration adds a separate volunteer-document table without changing student records.
+
 **October 13, 2026 · Supervised focus sessions**
 
 School student accounts now start or resume assigned LMS focus sessions. Teachers can monitor students in their classes, adjust time and respond to release requests; administrators can monitor all school students. The LMS reports focus, connection and presentation mode, with the limits of browser reporting explained in [Focus monitor](docs/focus-monitor.md). The voluntary [MRLC Focus beta](https://gedmrlc.monrefugeelc.com/focus-app) is installable from a phone or tablet browser; setup and device limits are covered in [Focus sessions on iOS, Android, and ChromeOS](docs/mobile-chromeos-focus.md). The desktop kiosk companion is available as an unsigned beta for supervised testing on the [Kiosk downloads page](https://gedmrlc.monrefugeelc.com/kiosk-downloads), as described in [kiosk/README.md](kiosk/README.md). Recent October work also improved video lesson controls and exam answer-key permissions.
