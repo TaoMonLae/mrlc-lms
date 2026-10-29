@@ -1162,6 +1162,8 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
   const [previewOpen, setPreviewOpen] = useState(defaultPreviewOpen);
   const [previewRoot, setPreviewRoot] = useState<HTMLDivElement | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [slowLoading, setSlowLoading] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   pageRef.current = page;
 
   const [pendingPage, setPendingPage] = useState<number | null>(null);
@@ -1197,6 +1199,8 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
     setNumPages(0);
     setPage(1);
     setErr(null);
+    setSlowLoading(false);
+    setLoadAttempt(0);
     setProgressLoaded(false);
     setPendingPage(null);
   }, [id]);
@@ -1245,16 +1249,22 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
     return () => ro.disconnect();
   }, [numPages]);
 
-  // Safety net: never hang on a silent spinner forever.
+  // A large PDF can still be downloading after 25 seconds. Keep its Document
+  // mounted so a slow response can finish instead of cancelling it.
   useEffect(() => {
     if (numPages > 0 || err) return;
-    const t = setTimeout(() => {
-      if (numPages === 0) {
-        setErr('The PDF viewer took too long to respond. Please try again or download the file if downloads are enabled.');
-      }
-    }, 25000);
+    const t = setTimeout(() => setSlowLoading(true), 25000);
     return () => clearTimeout(t);
-  }, [numPages, err]);
+  }, [numPages, err, loadAttempt]);
+
+  const retryPdf = () => {
+    setPendingPage((current) => current ?? (pageRef.current > 1 ? pageRef.current : null));
+    pdfRef.current = null;
+    setNumPages(0);
+    setErr(null);
+    setSlowLoading(false);
+    setLoadAttempt((current) => current + 1);
+  };
 
   const pageStep = pageView === 'two' ? 2 : 1;
   const go = (direction: number) => jumpToPage(pageRef.current + direction * pageStep);
@@ -1395,12 +1405,14 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
             <BookOpen className="h-10 w-10 text-slate-300 mb-3" />
             <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Could not display this PDF.</p>
             <p className="text-xs text-slate-500 mt-1 break-words">{err}</p>
+            <Button type="button" variant="outline" className="mt-4" onClick={retryPdf}>Try again</Button>
           </div>
         ) : (
-            <Document className="flex flex-1 min-h-0 min-w-0 relative"
+          <>
+            <Document key={`${id}-${loadAttempt}`} className="flex flex-1 min-h-0 min-w-0 relative"
               file={file}
               onLoadSuccess={(pdf: any) => {
-                setNumPages(pdf.numPages); pdfRef.current = pdf; setErr(null);
+                setNumPages(pdf.numPages); pdfRef.current = pdf; setErr(null); setSlowLoading(false);
                 pdf.getPage(1).then((first: any) => { const bounds = first.getViewport({ scale: 1 }); setAspectRatio(bounds.width / bounds.height); }).catch(() => {});
               }}
               onLoadError={onError}
@@ -1438,6 +1450,15 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards, onSelection }: {
                 </div>
               </div>
             </Document>
+            {slowLoading && numPages === 0 && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/95 px-6 text-center">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
+                <p className="text-sm font-medium">This PDF is still loading.</p>
+                <p className="max-w-sm text-xs text-muted-foreground">Large books can take longer to open. You can keep waiting or restart the viewer.</p>
+                <Button type="button" variant="outline" onClick={retryPdf}>Try again</Button>
+              </div>
+            )}
+          </>
         )}
         {selection && (
           <SelectionBar

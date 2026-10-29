@@ -35,6 +35,7 @@ async function epubFixture() {
 
 async function fixture(page: Page, format: 'PDF' | 'EPUB', savedPage = '1', options?: {
   contentDelayMs?: number;
+  contentGate?: Promise<void>;
   requestEvents?: string[];
 }) {
   const user = { id: 'reader-teacher', role: 'TEACHER', firstName: 'Teacher', lastName: 'Reader', name: 'Teacher Reader', isActive: true, cursorEffect: 'NONE' };
@@ -52,6 +53,7 @@ async function fixture(page: Page, format: 'PDF' | 'EPUB', savedPage = '1', opti
     if (path === '/api/ebooks/reader-fixture/content') {
       expect(route.request().headers().authorization).toBe('Bearer reader-test');
       options?.requestEvents?.push('content-start');
+      if (options?.contentGate) await options.contentGate;
       if (options?.contentDelayMs) await new Promise(resolve => setTimeout(resolve, options.contentDelayMs));
       options?.requestEvents?.push('content-finished');
       return route.fulfill({ body, contentType: format === 'PDF' ? 'application/pdf' : 'application/epub+zip' });
@@ -115,6 +117,20 @@ test('PDF scrolls through pages, resumes correctly, handles keys and bounds rend
     await page.evaluate(() => document.documentElement.classList.add('dark'));
     await page.locator('.elibrary-reader-shell').screenshot({ path: info.outputPath('pdf-previews-dark.png') });
   }
+});
+
+test('a slow PDF keeps loading after the viewer warning and displays when ready', async ({ page }) => {
+  await page.clock.install();
+  let releaseContent = () => {};
+  const contentGate = new Promise<void>((resolve) => { releaseContent = resolve; });
+  const requestEvents: string[] = [];
+  await fixture(page, 'PDF', '1', { contentGate, requestEvents });
+  await expect.poll(() => requestEvents.includes('content-start')).toBe(true);
+  await page.clock.fastForward(26_000);
+  await expect(page.getByText('This PDF is still loading.')).toBeVisible();
+  releaseContent();
+  await expect(page.getByLabel('PDF reading area').locator('.react-pdf__Page__canvas').first()).toBeVisible();
+  await expect(page.getByText('This PDF is still loading.')).toHaveCount(0);
 });
 
 test('PDF fullscreen scroll and search keyboard stay independent', async ({ page }, info) => {
