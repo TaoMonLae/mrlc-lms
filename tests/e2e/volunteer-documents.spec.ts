@@ -86,11 +86,9 @@ async function fixture(page: Page, options: {
   const writes: Record<string, unknown>[] = [];
   const cancellations: Record<string, unknown>[] = [];
   const signs: Record<string, unknown>[] = [];
-  const chopWrites: Record<string, unknown>[] = [];
   const user = options.role === 'TEACHER' ? teacher : { ...admin, role: options.role || 'ADMIN' };
   let currentDocument = options.document || certificate;
   let documents: VolunteerDocumentRecord[] = options.document ? [options.document] : [];
-  let savedChop: string | null = null;
   await page.addInitScript(({ user, release, authenticated }) => {
     sessionStorage.clear(); localStorage.clear();
     if (authenticated) {
@@ -105,14 +103,8 @@ async function fixture(page: Page, options: {
     if (path === '/api/auth/me') return route.fulfill({ json: { user } });
     if (path === '/api/settings' || path === '/api/public/branding') return route.fulfill({ json: { name: 'Mon Refugee Learning Centre', cursorEffect: 'NONE' } });
     if (path === '/api/volunteer-documents/options') return route.fulfill({ json: {
-      schoolChopDataUrl: savedChop,
       signatories: [{ id: admin.id, name: 'Document Administrator', role: 'ADMIN' }, { id: teacher.id, name: 'Sample Signatory', role: 'TEACHER' }],
     } });
-    if (path === '/api/volunteer-documents/chop') {
-      const input = route.request().postDataJSON(); chopWrites.push(input);
-      savedChop = input.imageDataUrl;
-      return route.fulfill({ json: { schoolChopDataUrl: savedChop } });
-    }
     if (path === '/api/volunteer-documents' && route.request().method() === 'POST') {
       const input = route.request().postDataJSON();
       writes.push(input);
@@ -122,7 +114,7 @@ async function fixture(page: Page, options: {
         fromMonth: input.fromMonth, toMonth: input.toMonth,
         payload: {
           ...pendingCertificate(input.signatoryUserId, Boolean(input.organizationSignatoryUserId)).payload,
-          school: { ...certificate.payload.school, chopDataUrl: savedChop },
+          school: { ...certificate.payload.school },
           volunteer: { ...certificate.payload.volunteer, name: input.recipientName, role: input.role, fromMonth: input.fromMonth, toMonth: input.toMonth },
           signatory: { name: input.signatoryName, title: input.signatoryTitle },
         },
@@ -160,7 +152,7 @@ async function fixture(page: Page, options: {
     }
     return route.fulfill({ json: [] });
   });
-  return { writes, cancellations, signs, chopWrites, current: () => currentDocument };
+  return { writes, cancellations, signs, current: () => currentDocument };
 }
 
 async function chooseServiceMonth(page: Page, label: 'From' | 'To', value: string) {
@@ -414,7 +406,7 @@ test('an assigned teacher reviews and signs their document, with consent and the
   await page.goto('/documents/volunteer/volunteer-certificate/print');
   const sheet = page.locator('.volunteer-sheet');
   await expect(sheet.getByAltText('Signature of Sample Signatory', { exact: true })).toBeVisible();
-  await expect(sheet.getByAltText('MRLC school chop', { exact: true })).toBeVisible();
+  await expect(sheet.getByAltText('MRLC school chop', { exact: true })).toHaveCount(0);
   await expect(sheet.locator('.volunteer-pending-watermark')).toHaveCount(0);
   await expect(sheet.locator('.volunteer-signature-audit')).toContainText('1 October 2026, 00:30 MYT');
   await page.goto(`/verify/volunteer/${verifyToken}`);
@@ -458,32 +450,27 @@ test('opening a stale signing row reloads the record and blocks a cancelled docu
   expect(signs).toHaveLength(0);
 });
 
-test('an uploaded school chop is previewed, reused and retained on an already prepared document', async ({ page }) => {
-  const { chopWrites } = await fixture(page, { authenticated: true });
+test('administrators can create and sign a document without a school chop', async ({ page }) => {
+  const { current, signs } = await fixture(page, { authenticated: true });
   await page.goto('/documents/volunteers');
+  await expect(page.getByLabel('Upload the official school chop', { exact: true })).toHaveCount(0);
+  await expect(page.locator('.volunteer-school-chop, .volunteer-chop-placeholder')).toHaveCount(0);
   await completeServiceForm(page);
   await page.getByLabel('Authorized staff account *', { exact: true }).selectOption(admin.id);
-  const review = page.getByRole('checkbox', { name: 'I have reviewed the preview and confirmed the name, service dates, contributions and signatories.' });
-  await review.check();
-  await page.getByLabel('Upload the official school chop', { exact: true }).setInputFiles({ name: 'synthetic-test-chop.png', mimeType: 'image/png', buffer: fixturePng });
-  await expect(page.getByAltText('Saved school chop', { exact: true })).toBeVisible();
-  await expect(page.getByRole('complementary', { name: 'Document preview' }).getByAltText('MRLC school chop', { exact: true })).toBeVisible();
-  await expect(review).not.toBeChecked();
-  expect(chopWrites).toHaveLength(1);
-  await review.check();
+  await page.getByRole('checkbox', { name: 'I have reviewed the preview and confirmed the name, service dates, contributions and signatories.' }).check();
   await page.getByRole('button', { name: 'Create for signing', exact: true }).click();
   await expect(page.locator('tbody')).toContainText('Sample Volunteer');
-  await page.getByRole('button', { name: 'Remove saved chop', exact: true }).click();
-  await expect(page.getByAltText('Saved school chop', { exact: true })).toHaveCount(0);
-  expect(chopWrites).toHaveLength(2);
-  expect(chopWrites[1]).toEqual({ imageDataUrl: null });
+  expect(current().payload.school).not.toHaveProperty('chopDataUrl');
   await page.getByRole('button', { name: `Sign MRLC document ${certificate.documentNumber}`, exact: true }).click();
+  await expect(page.getByAltText('School chop to be applied', { exact: true })).toHaveCount(0);
   await uploadSignature(page);
   await page.getByRole('dialog').getByRole('checkbox', { name: /I have reviewed this document, confirm that I am its assigned MRLC signatory/ }).check();
   await page.getByRole('dialog').getByRole('button', { name: 'Sign this document', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(signs).toHaveLength(1);
   await page.goto('/documents/volunteer/volunteer-certificate/print');
-  await expect(page.locator('.volunteer-sheet').getByAltText('MRLC school chop', { exact: true })).toHaveAttribute('src', fixtureImage);
+  await expect(page.locator('.volunteer-sheet').getByAltText('Signature of Document Administrator', { exact: true })).toBeVisible();
+  await expect(page.locator('.volunteer-school-chop, .volunteer-chop-placeholder')).toHaveCount(0);
 });
 
 test.describe('Malaysia dates on a computer in another timezone', () => {
@@ -535,7 +522,7 @@ test('a second assigned MRO signatory completes a document without replacing its
   await page.goto('/documents/volunteer/volunteer-certificate/print');
   await expect(page.getByAltText('Signature of Sample Signatory', { exact: true })).toHaveAttribute('src', fixtureImage);
   await expect(page.getByAltText('Signature of Document Administrator', { exact: true })).toBeVisible();
-  await expect(page.locator('.volunteer-school-chop')).toHaveCount(1);
+  await expect(page.locator('.volunteer-school-chop, .volunteer-chop-placeholder')).toHaveCount(0);
   await page.goto(`/verify/volunteer/${verifyToken}`);
   await expect(page.getByRole('heading', { name: 'Verified volunteer document', exact: true })).toBeVisible();
   await expect(page.getByText('Complete', { exact: true })).toBeVisible();

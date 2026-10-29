@@ -248,7 +248,7 @@ export default function SignatureCapture({ value, onChange, onBusyChange, disabl
       context.drawImage(image, (WIDTH - width) / 2, (HEIGHT - height) / 2, width, height);
       if (!hasSignature(candidate)) throw new Error('The image appears blank or too small. Choose a clear image of your signature.');
       // Remove a plain white paper background so the saved signature does not
-      // cover the document rules or school chop with a white rectangle.
+      // cover the document rules with a white rectangle.
       const pixels = context.getImageData(0, 0, WIDTH, HEIGHT);
       for (let index = 0; index < pixels.data.length; index += 4) {
         if (Math.min(pixels.data[index], pixels.data[index + 1], pixels.data[index + 2]) >= 245) pixels.data[index + 3] = 0;

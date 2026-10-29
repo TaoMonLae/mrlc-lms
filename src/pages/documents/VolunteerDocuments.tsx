@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { ArrowLeft, Award, Ban, Check, CheckCircle2, ExternalLink, FileCheck2, FileText, Link2, Loader2, Maximize2, PenLine, RefreshCw, Search, ShieldCheck, Stamp } from 'lucide-react';
+import { ArrowLeft, Award, Ban, Check, CheckCircle2, ExternalLink, FileCheck2, FileText, Link2, Loader2, Maximize2, PenLine, RefreshCw, Search, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -73,11 +73,9 @@ export default function VolunteerDocuments() {
   const [cancelReason, setCancelReason] = useState('');
   const [cancelError, setCancelError] = useState('');
   const [cancelling, setCancelling] = useState(false);
-  const [options, setOptions] = useState<VolunteerSigningOptions>({ signatories: [], schoolChopDataUrl: null });
+  const [options, setOptions] = useState<VolunteerSigningOptions>({ signatories: [] });
   const [optionsLoading, setOptionsLoading] = useState(false);
   const [optionsError, setOptionsError] = useState('');
-  const [chopSaving, setChopSaving] = useState(false);
-  const [chopError, setChopError] = useState('');
   const [signTarget, setSignTarget] = useState<{ document: VolunteerDocumentRecord; slot: VolunteerSignatureSlot } | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
   const [signConsent, setSignConsent] = useState(false);
@@ -109,7 +107,7 @@ export default function VolunteerDocuments() {
       const data = await apiGet<VolunteerSigningOptions>('/api/volunteer-documents/options', { signal });
       if (!signal?.aborted && activeIdentity.current === identity) setOptions(data);
     } catch (error) {
-      if (!signal?.aborted && activeIdentity.current === identity) setOptionsError(error instanceof Error ? error.message : 'Unable to load authorized staff and school chop.');
+      if (!signal?.aborted && activeIdentity.current === identity) setOptionsError(error instanceof Error ? error.message : 'Unable to load authorized staff.');
     } finally { if (!signal?.aborted && activeIdentity.current === identity) setOptionsLoading(false); }
   }, []);
 
@@ -118,7 +116,7 @@ export default function VolunteerDocuments() {
     signLock.current = false; issueLock.current = false;
     setSignTarget(null); setSignature(null); setSignConsent(false); setSignReady(false); setSignLoading(false); setCaptureBusy(false); setSigning(false);
     setCancelTarget(null); setCancelling(false); setIssued(null); setIssuing(false); setReviewed(false); setFullPreviewOpen(false);
-    setForm({ ...EMPTY_FORM }); setOptions({ signatories: [], schoolChopDataUrl: null }); setBranding({}); setChopSaving(false); setChopError('');
+    setForm({ ...EMPTY_FORM }); setOptions({ signatories: [] }); setBranding({});
     setDocuments([]); setSignError(''); setIssueError(''); setCancelError(''); setCancelReason(''); setOptionsError(''); setLoadError(''); setQuery(''); setStatusFilter('ALL');
   }, [identityKey]);
 
@@ -150,7 +148,6 @@ export default function VolunteerDocuments() {
       name: VOLUNTEER_SCHOOL_NAME, program: VOLUNTEER_PROGRAM_NAME,
       logoUrl: branding.logoUrl || null, address: branding.address || null,
       contactEmail: branding.contactEmail || null, contactPhone: branding.contactPhone || null,
-      chopDataUrl: options.schoolChopDataUrl,
     },
     volunteer: {
       name: form.recipientName.trim(), role: form.role.trim(), fromMonth: form.fromMonth, toMonth: form.toMonth,
@@ -161,7 +158,7 @@ export default function VolunteerDocuments() {
     signatory: { name: form.signatoryName.trim(), title: form.signatoryTitle.trim() },
     organizationSignatory: form.organizationSignatoryName?.trim() || form.organizationSignatoryTitle?.trim()
       ? { name: form.organizationSignatoryName?.trim() || '', title: form.organizationSignatoryTitle?.trim() || '' } : null,
-  }), [form, branding, options.schoolChopDataUrl]);
+  }), [form, branding]);
 
   const filteredDocuments = useMemo(() => {
     const term = query.trim().toLocaleLowerCase();
@@ -172,7 +169,7 @@ export default function VolunteerDocuments() {
 
   const issueDocument = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (issueLock.current || chopSaving || optionsLoading) return;
+    if (issueLock.current || optionsLoading) return;
     if (optionsError) { setIssueError('Reload the signing options before creating a document.'); return; }
     const identity = identityKey;
     const result = validateVolunteerDocumentInput({
@@ -229,31 +226,6 @@ export default function VolunteerDocuments() {
     setReviewed(false); setIssueError(''); setIssued(null);
   };
 
-  const saveChop = async (file: File | null) => {
-    if (chopSaving || issuing) return;
-    const identity = identityKey;
-    setChopError('');
-    if (file && (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 2 * 1024 * 1024)) {
-      setChopError('Choose a PNG, JPG or WebP image no larger than 2 MB.'); return;
-    }
-    setChopSaving(true);
-    try {
-      const imageDataUrl = file ? await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result));
-        reader.onerror = () => reject(new Error('Could not read the school chop image.'));
-        reader.readAsDataURL(file);
-      }) : null;
-      if (activeIdentity.current !== identity) return;
-      const saved = await apiSend<{ schoolChopDataUrl: string | null }>('/api/volunteer-documents/chop', 'POST', { imageDataUrl });
-      if (activeIdentity.current !== identity) return;
-      setOptions(previous => ({ ...previous, schoolChopDataUrl: saved.schoolChopDataUrl }));
-      setReviewed(false);
-      toast.success(file ? 'School chop saved for new documents.' : 'School chop removed from future documents.');
-    } catch (error) { if (activeIdentity.current === identity) setChopError(error instanceof Error ? error.message : 'Could not save the school chop.'); }
-    finally { if (activeIdentity.current === identity) setChopSaving(false); }
-  };
-
   const closeSigning = () => {
     if (signLock.current) return;
     signLoad.current?.abort(); setSignTarget(null); setSignature(null); setSignConsent(false);
@@ -306,7 +278,7 @@ export default function VolunteerDocuments() {
 
       {isAdmin && <>
       {optionsError && <div role="alert" className="flex flex-wrap items-center gap-3 rounded-sm border border-destructive/30 p-4"><p className="text-sm text-destructive">{optionsError}</p><Button variant="outline" size="sm" disabled={optionsLoading} onClick={() => void loadOptions()}>Reload signing options</Button></div>}
-      <fieldset disabled={issuing || chopSaving} className="min-w-0">
+      <fieldset disabled={issuing} className="min-w-0">
         <legend className="mb-3 text-sm font-semibold text-foreground">1. Choose a template</legend>
         <div className="grid gap-3 md:grid-cols-3">
           {TEMPLATES.map(template => {
@@ -326,7 +298,7 @@ export default function VolunteerDocuments() {
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(340px,0.8fr)_minmax(0,1.2fr)]">
         <form onSubmit={issueDocument} className="min-w-0 rounded-sm border border-border bg-card">
-          <fieldset disabled={issuing || chopSaving} className="min-w-0 space-y-5 p-5">
+          <fieldset disabled={issuing} className="min-w-0 space-y-5 p-5">
             <legend className="sr-only">Volunteer document details</legend>
             <div><h2 className="text-base font-semibold">2. Add service details</h2><p className="mt-1 text-xs text-muted-foreground">Fields marked * are required. No student account is needed.</p></div>
             <Field label="Volunteer’s full name *" id="volunteer-name"><Input id="volunteer-name" autoComplete="off" value={form.recipientName} onChange={event => setField('recipientName', event.target.value)} placeholder="Name as it should appear on the document" required maxLength={160} /></Field>
@@ -345,15 +317,6 @@ export default function VolunteerDocuments() {
               <Field label="Authorized staff account *" id="volunteer-signatory"><select id="volunteer-signatory" className={`${selectStyle} w-full`} value={form.signatoryUserId || ''} onChange={event => chooseSignatory('SCHOOL', event.target.value)} required disabled={optionsLoading}><option value="">{optionsLoading ? 'Loading staff…' : 'Choose a signatory'}</option>{options.signatories.map(person => <option key={person.id} value={person.id}>{person.name} · {person.role.replaceAll('_', ' ')}</option>)}</select></Field>
               <Field label="Position / title *" id="volunteer-signatory-title"><Input id="volunteer-signatory-title" value={form.signatoryTitle} onChange={event => setField('signatoryTitle', event.target.value)} placeholder="e.g. Programme Coordinator" required maxLength={120} /></Field>
             </div><p className="mt-2 text-xs text-muted-foreground">Only this staff account can add the MRLC signature. Their account name is printed on the document.</p></div>
-            <div className="space-y-3 border-t border-border pt-4">
-              <h3 className="flex items-center gap-2 text-sm font-semibold"><Stamp className="size-4" />School chop</h3>
-              {options.schoolChopDataUrl && <div className="flex flex-wrap items-center gap-4"><img src={options.schoolChopDataUrl} alt="Saved school chop" className="h-24 max-w-48 border border-border bg-white p-2 object-contain" /><Button type="button" variant="outline" size="sm" disabled={chopSaving || issuing} onClick={() => void saveChop(null)}>Remove saved chop</Button></div>}
-              <Label htmlFor="volunteer-school-chop">{options.schoolChopDataUrl ? 'Replace school chop image' : 'Upload the official school chop'}</Label>
-              <input id="volunteer-school-chop" type="file" accept="image/png,image/jpeg,image/webp" className="block w-full text-sm file:mr-3 file:rounded-sm file:border file:border-input file:bg-card file:px-3 file:py-2" disabled={chopSaving || issuing || optionsLoading} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; if (file) void saveChop(file); }} />
-              <p className="text-xs leading-5 text-muted-foreground">PNG, JPG or WebP, up to 2 MB. Use the organization’s actual chop; a transparent background prints best. It appears with the MRLC signature and is saved for future documents. Existing records keep their original chop.</p>
-              {chopSaving && <p className="text-xs" role="status">Saving school chop…</p>}
-              {chopError && <p className="text-sm text-destructive" role="alert">{chopError}</p>}
-            </div>
             <details className="border-t border-border pt-4"><summary className="cursor-pointer text-sm font-semibold focus-visible:outline-2 focus-visible:outline-ring">Add an MRO signatory (optional)</summary><div className="mt-3 grid gap-3 sm:grid-cols-2">
               <Field label="MRO authorized staff account" id="volunteer-mro-signatory"><select id="volunteer-mro-signatory" className={`${selectStyle} w-full`} value={form.organizationSignatoryUserId || ''} onChange={event => chooseSignatory('ORGANIZATION', event.target.value)} disabled={optionsLoading}><option value="">No second signatory</option>{options.signatories.map(person => <option key={person.id} value={person.id}>{person.name} · {person.role.replaceAll('_', ' ')}</option>)}</select></Field>
               <Field label="MRO position / title" id="volunteer-mro-title"><Input id="volunteer-mro-title" value={form.organizationSignatoryTitle} onChange={event => setField('organizationSignatoryTitle', event.target.value)} maxLength={120} /></Field>
@@ -361,10 +324,10 @@ export default function VolunteerDocuments() {
           </fieldset>
           <div className="space-y-4 border-t border-border bg-muted/30 p-5">
             <h2 className="text-base font-semibold">3. Review and request signatures</h2>
-            <label className="flex cursor-pointer items-start gap-3 text-sm leading-5"><input type="checkbox" checked={reviewed} onChange={event => { setReviewed(event.target.checked); setIssueError(''); }} disabled={issuing || chopSaving || optionsLoading} className="mt-0.5 size-4 shrink-0 accent-[var(--academic-teal)]" required /><span>I have reviewed the preview and confirmed the name, service dates, contributions and signatories.</span></label>
+            <label className="flex cursor-pointer items-start gap-3 text-sm leading-5"><input type="checkbox" checked={reviewed} onChange={event => { setReviewed(event.target.checked); setIssueError(''); }} disabled={issuing || optionsLoading} className="mt-0.5 size-4 shrink-0 accent-[var(--academic-teal)]" required /><span>I have reviewed the preview and confirmed the name, service dates, contributions and signatories.</span></label>
             <p className="text-xs leading-5 text-muted-foreground">The document becomes valid after every assigned signatory signs. Its verification link shows the volunteer’s name, role, service dates, recorded hours, signatories and signing dates. Cancel and create a new document to correct these details.</p>
             {issueError && <p role="alert" className="text-sm text-destructive">{issueError}</p>}
-            <Button type="submit" disabled={issuing || chopSaving || optionsLoading || Boolean(optionsError) || !reviewed} className="w-full">{issuing ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}{issuing ? 'Creating document…' : 'Create for signing'}</Button>
+            <Button type="submit" disabled={issuing || optionsLoading || Boolean(optionsError) || !reviewed} className="w-full">{issuing ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}{issuing ? 'Creating document…' : 'Create for signing'}</Button>
           </div>
         </form>
 
@@ -409,7 +372,6 @@ export default function VolunteerDocuments() {
               <div className="min-w-0 overflow-x-auto border border-border bg-muted/40 p-2" role="region" aria-label="Document to sign" tabIndex={0}>
                 <div className="min-w-[640px]"><VolunteerDocumentSheet type={signTarget.document.type} payload={signTarget.document.payload} documentNumber={signTarget.document.documentNumber} issueDate={signTarget.document.issueDate} status={signTarget.document.status} signatures={signTarget.document.signatures} signingStatus={signTarget.document.signingStatus} /></div>
               </div>
-              {signTarget.document.payload.school.chopDataUrl && <div className="flex items-center gap-4 rounded-sm border border-border p-3"><img src={signTarget.document.payload.school.chopDataUrl} alt="School chop to be applied" className="h-20 max-w-40 bg-white p-1 object-contain" /><p className="text-xs text-muted-foreground">This school chop is part of the saved document and appears when the MRLC signatory signs.</p></div>}
               {!!signTarget.document.signatures?.length && <ul className="space-y-1 text-xs text-muted-foreground">{signTarget.document.signatures.map(signed => <li key={signed.id}>{signed.signerName} · {signed.signerTitle} · Signed {formatVolunteerSignedAt(signed.signedAt)}</li>)}</ul>}
               <SignatureCapture key={`${signTarget.document.id}-${signTarget.slot}`} id="volunteer-digital-signature" value={signature} onChange={value => { setSignature(value); setSignConsent(false); }} onBusyChange={setCaptureBusy} disabled={signing || !signReady} />
               <label className="flex items-start gap-3 text-sm leading-5"><input type="checkbox" className="mt-0.5 size-4 shrink-0" checked={signConsent} onChange={event => setSignConsent(event.target.checked)} disabled={signing || !signReady || captureBusy} required /><span>I have reviewed this document, confirm that I am its assigned {signTarget.slot === 'SCHOOL' ? 'MRLC' : 'MRO'} signatory, and authorize the use of my signature on this document.</span></label>

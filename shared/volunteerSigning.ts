@@ -7,8 +7,8 @@ export class VolunteerSigningError extends Error {
 }
 
 /** Accept raster bytes only; never fetch a URL supplied by a client. */
-export async function normalizeVolunteerMark(value: unknown, kind: 'signature' | 'chop'): Promise<string> {
-  const label = kind === 'signature' ? 'Signature' : 'School chop';
+export async function normalizeVolunteerSignature(value: unknown): Promise<string> {
+  const label = 'Signature';
   if (typeof value !== 'string' || value.length > Math.ceil(2 * 1024 * 1024 / 3) * 4 + 100) {
     throw new VolunteerSigningError(`${label} must be a PNG, JPEG or WebP image no larger than 2 MB.`);
   }
@@ -25,7 +25,7 @@ export async function normalizeVolunteerMark(value: unknown, kind: 'signature' |
       throw new Error('Unsupported raster');
     }
     const normalized = await sharp(bytes, { limitInputPixels: 4_000_000 })
-      .rotate().resize({ width: kind === 'signature' ? 1200 : 800, height: kind === 'signature' ? 400 : 800,
+      .rotate().resize({ width: 1200, height: 400,
         fit: 'inside', withoutEnlargement: true }).ensureAlpha().png({ compressionLevel: 9 }).toBuffer();
     if (normalized.length > 1024 * 1024) throw new Error('Image too large after normalization');
     const { data, info } = await sharp(normalized).raw().toBuffer({ resolveWithObject: true });

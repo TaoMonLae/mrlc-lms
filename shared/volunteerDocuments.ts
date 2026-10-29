@@ -33,7 +33,6 @@ export interface VolunteerDocumentSignature extends VolunteerSignatureSummary {
 
 export interface VolunteerSigningOptions {
   signatories: { id: string; name: string; role: string }[];
-  schoolChopDataUrl: string | null;
 }
 
 export function volunteerContributionLimit(type: VolunteerDocumentType): number {
@@ -67,6 +66,7 @@ export interface VolunteerDocumentPayload {
     address: string | null;
     contactEmail: string | null;
     contactPhone: string | null;
+    /** Retained only for immutable historical payloads and their content hashes. */
     chopDataUrl?: string | null;
   };
   volunteer: {

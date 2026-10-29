@@ -131,7 +131,7 @@ export default function VolunteerDocumentSheet({
         )}
 
         <div className="volunteer-signatures">
-          <Signature name={payload.signatory.name} title={payload.signatory.title} organization={payload.school.name} signature={schoolSignature} chopDataUrl={payload.school.chopDataUrl} school draft={draft} signingRequested={payload.version === 2} />
+          <Signature name={payload.signatory.name} title={payload.signatory.title} organization={payload.school.name} signature={schoolSignature} draft={draft} signingRequested={payload.version === 2} />
           {payload.organizationSignatory && <Signature name={payload.organizationSignatory.name} title={payload.organizationSignatory.title} organization={payload.organization.name} signature={organizationSignature} draft={draft} signingRequested={payload.version === 2} />}
         </div>
 
@@ -169,22 +169,17 @@ function ServiceHours({ hoursPerWeek, totalHours }: { hoursPerWeek: number | nul
   ].filter(Boolean).join(' · ')}</p>;
 }
 
-function Signature({ name, title, organization, signature, chopDataUrl, school = false, draft, signingRequested }: {
+function Signature({ name, title, organization, signature, draft, signingRequested }: {
   name: string;
   title: string;
   organization: string;
   signature?: VolunteerDocumentSignature;
-  chopDataUrl?: string | null;
-  school?: boolean;
   draft: boolean;
   signingRequested: boolean;
 }) {
-  const showChop = school && chopDataUrl && (draft || Boolean(signature));
-  return <div className={`volunteer-signature ${school ? 'volunteer-school-signature' : ''}`}>
+  return <div className="volunteer-signature">
     <div className="volunteer-signature-marks">
       {signature && <img className="volunteer-signature-image" data-volunteer-signature src={signature.imageDataUrl} alt={`Signature of ${signature.signerName}`} />}
-      {showChop ? <img className="volunteer-school-chop" data-volunteer-seal src={chopDataUrl} alt="MRLC school chop" />
-        : school && <div className="volunteer-chop-placeholder">School chop</div>}
     </div>
     <div className="volunteer-signature-line" />
     <p className="volunteer-signature-name">{signature?.signerName || name || '[Authorized signatory]'}</p>

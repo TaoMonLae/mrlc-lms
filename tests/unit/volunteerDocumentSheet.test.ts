@@ -53,13 +53,20 @@ function render(type: VolunteerDocumentType, overrides: Partial<VolunteerDocumen
   }));
 }
 
+function assertNoChop(html: string) {
+  assert.ok(!html.includes(chop), 'Historical chop image must not be rendered');
+  assert.ok(!html.includes('data-volunteer-seal'));
+  assert.ok(!html.includes('volunteer-school-chop'));
+  assert.ok(!html.includes('volunteer-chop-placeholder'));
+  assert.ok(!html.includes('School chop'));
+}
+
 for (const type of TYPES) {
-  test(`${type} prints the authenticated signature and school chop with Malaysian dates`, () => {
+  test(`${type} prints the authenticated signature without the historical chop and retains Malaysian dates`, () => {
     const html = render(type, { signatures: [schoolSignature], signingStatus: 'SIGNED' });
     assert.match(html, /<img[^>]*data-volunteer-signature/);
-    assert.match(html, /<img[^>]*data-volunteer-seal/);
     assert.ok(html.includes(signatureImage));
-    assert.ok(html.includes(chop));
+    assertNoChop(html);
     assert.ok(html.includes('Authorized School Signer'));
     assert.ok(html.includes('Programme Director'));
     assert.ok(html.includes('Digitally signed'));
@@ -71,14 +78,13 @@ for (const type of TYPES) {
     assert.ok(!html.includes('Awaiting signatures · not yet valid'));
   });
 
-  test(`${type} with pending signatures cannot appear digitally signed or carry the actual chop`, () => {
+  test(`${type} with pending signatures cannot appear digitally signed and has no chop`, () => {
     const html = render(type, { signatures: [], signingStatus: 'PENDING' });
     assert.ok(html.includes('volunteer-pending-watermark'));
     assert.ok(html.includes('Awaiting signatures · not yet valid'));
     assert.ok(html.includes('Awaiting authorized signature'));
     assert.ok(!html.includes('data-volunteer-signature'));
-    assert.ok(!html.includes('data-volunteer-seal'));
-    assert.ok(!html.includes(chop));
+    assertNoChop(html);
     assert.ok(!html.includes('Digitally signed'));
   });
 }
@@ -89,7 +95,7 @@ test('a two-signatory document remains visibly pending after only the school sig
     signatures: [schoolSignature], signingStatus: 'PENDING',
   });
   assert.equal((html.match(/data-volunteer-signature/g) || []).length, 1);
-  assert.ok(html.includes('data-volunteer-seal'));
+  assertNoChop(html);
   assert.ok(html.includes('Organization Director'));
   assert.ok(html.includes('Awaiting authorized signature'));
   assert.ok(html.includes('Awaiting signatures · not yet valid'));
@@ -104,6 +110,7 @@ test('cancellation takes precedence over signature completion and pending status
     assert.ok(html.includes('Cancelled · no longer valid'));
     assert.ok(!html.includes('volunteer-pending-watermark'));
     assert.ok(!html.includes('Awaiting signatures · not yet valid'));
+    assertNoChop(html);
   }
 });
 
@@ -115,7 +122,7 @@ test('legacy documents retain manual signatory lines without digital-signing cla
     assert.ok(!html.includes('Digitally signed'));
     assert.ok(!html.includes('Awaiting authorized signature'));
     assert.ok(!html.includes('volunteer-pending-watermark'));
-    assert.ok(!html.includes('data-volunteer-seal'));
+    assertNoChop(html);
   }
 });
 
@@ -130,6 +137,6 @@ test('partial draft month selections never print malformed service dates', () =>
     assert.ok(!html.includes('<dd>2026-</dd>'));
     assert.ok(!html.includes('<dd>-01</dd>'));
     assert.ok(html.includes('DRAFT · NOT ISSUED'));
-    assert.ok(html.includes('data-volunteer-seal'), 'The configured chop can be reviewed before issue');
+    assertNoChop(html);
   }
 });

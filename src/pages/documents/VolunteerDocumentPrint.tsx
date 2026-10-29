@@ -47,8 +47,8 @@ export default function VolunteerDocumentPrint() {
           window.document.fonts.ready,
           ...images.map(async image => {
             try { await image.decode(); } catch {
-              if (image.hasAttribute('data-volunteer-signature') || image.hasAttribute('data-volunteer-seal') || image.classList.contains('volunteer-qr')) {
-                throw new Error('A signature, school chop or verification QR code could not load. Refresh the document before printing.');
+              if (image.hasAttribute('data-volunteer-signature') || image.classList.contains('volunteer-qr')) {
+                throw new Error('A signature or verification QR code could not load. Refresh the document before printing.');
               }
             }
           }),

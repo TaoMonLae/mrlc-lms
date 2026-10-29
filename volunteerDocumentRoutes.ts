@@ -7,7 +7,7 @@ import {
   VOLUNTEER_ORGANIZATION_NAME, VOLUNTEER_SCHOOL_NAME, VOLUNTEER_PROGRAM_NAME, VOLUNTEER_SIGNER_ROLES,
   type VolunteerDocumentPayload, type VolunteerDocumentType,
 } from './shared/volunteerDocuments';
-import { normalizeVolunteerMark, volunteerContentHash, volunteerSigningStatus, VolunteerSigningError } from './shared/volunteerSigning';
+import { normalizeVolunteerSignature, volunteerContentHash, volunteerSigningStatus, VolunteerSigningError } from './shared/volunteerSigning';
 
 export interface VolunteerDocumentRoutesContext {
   prisma: PrismaClient;
@@ -70,35 +70,14 @@ export function registerVolunteerDocumentRoutes(app: Express, ctx: VolunteerDocu
   app.get('/api/volunteer-documents/options', authMiddleware, async (req, res) => {
     if (!requireAdmin(req, res)) return;
     try {
-      const [staff, school] = await Promise.all([
-        prisma.user.findMany({
-          where: { isActive: true, isExternalLearner: false, role: { in: [...VOLUNTEER_SIGNER_ROLES] } },
-          select: { id: true, firstName: true, lastName: true, role: true },
-          orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
-        }),
-        prisma.schoolProfile.findFirst({ select: { schoolChopDataUrl: true } }),
-      ]);
+      const staff = await prisma.user.findMany({
+        where: { isActive: true, isExternalLearner: false, role: { in: [...VOLUNTEER_SIGNER_ROLES] } },
+        select: { id: true, firstName: true, lastName: true, role: true },
+        orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
+      });
       res.setHeader('Cache-Control', 'private, no-store');
-      res.json({ signatories: staff.map(user => ({ id: user.id, name: `${user.firstName} ${user.lastName}`.trim(), role: user.role })), schoolChopDataUrl: school?.schoolChopDataUrl || null });
+      res.json({ signatories: staff.map(user => ({ id: user.id, name: `${user.firstName} ${user.lastName}`.trim(), role: user.role })) });
     } catch (error) { handleError(res, error, 'loading signing options'); }
-  });
-
-  app.post('/api/volunteer-documents/chop', authMiddleware, async (req, res) => {
-    const user = requireAdmin(req, res); if (!user) return;
-    try {
-      const image = req.body?.imageDataUrl === null ? null : await normalizeVolunteerMark(req.body?.imageDataUrl, 'chop');
-      const existing = await prisma.schoolProfile.findFirst({ select: { id: true } });
-      const school = existing
-        ? await prisma.schoolProfile.update({ where: { id: existing.id }, data: { schoolChopDataUrl: image } })
-        : await prisma.schoolProfile.create({ data: { name: VOLUNTEER_SCHOOL_NAME, schoolChopDataUrl: image } });
-      try {
-        await createAuditLog(user.userId, user.email, 'UPDATE', 'SCHOOL_PROFILE', school.id,
-          image ? 'Updated the volunteer document school chop.' : 'Removed the volunteer document school chop.',
-          req.ip, req.headers['user-agent'] || null, 'SUCCESS');
-      } catch (error) { logger.error('Unable to audit the school chop update:', error); }
-      res.setHeader('Cache-Control', 'private, no-store');
-      res.json({ schoolChopDataUrl: image });
-    } catch (error) { handleError(res, error, 'saving school chop'); }
   });
 
   app.post('/api/volunteer-documents', authMiddleware, async (req, res) => {
@@ -130,7 +109,6 @@ export function registerVolunteerDocumentRoutes(app: Express, ctx: VolunteerDocu
           name: VOLUNTEER_SCHOOL_NAME, program: VOLUNTEER_PROGRAM_NAME,
           logoUrl: profile?.logoUrl || null, address: profile?.address || null,
           contactEmail: profile?.contactEmail || null, contactPhone: profile?.contactPhone || null,
-          chopDataUrl: profile?.schoolChopDataUrl || null,
         },
         volunteer: {
           name: input.recipientName, role: input.role, fromMonth: input.fromMonth, toMonth: input.toMonth,
@@ -197,7 +175,7 @@ export function registerVolunteerDocumentRoutes(app: Express, ctx: VolunteerDocu
     if (consent !== true) { res.status(400).json({ error: 'Confirm that you have reviewed this document and authorize your signature.' }); return; }
     if (typeof contentHash !== 'string' || !/^[a-f0-9]{64}$/.test(contentHash)) { res.status(400).json({ error: 'Open and review the current document before signing.' }); return; }
     try {
-      const imageDataUrl = await normalizeVolunteerMark(req.body?.imageDataUrl, 'signature');
+      const imageDataUrl = await normalizeVolunteerSignature(req.body?.imageDataUrl);
       const document = await prisma.$transaction(async tx => {
         const existing = await tx.volunteerDocument.findUnique({ where: { id: req.params.id }, include: signatureInclude });
         if (!existing) throw new VolunteerSigningError('Volunteer document not found.', 404);

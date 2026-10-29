@@ -3,7 +3,7 @@ import test from 'node:test';
 import express from 'express';
 import sharp from 'sharp';
 import { registerVolunteerDocumentRoutes } from '../../volunteerDocumentRoutes';
-import { normalizeVolunteerMark, volunteerContentHash, volunteerSigningStatus } from '../../shared/volunteerSigning';
+import { normalizeVolunteerSignature, volunteerContentHash, volunteerSigningStatus } from '../../shared/volunteerSigning';
 
 const input = {
   type: 'VOLUNTEER_APPRECIATION_CERTIFICATE', recipientName: ' A Volunteer ', role: 'English tutor',
@@ -26,9 +26,9 @@ async function markImage(format: 'png' | 'jpeg' | 'webp' = 'png') {
   return `data:image/${format};base64,${image.toString('base64')}`;
 }
 
-test('signature and chop raster validation normalizes images and rejects unsafe or empty marks', async () => {
+test('signature raster validation normalizes images and rejects unsafe or empty marks', async () => {
   for (const format of ['png', 'jpeg', 'webp'] as const) {
-    const normalized = await normalizeVolunteerMark(await markImage(format), 'signature');
+    const normalized = await normalizeVolunteerSignature(await markImage(format));
     assert.match(normalized, /^data:image\/png;base64,/);
     const meta = await sharp(Buffer.from(normalized.split(',')[1], 'base64')).metadata();
     assert.ok(meta.width! <= 1200 && meta.height! <= 400);
@@ -36,14 +36,14 @@ test('signature and chop raster validation normalizes images and rejects unsafe 
   }
   for (const invalid of [null, '', 'https://example.test/signature.png', 'data:image/svg+xml;base64,PHN2Zz4=',
     'data:image/png;base64,%%%=', 'data:image/png;base64,dGV4dA==', `data:image/png;base64,${'A'.repeat(2_800_000)}`]) {
-    await assert.rejects(normalizeVolunteerMark(invalid, 'signature'));
+    await assert.rejects(normalizeVolunteerSignature(invalid));
   }
   const blank = await sharp({ create: { width: 200, height: 80, channels: 4, background: '#ffffff' } }).png().toBuffer();
-  await assert.rejects(normalizeVolunteerMark(`data:image/png;base64,${blank.toString('base64')}`, 'signature'), /blank/);
+  await assert.rejects(normalizeVolunteerSignature(`data:image/png;base64,${blank.toString('base64')}`), /blank/);
   const solid = await sharp({ create: { width: 200, height: 80, channels: 4, background: '#000000' } }).png().toBuffer();
-  await assert.rejects(normalizeVolunteerMark(`data:image/png;base64,${solid.toString('base64')}`, 'chop'), /blank/);
+  await assert.rejects(normalizeVolunteerSignature(`data:image/png;base64,${solid.toString('base64')}`), /blank/);
   const png = await markImage('png');
-  await assert.rejects(normalizeVolunteerMark(png.replace('image/png', 'image/jpeg'), 'signature'), /could not be read/);
+  await assert.rejects(normalizeVolunteerSignature(png.replace('image/png', 'image/jpeg')), /could not be read/);
 });
 
 function setup() {
@@ -58,7 +58,7 @@ function setup() {
     ['disabled-id', { id: 'disabled-id', firstName: 'Disabled', lastName: 'Teacher', role: 'TEACHER', isActive: false, isExternalLearner: false }],
     ['external-id', { id: 'external-id', firstName: 'External', lastName: 'Account', role: 'STAFF', isActive: true, isExternalLearner: true }],
   ]);
-  let school: any = { id: 'school-id', name: 'School', logoUrl: '/school-logo.png', address: 'School address', contactEmail: 'school@example.test', contactPhone: '12345', schoolChopDataUrl: null };
+  const school: any = { id: 'school-id', name: 'School', logoUrl: '/school-logo.png', address: 'School address', contactEmail: 'school@example.test', contactPhone: '12345', schoolChopDataUrl: 'historical-private-chop' };
   let auditUnavailable = false;
   let lockFailure = false;
   const find = (where: any) => {
@@ -71,8 +71,6 @@ function setup() {
   const prisma: any = {
     schoolProfile: {
       findFirst: async () => school,
-      update: async ({ data }: any) => { school = { ...school, ...data }; return school; },
-      create: async ({ data }: any) => { school = { id: 'school-id', ...data }; return school; },
     },
     user: {
       findUnique: async ({ where }: any) => users.get(where.id) || null,
@@ -124,36 +122,33 @@ function setup() {
     }
     return res;
   }
-  return { send, documents, signatures, users, audits, getSchool: () => school, failAudit: () => { auditUnavailable = true; }, failLock: () => { lockFailure = true; } };
+  const hasRoute = (path: string) => (app as any)._router.stack.some((layer: any) => layer.route?.path === path);
+  return { send, documents, signatures, users, audits, hasRoute, failAudit: () => { auditUnavailable = true; }, failLock: () => { lockFailure = true; } };
 }
 
-test('admins assign actual staff identities; chop snapshots and option access stay private', async () => {
-  const { send, getSchool } = setup();
+test('admins assign actual staff identities without exposing or copying saved chops', async () => {
+  const { send, hasRoute } = setup();
+  assert.equal(hasRoute('/api/volunteer-documents/chop'), false, 'School chop uploads are no longer supported');
   for (const user of [null, 'student-id', 'teacher-id', 'external-id']) {
     assert.equal((await send('/api/volunteer-documents/options', 'GET', user)).statusCode, 403);
-    assert.equal((await send('/api/volunteer-documents/chop', 'POST', user, { imageDataUrl: null })).statusCode, 403);
     assert.equal((await send('/api/volunteer-documents', 'POST', user, input)).statusCode, 403);
   }
   const options = await send('/api/volunteer-documents/options', 'GET', 'admin-id');
   assert.deepEqual(options.data.signatories.map((person: any) => person.id), ['admin-id', 'teacher-id', 'staff-id']);
+  assert.deepEqual(Object.keys(options.data), ['signatories']);
   assert.equal(options.headers['Cache-Control'], 'private, no-store');
   assert.equal((await send('/api/volunteer-documents', 'POST', 'admin-id', { ...input, signatoryUserId: undefined })).statusCode, 400);
   for (const signatoryUserId of ['student-id', 'disabled-id', 'external-id', 'unknown']) {
     assert.equal((await send('/api/volunteer-documents', 'POST', 'admin-id', { ...input, signatoryUserId })).statusCode, 400);
   }
-  assert.equal((await send('/api/volunteer-documents/chop', 'POST', 'admin-id', { imageDataUrl: 'https://example.test/chop.png' })).statusCode, 400);
-  const uploaded = await send('/api/volunteer-documents/chop', 'POST', 'admin-id', { imageDataUrl: await markImage() });
-  assert.equal(uploaded.statusCode, 200);
-  assert.match(getSchool().schoolChopDataUrl, /^data:image\/png;base64,/);
-  const issued = await send('/api/volunteer-documents', 'POST', 'admin-id', input);
+  const issued = await send('/api/volunteer-documents', 'POST', 'admin-id', { ...input, schoolChopDataUrl: 'client-chop', school: { chopDataUrl: 'client-chop' } });
   assert.equal(issued.statusCode, 201);
   const document = issued.data;
   assert.equal(document.payload.version, 2);
   assert.equal(document.payload.signatory.name, 'School Director', 'The account name wins over client-provided names');
-  assert.equal(document.payload.school.chopDataUrl, uploaded.data.schoolChopDataUrl);
-  await send('/api/volunteer-documents/chop', 'POST', 'admin-id', { imageDataUrl: null });
-  assert.equal(getSchool().schoolChopDataUrl, null);
-  assert.equal(document.payload.school.chopDataUrl, uploaded.data.schoolChopDataUrl, 'Issued chop remains frozen');
+  assert.equal(Object.hasOwn(document.payload.school, 'chopDataUrl'), false);
+  assert.ok(!JSON.stringify(document).includes('historical-private-chop'));
+  assert.ok(!JSON.stringify(document).includes('client-chop'));
   assert.equal(document.signingStatus, 'PENDING');
   assert.match(document.contentHash, /^[a-f0-9]{64}$/);
   assert.equal((await send('/api/volunteer-documents', 'GET', 'teacher-id')).data.length, 1);
@@ -251,4 +246,26 @@ test('content fingerprints ignore JSON key order but detect changes to dates, si
   assert.equal(volunteerSigningStatus({ ...document, payload: { ...document.payload, version: 1 }, signatures: [{ slot: 'SCHOOL', signerUserId: 'teacher-id', contentHash: original }] }), 'PENDING', 'A downgraded payload must not inherit the legacy exemption');
   assert.equal(volunteerSigningStatus({ ...document, payload: { ...document.payload, version: 999 } }), 'PENDING', 'Unknown versions never verify');
   assert.equal(volunteerSigningStatus({ ...document, signatoryUserId: null, organizationSignatoryUserId: null, payload: { ...document.payload, version: 1 }, signatures: [{ slot: 'SCHOOL', signerUserId: 'teacher-id', contentHash: original }] }), 'PENDING', 'Removing assignment IDs must not hide existing signing evidence');
+});
+
+test('historical chop snapshots remain bound to existing signatures and private during verification', async () => {
+  const { send, documents, signatures } = setup();
+  const issued = await send('/api/volunteer-documents', 'POST', 'admin-id', input);
+  const document = documents.get(issued.data.id);
+  document.payload.school.chopDataUrl = 'historical-private-chop';
+  const contentHash = volunteerContentHash(document);
+  signatures.push({
+    id: 'historical-signature', documentId: document.id, slot: 'SCHOOL', signerUserId: 'teacher-id',
+    signerName: 'School Director', signerTitle: 'Director', signedAt: new Date(), contentHash,
+    imageDataUrl: await markImage(),
+  });
+  const stored = await send('/api/volunteer-documents/:id', 'GET', 'teacher-id', undefined, { id: document.id });
+  assert.equal(stored.data.signingStatus, 'SIGNED');
+  assert.equal(stored.data.contentHash, contentHash);
+  assert.equal(stored.data.payload.school.chopDataUrl, 'historical-private-chop', 'Previously signed payloads remain immutable');
+  const { chopDataUrl: _historicalChop, ...schoolWithoutChop } = document.payload.school;
+  assert.notEqual(volunteerContentHash({ ...document, payload: { ...document.payload, school: schoolWithoutChop } }), contentHash);
+  const publicRecord = await send('/api/verify/volunteer/:token', 'GET', null, undefined, { token: document.verifyToken });
+  assert.equal(publicRecord.data.valid, true);
+  assert.ok(!JSON.stringify(publicRecord.data).includes('chop'));
 });
