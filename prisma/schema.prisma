@@ -2553,6 +2553,36 @@ enum DocumentStatus {
   REISSUED
 }
 
+enum VolunteerDocumentType {
+  VOLUNTEER_APPRECIATION_LETTER
+  VOLUNTEER_APPRECIATION_CERTIFICATE
+  PART_TIME_VOLUNTEER_CONFIRMATION
+}
+
+// Volunteers may be external to the LMS and do not need a student or user account.
+model VolunteerDocument {
+  id              String                @id @default(uuid())
+  documentNumber  String                @unique
+  verifyToken     String                @unique
+  type            VolunteerDocumentType
+  status          DocumentStatus        @default(ACTIVE)
+  recipientName   String
+  role            String
+  fromMonth       String
+  toMonth         String
+  payload         Json
+  issuedById      String
+  issuedByName    String
+  issueDate       DateTime              @default(now())
+  cancelledReason String?
+  downloadCount   Int                   @default(0)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([status, createdAt])
+  @@index([type])
+}
+
 model GeneratedDocument {
   id             String         @id @default(uuid())
   documentNumber String         @unique

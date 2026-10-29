@@ -14,6 +14,7 @@ export function isExternalLearnerAppPathAllowed(value: string): boolean {
   const pathname = cleanPathname(value);
   return (
     pathname === "/language-quest"
+    || /^\/verify\/volunteer\/[^/]+$/.test(pathname)
     || pathname === "/language-quest/about"
     || pathname === "/change-password"
     || pathname === "/games/language-quest"

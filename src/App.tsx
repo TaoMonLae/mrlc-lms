@@ -255,6 +255,9 @@ const DocumentsPage = lazy(() => import("./pages/documents/Documents"));
 const DocumentPrint = lazy(() => import("./pages/documents/DocumentPrint"));
 const StudentIdCardPrint = lazy(() => import("./pages/documents/StudentIdCardPrint"));
 const VerifyDocument = lazy(() => import("./pages/documents/VerifyDocument"));
+const VolunteerDocuments = lazy(() => import("./pages/documents/VolunteerDocuments"));
+const VolunteerDocumentPrint = lazy(() => import("./pages/documents/VolunteerDocumentPrint"));
+const VerifyVolunteerDocument = lazy(() => import("./pages/documents/VerifyVolunteerDocument"));
 const VerifyPersonnelCard = lazy(() => import("./pages/documents/VerifyPersonnelCard"));
 const StudentDocumentsPage = lazy(() => import("./pages/student/StudentDocuments"));
 
@@ -338,6 +341,7 @@ export default function App() {
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route path="/verify/payment/:id" element={<VerifyPaymentReceipt />} />
             <Route path="/verify/personnel/:token" element={<VerifyPersonnelCard />} />
+            <Route path="/verify/volunteer/:token" element={<VerifyVolunteerDocument />} />
             <Route path="/verify/:token" element={<VerifyDocument />} />
 
             {/* Dictionary — public, no sign-in required (also linked from inside the app) */}
@@ -350,6 +354,9 @@ export default function App() {
               </Route>
               <Route path="/documents/:id/print" element={<DocumentPrint />} />
               <Route path="/documents/:id/id-card" element={<StudentIdCardPrint />} />
+              <Route element={<ProtectedRoute strictRoles={['ADMIN']} />}>
+                <Route path="/documents/volunteer/:id/print" element={<VolunteerDocumentPrint />} />
+              </Route>
               <Route path="/payroll/payslips/:id/print" element={<PayslipPrint />} />
               <Route path="/payroll/runs/:id/print" element={<PayrollRunPrint />} />
               <Route element={<LanguageQuestShell />}>
@@ -578,6 +585,9 @@ export default function App() {
                   <Route path="/users/:id/edit" element={<UserEdit />} />
                 </Route>
 
+                <Route element={<ProtectedRoute strictRoles={['ADMIN']} />}>
+                  <Route path="/documents/volunteers" element={<VolunteerDocuments />} />
+                </Route>
                 <Route element={<ProtectedRoute requiredPermission="manage_all" />}>
                   <Route path="/operations" element={<SchoolOperations />} />
                   <Route path="/chat/moderation" element={<ChatModeration />} />
