@@ -48,11 +48,17 @@
 .volunteer-certificate .volunteer-contributions { max-width: 88%; margin: 0 auto .8cqw; font-size: 1.15cqw; line-height: 1.45; }
 .volunteer-sheet .volunteer-service-hours { font-size: 1.1cqw; font-weight: 600; margin: .6cqw 0; }
 .volunteer-sheet .volunteer-thanks { font-size: 1.15cqw; margin-top: .8cqw; }
-.volunteer-signatures { display: flex; justify-content: space-between; gap: 6cqw; padding-top: 3.6cqw; margin-top: 1cqw; }
+.volunteer-signatures { display: flex; justify-content: space-between; gap: 6cqw; padding-top: .8cqw; margin-top: .6cqw; }
 .volunteer-signature { width: 36%; font-size: 1.08cqw; line-height: 1.4; }
+.volunteer-signature-marks { position: relative; height: 7cqw; display: flex; align-items: flex-end; padding-bottom: .4cqw; }
+.volunteer-signature-image { max-width: 100%; width: 100%; height: 6.4cqw; object-fit: contain; object-position: left bottom; }
+.volunteer-school-signature .volunteer-signature-image { max-width: calc(100% - 7.8cqw); }
+.volunteer-school-chop, .volunteer-chop-placeholder { position: absolute; right: 0; bottom: -.2cqw; width: 7.4cqw; height: 7.4cqw; object-fit: contain; }
+.volunteer-chop-placeholder { display: flex; align-items: center; justify-content: center; border: .08cqw dashed #b7c0c6; color: #63717b; font-size: .85cqw; text-align: center; }
 .volunteer-signature-line { border-top: .08cqw solid var(--volunteer-navy); margin-bottom: .7cqw; }
 .volunteer-signature-name { font-weight: 700; font-size: 1.18cqw; }
 .volunteer-signature-organization { color: #5d6a72; }
+.volunteer-sheet .volunteer-signature-audit { margin-top: .45cqw; color: #345a54; font-size: .86cqw; line-height: 1.4; }
 .volunteer-sheet-footer { display: flex; justify-content: space-between; align-items: flex-end; gap: 3cqw; padding-top: 1.6cqw; margin-top: 1.7cqw; border-top: .08cqw solid #d7dce0; font-size: .84cqw; line-height: 1.5; }
 .volunteer-footer-record { max-width: 40%; }
 .volunteer-footer-record strong { letter-spacing: .025em; }
@@ -63,13 +69,14 @@
 .volunteer-verify-url { color: inherit; text-decoration: none; display: block; overflow-wrap: anywhere; font-size: .76cqw; }
 .volunteer-draft-label { position: absolute; top: 1.8cqw; right: 2.4cqw; font-size: .85cqw; font-weight: 700; letter-spacing: .12em; color: #8b6423; }
 .volunteer-watermark { position: absolute; inset: 0; z-index: -1; display: flex; align-items: center; justify-content: center; font-size: 12cqw; font-weight: 800; transform: rotate(-24deg); color: #c2382b18; pointer-events: none; }
+.volunteer-pending-watermark { font-size: 6.5cqw; color: #8b64231c; text-align: center; }
 .volunteer-invalid-status { color: #a62d21; font-weight: 700; }
 .volunteer-dense .volunteer-certificate-body { padding-top: 1.6cqw; }
 .volunteer-dense .volunteer-recipient { font-size: 3.1cqw; }
 .volunteer-dense .volunteer-presented { margin-top: 1.1cqw; }
 .volunteer-dense .volunteer-certificate-copy { font-size: 1.1cqw; }
 .volunteer-dense .volunteer-contributions { font-size: 1.02cqw; }
-.volunteer-dense .volunteer-signatures { padding-top: 2.7cqw; }
+.volunteer-dense .volunteer-signatures { padding-top: .6cqw; }
 .volunteer-long-name .volunteer-recipient { font-size: 2.7cqw; }
 .volunteer-letter { height: 141.42857cqw; padding: 7cqw 8.5cqw 6cqw; font-size: 1.75cqw; line-height: 1.75; }
 .volunteer-letter .volunteer-sheet-header { justify-content: flex-start; text-align: left; padding-bottom: 2.6cqw; border-bottom: .3cqw solid var(--volunteer-navy); }
@@ -87,9 +94,15 @@
 .volunteer-letter .volunteer-service-period dd { font-size: 1.9cqw; }
 .volunteer-letter .volunteer-service-hours { font-size: 1.6cqw; margin-bottom: 2cqw; }
 .volunteer-sheet .volunteer-letter-subtitle { font-size: 1.7cqw; font-weight: 700; margin: 1.5cqw 0 .6cqw; }
-.volunteer-letter .volunteer-signatures { padding-top: 4cqw; margin-top: 0; }
+.volunteer-letter .volunteer-signatures { padding-top: 1cqw; margin-top: 0; }
 .volunteer-letter .volunteer-signature { width: 44%; font-size: 1.45cqw; }
 .volunteer-letter .volunteer-signature-name { font-size: 1.6cqw; }
+.volunteer-letter .volunteer-signature-marks { height: 10cqw; }
+.volunteer-letter .volunteer-signature-image { height: 9cqw; }
+.volunteer-letter .volunteer-school-chop, .volunteer-letter .volunteer-chop-placeholder { width: 10cqw; height: 10cqw; }
+.volunteer-letter .volunteer-school-signature .volunteer-signature-image { max-width: calc(100% - 10.4cqw); }
+.volunteer-letter .volunteer-chop-placeholder { font-size: 1.15cqw; }
+.volunteer-letter .volunteer-signature-audit { font-size: 1.1cqw; }
 .volunteer-letter .volunteer-sheet-footer { font-size: 1.08cqw; margin-top: 4cqw; padding-top: 2cqw; }
 .volunteer-letter .volunteer-qr, .volunteer-letter .volunteer-qr-placeholder { width: 8cqw; height: 8cqw; }
 .volunteer-letter .volunteer-verify-url { font-size: .92cqw; }
@@ -98,7 +111,7 @@
 .volunteer-dense-letter .volunteer-letter-title { margin: 3cqw 0 2.6cqw; }
 .volunteer-dense-letter .volunteer-letter-body > p { margin-bottom: 1.5cqw; }
 .volunteer-dense-letter .volunteer-service-period { margin-block: 2cqw; }
-.volunteer-dense-letter .volunteer-signatures { padding-top: 3cqw; }
+.volunteer-dense-letter .volunteer-signatures { padding-top: .8cqw; }
 .volunteer-dense-letter .volunteer-sheet-footer { margin-top: 2.8cqw; }
 .volunteer-print-page { min-height: 100vh; background: #e9ecef; padding: 24px 16px 48px; }
 .volunteer-print-toolbar { max-width: 1123px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }

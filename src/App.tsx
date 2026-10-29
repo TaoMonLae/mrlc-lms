@@ -1,9 +1,9 @@
-import ReleaseUpdates from "./pages/ReleaseUpdates";
-import FinanceProcedures from './pages/financial/FinanceProcedures';
-import FinanceWorkspace from './components/financial/FinanceWorkspace';
 import { Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { lazyWithRetry as lazy } from "./lib/lazyWithRetry";
+const ReleaseUpdates = lazy(() => import("./pages/ReleaseUpdates"));
+const FinanceProcedures = lazy(() => import("./pages/financial/FinanceProcedures"));
+const FinanceWorkspace = lazy(() => import("./components/financial/FinanceWorkspace"));
 const AppLayout = lazy(() => import("./components/layout/AppLayout").then((module) => ({ default: module.AppLayout })));
 import { ExternalLearnerBoundary, ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { StudentFocusMonitor } from "./components/focus/StudentFocusMonitor";
@@ -354,7 +354,7 @@ export default function App() {
               </Route>
               <Route path="/documents/:id/print" element={<DocumentPrint />} />
               <Route path="/documents/:id/id-card" element={<StudentIdCardPrint />} />
-              <Route element={<ProtectedRoute strictRoles={['ADMIN']} />}>
+              <Route element={<ProtectedRoute strictRoles={['ADMIN', 'TEACHER', 'STAFF', 'ACCOUNTANT', 'LIBRARIAN', 'CASE_WORKER']} />}>
                 <Route path="/documents/volunteer/:id/print" element={<VolunteerDocumentPrint />} />
               </Route>
               <Route path="/payroll/payslips/:id/print" element={<PayslipPrint />} />
@@ -585,7 +585,7 @@ export default function App() {
                   <Route path="/users/:id/edit" element={<UserEdit />} />
                 </Route>
 
-                <Route element={<ProtectedRoute strictRoles={['ADMIN']} />}>
+                <Route element={<ProtectedRoute strictRoles={['ADMIN', 'TEACHER', 'STAFF', 'ACCOUNTANT', 'LIBRARIAN', 'CASE_WORKER']} />}>
                   <Route path="/documents/volunteers" element={<VolunteerDocuments />} />
                 </Route>
                 <Route element={<ProtectedRoute requiredPermission="manage_all" />}>

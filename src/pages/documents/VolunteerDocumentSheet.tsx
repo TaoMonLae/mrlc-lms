@@ -4,9 +4,13 @@ import {
   VOLUNTEER_DOCUMENT_TYPE_LABELS,
   type VolunteerDocumentPayload,
   type VolunteerDocumentRecord,
+  type VolunteerDocumentSignature,
   type VolunteerDocumentType,
 } from '@/shared/volunteerDocuments';
+import { formatVolunteerIssueDate, formatVolunteerSignedAt } from '@/shared/volunteerDocumentDates';
 import './volunteerDocuments.css';
+
+export { formatVolunteerIssueDate } from '@/shared/volunteerDocumentDates';
 
 export interface VolunteerDocumentSheetProps {
   type: VolunteerDocumentType;
@@ -16,30 +20,29 @@ export interface VolunteerDocumentSheetProps {
   verifyUrl?: string;
   qrDataUrl?: string;
   status?: VolunteerDocumentRecord['status'];
+  signatures?: VolunteerDocumentSignature[];
+  signingStatus?: VolunteerDocumentRecord['signingStatus'];
   draft?: boolean;
-}
-
-export function formatVolunteerIssueDate(value?: string): string {
-  if (!value) return 'Set when issued';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Set when issued' : new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Asia/Kuala_Lumpur', day: 'numeric', month: 'long', year: 'numeric',
-  }).format(date);
 }
 
 /** One layout powers the live draft and the issued, printable document. */
 export default function VolunteerDocumentSheet({
-  type, payload, documentNumber, issueDate, verifyUrl, qrDataUrl, status = 'ACTIVE', draft = false,
+  type, payload, documentNumber, issueDate, verifyUrl, qrDataUrl, status = 'ACTIVE', signatures = [], signingStatus, draft = false,
 }: VolunteerDocumentSheetProps) {
   const certificate = type === 'VOLUNTEER_APPRECIATION_CERTIFICATE';
   const proof = type === 'PART_TIME_VOLUNTEER_CONFIRMATION';
   const volunteer = payload.volunteer;
   const name = volunteer.name || '[Volunteer’s full name]';
   const role = volunteer.role || '[Volunteer role]';
-  const from = volunteer.fromMonth ? formatVolunteerMonth(volunteer.fromMonth) : '[Start month / year]';
-  const to = volunteer.toMonth ? formatVolunteerMonth(volunteer.toMonth) : '[End month / year]';
+  const serviceMonth = (value: string, placeholder: string) => /^(19|20|21)\d{2}-(0[1-9]|1[0-2])$/.test(value)
+    ? formatVolunteerMonth(value) : draft ? placeholder : 'Date unavailable';
+  const from = serviceMonth(volunteer.fromMonth, '[Start month / year]');
+  const to = serviceMonth(volunteer.toMonth, '[End month / year]');
   const dense = certificate && (volunteer.contributions.length > 450 || name.length > 65 || role.length > 65);
   const invalid = !draft && status !== 'ACTIVE';
+  const pending = !draft && !invalid && payload.version === 2 && signingStatus !== 'SIGNED';
+  const schoolSignature = signatures.find(signature => signature.slot === 'SCHOOL');
+  const organizationSignature = signatures.find(signature => signature.slot === 'ORGANIZATION');
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -68,12 +71,13 @@ export default function VolunteerDocumentSheet({
       window.removeEventListener('beforeprint', fit);
       window.removeEventListener('afterprint', fit);
     };
-  }, [type, payload, documentNumber, issueDate, verifyUrl, qrDataUrl, draft, status]);
+  }, [type, payload, documentNumber, issueDate, verifyUrl, qrDataUrl, draft, status, signatures, signingStatus]);
 
   return (
     <div className={`volunteer-document-frame ${certificate ? 'volunteer-landscape' : 'volunteer-portrait'}`}>
       <article className={`volunteer-sheet report-print ${certificate ? 'volunteer-certificate' : 'volunteer-letter'} ${dense ? 'volunteer-dense' : ''} ${name.length > 100 ? 'volunteer-long-name' : ''} ${!certificate && volunteer.contributions.length > 800 ? 'volunteer-dense-letter' : ''}`} aria-label={`${draft ? 'Draft ' : ''}${VOLUNTEER_DOCUMENT_TYPE_LABELS[type]}`}>
         {invalid && <div className="volunteer-watermark" aria-hidden="true">{status}</div>}
+        {pending && <div className="volunteer-watermark volunteer-pending-watermark" aria-hidden="true">AWAITING SIGNATURES</div>}
         {draft && <div className="volunteer-draft-label">DRAFT · NOT ISSUED</div>}
         <div className="volunteer-sheet-content" ref={contentRef}>
         <header className="volunteer-sheet-header">
@@ -127,8 +131,8 @@ export default function VolunteerDocumentSheet({
         )}
 
         <div className="volunteer-signatures">
-          <Signature name={payload.signatory.name} title={payload.signatory.title} organization={payload.school.name} />
-          {payload.organizationSignatory && <Signature name={payload.organizationSignatory.name} title={payload.organizationSignatory.title} organization={payload.organization.name} />}
+          <Signature name={payload.signatory.name} title={payload.signatory.title} organization={payload.school.name} signature={schoolSignature} chopDataUrl={payload.school.chopDataUrl} school draft={draft} signingRequested={payload.version === 2} />
+          {payload.organizationSignatory && <Signature name={payload.organizationSignatory.name} title={payload.organizationSignatory.title} organization={payload.organization.name} signature={organizationSignature} draft={draft} signingRequested={payload.version === 2} />}
         </div>
 
         <footer className="volunteer-sheet-footer">
@@ -136,6 +140,7 @@ export default function VolunteerDocumentSheet({
             <p><strong>{documentNumber || 'Document number assigned on issue'}</strong></p>
             <p>Issued: {formatVolunteerIssueDate(issueDate)}</p>
             {invalid && <p className="volunteer-invalid-status">{status === 'CANCELLED' ? 'Cancelled · no longer valid' : 'Reissued · superseded by a newer record'}</p>}
+            {pending && <p className="volunteer-invalid-status">Awaiting signatures · not yet valid</p>}
             {!certificate && <p>{[payload.school.contactEmail, payload.school.contactPhone].filter(Boolean).join(' · ')}</p>}
           </div>
           <div className="volunteer-verification-block">
@@ -164,6 +169,28 @@ function ServiceHours({ hoursPerWeek, totalHours }: { hoursPerWeek: number | nul
   ].filter(Boolean).join(' · ')}</p>;
 }
 
-function Signature({ name, title, organization }: { name: string; title: string; organization: string }) {
-  return <div className="volunteer-signature"><div className="volunteer-signature-line" /><p className="volunteer-signature-name">{name || '[Authorized signatory]'}</p><p>{title || '[Position / title]'}</p><p className="volunteer-signature-organization">{organization}</p></div>;
+function Signature({ name, title, organization, signature, chopDataUrl, school = false, draft, signingRequested }: {
+  name: string;
+  title: string;
+  organization: string;
+  signature?: VolunteerDocumentSignature;
+  chopDataUrl?: string | null;
+  school?: boolean;
+  draft: boolean;
+  signingRequested: boolean;
+}) {
+  const showChop = school && chopDataUrl && (draft || Boolean(signature));
+  return <div className={`volunteer-signature ${school ? 'volunteer-school-signature' : ''}`}>
+    <div className="volunteer-signature-marks">
+      {signature && <img className="volunteer-signature-image" data-volunteer-signature src={signature.imageDataUrl} alt={`Signature of ${signature.signerName}`} />}
+      {showChop ? <img className="volunteer-school-chop" data-volunteer-seal src={chopDataUrl} alt="MRLC school chop" />
+        : school && <div className="volunteer-chop-placeholder">School chop</div>}
+    </div>
+    <div className="volunteer-signature-line" />
+    <p className="volunteer-signature-name">{signature?.signerName || name || '[Authorized signatory]'}</p>
+    <p>{signature?.signerTitle || title || '[Position / title]'}</p>
+    <p className="volunteer-signature-organization">{organization}</p>
+    {signature ? <p className="volunteer-signature-audit">Digitally signed<br /><time dateTime={signature.signedAt}>{formatVolunteerSignedAt(signature.signedAt)}</time></p>
+      : signingRequested && <p className="volunteer-signature-audit">{draft ? 'Signature added by the authorized account' : 'Awaiting authorized signature'}</p>}
+  </div>;
 }

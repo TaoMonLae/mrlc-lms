@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 import { Loader2, ShieldCheck, ShieldX, ShieldAlert, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatVolunteerMonth, type VolunteerDocumentVerification } from '@/shared/volunteerDocuments';
-import { formatVolunteerIssueDate } from './VolunteerDocumentSheet';
+import { formatVolunteerIssueDate, formatVolunteerSignedAt } from '@/shared/volunteerDocumentDates';
 
 export default function VerifyVolunteerDocument() {
   const { token } = useParams();
@@ -26,6 +26,16 @@ export default function VerifyVolunteerDocument() {
     return () => controller.abort();
   }, [token, attempt]);
 
+  const awaitingSignatures = result?.status === 'ACTIVE' && result.signingStatus === 'PENDING';
+  const verificationHeading = result?.valid ? 'Verified volunteer document'
+    : result?.status === 'CANCELLED' ? 'Document cancelled'
+    : result?.status === 'REISSUED' ? 'Document superseded'
+    : awaitingSignatures ? 'Awaiting authorized signatures' : 'Document not verified';
+  const verificationDescription = result?.valid ? 'This document matches the issuing organization’s active record.'
+    : awaitingSignatures ? 'This record has been prepared but is not yet valid. The assigned signatories must complete their signatures.'
+    : 'This record is not valid. Contact the issuing organization for an updated document.';
+  const serviceMonth = (value: string) => /^(19|20|21)\d{2}-(0[1-9]|1[0-2])$/.test(value) ? formatVolunteerMonth(value) : 'Date unavailable';
+
   return (
     <main className="min-h-screen bg-background px-4 py-10 sm:py-16">
       <section className="mx-auto max-w-xl overflow-hidden rounded-sm border border-border bg-card">
@@ -41,20 +51,31 @@ export default function VerifyVolunteerDocument() {
           {state === 'found' && result && <>
             <div className="mb-7 flex items-start gap-3">
               {result.valid ? <ShieldCheck className="mt-1 size-9 shrink-0 text-emerald-600" /> : <ShieldAlert className="mt-1 size-9 shrink-0 text-amber-600" />}
-              <div><h2 className="text-xl font-semibold">{result.valid ? 'Verified volunteer document' : result.status === 'CANCELLED' ? 'Document cancelled' : 'Document superseded'}</h2><p className="mt-1 text-sm text-muted-foreground">{result.valid ? 'This document matches the issuing organization’s active record.' : 'This record is no longer valid. Contact the issuing organization for an updated document.'}</p></div>
+              <div><h2 className="text-xl font-semibold">{verificationHeading}</h2><p className="mt-1 text-sm text-muted-foreground">{verificationDescription}</p></div>
             </div>
             <dl className="divide-y divide-border border-y border-border text-sm">
               <VerificationRow label="Issued to" value={result.recipientName} />
               <VerificationRow label="Document" value={result.documentType} />
               <VerificationRow label="Volunteer role" value={result.role} />
-              <VerificationRow label="From" value={formatVolunteerMonth(result.fromMonth)} />
-              <VerificationRow label="To" value={formatVolunteerMonth(result.toMonth)} />
+              <VerificationRow label="From" value={serviceMonth(result.fromMonth)} />
+              <VerificationRow label="To" value={serviceMonth(result.toMonth)} />
               {result.hoursPerWeek != null && <VerificationRow label="Hours per week" value={String(result.hoursPerWeek)} />}
               {result.totalHours != null && <VerificationRow label="Total volunteer hours" value={String(result.totalHours)} />}
               <VerificationRow label="Document number" value={result.documentNumber} />
               <VerificationRow label="Issued on" value={formatVolunteerIssueDate(result.issueDate)} />
-              <VerificationRow label="Status" value={result.valid ? 'Active' : result.status === 'CANCELLED' ? 'Cancelled' : 'Reissued'} />
+              <VerificationRow label="Status" value={result.valid ? 'Active' : result.status === 'CANCELLED' ? 'Cancelled' : result.status === 'REISSUED' ? 'Reissued' : awaitingSignatures ? 'Awaiting signatures' : 'Not verified'} />
+              <VerificationRow label="Digital signatures" value={result.signingStatus === 'SIGNED' ? 'Complete' : result.signingStatus === 'PENDING' ? 'Pending' : 'Not recorded for this document'} />
             </dl>
+            {Boolean(result.signatures?.length) && <section className="mt-6" aria-labelledby="volunteer-verified-signatures">
+              <h3 id="volunteer-verified-signatures" className="text-sm font-semibold">Recorded signatories</h3>
+              <ul className="mt-3 space-y-4">
+                {result.signatures!.map(signature => <li key={signature.slot} className="border-l-2 border-academic-teal pl-3 text-sm">
+                  <p className="font-semibold">{signature.signerName}</p>
+                  <p className="text-muted-foreground">{signature.signerTitle} · {signature.slot === 'SCHOOL' ? result.school.name : result.organization.name}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Signed <time dateTime={signature.signedAt}>{formatVolunteerSignedAt(signature.signedAt)}</time></p>
+                </li>)}
+              </ul>
+            </section>}
             <p className="mt-6 text-xs leading-relaxed text-muted-foreground">Compare the recipient, service period and document number above with the original. Verification confirms the recorded volunteer service; it does not certify academic qualifications or paid employment.</p>
           </>}
         </div>

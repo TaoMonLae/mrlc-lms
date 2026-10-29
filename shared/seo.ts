@@ -39,8 +39,8 @@ export const PUBLIC_SEO_PAGES = [
     path: '/kiosk-downloads',
     title: 'MRLC Kiosk Beta Downloads | Windows & Mac',
     heading: 'A focused school session, on this computer.',
-    description: 'Download the unsigned MRLC Kiosk beta for Windows x64, Apple Silicon Mac or Intel Mac, with setup guidance for supervised school testing.',
-    summary: 'Find the MRLC Kiosk beta installers for Windows and Mac. These unsigned builds are for supervised school testing; read the setup guidance before installing.',
+    description: 'Download the MRLC Kiosk beta for Windows x64, Apple Silicon Mac or Intel Mac. Mac installers are signed and notarized; Windows is an unsigned beta.',
+    summary: 'Find the MRLC Kiosk beta installers for supervised school testing. Mac builds are signed and notarized, while the Windows beta is unsigned. Read the setup guidance before installing.',
     label: 'Kiosk beta downloads',
   },
   {

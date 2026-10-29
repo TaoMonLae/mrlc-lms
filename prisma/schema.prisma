@@ -335,6 +335,7 @@ model SchoolProfile {
   // Branding
   logoUrl           String?
   signatureUrl      String?
+  schoolChopDataUrl String?
   loginHeroUrl      String?
   primaryColor      String? @default("#5865f2")
   accentColor       String? @default("#3b82f6")
@@ -2578,9 +2579,32 @@ model VolunteerDocument {
   downloadCount   Int                   @default(0)
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
+  signatoryUserId             String?
+  organizationSignatoryUserId String?
+  signatures                 VolunteerDocumentSignature[]
 
   @@index([status, createdAt])
   @@index([type])
+  @@index([signatoryUserId, createdAt])
+  @@index([organizationSignatoryUserId, createdAt])
+}
+
+// Signature evidence remains attached to its issued snapshot, even if an
+// account is later renamed or removed. Only the assigned account may sign.
+model VolunteerDocumentSignature {
+  id            String            @id @default(uuid())
+  documentId    String
+  document      VolunteerDocument @relation(fields: [documentId], references: [id], onDelete: Restrict)
+  slot          String
+  signerUserId  String
+  signerName    String
+  signerTitle   String
+  imageDataUrl  String
+  contentHash   String
+  signedAt      DateTime          @default(now())
+
+  @@unique([documentId, slot])
+  @@index([signerUserId])
 }
 
 model GeneratedDocument {

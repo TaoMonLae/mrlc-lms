@@ -204,6 +204,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
       { title: "GED Readiness", url: "/gradebook/ged-readiness", icon: GraduationCap },
       { title: "Class Performance", url: "/gradebook/reports", icon: BarChart3 },
       { title: "Documents", url: "/documents", icon: FileText },
+      { title: "Volunteer Documents", url: "/documents/volunteers", icon: FileText },
       { title: "Flashcards", url: "/flashcards", icon: Layers },
       { title: "Conduct", url: "/conduct", icon: ShieldAlert },
       { title: "Student Success", url: "/student-success", icon: HeartPulse },
@@ -499,7 +500,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Volunteer Documents",
     url: "/documents/volunteers",
     icon: FileText,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "TEACHER", "STAFF", "ACCOUNTANT", "LIBRARIAN", "CASE_WORKER"],
   },
   {
     title: "Library",

@@ -10088,7 +10088,10 @@ async function startServer() {
   app.get("/api/settings", authMiddleware, async (req, res) => {
     try {
       const profile = await prisma.schoolProfile.findFirst();
-      res.json(profile || {});
+      // The official chop is available only through the volunteer document
+      // signing workflow, never through general school settings.
+      const { schoolChopDataUrl: _schoolChopDataUrl, ...settings } = profile || {};
+      res.json(settings);
     } catch (err) {
       logger.error("Error fetching settings:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -10160,7 +10163,8 @@ async function startServer() {
         : await saveProfile;
       await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "SETTINGS", profile.id,
         "School settings updated.", req.ip, req.headers["user-agent"] || null, "SUCCESS");
-      res.json(profile);
+      const { schoolChopDataUrl: _schoolChopDataUrl, ...settings } = profile;
+      res.json(settings);
     } catch (err) {
       logger.error("Error updating settings:", err);
       res.status(500).json({ error: "Internal Server Error" });
