@@ -32,7 +32,10 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = React.memo(({ isOpe
           <div>
             <h3 className="text-yellow-400 font-bold font-mono text-sm uppercase mb-1">OBJECTIVE</h3>
             <p className="text-slate-300 leading-relaxed">
-              Navigate the maze, clear all pellets, dodge the ghosts, and collect special bonus items!
+              Clear all pellets to advance through 15 named stages. The routes change as you progress. Dodge ghosts and collect bonus items along the way.
+            </p>
+            <p className="mt-2 text-slate-400 leading-relaxed">
+              Choose a mode in Settings before starting: Classic gives 3 lives; Time Attack gives 120 seconds per stage; Survival gives 1 life; Practice prevents ghost damage and does not submit a score.
             </p>
           </div>
 
@@ -46,7 +49,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = React.memo(({ isOpe
               </li>
               <li className="p-2 bg-slate-950 rounded-lg border border-slate-800">
                 <span className="text-cyan-400 font-bold">SPACEBAR</span>
-                <span className="block text-[10px] text-slate-400">Trigger Power Boost</span>
+                <span className="block text-[10px] text-slate-400">Speed boost, 20-second cooldown</span>
               </li>
               <li className="p-2 bg-slate-950 rounded-lg border border-slate-800">
                 <span className="text-pink-400 font-bold">TOUCH D-PAD</span>

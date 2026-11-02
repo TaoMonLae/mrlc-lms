@@ -10,6 +10,7 @@ interface SettingsModalProps {
   difficulty: AIDifficulty;
   onSelectDifficulty: (d: AIDifficulty) => void;
   gameMode: GameMode;
+  modeLocked: boolean;
   onSelectGameMode: (m: GameMode) => void;
   enableCRT: boolean;
   onToggleCRT: () => void;
@@ -27,6 +28,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
   difficulty,
   onSelectDifficulty,
   gameMode,
+  modeLocked,
   onSelectGameMode,
   enableCRT,
   onToggleCRT,
@@ -109,8 +111,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
               {(['CLASSIC', 'TIME_ATTACK', 'SURVIVAL', 'PRACTICE'] as GameMode[]).map((m) => (
                 <button
                   key={m}
+                  disabled={modeLocked}
                   onClick={() => onSelectGameMode(m)}
-                  className={`py-2 px-3 rounded-lg border font-bold transition cursor-pointer text-center ${
+                  className={`py-2 px-3 rounded-lg border font-bold transition cursor-pointer text-center disabled:cursor-not-allowed disabled:opacity-60 ${
                     gameMode === m
                       ? 'bg-yellow-500/20 border-yellow-400 text-yellow-300'
                       : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
@@ -120,6 +123,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
                 </button>
               ))}
             </div>
+            <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+              Classic: 3 lives · Time Attack: 120 seconds per stage · Survival: 1 life · Practice: no ghost damage or leaderboard score.
+              {modeLocked && ' Finish or restart this run to change modes.'}
+            </p>
           </div>
 
           {/* Audio Volume */}

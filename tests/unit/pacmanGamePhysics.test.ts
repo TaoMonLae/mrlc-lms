@@ -9,6 +9,7 @@ import {
   isWithinPickupRadius
 } from '../../src/pages/games/pacman/utils/gamePhysics';
 import { getNextGhostDirection } from '../../src/pages/games/pacman/utils/ghostAI';
+import { getLevelLayout, TOTAL_LEVELS } from '../../src/pages/games/pacman/utils/levels';
 import {
   getMazeSpawns,
   isWalkableForGhost,
@@ -124,4 +125,36 @@ test('Pac-Man cannot skip through a wall during a high-speed frame', () => {
 
   assert.equal(movement.blocked, true);
   assert.deepEqual(movement.position, { x: 1, y: 1 });
+});
+
+test('all 15 stages have reachable pellets, valid spawns, and distinct routes', () => {
+  const layouts = Array.from({ length: TOTAL_LEVELS }, (_, index) => getLevelLayout(index + 1));
+  assert.equal(new Set(layouts.map(({ name }) => name)).size, TOTAL_LEVELS);
+  assert.equal(new Set(layouts.map(({ maze }) => JSON.stringify(maze))).size, TOTAL_LEVELS);
+
+  for (const { name, maze } of layouts) {
+    const { pacmanSpawn, ghostSpawns } = getMazeSpawns(maze);
+    const start = { x: Math.floor(pacmanSpawn.x), y: pacmanSpawn.y };
+    const queue = [start];
+    const visited = new Set([`${start.x},${start.y}`]);
+    for (let index = 0; index < queue.length; index++) {
+      const { x, y } = queue[index];
+      for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+        const nx = (x + dx + maze[0].length) % maze[0].length;
+        const ny = y + dy;
+        const key = `${nx},${ny}`;
+        const tile = maze[ny]?.[nx];
+        if (tile !== undefined && isWalkableForPacman(tile) && !visited.has(key)) {
+          visited.add(key);
+          queue.push({ x: nx, y: ny });
+        }
+      }
+    }
+    maze.forEach((row, y) => row.forEach((tile, x) => {
+      if (tile === 2 || tile === 3) assert.ok(visited.has(`${x},${y}`), `${name}: unreachable pellet at ${x},${y}`);
+    }));
+    for (const ghost of [ghostSpawns.PINKY, ghostSpawns.INKY, ghostSpawns.CLYDE]) {
+      assert.equal(maze[ghost.y][ghost.x], 5, `${name}: ghost spawn`);
+    }
+  }
 });

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import confetti from 'canvas-confetti';
 import {
@@ -25,7 +25,8 @@ import {
   getPacmanStepPosition,
   isWithinPickupRadius
 } from './utils/gamePhysics';
-import { countDotsAndEnergizers, getMazeSpawns, isWalkableForPacman, MAZES, TILE_SIZE } from './utils/mazes';
+import { countDotsAndEnergizers, getMazeSpawns, isWalkableForPacman, TILE_SIZE } from './utils/mazes';
+import { getLevelLayout, TOTAL_LEVELS } from './utils/levels';
 import { ParticleSystem } from './utils/particles';
 import { pacmanDirectionForSwipe } from './utils/touchControls';
 
@@ -47,6 +48,7 @@ const DEFAULT_STATS: GameStats = {
 
 const MAX_PACMAN_SPEED = 9.5;
 const MAX_GHOST_SPEED = 10.5;
+const TIME_ATTACK_SECONDS = 120;
 const GHOST_HOUSE_DELAYS = {
   PINKY: 1.5,
   INKY: 3.5,
@@ -110,6 +112,8 @@ export default function PacmanGame() {
   const [score, setScore] = useState<number>(0);
   const [highScore, setHighScore] = useState<number>(0);
   const [level, setLevel] = useState<number>(1);
+  const levelName = useMemo(() => getLevelLayout(level).name, [level]);
+  const nextLevelName = useMemo(() => level < TOTAL_LEVELS ? getLevelLayout(level + 1).name : null, [level]);
   const [lives, setLives] = useState<number>(3);
   const [isNewHighScore, setIsNewHighScore] = useState<boolean>(false);
 
@@ -119,9 +123,16 @@ export default function PacmanGame() {
   const [stats, setStats] = useState<GameStats>(DEFAULT_STATS);
 
   // Entities & Maze
-  const [mazeIndex, setMazeIndex] = useState<number>(0);
-  const [maze, setMaze] = useState<number[][]>(() => MAZES[0].map((row) => [...row]));
+  const [maze, setMaze] = useState<number[][]>(() => getLevelLayout(1).maze);
   const [dotsRemaining, setDotsRemaining] = useState<number>(0);
+  const [levelDots, setLevelDots] = useState<number>(0);
+  const [timeRemaining, setTimeRemaining] = useState(TIME_ATTACK_SECONDS);
+  const [boostCooldown, setBoostCooldown] = useState(0);
+  const dotsRemainingRef = useRef(0);
+  const timeRemainingRef = useRef(TIME_ATTACK_SECONDS);
+  const boostCooldownRef = useRef(0);
+  const deathTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const modalPauseRef = useRef(false);
 
   // Power-Up & Bonus Fruit State
   const [activePowerUp, setActivePowerUp] = useState<PowerUpType | null>(null);
@@ -240,6 +251,16 @@ export default function PacmanGame() {
   useEffect(() => {
     levelRef.current = level;
   }, [level]);
+  useEffect(() => () => {
+    if (deathTimeoutRef.current) clearTimeout(deathTimeoutRef.current);
+  }, []);
+  useEffect(() => {
+    const pauseWhenHidden = () => {
+      if (document.hidden) setStatus((current) => current === 'PLAYING' ? 'PAUSED' : current);
+    };
+    document.addEventListener('visibilitychange', pauseWhenHidden);
+    return () => document.removeEventListener('visibilitychange', pauseWhenHidden);
+  }, []);
 
   // Detect Mobile device to auto-enable touch controls
   useEffect(() => {
@@ -327,13 +348,18 @@ export default function PacmanGame() {
 
   // Initialize Maze and Dots for Level
   const initLevel = useCallback(
-    (lvl: number, currentMazeIdx: number) => {
-      const rawMaze = MAZES[currentMazeIdx % MAZES.length];
-      const mazeCopy = rawMaze.map((row) => [...row]);
+    (lvl: number) => {
+      const mazeCopy = getLevelLayout(lvl).maze;
       const { dots, energizers } = countDotsAndEnergizers(mazeCopy);
 
       setMaze(mazeCopy);
-      setDotsRemaining(dots + energizers);
+      dotsRemainingRef.current = dots + energizers;
+      setDotsRemaining(dotsRemainingRef.current);
+      setLevelDots(dotsRemainingRef.current);
+      timeRemainingRef.current = TIME_ATTACK_SECONDS;
+      setTimeRemaining(TIME_ATTACK_SECONDS);
+      boostCooldownRef.current = 0;
+      setBoostCooldown(0);
 
       const spawns = getMazeSpawns(mazeCopy);
       const ghostExit = getGhostExitPosition(mazeCopy);
@@ -447,6 +473,7 @@ export default function PacmanGame() {
   // treatment Snake/Checkers give their score-save calls (see
   // authInterceptor's "optional auth" allowlist for the matching 401 case).
   const recordScore = useCallback(() => {
+    if (gameMode === 'PRACTICE') return;
     apiSend('/api/games/pacman/scores', 'POST', {
       score: scoreRef.current,
       level: levelRef.current,
@@ -458,12 +485,16 @@ export default function PacmanGame() {
 
   // Start new game
   const handleStartGame = () => {
+    if (deathTimeoutRef.current) clearTimeout(deathTimeoutRef.current);
+    deathTimeoutRef.current = null;
+    scoreRef.current = 0;
+    levelRef.current = 1;
     setScore(0);
     setLevel(1);
-    setLives(3);
+    setLives(gameMode === 'SURVIVAL' ? 1 : 3);
     setIsNewHighScore(false);
-    setMazeIndex(0);
-    initLevel(1, 0);
+    modalPauseRef.current = false;
+    initLevel(1);
     setStatus('PLAYING');
     soundEngine.playGameStart();
 
@@ -482,14 +513,19 @@ export default function PacmanGame() {
 
   // Move to Next Level
   const handleNextLevel = () => {
+    if (status !== 'LEVEL_CLEAR' || level >= TOTAL_LEVELS) return;
     const nextLvl = level + 1;
-    const nextMazeIdx = (mazeIndex + 1) % MAZES.length;
     setLevel(nextLvl);
-    setMazeIndex(nextMazeIdx);
-    initLevel(nextLvl, nextMazeIdx);
+    levelRef.current = nextLvl;
+    initLevel(nextLvl);
     setStatus('PLAYING');
     soundEngine.playGameStart();
   };
+
+  const addScore = useCallback((points: number) => {
+    scoreRef.current += points;
+    setScore(scoreRef.current);
+  }, []);
 
   // Spawn Bonus Fruit dynamically
   const spawnFruit = useCallback(() => {
@@ -578,21 +614,18 @@ export default function PacmanGame() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (status !== 'PLAYING' && status !== 'PAUSED') return;
+      if (isSettingsOpen || isLeaderboardOpen || isHowToPlayOpen) return;
+      if (e.target instanceof HTMLElement && e.target.closest('button, input, select, textarea, [contenteditable="true"]')) return;
 
       if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
+        e.preventDefault();
         setStatus((prev) => (prev === 'PLAYING' ? 'PAUSED' : 'PLAYING'));
         return;
       }
 
       if (e.key === ' ' && status === 'PLAYING') {
-        // Trigger Super Power Boost / Magnet Pulse
-        if (!pacmanRef.current.powerUp) {
-          pacmanRef.current.powerUp = 'SPEED';
-          pacmanRef.current.powerUpTimeLeft = 5;
-          setActivePowerUp('SPEED');
-          setPowerUpTimeLeft(5);
-          soundEngine.playPowerUp();
-        }
+        e.preventDefault();
+        handleTriggerPower();
         return;
       }
 
@@ -610,7 +643,7 @@ export default function PacmanGame() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [status]);
+  }, [status, isSettingsOpen, isLeaderboardOpen, isHowToPlayOpen]);
 
   // Main 60FPS Game Loop
   const updateGame = useCallback(
@@ -620,6 +653,31 @@ export default function PacmanGame() {
       const pac = pacmanRef.current;
       const ghosts = ghostsRef.current;
       const ps = particleSystemRef.current;
+
+      if (boostCooldownRef.current > 0) {
+        boostCooldownRef.current = Math.max(0, boostCooldownRef.current - dt);
+        setBoostCooldown(boostCooldownRef.current);
+      }
+
+      if (gameMode === 'TIME_ATTACK') {
+        timeRemainingRef.current = Math.max(0, timeRemainingRef.current - dt);
+        setTimeRemaining(timeRemainingRef.current);
+        if (timeRemainingRef.current === 0) {
+          setStatus('GAME_OVER');
+          recordScore();
+          return;
+        }
+      }
+
+      for (const [item, clear] of [
+        [fruitRef.current, () => { fruitRef.current = null; setFruit(null); }],
+        [powerUpItemRef.current, () => { powerUpItemRef.current = null; setPowerUpItem(null); }]
+      ] as const) {
+        if (item) {
+          item.duration -= dt;
+          if (item.duration <= 0) clear();
+        }
+      }
 
       // Update Particle System
       ps.update(dt);
@@ -634,39 +692,22 @@ export default function PacmanGame() {
       // is standing on and for the Magnet power-up's nearby auto-collect.
       const collectDot = (rx: number, ry: number, tileValue: number) => {
         maze[ry][rx] = 0;
+        dotsRemainingRef.current -= 1;
+        const remaining = dotsRemainingRef.current;
+        setDotsRemaining(remaining);
+        if (remaining === 100 || remaining === 50) spawnFruit();
+        if (remaining === 120 || remaining === 30) spawnPowerUpItem();
         const px = rx * TILE_SIZE + TILE_SIZE / 2;
         const py = ry * TILE_SIZE + TILE_SIZE / 2;
 
         if (tileValue === 2) {
           ps.spawnDotParticles(px, py);
-          setDotsRemaining((prev) => {
-            const rem = prev - 1;
-            if (rem === 100 || rem === 50) spawnFruit();
-            if (rem === 120 || rem === 30) spawnPowerUpItem();
-            if (rem <= 0 && !levelClearTriggered) {
-              levelClearTriggered = true;
-              setStatus('LEVEL_CLEAR');
-              soundEngine.playLevelClear();
-              confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-            }
-            return rem;
-          });
-          setScore((s) => s + 10);
+          addScore(10);
           soundEngine.playWaka();
           setStats((prev) => ({ ...prev, dotsEaten: prev.dotsEaten + 1 }));
         } else {
           ps.spawnPowerUpSparkles(px, py, '#a855f7');
-          setDotsRemaining((prev) => {
-            const rem = prev - 1;
-            if (rem <= 0 && !levelClearTriggered) {
-              levelClearTriggered = true;
-              setStatus('LEVEL_CLEAR');
-              soundEngine.playLevelClear();
-              confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-            }
-            return rem;
-          });
-          setScore((s) => s + 50);
+          addScore(50);
           ghostComboRef.current = 1; // Reset ghost combo multiplier
           soundEngine.playEnergizer();
           ghosts.forEach((g) => {
@@ -675,6 +716,13 @@ export default function PacmanGame() {
               g.frightenedTimer = 8; // 8 seconds frightened
             }
           });
+        }
+        if (remaining === 0 && !levelClearTriggered) {
+          levelClearTriggered = true;
+          setStatus(levelRef.current === TOTAL_LEVELS ? 'GAME_COMPLETE' : 'LEVEL_CLEAR');
+          soundEngine.playLevelClear();
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+          if (levelRef.current === TOTAL_LEVELS) recordScore();
         }
       };
 
@@ -849,12 +897,13 @@ export default function PacmanGame() {
           }
         }
       }
+      if (levelClearTriggered) return;
 
       // 3. PAC-MAN EATING BONUS FRUIT
       const activeFruit = fruitRef.current;
       if (activeFruit?.active) {
         if (isWithinPickupRadius(pac, activeFruit)) {
-          setScore((s) => s + activeFruit.points);
+          addScore(activeFruit.points);
           soundEngine.playEatFruit();
           fruitRef.current = null;
           setFruit(null);
@@ -1009,7 +1058,7 @@ export default function PacmanGame() {
             const pts = 200 * ghostComboRef.current;
             ghostComboRef.current *= 2;
 
-            setScore((s) => s + pts);
+            addScore(pts);
             soundEngine.playEatGhost();
 
             ps.spawnGhostExplosion(
@@ -1039,7 +1088,7 @@ export default function PacmanGame() {
               localStorage.setItem('pacman_stats', JSON.stringify(updated));
               return updated;
             });
-          } else if (ghost.state === 'CHASE' || ghost.state === 'SCATTER') {
+          } else if (gameMode !== 'PRACTICE' && (ghost.state === 'CHASE' || ghost.state === 'SCATTER')) {
             // PAC-MAN HIT BY GHOST!
             if (pac.isShieldActive || pac.powerUp === 'SHIELD') {
               // Shield breaks, ghost vaporized!
@@ -1060,7 +1109,8 @@ export default function PacmanGame() {
               soundEngine.playDeath();
               ps.spawnDeathBurst(pac.x * TILE_SIZE + TILE_SIZE / 2, pac.y * TILE_SIZE + TILE_SIZE / 2);
 
-              setTimeout(() => {
+              deathTimeoutRef.current = setTimeout(() => {
+                deathTimeoutRef.current = null;
                 setLives((prevLives) => {
                   const remaining = prevLives - 1;
                   if (remaining <= 0) {
@@ -1098,13 +1148,14 @@ export default function PacmanGame() {
           .filter((ft) => ft.life < 0.8);
       });
     },
-    [status, maze, spawnFruit, spawnPowerUpItem, recordScore]
+    [status, maze, spawnFruit, spawnPowerUpItem, recordScore, addScore, gameMode]
   );
 
   // Track high score across every scoring event (dots, energizers, fruit,
   // ghosts) rather than only when eating dots, so a bonus that pushes the
   // score past the previous best is always recognized and persisted.
   useEffect(() => {
+    if (gameMode === 'PRACTICE') return;
     setHighScore((prev) => {
       if (score > prev) {
         setIsNewHighScore(true);
@@ -1142,12 +1193,30 @@ export default function PacmanGame() {
 
   // Trigger Power Boost manually
   const handleTriggerPower = () => {
-    if (!pacmanRef.current.powerUp) {
+    if (status === 'PLAYING' && !pacmanRef.current.powerUp && boostCooldownRef.current === 0) {
       pacmanRef.current.powerUp = 'SPEED';
       pacmanRef.current.powerUpTimeLeft = 5;
+      boostCooldownRef.current = 20;
+      setBoostCooldown(20);
       setActivePowerUp('SPEED');
       setPowerUpTimeLeft(5);
       soundEngine.playPowerUp();
+    }
+  };
+
+  const openModal = (open: (value: boolean) => void) => {
+    if (status === 'PLAYING') {
+      modalPauseRef.current = true;
+      setStatus('PAUSED');
+    }
+    open(true);
+  };
+
+  const closeModal = (close: (value: boolean) => void) => {
+    close(false);
+    if (modalPauseRef.current) {
+      modalPauseRef.current = false;
+      setStatus('PLAYING');
     }
   };
 
@@ -1180,9 +1249,9 @@ export default function PacmanGame() {
         onToggleMute={() => setIsMuted((prev) => !prev)}
         theme={theme}
         onSelectTheme={setTheme}
-        onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-        onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
+        onOpenLeaderboard={() => openModal(setIsLeaderboardOpen)}
+        onOpenSettings={() => openModal(setIsSettingsOpen)}
+        onOpenHowToPlay={() => openModal(setIsHowToPlayOpen)}
         gameMode={gameMode}
         activePowerUp={activePowerUp}
         powerUpTimeLeft={powerUpTimeLeft}
@@ -1190,6 +1259,16 @@ export default function PacmanGame() {
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
       />
+
+      {status !== 'READY' && <div className="w-full max-w-[560px] px-3 py-2 font-mono text-xs text-slate-300" aria-live="off">
+        <div className="mb-1 flex flex-wrap justify-between gap-x-3 gap-y-1">
+          <span>{gameMode.replace('_', ' ')} · Stage {level}/{TOTAL_LEVELS} · {levelName} · {dotsRemaining} pellets left</span>
+          {gameMode === 'TIME_ATTACK' && <span className={timeRemaining <= 20 ? 'text-rose-400' : 'text-cyan-300'}>Time {Math.ceil(timeRemaining)}s</span>}
+        </div>
+        <div role="progressbar" aria-label={`Level ${level} pellets collected`} aria-valuemin={0} aria-valuemax={levelDots} aria-valuenow={levelDots - dotsRemaining} className="h-2 overflow-hidden rounded-full bg-slate-800">
+          <div className="h-full rounded-full bg-gradient-to-r from-yellow-400 to-cyan-400 transition-[width] duration-150" style={{ width: `${levelDots ? ((levelDots - dotsRemaining) / levelDots) * 100 : 0}%` }} />
+        </div>
+      </div>}
 
       {fullscreenError && (
         <p className="fixed left-1/2 top-20 z-50 -translate-x-1/2 rounded-xl border border-rose-300/20 bg-rose-950/95 px-4 py-2 text-center text-xs font-semibold text-rose-100 shadow-lg">
@@ -1247,6 +1326,10 @@ export default function PacmanGame() {
             onRestartGame={handleRestartGame}
             onNextLevel={handleNextLevel}
             showTouchControls={showTouchControls}
+            boostCooldown={boostCooldown}
+            activePowerUp={activePowerUp}
+            totalLevels={TOTAL_LEVELS}
+            nextLevelName={nextLevelName}
           />
         </div>
       </main>
@@ -1254,7 +1337,7 @@ export default function PacmanGame() {
       {/* Modals */}
       <LeaderboardModal
         isOpen={isLeaderboardOpen}
-        onClose={() => setIsLeaderboardOpen(false)}
+        onClose={() => closeModal(setIsLeaderboardOpen)}
         gameMode={gameMode}
         stats={stats}
         achievements={[
@@ -1299,13 +1382,14 @@ export default function PacmanGame() {
 
       <SettingsModal
         isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
+        onClose={() => closeModal(setIsSettingsOpen)}
         theme={theme}
         onSelectTheme={setTheme}
         difficulty={difficulty}
         onSelectDifficulty={setDifficulty}
         gameMode={gameMode}
         onSelectGameMode={setGameMode}
+        modeLocked={status === 'PLAYING' || status === 'PAUSED' || status === 'DYING' || status === 'LEVEL_CLEAR'}
         enableCRT={enableCRT}
         onToggleCRT={() => setEnableCRT((prev) => !prev)}
         showTouchControls={showTouchControls}
@@ -1314,7 +1398,7 @@ export default function PacmanGame() {
         onChangeVolume={setVolume}
       />
 
-      <HowToPlayModal isOpen={isHowToPlayOpen} onClose={() => setIsHowToPlayOpen(false)} />
+      <HowToPlayModal isOpen={isHowToPlayOpen} onClose={() => closeModal(setIsHowToPlayOpen)} />
     </div>
   );
 }
