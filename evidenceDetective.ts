@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
-import { EVIDENCE_CASES, gradeEvidence, publicEvidenceCase } from "./evidenceCases";
+import { EVIDENCE_CASES, evidenceAttemptResponse, gradeEvidence, publicEvidenceCase } from "./evidenceCases";
 
 const attemptSchema = z.object({
   caseId: z.string(),
@@ -60,11 +60,7 @@ export function registerEvidenceDetectiveRoutes({ app, prisma, authMiddleware, g
         update: { attempts: { increment: 1 }, ...(solved ? { solved: true, solvedAt: new Date() } : {}) },
       });
       const completed = progress.solved;
-      res.json({
-        solved: completed, attempts: progress.attempts,
-        evidenceCorrect: result.evidenceCorrect, reasoningCorrect: result.reasoningCorrect,
-        ...(completed ? { answer: caseItem.answer, explanation: caseItem.explanation } : { hint: caseItem.hint }),
-      });
+      res.json(evidenceAttemptResponse(caseItem, progress.attempts, completed));
     } catch (error) {
       console.error("Evidence Detective save failed:", error);
       res.status(500).json({ error: "Your answer could not be saved. Please try again." });
