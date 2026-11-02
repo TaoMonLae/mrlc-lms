@@ -20,14 +20,14 @@ export function useReleaseUpdates() {
 }
 
 export function ReleaseUpdatesProvider({ children }: { children: ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isSessionVerified } = useAuth();
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const [hasUnseenRelease, setHasUnseenRelease] = useState(false);
   const canShowHere = location.pathname !== '/updates' && canAutoShowReleaseUpdates(location.pathname);
 
   useEffect(() => {
-    if (isLoading || !user) {
+    if (isLoading || !user || !isSessionVerified) {
       setOpen(false);
       setHasUnseenRelease(false);
       return;
@@ -44,7 +44,7 @@ export function ReleaseUpdatesProvider({ children }: { children: ReactNode }) {
     // clear focus without competing with the login transition.
     const timer = window.setTimeout(() => setOpen(true), 450);
     return () => window.clearTimeout(timer);
-  }, [canShowHere, isLoading, user]);
+  }, [canShowHere, isLoading, isSessionVerified, user]);
 
   useEffect(() => {
     if (!user) return;
@@ -71,7 +71,7 @@ export function ReleaseUpdatesProvider({ children }: { children: ReactNode }) {
   return (
     <ReleaseUpdatesContext.Provider value={value}>
       {children}
-      {user && canShowHere && <UpdateScreen open={open} onClose={closeUpdates} release={CURRENT_RELEASE} />}
+      {user && isSessionVerified && canShowHere && <UpdateScreen open={open} onClose={closeUpdates} release={CURRENT_RELEASE} />}
     </ReleaseUpdatesContext.Provider>
   );
 }

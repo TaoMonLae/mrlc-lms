@@ -43,6 +43,10 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
+// The reverse proxy can keep an unanswered auth request open for minutes.
+// Session recovery must finish in a useful amount of time even if it does.
+const SESSION_VALIDATION_TIMEOUT_MS = 10_000;
+
 // ─── API user → permissions User mapper ───────────────────────────────────────
 
 function mapApiUser(apiUser: Record<string, any>): User {
@@ -112,12 +116,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const controller = new AbortController();
+    let disposed = false;
+    const isCurrent = () => !disposed && sessionStorage.getItem('auth_token') === token;
+    const timeout = window.setTimeout(() => controller.abort(), SESSION_VALIDATION_TIMEOUT_MS);
+    const restoreCachedUser = () => {
+      if (!isCurrent()) return;
+      // A transient server failure must not grant a cached account verified
+      // access to privileged routes.
+      setIsSessionVerified(false);
+      const cached = sessionStorage.getItem('auth_user');
+      if (cached) {
+        try { setUser(mapApiUser(JSON.parse(cached))); return; } catch { /* ignore */ }
+      }
+      setUser(null);
+    };
+
     fetch('/api/auth/me', {
       headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
     })
       .then(async (res) => {
+        if (!isCurrent()) return;
         if (res.ok) {
           const data = await res.json();
+          if (!isCurrent()) return;
           setUser(mapApiUser(data.user));
           setIsSessionVerified(true);
           return;
@@ -136,21 +159,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         // Transient error: fall back to the cached user so the session survives.
-        const cached = sessionStorage.getItem('auth_user');
-        setIsSessionVerified(false);
-        if (cached) {
-          try { setUser(mapApiUser(JSON.parse(cached))); } catch { /* ignore */ }
-        }
+        restoreCachedUser();
       })
-      .catch(() => {
-        // Network error — keep the session; fall back to the cached user.
-        const cached = sessionStorage.getItem('auth_user');
-        setIsSessionVerified(false);
-        if (cached) {
-          try { setUser(mapApiUser(JSON.parse(cached))); } catch { /* ignore */ }
-        }
-      })
-      .finally(() => setIsLoading(false));
+      .catch(restoreCachedUser)
+      .finally(() => {
+        window.clearTimeout(timeout);
+        if (isCurrent()) setIsLoading(false);
+      });
+
+    return () => {
+      disposed = true;
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
   }, [validationAttempt]);
 
   const retrySessionValidation = useCallback(() => {
@@ -191,6 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         setUser(mapApiUser(data.user));
         setIsSessionVerified(true);
+        setIsLoading(false);
 
         // Dispatch custom event for other providers to listen to
         window.dispatchEvent(new Event('auth-state-changed'));
@@ -213,6 +235,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('auth_user');
     setUser(null);
     setIsSessionVerified(false);
+    setIsLoading(false);
 
     // Dispatch custom event for other providers to listen to
     window.dispatchEvent(new Event('auth-state-changed'));
