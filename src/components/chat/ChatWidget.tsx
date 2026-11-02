@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router';
-import { MessageSquare, X, ArrowLeft, Send, Maximize2, Camera, Clock, Download } from 'lucide-react';
+import { MessageSquare, X, ArrowLeft, Send, Maximize2, Camera, Clock, Download, Pin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -12,18 +12,19 @@ import { useAuth } from '../../providers/AuthProvider';
 import { useFloatingPanel } from '../../providers/FloatingPanelProvider';
 import { StickerPicker, isStickerUrl } from './StickerPicker';
 import CameraCapture from '../CameraCapture';
+import { chatTextParts } from '../../lib/chatLinks';
 
 const timeLeftShort = (iso: string) => { const m = Math.max(0, Math.round((new Date(iso).getTime() - Date.now()) / 60000)); return m < 60 ? `${m}m` : `${Math.round(m / 60)}h`; };
 
 interface Contact { id: string; name: string; role: string; profilePhotoUrl?: string | null }
 interface Participant extends Contact { lastReadAt?: string | null }
 interface ConvSummary {
-  id: string; type: string; title: string; unread: number; lastMessageAt: string;
+  id: string; type: string; title: string; unread: number; lastMessageAt: string; isPinned?: boolean;
   participants: Contact[];
   lastMessage: { body: string } | null;
 }
 interface ChatMsg { id: string; body: string; attachmentUrl?: string | null; expiresAt?: string | null; sender: Contact; createdAt: string; mine: boolean }
-interface ConvDetail { id: string; title: string | null; participants: Participant[]; oversight: boolean; messages: ChatMsg[] }
+interface ConvDetail { id: string; title: string | null; participants: Participant[]; oversight: boolean; messages: ChatMsg[]; pinnedMessages?: { id: string; body: string; senderName: string; attachmentUrl?: string | null }[] }
 
 const POLL_MS = 8000;
 const timeLabel = (iso: string) => { const d = new Date(iso); return isToday(d) ? format(d, 'HH:mm') : format(d, 'd MMM'); };
@@ -43,6 +44,7 @@ export default function ChatWidget() {
   const [detail, setDetail] = useState<ConvDetail | null>(null);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
+  const [showPinned, setShowPinned] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeIdRef = useRef<string | null>(null);
   useEffect(() => { activeIdRef.current = activeId; }, [activeId]);
@@ -53,7 +55,10 @@ export default function ChatWidget() {
     try { setConversations(await apiGet<ConvSummary[]>('/api/chat/conversations')); } catch { /* keep */ }
   }
   async function openConversation(id: string) {
+    activeIdRef.current = id;
     setActiveId(id);
+    setDetail(null);
+    setShowPinned(false);
     try {
       const d = await apiGet<ConvDetail>(`/api/chat/conversations/${id}/messages`);
       if (activeIdRef.current !== id) return; // user already switched to another conversation
@@ -118,25 +123,27 @@ export default function ChatWidget() {
   async function send() {
     const body = draft.trim();
     if (sending || !body || !activeId) return;
+    const conversationId = activeId;
     const originalDraft = draft;
     setSending(true);
     setDraft('');
     try {
-      const msg = await apiSend<ChatMsg>(`/api/chat/conversations/${activeId}/messages`, 'POST', { body });
-      setDetail((d) => (d && d.id === activeId ? { ...d, messages: [...d.messages, msg] } : d));
+      const msg = await apiSend<ChatMsg>(`/api/chat/conversations/${conversationId}/messages`, 'POST', { body });
+      setDetail((d) => (d && d.id === conversationId && !d.messages.some((m) => m.id === msg.id) ? { ...d, messages: [...d.messages, msg] } : d));
       loadList();
     } catch (err: any) {
       toast.error(err.message || 'Could not send message');
-      setDraft(originalDraft);
+      if (activeIdRef.current === conversationId) setDraft(originalDraft);
     } finally { setSending(false); }
   }
 
   async function sendSticker(url: string) {
     if (!activeId || sending) return;
+    const conversationId = activeId;
     setSending(true);
     try {
-      const msg = await apiSend<ChatMsg>(`/api/chat/conversations/${activeId}/messages`, 'POST', { body: '', attachmentUrl: url });
-      setDetail((d) => (d && d.id === activeId ? { ...d, messages: [...d.messages, msg] } : d));
+      const msg = await apiSend<ChatMsg>(`/api/chat/conversations/${conversationId}/messages`, 'POST', { body: '', attachmentUrl: url });
+      setDetail((d) => (d && d.id === conversationId && !d.messages.some((m) => m.id === msg.id) ? { ...d, messages: [...d.messages, msg] } : d));
       loadList();
     } catch { /* ignore */ }
     finally { setSending(false); }
@@ -148,6 +155,7 @@ export default function ChatWidget() {
       toast.error('Please open a conversation first');
       return;
     }
+    const conversationId = activeId;
     setCamera(false);
     setSending(true);
     try {
@@ -157,8 +165,8 @@ export default function ChatWidget() {
       const upRes = await fetch('/api/chat-media', { method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : {}, body: fd });
       const up = await upRes.json().catch(() => ({}));
       if (!upRes.ok) throw new Error(up.error || 'Upload failed');
-      const msg = await apiSend<ChatMsg>(`/api/chat/conversations/${activeId}/messages`, 'POST', { attachmentUrl: up.url, ephemeral: true });
-      setDetail((d) => (d && d.id === activeId ? { ...d, messages: [...d.messages, msg] } : d));
+      const msg = await apiSend<ChatMsg>(`/api/chat/conversations/${conversationId}/messages`, 'POST', { attachmentUrl: up.url, ephemeral: true });
+      setDetail((d) => (d && d.id === conversationId && !d.messages.some((m) => m.id === msg.id) ? { ...d, messages: [...d.messages, msg] } : d));
       loadList();
     } catch (err: any) {
       toast.error(err.message || 'Could not send photo');
@@ -232,7 +240,7 @@ export default function ChatWidget() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-sm font-medium text-foreground">{c.title}</span>
+                  <span className="flex min-w-0 items-center gap-1 truncate text-sm font-medium text-foreground">{c.isPinned && <Pin aria-label="Pinned" className="h-3 w-3 shrink-0 text-academic-teal" />}<span className="truncate">{c.title}</span></span>
                   <span className="shrink-0 text-[11px] text-muted-foreground">{timeLabel(c.lastMessageAt)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
@@ -246,6 +254,10 @@ export default function ChatWidget() {
         </div>
       ) : (
         <>
+          {!!detail.pinnedMessages?.length && <div className="border-b border-border bg-muted/30 px-3 py-2">
+            <button type="button" onClick={() => setShowPinned((value) => !value)} className="flex w-full items-center gap-2 text-left text-xs font-medium text-foreground" aria-expanded={showPinned}><Pin className="h-3.5 w-3.5 text-academic-teal" /> {detail.pinnedMessages.length} pinned {detail.pinnedMessages.length === 1 ? 'message' : 'messages'}</button>
+            {showPinned && <div className="mt-2 max-h-36 space-y-2 overflow-y-auto">{detail.pinnedMessages.map((message) => <div key={message.id} className="border-t border-border pt-2 text-xs"><span className="font-semibold text-muted-foreground">{message.senderName}</span><p className="mt-1 whitespace-pre-wrap break-words text-foreground">{chatTextParts(message.body || (message.attachmentUrl ? 'Image' : '')).map((part, index) => part.href ? <a key={index} href={part.href} target="_blank" rel="noopener noreferrer" className="break-all underline underline-offset-2">{part.text}</a> : <span key={index}>{part.text}</span>)}</p></div>)}</div>}
+          </div>}
           <div ref={scrollRef} className="flex-1 space-y-2 overflow-y-auto p-3">
             {detail.messages.length === 0 ? <p className="py-8 text-center text-xs text-muted-foreground">No messages yet.</p> :
               detail.messages.map((m) => {
@@ -261,7 +273,9 @@ export default function ChatWidget() {
                         {canSave && m.attachmentUrl && <a href={m.attachmentUrl} download className="inline-flex items-center gap-0.5 underline"><Download className="h-3 w-3" /> Save</a>}
                       </div>
                     )}
-                    {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
+                    {m.body && <p className="whitespace-pre-wrap break-words">{chatTextParts(m.body).map((part, index) => part.href
+                      ? <a key={index} href={part.href} target="_blank" rel="noopener noreferrer" className="break-all underline underline-offset-2 hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">{part.text}</a>
+                      : <span key={index}>{part.text}</span>)}</p>}
                     <p className={`mt-0.5 text-[11px] ${m.mine ? 'text-right text-muted-foreground' : 'text-muted-foreground'} ${sticker ? '' : m.mine ? 'text-white/70' : ''}`}>{timeLabel(m.createdAt)}</p>
                   </div>
                 </div>
@@ -282,9 +296,9 @@ export default function ChatWidget() {
                 <div className="flex justify-start" aria-live="polite">
                   <div className="flex items-center gap-1.5 rounded-sm bg-muted px-2.5 py-1.5">
                     <span className="flex gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.3s]" />
-                      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.15s]" />
-                      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
                     </span>
                     <span className="text-[11px] text-muted-foreground">{label}…</span>
                   </div>

@@ -3909,6 +3909,7 @@ model ConversationParticipant {
   user           User         @relation(fields: [userId], references: [id])
   lastReadAt     DateTime?
   isMuted        Boolean      @default(false)
+  isPinned       Boolean      @default(false)
   leftAt         DateTime?
   createdAt      DateTime     @default(now())
 
@@ -3926,12 +3927,15 @@ model ChatMessage {
   attachmentUrl  String?
   expiresAt      DateTime? // set for ephemeral camera photos (disappear after 24h)
   deletedAt      DateTime?
+  pinnedAt       DateTime?
+  pinnedById     String?
 
   reports ChatMessageReport[]
 
   createdAt DateTime @default(now())
 
   @@index([conversationId, createdAt])
+  @@index([conversationId, pinnedAt])
   @@index([senderId])
 }
 
