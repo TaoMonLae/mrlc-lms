@@ -12,7 +12,7 @@ import {
   Trophy,
   Zap
 } from 'lucide-react';
-import { Direction, GameStatus } from '../types';
+import { Direction, GameStatus, PowerUpType } from '../types';
 
 interface ControlsOverlayProps {
   status: GameStatus;
@@ -27,6 +27,10 @@ interface ControlsOverlayProps {
   onRestartGame: () => void;
   onNextLevel: () => void;
   showTouchControls: boolean;
+  boostCooldown: number;
+  activePowerUp: PowerUpType | null;
+  totalLevels: number;
+  nextLevelName: string | null;
 }
 
 export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
@@ -41,7 +45,11 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
   onPauseGame,
   onRestartGame,
   onNextLevel,
-  showTouchControls
+  showTouchControls,
+  boostCooldown,
+  activePowerUp,
+  totalLevels,
+  nextLevelName
 }) => {
   return (
     <div className="w-full flex flex-col items-center">
@@ -95,6 +103,12 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
         </div>
       )}
 
+      {status === 'DYING' && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/55" role="status">
+          <p className="rounded-xl bg-slate-900/90 px-5 py-3 text-xl font-bold text-yellow-300">Ready for another life…</p>
+        </div>
+      )}
+
       {status === 'LEVEL_CLEAR' && (
         <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30 animate-fade-in">
           <Sparkles className="w-12 h-12 text-yellow-400 mb-2 animate-spin" />
@@ -102,8 +116,9 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
             LEVEL CLEAR!
           </h2>
           <p className="text-slate-300 font-mono text-lg mb-6">
-            Stage <span className="text-pink-400 font-bold">#{level}</span> Completed!
+            Stage <span className="text-pink-400 font-bold">{level}/{totalLevels}</span> completed!
           </p>
+          {nextLevelName && <p className="mb-3 text-sm text-cyan-200">Up next: {nextLevelName}</p>}
 
           <button
             onClick={onNextLevel}
@@ -111,6 +126,15 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
           >
             NEXT LEVEL &rarr;
           </button>
+        </div>
+      )}
+
+      {status === 'GAME_COMPLETE' && (
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-950/90 p-6 text-center">
+          <Trophy className="mb-3 size-12 text-yellow-300" />
+          <h2 className="text-3xl font-black text-yellow-300">ALL {totalLevels} STAGES CLEAR!</h2>
+          <p className="my-4 text-slate-200">Final score: {score.toLocaleString()}</p>
+          <button onClick={onRestartGame} className="rounded-xl bg-yellow-400 px-7 py-3 font-bold text-slate-950 hover:bg-yellow-300">PLAY AGAIN</button>
         </div>
       )}
 
@@ -210,15 +234,17 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
             <div className="flex flex-col gap-2">
               <button
                 type="button"
+                disabled={boostCooldown > 0 || activePowerUp !== null}
+                aria-label={boostCooldown > 0 ? `Boost ready in ${Math.ceil(boostCooldown)} seconds` : activePowerUp ? 'Wait for current power-up to end' : 'Activate speed boost'}
                 onPointerDown={(event) => {
                   event.preventDefault();
                   onTriggerPower();
                 }}
                 onClick={onTriggerPower}
-                className="flex h-[4.5rem] w-20 touch-manipulation flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 font-black text-slate-950 shadow-lg shadow-orange-500/30 transition active:scale-95"
+                className="flex h-[4.5rem] w-20 touch-manipulation flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 font-black text-slate-950 shadow-lg shadow-orange-500/30 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Zap className="mb-0.5 size-6 fill-slate-950" />
-                <span className="text-[10px] uppercase">Boost</span>
+                <span className="text-[10px] uppercase">{boostCooldown > 0 ? `${Math.ceil(boostCooldown)}s` : activePowerUp ? 'Active' : 'Boost'}</span>
               </button>
               <button
                 type="button"
@@ -238,7 +264,7 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
         <div className="mt-3 text-[11px] font-mono text-slate-500 flex items-center gap-4">
           <span><strong className="text-slate-300">ARROW KEYS / WASD</strong> MOVE</span>
           <span>&bull;</span>
-          <span><strong className="text-slate-300">SPACE</strong> POWER BOOST</span>
+          <span><strong className="text-slate-300">SPACE</strong> {boostCooldown > 0 ? `BOOST IN ${Math.ceil(boostCooldown)}S` : activePowerUp ? 'POWER ACTIVE' : 'POWER BOOST'}</span>
           <span>&bull;</span>
           <span><strong className="text-slate-300">P / ESC</strong> PAUSE</span>
         </div>

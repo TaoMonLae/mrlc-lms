@@ -12,7 +12,7 @@ export type GameMode = 'CLASSIC' | 'TIME_ATTACK' | 'SURVIVAL' | 'PRACTICE';
 
 export type AIDifficulty = 'EASY' | 'MEDIUM' | 'HARD' | 'NIGHTMARE';
 
-export type GameStatus = 'READY' | 'PLAYING' | 'PAUSED' | 'DYING' | 'LEVEL_CLEAR' | 'GAME_OVER';
+export type GameStatus = 'READY' | 'PLAYING' | 'PAUSED' | 'DYING' | 'LEVEL_CLEAR' | 'GAME_COMPLETE' | 'GAME_OVER';
 
 export interface Position {
   x: number; // grid column
