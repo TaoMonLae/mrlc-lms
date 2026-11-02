@@ -29,6 +29,7 @@ test('review uses the corrected key in canonical order while showing the student
   const [result] = buildExamReviewQuestions(answers, frozen, current) as any[];
   assert.equal(result.studentAnswer, 'Cold');
   assert.equal(result.correctAnswer, 'Warm');
+  assert.deepEqual(result.choiceLabels, ['Cold', 'Warm']);
   assert.equal(result.status, 'INCORRECT');
   assert.equal(result.answerKeyCorrected, true);
 });
