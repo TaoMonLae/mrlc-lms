@@ -5,6 +5,7 @@ import {
   UserSquare2,
   Library,
   BookOpen,
+  BookOpenCheck,
   CalendarCheck,
   FileCheck,
   Wallet,
@@ -397,6 +398,11 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Pac-Man",
     url: "/games/pacman",
     icon: Ghost,
+  },
+  {
+    title: "Evidence Detective",
+    url: "/games/evidence-detective",
+    icon: BookOpenCheck,
   },
   {
     title: "Word Connect",

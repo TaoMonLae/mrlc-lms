@@ -290,6 +290,7 @@ model User {
   chessMatchesBlack          ChessMatch[]                      @relation("ChessBlack")
   pacmanGameScores           PacmanGameScore[]
   pacmanStageProgress        PacmanStageProgress[]
+  evidenceCaseProgress       EvidenceCaseProgress[]
   languageQuestProgress      LanguageQuestUserProgress?
   languageQuestChallenges    LanguageQuestChallengeProgress[]
   languageQuestXpEvents      LanguageQuestXpEvent[]
@@ -4723,4 +4724,18 @@ model GameDailyUsage {
 
   @@unique([userId, gameKey, dayKey])
   @@index([userId, dayKey])
+}
+
+model EvidenceCaseProgress {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  caseId    String
+  attempts  Int      @default(0)
+  solved    Boolean  @default(false)
+  solvedAt  DateTime?
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, caseId])
+  @@index([userId, solved])
 }

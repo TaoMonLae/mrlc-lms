@@ -204,6 +204,7 @@ const ChessLobbyPage = lazy(() => import("./pages/games/chess/Lobby"));
 const ChessLeaderboardPage = lazy(() => import("./pages/games/chess/Leaderboard"));
 const PacmanSelectPage = lazy(() => import("./pages/games/pacman/index"));
 const PacmanPlayPage = lazy(() => import("./pages/games/pacman/PlayPage"));
+const EvidenceDetectivePage = lazy(() => import("./pages/games/evidence-detective/EvidenceDetective"));
 const PeriodicTableHubPage = lazy(() => import("./pages/games/periodic-table/index"));
 const PeriodicTableQuizPage = lazy(() => import("./pages/games/periodic-table/ElementQuiz"));
 const PeriodicTableMatchPage = lazy(() => import("./pages/games/periodic-table/ElementMatch"));
@@ -474,6 +475,7 @@ export default function App() {
 
                 <Route path="/games/pacman" element={<GameAccessGate gameKey="PACMAN"><PacmanSelectPage /></GameAccessGate>} />
                 <Route path="/games/pacman/play" element={<GameAccessGate gameKey="PACMAN" consumeTime><PacmanPlayPage /></GameAccessGate>} />
+                <Route path="/games/evidence-detective" element={<GameAccessGate gameKey="EVIDENCE_DETECTIVE" consumeTime><EvidenceDetectivePage /></GameAccessGate>} />
                 <Route path="/games/word-connect" element={<GameAccessGate gameKey="WORD_CONNECT"><WordConnectPage /></GameAccessGate>} />
                 <Route path="/games/word-connect/play/:levelId" element={<GameAccessGate gameKey="WORD_CONNECT" consumeTime><WordConnectPlayPage /></GameAccessGate>} />
 

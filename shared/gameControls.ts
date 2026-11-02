@@ -7,6 +7,7 @@ export const GAME_KEYS = [
   "WORD_TRAIL",
   "WORD_CONNECT",
   "PERIODIC_TABLE",
+  "EVIDENCE_DETECTIVE",
 ] as const;
 
 export type GameKey = (typeof GAME_KEYS)[number];
@@ -22,6 +23,7 @@ export const GAME_LABELS: Record<GameKey, string> = {
   WORD_TRAIL: "Word Trail",
   WORD_CONNECT: "Word Connect Adventure",
   PERIODIC_TABLE: "Periodic Table",
+  EVIDENCE_DETECTIVE: "Evidence Detective",
 };
 
 export interface GameControlPolicyLike {
