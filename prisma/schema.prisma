@@ -289,6 +289,7 @@ model User {
   chessMatchesWhite          ChessMatch[]                      @relation("ChessWhite")
   chessMatchesBlack          ChessMatch[]                      @relation("ChessBlack")
   pacmanGameScores           PacmanGameScore[]
+  pacmanStageProgress        PacmanStageProgress[]
   languageQuestProgress      LanguageQuestUserProgress?
   languageQuestChallenges    LanguageQuestChallengeProgress[]
   languageQuestXpEvents      LanguageQuestXpEvent[]
@@ -4157,6 +4158,18 @@ model PacmanGameScore {
   @@index([score])
   @@index([gameMode])
   @@index([playedAt])
+}
+
+model PacmanStageProgress {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameMode     String
+  highestLevel Int      @default(1)
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, gameMode])
+  @@index([userId])
 }
 
 // Teacher/admin-authored vocabulary for the Checkers vocabulary game. These are

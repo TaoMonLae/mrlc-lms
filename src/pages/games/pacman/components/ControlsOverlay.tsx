@@ -26,6 +26,10 @@ interface ControlsOverlayProps {
   onPauseGame: () => void;
   onRestartGame: () => void;
   onNextLevel: () => void;
+  savedStage: number;
+  onContinueGame: () => void;
+  progressSync: 'loading' | 'account' | 'device' | 'unavailable';
+  progressLoaded: boolean;
   showTouchControls: boolean;
   boostCooldown: number;
   activePowerUp: PowerUpType | null;
@@ -45,6 +49,10 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
   onPauseGame,
   onRestartGame,
   onNextLevel,
+  savedStage,
+  onContinueGame,
+  progressSync,
+  progressLoaded,
   showTouchControls,
   boostCooldown,
   activePowerUp,
@@ -69,12 +77,19 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
           </p>
 
           <button
-            onClick={onStartGame}
-            className="group relative px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 font-black text-base sm:text-lg shadow-lg shadow-yellow-500/30 hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-2"
+            disabled={!progressLoaded}
+            onClick={savedStage > 1 ? onContinueGame : onStartGame}
+            className="group relative px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 font-black text-base sm:text-lg shadow-lg shadow-yellow-500/30 hover:scale-105 active:scale-95 transition cursor-pointer disabled:cursor-wait disabled:opacity-60 flex items-center gap-2"
           >
             <Play className="w-5 h-5 fill-slate-950" />
-            START GAME
+            {!progressLoaded ? 'CHECKING SAVED STAGE…' : savedStage > 1 ? `CONTINUE STAGE ${savedStage}` : 'START GAME'}
           </button>
+          {savedStage > 1 && (
+            <>
+              <p className="mt-2 text-xs text-slate-300">{progressSync === 'account' ? 'Checkpoint saved to your account' : progressSync === 'loading' ? 'Checking account sync' : progressSync === 'device' ? 'Saved on this device; account sync unavailable' : 'Checkpoint could not be saved'}. Score starts at 0.</p>
+              <button type="button" onClick={onStartGame} className="mt-3 rounded-lg px-4 py-2 text-sm font-semibold text-cyan-200 hover:bg-slate-800">Start from stage 1</button>
+            </>
+          )}
         </div>
       )}
 
@@ -97,7 +112,7 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
               className="px-6 py-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold border border-slate-700 transition cursor-pointer flex items-center justify-center gap-2"
             >
               <RotateCcw className="w-4 h-4" />
-              RESTART
+              RESTART STAGE
             </button>
           </div>
         </div>
@@ -119,6 +134,9 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
             Stage <span className="text-pink-400 font-bold">{level}/{totalLevels}</span> completed!
           </p>
           {nextLevelName && <p className="mb-3 text-sm text-cyan-200">Up next: {nextLevelName}</p>}
+          <p className="mb-4 text-xs text-slate-300" role="status">
+            Stage {Math.min(totalLevels, level + 1)} unlocked · {progressSync === 'account' ? 'saved to your account' : progressSync === 'device' ? 'saved on this device' : progressSync === 'loading' ? 'syncing progress' : 'save unavailable'}
+          </p>
 
           <button
             onClick={onNextLevel}
@@ -134,7 +152,7 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
           <Trophy className="mb-3 size-12 text-yellow-300" />
           <h2 className="text-3xl font-black text-yellow-300">ALL {totalLevels} STAGES CLEAR!</h2>
           <p className="my-4 text-slate-200">Final score: {score.toLocaleString()}</p>
-          <button onClick={onRestartGame} className="rounded-xl bg-yellow-400 px-7 py-3 font-bold text-slate-950 hover:bg-yellow-300">PLAY AGAIN</button>
+          <button onClick={onStartGame} className="rounded-xl bg-yellow-400 px-7 py-3 font-bold text-slate-950 hover:bg-yellow-300">PLAY AGAIN FROM STAGE 1</button>
         </div>
       )}
 
@@ -158,12 +176,15 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
           </div>
 
           <button
-            onClick={onRestartGame}
+            onClick={savedStage > 1 ? onContinueGame : onStartGame}
             className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-red-500 to-pink-600 text-white font-black text-lg shadow-lg shadow-red-500/30 hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-2"
           >
             <RotateCcw className="w-5 h-5" />
-            PLAY AGAIN
+            {savedStage > 1 ? `RETRY STAGE ${savedStage}` : 'PLAY AGAIN'}
           </button>
+          {savedStage > 1 && (
+            <button type="button" onClick={onStartGame} className="mt-3 rounded-lg px-4 py-2 text-sm font-semibold text-cyan-200 hover:bg-slate-800">Start from stage 1</button>
+          )}
         </div>
       )}
 
