@@ -1241,7 +1241,7 @@ function StudentInput({ q, value, onChange, small }: { q: Question; value: any; 
     const words = (String(value ?? '').trim().match(/\S+/g) || []).length;
     return <div>
       <textarea aria-label="Preview answer" className={q.uiType === 'SHORT' ? undefined : 'ep-essay'} value={value ?? ''} onChange={(e) => onChange(e.target.value)} rows={q.uiType === 'SHORT' ? 2 : small ? 5 : 14} placeholder="Type your answer…" style={{ width: '100%', border: `1px solid ${C.border3}`, borderRadius: 12, padding: optPad, fontSize: fs, outline: 'none', resize: 'vertical', fontFamily: 'inherit' }} />
-      {q.uiType !== 'SHORT' && !small && <p className="ep-word-count" aria-live="polite">{words} {words === 1 ? 'word' : 'words'}</p>}
+      {q.uiType !== 'SHORT' && !small && <p className="ep-word-count">{words} {words === 1 ? 'word' : 'words'}</p>}
     </div>;
   }
   if (q.uiType === 'DRAG') {
@@ -1319,7 +1319,7 @@ function StudentPlayer({ questions, title, minutes, onClose }: { questions: Ques
     {q ? <ExamPaper title={title || 'Untitled exam'} preview status={minutes > 0 && remaining === 0 ? 'Preview timer ended · you can keep exploring' : 'Preview only · answers are not saved'} remaining={minutes > 0 ? remaining : null}
       questions={questions.map((item, i) => ({ id: item.id, points: item.points, answered: complete(item, i), partial: partial(item, i), flagged: !!flags[i] }))} index={pIdx}
       prompt={renderQuestionText(q.uiType === 'DRAG' ? dragPrompt(q) : q.text || 'Question text')} passage={q.passageText ? <PassageView text={q.passageText} slots={passageSlots} onSlotChange={(index, value) => setAnswers(a => ({ ...a, [index]: value === '' ? null : Number(value) }))} /> : undefined} passageKey={q.passageText || undefined} imageUrl={q.imageUrl}
-      onNavigate={setPIdx} onFlag={() => setFlags(f => ({ ...f, [pIdx]: !f[pIdx] }))} onClose={onClose}
+      writtenResponse={q.uiType === 'ESSAY' || q.uiType === 'EXTENDED'} onNavigate={setPIdx} onFlag={() => setFlags(f => ({ ...f, [pIdx]: !f[pIdx] }))} onClose={onClose}
       onSubmit={() => { toast.success('Preview complete. No attempt was submitted.'); onClose(); }}>
       <p className="mb-4 text-sm" style={{ color: 'var(--ep-muted)' }}>{q.uiType === 'HOTSPOT' ? 'Select all answers that apply.' : q.uiType === 'DROPDOWN' ? (passageSlots && Object.values(passageSlots).some(slot => slot.active) ? 'Choose your answer in the passage, or from the list below.' : 'Choose an answer from the list.') : ['SHORT', 'ESSAY', 'EXTENDED'].includes(q.uiType) ? 'Write your response below.' : q.uiType === 'DRAG' ? 'Complete each blank using the word bank.' : 'Select one answer.'}</p>
       <StudentInput key={q.id} q={q} value={answers[pIdx] ?? null} onChange={v => setAnswers(a => ({ ...a, [pIdx]: v }))} />

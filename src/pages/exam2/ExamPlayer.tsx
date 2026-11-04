@@ -417,7 +417,7 @@ export default function ExamPlayer() {
     if (essayIdRef.current) dirty.current.add(essayIdRef.current);
     essayLockAnnounced.current = true;
     void save('AUTOSAVE');
-    toast.warning('Extended Response time is over', { description: 'Your response has been saved and can no longer be changed.' });
+    toast.warning('Extended Response time is over', { description: 'You can still read your response. Editing is now locked.' });
     if (idx === essayIndex && breakMinutes > 0 && !breakState) startBreak();
   }, [essayLocked, timerTick]);
 
@@ -469,7 +469,8 @@ export default function ExamPlayer() {
         <span className="ep-eyebrow">Break</span>
         <h1 id="ep-break-title">Take a short break</h1>
         <p className="ep-break-clock" aria-live="off">{clock(breakLeft)}</p>
-        <p>Your questions are hidden during the break and your answers are saved.</p>
+        <p>Your questions are hidden during the break.</p>
+        {saveError && <div role="alert"><p>Changes could not be saved. Keep the exam open.</p><Button variant="outline" disabled={saving || submitting} onClick={() => void save('AUTOSAVE')}>Retry save</Button></div>}
         {timerArmed.current && <p className="ep-break-note">The exam clock keeps running during the break: <strong>{clock(remaining)}</strong> left for the rest of the exam.</p>}
         <Button className="mt-2" onClick={() => { const ended: BreakState = { ...breakState, endsAt: Date.now() - 1 }; setBreakState(ended); try { localStorage.setItem(breakKey, JSON.stringify(ended)); } catch { /* ignore */ } }}>Return to the exam</Button>
       </div>
@@ -641,9 +642,9 @@ export default function ExamPlayer() {
     const lockedEssay = timedEssay && essayLocked;
     return (
       <div>
-        {timedEssay && <div className={`ep-essay-clock ${lockedEssay ? 'is-over' : essayRemaining <= 300 ? 'is-low' : ''}`} role="status">
+        {timedEssay && <div className={`ep-essay-clock ${lockedEssay ? 'is-over' : essayRemaining <= 300 ? 'is-low' : ''}`} role="timer">
           <PenLine size={15} aria-hidden="true" />
-          {lockedEssay ? 'Extended Response time is over. Your response is saved and locked.' : <>Extended Response time left: <strong>{clock(essayRemaining)}</strong></>}
+          {lockedEssay ? 'Extended Response time is over. Your response is locked.' : <>Extended Response time left: <strong>{clock(essayRemaining)}</strong></>}
         </div>}
         <textarea
           readOnly={lockedEssay}
@@ -655,7 +656,7 @@ export default function ExamPlayer() {
           value={text}
           onChange={(e) => setAnswer(q.id, { answerText: e.target.value })}
         />
-        {longAnswer && <p id={`words-${q.id}`} className="ep-word-count" aria-live="polite">{words} {words === 1 ? 'word' : 'words'}</p>}
+        {longAnswer && <p id={`words-${q.id}`} className="ep-word-count">{words} {words === 1 ? 'word' : 'words'}</p>}
       </div>
     );
   };
@@ -665,7 +666,7 @@ export default function ExamPlayer() {
     status={saveError ? 'Changes not saved' : saving ? 'Saving…' : savedAt ? `Saved ${new Date(savedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · saves automatically` : 'Your answers save automatically'}
     remaining={timerArmed.current ? remaining : null}
     questions={questions.map(question => ({ id: question.id, points: question.points, answered: answerIsComplete(question, answers[question.id]), partial: partialLabel(question, answers[question.id]), flagged: !!answers[question.id]?.flaggedForReview }))}
-    index={idx} prompt={<MathText>{q.type === 'DRAG_DROP' ? dragDisplay(q).prompt : q.text}</MathText>} passage={q.passageText ? <PassageView text={q.passageText} slots={passageSlots} disabled={submitting || (timerArmed.current && remaining === 0)} storageKey={`mrlc:exam-hl:${attemptId}:${passageHash(q.passageText)}`}
+    writtenResponse={LONG_ANSWER_TYPES.includes(q.type)} index={idx} prompt={<MathText>{q.type === 'DRAG_DROP' ? dragDisplay(q).prompt : q.text}</MathText>} passage={q.passageText ? <PassageView text={q.passageText} slots={passageSlots} disabled={submitting || (timerArmed.current && remaining === 0)} storageKey={`mrlc:exam-hl:${attemptId}:${passageHash(q.passageText)}`}
       onSlotChange={(questionIndex, value) => { const target = questions[questionIndex]; if (target) setAnswer(target.id, { answerText: value }); }} /> : undefined} passageKey={q.passageText || undefined} imageUrl={q.imageUrl}
     onNavigate={goTo} onFlag={() => setAnswer(q.id, { flaggedForReview: !answers[q.id]?.flaggedForReview })}
     onSubmit={() => void handleSubmit(false)} busy={submitting} answerDisabled={submitting || (timerArmed.current && remaining === 0)}

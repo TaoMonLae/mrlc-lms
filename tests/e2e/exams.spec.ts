@@ -2,7 +2,7 @@ import { CURRENT_RELEASE } from '../../src/data/releases';
 import { expect, test, type Page } from '@playwright/test';
 test.use({ serviceWorkers: 'block' });
 const available = { id: 'exam-a', title: 'Science checkpoint', durationMinutes: 30, openNow: true, requiresAccessCode: true, attemptLimit: 2, attemptsUsed: 0, activeAttemptId: null, availableFrom: null, availableUntil: null };
-async function fixture(page: Page, role = 'STUDENT', seconds = 0) {
+async function fixture(page: Page, role = 'STUDENT', seconds = 0, settings = {}) {
   const user = { id: `exam-${role}`, role, firstName: 'Exam', lastName: 'Tester', isActive: true, cursorEffect: 'NONE' };
   const writes: { path: string; body: any }[] = [];
   const flags = { failSave: false, failState: false, failResult: false, failTeacher: false };
@@ -24,7 +24,7 @@ async function fixture(page: Page, role = 'STUDENT', seconds = 0) {
     }
     if (path.endsWith('/state')) {
       if (flags.failState) { return route.abort('failed'); }
-      return route.fulfill({ json: { attempt: { state: 'IN_PROGRESS', sessionToken: 'session-a', remainingSeconds: seconds, canPause: true }, exam: { title: 'Science checkpoint', settings: {} }, questions: [{ id: 'q1', text: 'Explain evaporation.', type: 'ESSAY', points: 5 }, { id: 'q2', text: 'Explain condensation.', type: 'ESSAY', points: 5 }], answers: [] } });
+      return route.fulfill({ json: { attempt: { state: 'IN_PROGRESS', sessionToken: 'session-a', remainingSeconds: seconds, canPause: true }, exam: { title: 'Science checkpoint', settings }, questions: [{ id: 'q1', text: 'Explain evaporation.', type: 'ESSAY', points: 5 }, { id: 'q2', text: 'Explain condensation.', type: 'ESSAY', points: 5 }], answers: [] } });
     }
     if (path.endsWith('/save')) {
       if (flags.failSave) { flags.failSave = false; return route.abort('failed'); }
@@ -342,9 +342,29 @@ test('exam review distinguishes unanswered and flagged questions and submits onl
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   await page.getByRole('button', { name: /Review answers/ }).first().click();
   await page.getByRole('button', { name: 'Submit exam', exact: true }).click();
-  await expect(page.getByRole('alertdialog', { name: 'Submit your exam now?' })).toBeVisible();
+  await expect(page.getByRole('alertdialog', { name: 'Submit your exam now?' })).toContainText('1 unanswered question');
   expect(writes.filter(w => w.path.endsWith('/submit'))).toHaveLength(0);
+  await page.getByRole('button', { name: 'Go back and answer' }).click();
+  await expect(page.getByRole('heading', { name: 'Explain condensation.' })).toBeFocused();
+  await page.getByRole('button', { name: /Review answers/ }).first().click();
+  await page.getByRole('button', { name: 'Submit exam', exact: true }).click();
   await page.getByRole('button', { name: 'Yes, submit exam' }).click();
   await expect(page).toHaveURL(/\/result$/);
   expect(writes.find(w => w.path.endsWith('/submit'))?.body.answers[0]).toMatchObject({ answerText: 'Water becomes vapour.', flaggedForReview: true });
+});
+
+test('students can retry an unsaved essay during their break', async ({ page }) => {
+  const { flags, writes } = await fixture(page, 'STUDENT', 3600, { essayMinutes: 45, breakMinutes: 10 });
+  await page.goto('/exam2/attempts/attempt-a/play');
+  await expect(page.getByRole('timer')).toContainText('Extended Response');
+  await page.getByRole('textbox').fill('My evidence from both passages.');
+  flags.failSave = true;
+  await page.getByRole('button', { name: 'Next question' }).click();
+  await expect(page.getByRole('dialog', { name: 'Take a short break' })).toBeVisible();
+  await expect(page.getByRole('alert')).toContainText('Changes could not be saved');
+  await page.getByRole('button', { name: 'Retry save' }).click();
+  await expect(page.getByRole('button', { name: 'Retry save' })).toHaveCount(0);
+  expect(writes.filter(w => w.path.endsWith('/save')).at(-1)?.body.answers[0].answerText).toBe('My evidence from both passages.');
+  await page.getByRole('button', { name: 'Return to the exam' }).click();
+  await expect(page.getByRole('heading', { name: 'Explain condensation.' })).toBeVisible();
 });

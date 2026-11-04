@@ -243,3 +243,36 @@ test('student paper preview supports dropdowns, flags, passages and a non-submit
   await expect(preview).not.toBeVisible();
   expect(writes.filter(w => w.path.includes('/attempts/'))).toHaveLength(0);
 });
+
+test('a student can reread a long essay prompt and return to their draft in a 53-question exam', async ({ page }) => {
+  const questions = Array.from({ length: 53 }, (_, i) => ({
+    ...choice, id: `q${i + 1}`, passageText: 'Read both passages. '.repeat(120),
+    ...(i === 20 ? { type: 'ESSAY', text: 'Compare the two arguments. '.repeat(22) } : {}),
+  }));
+  await setup(page, questions);
+  await page.goto('/exams/studio-a/studio');
+  await page.getByRole('button', { name: 'Preview as student', exact: true }).click();
+  const preview = page.getByRole('dialog', { name: 'Student preview' });
+  await preview.getByRole('button', { name: 'Question 20, unanswered', exact: true }).click();
+  await preview.getByRole('button', { name: 'Next question' }).click();
+  const navigator = preview.getByRole('navigation', { name: 'Question navigation' });
+  await expect.poll(() => navigator.evaluate(nav => {
+    const bounds = nav.getBoundingClientRect();
+    const active = nav.querySelector('[aria-current]')?.getBoundingClientRect();
+    return !!active && active.left >= bounds.left && active.right <= bounds.right &&
+      active.top >= bounds.top && active.bottom <= bounds.bottom;
+  })).toBe(true);
+  const write = preview.getByRole('button', { name: 'Go to response' });
+  await write.click();
+  const answer = preview.getByRole('textbox');
+  await expect(answer).toBeFocused();
+  await answer.fill('Evidence from both passages.');
+  await preview.getByRole('button', { name: 'Read prompt again' }).click();
+  await expect(preview.getByRole('heading', { name: /Compare the two/ })).toBeFocused();
+  await write.click();
+  await expect(answer).toHaveValue('Evidence from both passages.');
+  await preview.getByRole('button', { name: 'Review answers', exact: true }).click();
+  await expect(preview.getByRole('button', { name: 'Finish preview' })).toBeInViewport();
+  await preview.getByRole('button', { name: 'Back to question' }).click();
+  await expect(answer).toHaveValue('Evidence from both passages.');
+});
