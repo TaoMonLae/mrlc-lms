@@ -30,3 +30,78 @@
 .ep-progress progress::-webkit-progress-bar { background:var(--ep-border); }
 .ep-progress progress::-webkit-progress-value { background:var(--ep-accent); }
 .ep-progress progress::-moz-progress-bar { background:var(--ep-accent); }
+
+/* ── Passage + question columns ──────────────────────────────────────────────
+   On wide screens the passage, the question and the navigator each scroll on
+   their own below the sticky header, so the answer choices never scroll away
+   while a student reads further down the passage. */
+.ep-passage-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:0!important; white-space:normal!important; }
+.ep-passage-toggle { display:none; align-items:center; gap:4px; min-height:36px; padding:4px 10px; border:1px solid var(--ep-border); border-radius:4px; background:var(--ep-paper); color:var(--ep-accent); font-size:13px; font-weight:600; }
+.ep-passage:focus-visible { outline:2px solid var(--ep-accent); outline-offset:-2px; }
+@media(min-width:901px) {
+  .ep-with-passage .ep-question-layout>.ep-passage,
+  .ep-with-passage .ep-question-layout>.ep-sheet,
+  .ep-with-passage>.ep-nav {
+    position:sticky; top:calc(var(--ep-header-h, 96px) + 16px);
+    max-height:calc(100dvh - var(--ep-header-h, 96px) - 32px);
+    overflow-y:auto; overscroll-behavior:contain;
+  }
+  .ep-with-passage>.ep-nav { padding-right:4px; }
+}
+/* On phones and small tablets the passage becomes a scrollable panel above the
+   question, so the question is always a short scroll away. */
+@media(max-width:900px) {
+  .ep-passage { max-height:42dvh; overflow-y:auto; overscroll-behavior:contain; position:relative; }
+  .ep-passage.is-open { max-height:none; }
+  .ep-passage-toggle { display:inline-flex; }
+  .ep-passage-head { position:sticky; top:0; z-index:1; background:var(--ep-paper); padding:4px 0; }
+}
+
+/* ── Partly answered (e.g. 1 of 4 drag-and-drop blanks filled) ─────────────── */
+.ep-nav nav .is-partial { background:linear-gradient(135deg, var(--ep-tint) 50%, var(--ep-paper) 50%); }
+.ep-legend-partial { display:inline-block; width:12px; height:12px; border:1px solid var(--ep-border); border-radius:2px; background:linear-gradient(135deg, var(--ep-tint) 50%, var(--ep-paper) 50%); }
+
+/* ── Timer warnings ────────────────────────────────────────────────────────── */
+.ep-timer-critical strong { animation:ep-pulse 1s ease-in-out infinite; }
+@keyframes ep-pulse { 50% { opacity:.55; } }
+@media (prefers-reduced-motion: reduce) { .ep-timer-critical strong { animation:none; } }
+
+/* ── Review filter + submit confirmation ───────────────────────────────────── */
+.ep-review-filter { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+.ep-review-filter button { min-height:36px; padding:6px 12px; border:1px solid var(--ep-border); border-radius:999px; background:var(--ep-paper); font-size:13px; font-weight:600; color:var(--ep-muted); }
+.ep-review-filter button[aria-pressed=true] { border-color:var(--ep-accent); background:var(--ep-tint); color:var(--ep-accent); }
+.ep-review-empty { padding:16px 0; color:var(--ep-muted); font-size:14px; border-bottom:1px solid var(--ep-border); }
+.ep-confirm { border:1px solid #b88426; background:var(--ep-paper); border-radius:5px; padding:18px; }
+.ep-confirm strong { display:block; font-size:16px; margin-bottom:6px; }
+.ep-confirm p { margin:0 0 14px; font-size:14px; line-height:1.6; color:var(--ep-ink); }
+
+/* ── Written answers ───────────────────────────────────────────────────────── */
+.ep-answer textarea.ep-essay { min-height:22rem; resize:vertical; }
+.ep-word-count { margin-top:6px; font-size:12px; color:var(--ep-muted); text-align:right; }
+
+/* ── Passage tools: highlighter + inline drop-downs ────────────────────────── */
+.ep-passage-tools { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:12px 0 4px; white-space:normal; }
+.ep-passage-tools button { display:inline-flex; align-items:center; gap:6px; min-height:34px; padding:4px 10px; border:1px solid var(--ep-border); border-radius:4px; background:var(--ep-paper); color:var(--ep-ink); font-size:13px; font-weight:600; }
+.ep-passage-tools button[aria-pressed=true] { border-color:#b88426; background:#fff4cc; color:#5c4100; }
+.ep-passage-hint { font-size:12px; color:var(--ep-muted); }
+.ep-passage-text { margin-top:12px; white-space:pre-wrap; overflow-wrap:anywhere; }
+.ep-passage-text.is-highlighting { cursor:text; }
+.ep-passage-text.is-highlighting .ep-highlight { cursor:pointer; }
+.ep-highlight { background:#fff0a3; color:inherit; border-radius:2px; box-shadow:0 0 0 1px #f2d75c; }
+.dark .ep-highlight { background:#6b5a12; box-shadow:none; }
+.ep-inline-select { display:inline-block; max-width:100%; margin:0 2px; padding:2px 6px; border:1px solid var(--ep-border); border-radius:4px; background:var(--ep-paper); color:var(--ep-ink); font:inherit; font-size:15px; line-height:1.5; vertical-align:baseline; }
+.ep-inline-select.is-active { border:2px solid var(--ep-accent); background:var(--ep-tint); }
+.ep-inline-select:focus-visible { outline:2px solid var(--ep-accent); outline-offset:1px; }
+@media(max-width:540px) { .ep-inline-select { font-size:14px; } }
+
+/* ── Extended Response clock + break screen ────────────────────────────────── */
+.ep-essay-clock { display:flex; align-items:center; gap:8px; margin-bottom:10px; padding:8px 12px; border:1px solid var(--ep-border); border-radius:5px; background:var(--ep-tint); font-size:14px; }
+.ep-essay-clock.is-low { border-color:#bd3c2c; color:#bd3c2c; background:var(--ep-paper); }
+.ep-essay-clock.is-over { border-color:#b88426; background:var(--ep-paper); }
+.ep-essay-chip { display:inline-flex; align-items:center; gap:4px; padding:4px 8px; border:1px solid var(--ep-border); border-radius:999px; font-size:12px; font-weight:600; color:var(--ep-muted); }
+.ep-break { display:flex; align-items:center; justify-content:center; min-height:100dvh; padding:24px; }
+.ep-break-card { max-width:520px; width:100%; text-align:center; background:var(--ep-paper); border:1px solid var(--ep-border); border-top:3px solid var(--ep-accent); border-radius:3px; padding:36px 28px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+.ep-break-card h1 { font-size:24px; font-weight:650; margin:0; }
+.ep-break-card p { margin:0; color:var(--ep-muted); line-height:1.6; }
+.ep-break-clock { font-size:48px; font-weight:700; color:var(--ep-ink)!important; font-variant-numeric:tabular-nums; }
+.ep-break-note strong { color:var(--ep-ink); }

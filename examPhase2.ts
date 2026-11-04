@@ -771,11 +771,14 @@ export function registerExamPhase2Routes(deps: Deps): void {
             blockClipboard: !!exam.settings?.antiCheat?.blockClipboard,
             warnOnFocusLoss: exam.settings?.antiCheat?.warnOnFocusLoss !== false,
           },
+          // GED-style Extended Response clock and break (minutes; 0 = off).
+          essayMinutes: Math.max(0, Math.min(600, Math.floor(Number(exam.settings?.essayMinutes) || 0))),
+          breakMinutes: Math.max(0, Math.min(120, Math.floor(Number(exam.settings?.breakMinutes) || 0))),
         },
       },
       questions: ordered,
       // saved answers (student's own, no correctness leaked)
-      answers: answers.map((a: any) => ({ questionId: a.questionId, answerText: a.answerText, selectedOptions: a.selectedOptions, flaggedForReview: a.flaggedForReview })),
+      answers: answers.map((a: any) => ({ questionId: a.questionId, answerText: a.answerText, selectedOptions: a.selectedOptions, flaggedForReview: a.flaggedForReview, timeSpentSeconds: a.timeSpentSeconds ?? null })),
     };
   }
 
@@ -1348,6 +1351,21 @@ export function registerExamPhase2Routes(deps: Deps): void {
       });
       const attemptsByExam: Record<string, any[]> = {};
       for (const a of allAttempts) (attemptsByExam[a.examId] ||= []).push(a);
+      // Question counts for the start page. Exams that draw random bank
+      // questions get no count, because the number drawn is decided per attempt.
+      const examIds = consider.map((e: any) => e.id);
+      const questionCounts: Record<string, number | null> = {};
+      try {
+        const [direct, linked] = await Promise.all([
+          prisma.question.groupBy({ by: ["examId"], where: { examId: { in: examIds } }, _count: { _all: true } }),
+          prisma.examQuestion.groupBy({ by: ["examId", "sourceType"], where: { examId: { in: examIds } }, _count: { _all: true } }),
+        ]);
+        for (const row of direct as any[]) questionCounts[row.examId] = (questionCounts[row.examId] ?? 0) + row._count._all;
+        for (const row of linked as any[]) {
+          if (row.sourceType === "RANDOM") { questionCounts[row.examId] = null; continue; }
+          if (questionCounts[row.examId] !== null) questionCounts[row.examId] = (questionCounts[row.examId] ?? 0) + row._count._all;
+        }
+      } catch (countErr) { logger.warn?.(countErr); }
       for (const e of consider) {
         if (seen.has(e.id)) continue; seen.add(e.id);
         if ((e._count?.assignments || 0) > 0 && !assignedExamIds.has(e.id)) continue;
@@ -1355,6 +1373,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
         const availability = examAvailability(e, assignment, attemptsByExam[e.id] || [], now.getTime());
         out.push({
           id: e.id, title: e.title, durationMinutes: e.durationMinutes,
+          questionCount: questionCounts[e.id] ?? null,
           ...availability,
           requiresAccessCode: e.requiresAccessCode, assigned: assignedExamIds.has(e.id),
         });
