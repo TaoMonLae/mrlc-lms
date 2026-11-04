@@ -21,6 +21,9 @@ export default function ExamPaper(p: Props) {
   const [filter, setFilter] = useState<ReviewFilter>('all');
   const [confirming, setConfirming] = useState(false);
   const [passageOpen, setPassageOpen] = useState(false);
+  const [longPrompt, setLongPrompt] = useState(false);
+  const progress = useRef<HTMLDivElement>(null);
+  const footer = useRef<HTMLElement>(null);
   const root = useRef<HTMLElement>(null);
   const header = useRef<HTMLElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -29,17 +32,34 @@ export default function ExamPaper(p: Props) {
   const firstRender = useRef(true);
   const lastPassageKey = useRef(p.passageKey);
 
-  // Sticky columns sit below the sticky header, whose height changes with the
-  // title length and screen width.
+  // The passage and question columns are sized so the header, progress bar,
+  // columns and Previous/Next footer all fit on one screen. Their heights
+  // change with the title length, notices and screen width.
   useLayoutEffect(() => {
-    const el = header.current;
-    if (!el || typeof ResizeObserver === 'undefined') return;
-    const sync = () => root.current?.style.setProperty('--ep-header-h', `${Math.round(el.getBoundingClientRect().height)}px`);
+    if (typeof ResizeObserver === 'undefined') return;
+    const sync = () => {
+      const style = root.current?.style;
+      if (!style) return;
+      const height = (el: Element | null) => el ? Math.round(el.getBoundingClientRect().height) : 0;
+      style.setProperty('--ep-header-h', `${height(header.current)}px`);
+      // Everything between the header and the columns (notices + progress bar).
+      const layout = root.current?.querySelector('.ep-layout');
+      const workspace = root.current?.querySelector('.ep-workspace');
+      const above = layout && workspace ? Math.max(0, Math.round(layout.getBoundingClientRect().top - workspace.getBoundingClientRect().top)) : height(progress.current);
+      style.setProperty('--ep-above-h', `${above}px`);
+      style.setProperty('--ep-footer-h', `${height(footer.current) || 62}px`);
+    };
     sync();
     const observer = new ResizeObserver(sync);
-    observer.observe(el);
+    [header.current, progress.current, footer.current, root.current?.querySelector('.ep-notices')].forEach((el) => { if (el) observer.observe(el); });
     return () => observer.disconnect();
-  }, []);
+  }, [review]);
+
+  // Long prompts (an essay assignment, a multi-part instruction) read better as
+  // body text than as a large heading, and keep the answer box in view.
+  useLayoutEffect(() => {
+    setLongPrompt((heading.current?.textContent || '').trim().length > 160);
+  }, [p.index, p.prompt, review]);
 
   // A new passage opens at its top; the same passage keeps the reader's place.
   useLayoutEffect(() => {
@@ -82,7 +102,7 @@ export default function ExamPaper(p: Props) {
     </header>
     <div className="ep-workspace">
       {p.notices && <div className="ep-notices">{p.notices}</div>}
-      <div className="ep-progress"><span><strong>{answered}</strong> of {p.questions.length} answered</span><progress aria-label="Questions answered" max={p.questions.length || 1} value={answered} /><button disabled={p.busy} onClick={() => openReview()}>Review answers{flagged > 0 ? ` · ${flagged} flagged` : ''}</button></div>
+      <div ref={progress} className="ep-progress"><span><strong>{answered}</strong> of {p.questions.length} answered</span><progress aria-label="Questions answered" max={p.questions.length || 1} value={answered} /><button disabled={p.busy} onClick={() => openReview()}>Review answers{flagged > 0 ? ` · ${flagged} flagged` : ''}</button></div>
       <div className={`ep-layout ${p.passage && !review ? 'ep-with-passage' : ''}`}>
         <aside className="ep-nav"><span className="ep-eyebrow">Questions</span><nav aria-label="Question navigation">{p.questions.map((item, i) => <button key={item.id} disabled={p.busy} onClick={() => void navigate(i)} aria-current={!review && p.index === i ? 'step' : undefined} aria-label={`Question ${i + 1}, ${statusOf(item).toLowerCase()}${item.flagged ? ', flagged' : ''}`} className={`${item.answered ? 'is-answered' : item.partial ? 'is-partial' : ''} ${item.flagged ? 'is-flagged' : ''}`}><span>{i + 1}</span>{item.flagged ? <Flag size={10} /> : item.answered ? <Check size={10} /> : null}</button>)}</nav><p className="ep-legend"><Check size={12} /> Answered <span className="ep-legend-partial" aria-hidden="true" /> Partly <Flag size={12} /> For review</p></aside>
         <div className="ep-document">
@@ -114,13 +134,13 @@ export default function ExamPaper(p: Props) {
               </aside>}
               <article ref={sheet} className="ep-sheet">
                 <div className="ep-question-meta"><span className="ep-eyebrow">Question {p.index + 1} of {p.questions.length}</span><span>{q?.points} {q?.points === 1 ? 'point' : 'points'}</span></div>
-                <h2 ref={heading} tabIndex={-1}>{p.prompt}</h2>
+                <h2 ref={heading} tabIndex={-1} className={longPrompt ? 'ep-prompt-long' : undefined}>{p.prompt}</h2>
                 {p.imageUrl && <img className="ep-image" src={p.imageUrl} alt="Question illustration" />}
                 <fieldset className="ep-answer" disabled={p.answerDisabled}><legend className="sr-only">Your answer</legend>{p.children}</fieldset>
                 <div className="ep-question-bottom"><span>{q?.answered ? <><Check size={14} /> Answer entered{p.preview ? ' in preview' : ''}</> : q?.partial ? `Partly answered (${q.partial})` : 'Not answered yet'}</span><button disabled={p.busy || p.answerDisabled} aria-pressed={q?.flagged} onClick={p.onFlag}><Flag size={15} />{q?.flagged ? 'Flagged for review' : 'Flag for review'}</button></div>
               </article>
             </div>
-            <footer className="ep-footer"><button aria-label="Previous question" disabled={p.index === 0 || p.busy} onClick={() => void navigate(p.index - 1)}><ArrowLeft size={16} /> Previous</button><div className="ep-tools">{p.tools}</div>{p.index < p.questions.length - 1 ? <button className="ep-primary" aria-label="Next question" disabled={p.busy} onClick={() => void navigate(p.index + 1)}>Next <ArrowRight size={16} /></button> : <button className="ep-primary" disabled={p.busy} onClick={() => openReview()}>Review answers <ArrowRight size={16} /></button>}</footer>
+            <footer ref={footer} className="ep-footer"><button aria-label="Previous question" disabled={p.index === 0 || p.busy} onClick={() => void navigate(p.index - 1)}><ArrowLeft size={16} /> Previous</button><div className="ep-tools">{p.tools}</div>{p.index < p.questions.length - 1 ? <button className="ep-primary" aria-label="Next question" disabled={p.busy} onClick={() => void navigate(p.index + 1)}>Next <ArrowRight size={16} /></button> : <button className="ep-primary" disabled={p.busy} onClick={() => openReview()}>Review answers <ArrowRight size={16} /></button>}</footer>
           </>}
         </div>
       </div>

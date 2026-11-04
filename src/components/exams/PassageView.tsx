@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Eraser, Highlighter } from 'lucide-react';
 import MathText from '../MathText';
-import { addHighlight, highlightRuns, splitPassage, type HighlightRange } from '../../lib/passageSlots';
+import { addHighlight, highlightRuns, snapToWords, splitPassage, type HighlightRange } from '../../lib/passageSlots';
 
 export type PassageSlot = {
   questionIndex: number;
@@ -85,9 +85,8 @@ export default function PassageView({ text, slots = {}, onSlotChange, onSlotFocu
     const a = pointOffset(range.startContainer, range.startOffset);
     const b = pointOffset(range.endContainer, range.endOffset);
     if (a === null || b === null) return;
-    const start = Math.min(a, b);
-    const end = Math.max(a, b);
-    if (text.slice(start, end).trim()) persist(addHighlight(ranges, { start, end }));
+    const { start, end } = snapToWords(text, Math.min(a, b), Math.max(a, b));
+    if (end > start) persist(addHighlight(ranges, { start, end }));
     selection.removeAllRanges();
   };
 
