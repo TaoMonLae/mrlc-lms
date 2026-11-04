@@ -235,7 +235,7 @@ test('student paper preview supports dropdowns, flags, passages and a non-submit
   await page.screenshot({ path: info.outputPath('exam-paper-passage.png'), fullPage: true });
   expect(await preview.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
   await preview.getByRole('button', { name: 'Review answers', exact: true }).click();
-  await expect(preview.getByText('2 of 2 answered · 1 flagged for review.')).toBeVisible();
+  await expect(preview.getByText('2 of 2 answered · 0 unanswered · 1 flagged for review.')).toBeVisible();
   await preview.getByRole('button', { name: 'Question 1 Answered', exact: true }).click();
   await expect(preview.getByRole('combobox')).toHaveValue('0');
   await preview.getByRole('button', { name: /Review answers/ }).first().click();

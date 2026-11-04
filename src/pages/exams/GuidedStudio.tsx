@@ -24,6 +24,9 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MathField from '../../components/MathField';
 import MathText from '../../components/MathText';
+import { splitDragPrompt } from '../../lib/dragBlanks';
+import PassageView, { type PassageSlot } from '../../components/exams/PassageView';
+import { mapSelectSlots } from '../../lib/passageSlots';
 import QuestionImageField from '../../components/QuestionImageField';
 import { useAuth } from '../../providers/AuthProvider';
 
@@ -143,6 +146,9 @@ export default function GuidedStudio() {
   const [instructions, setInstructions] = useState('');
   const [audience, setAudience] = useState<Audience>('GED');
   const [questionTheme, setQuestionTheme] = useState<QuestionTheme>('ged');
+  // GED-style Extended Response clock and break, in minutes (0 = off).
+  const [essayMinutes, setEssayMinutes] = useState(0);
+  const [breakMinutes, setBreakMinutes] = useState(0);
   const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'CLOSED' | 'ACTIVE' | 'SCHEDULED' | 'ARCHIVED'>('DRAFT');
   const [hasAttempts, setHasAttempts] = useState(false);
   const [canEditAnswerKey, setCanEditAnswerKey] = useState(false);
@@ -184,7 +190,7 @@ export default function GuidedStudio() {
   const [playerOpen, setPlayerOpen] = useState(false);
   const [published, setPublished] = useState(false);
 
-  const editSnapshot = JSON.stringify({ title, classId, subjectId, examType, duration, instructions, audience, questionTheme, questions, opensAt, closesAt, attempts, shuffle, lockdown, requireFullscreen, blockClipboard, warnOnFocusLoss, honorAccom, accom, passMark, release, releaseAt, showAnswers });
+  const editSnapshot = JSON.stringify({ title, classId, subjectId, examType, duration, instructions, audience, questionTheme, essayMinutes, breakMinutes, questions, opensAt, closesAt, attempts, shuffle, lockdown, requireFullscreen, blockClipboard, warnOnFocusLoss, honorAccom, accom, passMark, release, releaseAt, showAnswers });
   const savedSnapshot = useRef<string | null>(null);
   useEffect(() => {
     if (loading || loadError) return;
@@ -233,6 +239,8 @@ export default function GuidedStudio() {
       setInstructions(s.instructions || '');
       setAudience((['GED', 'K12_ELEMENTARY', 'K12_MIDDLE', 'K12_HIGH'].includes(s.audience) ? s.audience : 'GED') as Audience);
       setQuestionTheme((['classic', 'ged', 'colorful', 'focus'].includes(s.questionTheme) ? s.questionTheme : 'ged') as QuestionTheme);
+      setEssayMinutes(Math.max(0, Math.floor(Number(s.essayMinutes) || 0)));
+      setBreakMinutes(Math.max(0, Math.floor(Number(s.breakMinutes) || 0)));
 
       // Availability window — real columns first, settings JSON as fallback.
       const from = exam.availableFrom || s.startDate;
@@ -379,7 +387,7 @@ export default function GuidedStudio() {
     allowedAttempts: attempts,
     instructions,
     lockdownBrowser: lockdown, honorAccommodations: honorAccom,
-    audience, questionTheme,
+    audience, questionTheme, essayMinutes, breakMinutes,
     antiCheat: { ...originalSettings.current.antiCheat, requireFullscreen, blockClipboard, warnOnFocusLoss },
     accommodations: honorAccom ? accom : [],
     passMark, releaseScores: release,
@@ -431,6 +439,8 @@ export default function GuidedStudio() {
     if (!subjectId) { toast.error('Please select a subject.'); setStep('details'); return; }
     if (!classId) { toast.error('Please select a class.'); setStep('details'); return; }
     if (!Number.isFinite(duration) || duration < 1 || !Number.isInteger(duration)) { toast.error('Duration must be at least 1 minute.'); setStep('details'); return; }
+    if (!Number.isInteger(essayMinutes) || essayMinutes < 0 || essayMinutes >= duration) { toast.error('The Extended Response time must be shorter than the whole exam.'); setStep('details'); return; }
+    if (!Number.isInteger(breakMinutes) || breakMinutes < 0 || breakMinutes > 60) { toast.error('The break must be between 0 and 60 minutes.'); setStep('details'); return; }
     if ((nextStatus || status) === 'PUBLISHED' && questions.length === 0) { toast.error('Add at least one question before publishing.'); setStep('questions'); return; }
     if (release === 'closed' && !releaseAt && !closesAt) { toast.error('Choose a result release time or an exam close time.'); setStep('grading'); return; }
     if ((nextStatus || status) === 'PUBLISHED') {
@@ -614,7 +624,7 @@ export default function GuidedStudio() {
             <div className="gs-editor-paper">
             {questionLocked && <p className="gs-notice">{hasAttempts ? 'Students have started this exam.' : 'This exam is published.'} Question content is locked.{canEditAnswerKey ? ' Use Correct answer key to fix a misplaced answer.' : ' Ask an administrator for answer-key correction permission if an answer was misplaced.'}</p>}
             <fieldset disabled={saving} style={{ minWidth: 0 }}>
-            {step === 'details' && <DetailsStep {...{ title, setTitle, subjectId, setSubjectId, classId, setClassId, examType, setExamType, subjects, classes, duration, setDuration, instructions, setInstructions, audience, questionTheme, setQuestionTheme, applyPreset, hasAttempts, goNext: () => setStep('questions') }} />}
+            {step === 'details' && <DetailsStep {...{ title, setTitle, subjectId, setSubjectId, classId, setClassId, examType, setExamType, subjects, classes, duration, setDuration, instructions, setInstructions, audience, questionTheme, setQuestionTheme, essayMinutes, setEssayMinutes, breakMinutes, setBreakMinutes, hasEssay: questions.some(item => ['ESSAY', 'EXTENDED'].includes(item.uiType)), applyPreset, hasAttempts, goNext: () => setStep('questions') }} />}
             {step === 'questions' && (
               cur ? (
                 <><div className="gs-question-actions"><span className="gs-editor-position"><span className="gs-editor-index">{String(sel + 1).padStart(2, '0')}</span><span>Question {sel + 1} of {questions.length}<small>{isObjective(cur.uiType) ? 'Automatically graded' : 'Teacher graded'}</small></span></span><button className="gs-preview-toggle" aria-label={previewVisible ? 'Hide live preview' : 'Show live preview'} aria-expanded={previewVisible} aria-controls="studio-live-preview" onClick={() => setPreviewVisible(v => !v)}><PanelRight size={16} /></button><button disabled={questionLocked || sel === 0} aria-label="Move question up" onClick={() => { setQuestions(prev => { const next = [...prev]; [next[sel - 1], next[sel]] = [next[sel], next[sel - 1]]; return next; }); setSel(sel - 1); setDirty(true); }}><ArrowUp size={16} /></button><button disabled={questionLocked || sel === questions.length - 1} aria-label="Move question down" onClick={() => { setQuestions(prev => { const next = [...prev]; [next[sel], next[sel + 1]] = [next[sel + 1], next[sel]]; return next; }); setSel(sel + 1); setDirty(true); }}><ArrowDown size={16} /></button><button disabled={questionLocked} onClick={() => { setQuestions(prev => [...prev, { ...cur, id: crypto.randomUUID(), options: cur.options.map(o => ({ ...o })) }]); setSel(questions.length); setDirty(true); }}><Copy size={15} /> Duplicate</button></div><fieldset disabled={questionLocked} style={{ minWidth: 0 }}>
@@ -982,6 +992,13 @@ function DetailsStep(p: any) {
         </Select>
       </Field>
       <Field label="Time limit (minutes)"><input type="number" min={1} value={p.duration} onChange={(e: any) => p.setDuration(Number(e.target.value))} style={inputStyle} /></Field>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <Field label="Extended Response clock (minutes)"><input type="number" min={0} max={Math.max(0, p.duration - 1)} value={p.essayMinutes} onChange={(e: any) => p.setEssayMinutes(Math.max(0, Math.floor(Number(e.target.value) || 0)))} style={inputStyle} /></Field>
+        <Field label="Break after it (minutes)"><input type="number" min={0} max={60} value={p.breakMinutes} disabled={!p.essayMinutes} onChange={(e: any) => p.setBreakMinutes(Math.max(0, Math.floor(Number(e.target.value) || 0)))} style={inputStyle} /></Field>
+      </div>
+      <p style={{ fontSize: 12, color: C.muted, margin: '-6px 0 14px', lineHeight: 1.5 }}>
+        GED RLA uses 45 and 10. Set 0 to turn off. The essay clock starts when a student first opens the essay and locks the response when it runs out. The break screen hides the questions when the student leaves the essay; the exam clock keeps running.{p.essayMinutes > 0 && !p.hasEssay ? ' This exam has no essay question yet, so these settings will have no effect.' : ''}
+      </p>
       <Field label="Student question theme">
         <Select value={p.questionTheme} onValueChange={p.setQuestionTheme}>
           <SelectTrigger><SelectValue /></SelectTrigger>
@@ -1221,10 +1238,14 @@ function StudentInput({ q, value, onChange, small }: { q: Question; value: any; 
     );
   }
   if (q.uiType === 'SHORT' || q.uiType === 'ESSAY' || q.uiType === 'EXTENDED') {
-    return <textarea aria-label="Preview answer" value={value ?? ''} onChange={(e) => onChange(e.target.value)} rows={q.uiType === 'SHORT' ? 2 : 5} placeholder="Type your answer…" style={{ width: '100%', border: `1px solid ${C.border3}`, borderRadius: 12, padding: optPad, fontSize: fs, outline: 'none', resize: 'vertical', fontFamily: 'inherit' }} />;
+    const words = (String(value ?? '').trim().match(/\S+/g) || []).length;
+    return <div>
+      <textarea aria-label="Preview answer" className={q.uiType === 'SHORT' ? undefined : 'ep-essay'} value={value ?? ''} onChange={(e) => onChange(e.target.value)} rows={q.uiType === 'SHORT' ? 2 : small ? 5 : 14} placeholder="Type your answer…" style={{ width: '100%', border: `1px solid ${C.border3}`, borderRadius: 12, padding: optPad, fontSize: fs, outline: 'none', resize: 'vertical', fontFamily: 'inherit' }} />
+      {q.uiType !== 'SHORT' && !small && <p className="ep-word-count" aria-live="polite">{words} {words === 1 ? 'word' : 'words'}</p>}
+    </div>;
   }
   if (q.uiType === 'DRAG') {
-    const parts = (q.text || '').split(/_{2,}/);
+    const parts = splitDragPrompt(q.text || '').body.split(/_{2,}/);
     const matches: Record<number, number> = value || {};
     const place = (blank: number, word: number) => {
       if (!q.options[word]) return;
@@ -1232,7 +1253,7 @@ function StudentInput({ q, value, onChange, small }: { q: Question; value: any; 
       onChange({ ...next, [blank]: word }); setSelectedWord(null);
     };
     return <div><p style={{ color: C.muted, fontSize: 12, marginBottom: 12 }}>Drag a word to a blank, or select a word then a blank. Select a filled blank to clear it.</p>
-      <div style={{ lineHeight: 2.6 }}>{parts.map((part, i) => <span key={i}>{part}{i < parts.length - 1 && <button aria-label={`Blank ${i + 1}`} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); const word = e.dataTransfer.getData('text/plain'); if (word !== '') place(i, Number(word)); }} onClick={() => { if (selectedWord !== null) place(i, selectedWord); else { const next = { ...matches }; delete next[i]; onChange(next); } }} style={{ minWidth: 70, border: `1px dashed ${C.purple}`, margin: '0 4px', padding: '0 8px', borderRadius: 4 }}>{q.options[matches[i]]?.t || '…'}</button>}</span>)}</div>
+      <div style={{ lineHeight: 2.6, whiteSpace: 'pre-wrap' }}>{parts.map((part, i) => <span key={i}>{part}{i < parts.length - 1 && <button aria-label={`Blank ${i + 1}`} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); const word = e.dataTransfer.getData('text/plain'); if (word !== '') place(i, Number(word)); }} onClick={() => { if (selectedWord !== null) place(i, selectedWord); else { const next = { ...matches }; delete next[i]; onChange(next); } }} style={{ minWidth: 70, border: `1px dashed ${C.purple}`, margin: '0 4px', padding: '0 8px', borderRadius: 4 }}>{q.options[matches[i]]?.t || '…'}</button>}</span>)}</div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>{q.options.map((o, i) => <button key={i} disabled={Object.values(matches).includes(i)} draggable onDragStart={e => e.dataTransfer.setData('text/plain', String(i))} aria-pressed={selectedWord === i} onClick={() => setSelectedWord(selectedWord === i ? null : i)} style={{ padding: '6px 10px', border: `1px solid ${selectedWord === i ? C.purple : C.border}`, background: C.tint50, color: C.purpleText }}>{o.t || `Word ${i + 1}`}</button>)}</div>
     </div>;
   }
@@ -1269,6 +1290,22 @@ function StudentPlayer({ questions, title, minutes, onClose }: { questions: Ques
   }, [minutes]);
   useEffect(() => { const dialog = dialogRef.current; dialog?.showModal(); return () => dialog?.close(); }, []);
   const q = questions[pIdx];
+  const partial = (question: Question, index: number) => {
+    if (question.uiType !== 'DRAG') return undefined;
+    const blanks = (question.text.match(/_{2,}/g) || []).length;
+    const placed = Object.keys(answers[index] || {}).length;
+    return placed > 0 && placed < blanks ? `${placed} of ${blanks} placed` : undefined;
+  };
+  let passageSlots: Record<string, PassageSlot> | undefined;
+  if (q?.passageText?.includes('[Select')) {
+    const linked = mapSelectSlots(q.passageText, questions.map(item => ({ type: item.uiType === 'DROPDOWN' ? 'DROPDOWN' : item.uiType, text: item.text, passageText: item.passageText })));
+    passageSlots = Object.fromEntries(Object.entries(linked).map(([number, index]) => [number, {
+      questionIndex: index, label: String(index + 1), active: index === pIdx,
+      value: answers[index] === null || answers[index] === undefined ? '' : String(answers[index]),
+      options: questions[index].options.map((option, i) => ({ value: String(i), label: option.t })),
+    }]));
+  }
+  const dragPrompt = (question: Question) => splitDragPrompt(question.text || '').lead || 'Fill in each blank using the word bank.';
   const complete = (question: Question, index: number) => {
     const value = answers[index];
     if (question.uiType === 'DRAG') {
@@ -1280,8 +1317,8 @@ function StudentPlayer({ questions, title, minutes, onClose }: { questions: Ques
   };
   return <dialog ref={dialogRef} onCancel={onClose} aria-label="Student preview" className="guided-studio ep-preview-dialog">
     {q ? <ExamPaper title={title || 'Untitled exam'} preview status={minutes > 0 && remaining === 0 ? 'Preview timer ended · you can keep exploring' : 'Preview only · answers are not saved'} remaining={minutes > 0 ? remaining : null}
-      questions={questions.map((item, i) => ({ id: item.id, points: item.points, answered: complete(item, i), flagged: !!flags[i] }))} index={pIdx}
-      prompt={renderQuestionText(q.text || 'Question text')} passage={q.passageText ? <MathText>{q.passageText}</MathText> : undefined} imageUrl={q.imageUrl}
+      questions={questions.map((item, i) => ({ id: item.id, points: item.points, answered: complete(item, i), partial: partial(item, i), flagged: !!flags[i] }))} index={pIdx}
+      prompt={renderQuestionText(q.uiType === 'DRAG' ? dragPrompt(q) : q.text || 'Question text')} passage={q.passageText ? <PassageView text={q.passageText} slots={passageSlots} onSlotChange={(index, value) => setAnswers(a => ({ ...a, [index]: value === '' ? null : Number(value) }))} /> : undefined} passageKey={q.passageText || undefined} imageUrl={q.imageUrl}
       onNavigate={setPIdx} onFlag={() => setFlags(f => ({ ...f, [pIdx]: !f[pIdx] }))} onClose={onClose}
       onSubmit={() => { toast.success('Preview complete. No attempt was submitted.'); onClose(); }}>
       <p className="mb-4 text-sm" style={{ color: 'var(--ep-muted)' }}>{q.uiType === 'HOTSPOT' ? 'Select all answers that apply.' : q.uiType === 'DROPDOWN' ? 'Choose an answer from the list.' : ['SHORT', 'ESSAY', 'EXTENDED'].includes(q.uiType) ? 'Write your response below.' : q.uiType === 'DRAG' ? 'Complete each blank using the word bank.' : 'Select one answer.'}</p>

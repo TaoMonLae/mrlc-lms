@@ -1,12 +1,14 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { authHeaders } from '../../lib/api';
-import { Save, Pause, AlertTriangle, Loader2 } from 'lucide-react';
+import { Save, Pause, AlertTriangle, Loader2, Coffee, PenLine } from 'lucide-react';
 import MathText from '../../components/MathText';
 import ExamPaper from '../../components/exams/ExamPaper';
-import { splitDragText } from '../../lib/dragBlanks';
+import { hasDragBlanks, splitDragPrompt, splitDragText } from '../../lib/dragBlanks';
+import PassageView, { type PassageSlot } from '../../components/exams/PassageView';
+import { mapSelectSlots, passageHash } from '../../lib/passageSlots';
 
 /**
  * Server-authoritative exam player.
@@ -18,18 +20,65 @@ import { splitDragText } from '../../lib/dragBlanks';
  */
 type DragBankItem = { key: string; label: string };
 type Q = { id: string; text: string; type: string; points: number; options: any; partialCredit?: boolean; multipleSelection?: boolean; passageText?: string | null; imageUrl?: string | null; dragText?: string; dragBank?: DragBankItem[] };
-type Answer = { answerText?: string; selectedOptions?: string[] | Record<string, string>; flaggedForReview?: boolean };
-type ExamSettings = { audience?: string; questionTheme?: string; lockdownBrowser?: boolean; antiCheat?: { requireFullscreen?: boolean; blockClipboard?: boolean; warnOnFocusLoss?: boolean } };
+type Answer = { answerText?: string; selectedOptions?: string[] | Record<string, string>; flaggedForReview?: boolean; timeSpentSeconds?: number | null };
+type ExamSettings = { audience?: string; questionTheme?: string; lockdownBrowser?: boolean; antiCheat?: { requireFullscreen?: boolean; blockClipboard?: boolean; warnOnFocusLoss?: boolean }; essayMinutes?: number; breakMinutes?: number };
+
+function dragBlankIds(question: Q): string[] {
+  return splitDragText(question.dragText || '').filter((segment) => segment.kind === 'blank').map((segment: any) => segment.blankId);
+}
 
 function answerIsComplete(question: Q, answer?: Answer): boolean {
   if (question.type === 'DRAG_DROP') {
-    const blankIds = splitDragText(question.dragText || '').filter((segment) => segment.kind === 'blank').map((segment: any) => segment.blankId);
+    const blankIds = dragBlankIds(question);
     const matches = answer?.selectedOptions && !Array.isArray(answer.selectedOptions) ? answer.selectedOptions : {};
     return blankIds.length > 0 && blankIds.every((blankId) => Boolean(matches[blankId]));
   }
   if (Array.isArray(answer?.selectedOptions) && answer.selectedOptions.length > 0) return true;
   return Boolean(answer?.answerText?.trim());
 }
+
+/** Short label for a started but unfinished drag-and-drop answer, e.g. "1 of 4 placed". */
+function partialLabel(question: Q, answer?: Answer): string | undefined {
+  if (question.type !== 'DRAG_DROP') return undefined;
+  const blankIds = dragBlankIds(question);
+  const matches = answer?.selectedOptions && !Array.isArray(answer.selectedOptions) ? answer.selectedOptions : {};
+  const placed = blankIds.filter((blankId) => Boolean(matches[blankId])).length;
+  return placed > 0 && placed < blankIds.length ? `${placed} of ${blankIds.length} placed` : undefined;
+}
+
+/**
+ * Drag-and-drop questions authored in the Studio store the same text as the
+ * question and as the blanks. Show the instructions once as the heading and
+ * the blanks once in the answer area.
+ */
+function dragDisplay(question: Q): { prompt: string; body: string } {
+  const dragText = question.dragText || '';
+  if (!hasDragBlanks(question.text || '')) return { prompt: question.text, body: dragText };
+  const { lead, body } = splitDragPrompt(dragText);
+  return { prompt: lead || 'Fill in each blank using the word bank.', body };
+}
+
+const countWords = (text: string) => (text.trim().match(/\S+/g) || []).length;
+const LONG_ANSWER_TYPES = ['ESSAY', 'EXTENDED', 'WRITTEN'];
+/** Minutes-left warnings, announced once each. */
+const TIME_WARNINGS = [15 * 60, 5 * 60, 60];
+
+const clock = (seconds: number) => {
+  const safe = Math.max(0, Math.floor(seconds));
+  const h = Math.floor(safe / 3600);
+  const m = Math.floor((safe % 3600) / 60);
+  const sec = String(safe % 60).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${String(m).padStart(2, '0')}:${sec}`;
+};
+
+/** Value stored for a choice option (matches what the grader expects). */
+const optionValue = (opt: any, i: number) => String(typeof opt === 'object' ? opt.value ?? opt.text ?? i : opt);
+const optionLabel = (opt: any) => String(typeof opt === 'object' ? opt.text ?? opt.value : opt);
+
+type BreakState = { endsAt: number; taken: true };
+const readBreak = (key: string): BreakState | null => {
+  try { const parsed = JSON.parse(localStorage.getItem(key) || 'null'); return parsed?.taken ? parsed : null; } catch { return null; }
+};
 
 // A small rotating palette so drag chips read as playful/colorful (Wayground
 // style) rather than one flat color — purely cosmetic, keyed by chip index.
@@ -81,6 +130,36 @@ export default function ExamPlayer() {
   const timerArmed = useRef(false);
   const fullscreenEntered = useRef(false);
   const lastIntegrityEvent = useRef<Record<string, number>>({});
+  const warnedAt = useRef<Set<number>>(new Set());
+  // Text the student copied or cut from their own answer box. Pasting it back
+  // is editing their own work, not bringing in outside text.
+  const ownClipboard = useRef('');
+  // Extended Response clock. `essayBase` is the time already used (from the
+  // server); `essayStartedAt` is when this page started counting on top of it.
+  const essayBase = useRef(0);
+  const essayStartedAt = useRef<number | null>(null);
+  const essayLockAnnounced = useRef(false);
+  const breakKey = `mrlc:exam-break:${attemptId}`;
+  const [breakState, setBreakState] = useState<BreakState | null>(() => readBreak(`mrlc:exam-break:${attemptId}`));
+  const essayMinutes = Math.max(0, Number(examSettings.essayMinutes) || 0);
+  const breakMinutes = Math.max(0, Number(examSettings.breakMinutes) || 0);
+  const essayIndex = useMemo(() => essayMinutes > 0 ? questions.findIndex((question) => LONG_ANSWER_TYPES.includes(question.type)) : -1, [questions, essayMinutes]);
+  const essayIdRef = useRef<string | null>(null);
+  essayIdRef.current = essayIndex >= 0 ? questions[essayIndex]?.id ?? null : null;
+  const essayLimit = essayMinutes * 60;
+  const essayUsedRef = useRef<() => number>(() => 0);
+  essayUsedRef.current = () => Math.min(essayLimit, essayBase.current + (essayStartedAt.current !== null ? (Date.now() - essayStartedAt.current) / 1000 : 0));
+  const essayStarted = essayIndex >= 0 && essayStartedAt.current !== null;
+  const essayRemaining = essayStarted ? Math.max(0, Math.ceil(essayLimit - essayUsedRef.current())) : essayLimit;
+  const essayLocked = essayStarted && essayRemaining <= 0;
+  const onBreak = !!breakState && breakState.endsAt > Date.now();
+
+  const startBreak = () => {
+    if (breakMinutes <= 0) return;
+    const next: BreakState = { endsAt: Date.now() + breakMinutes * 60 * 1000, taken: true };
+    setBreakState(next);
+    try { localStorage.setItem(breakKey, JSON.stringify(next)); } catch { /* break still works for this page */ }
+  };
 
   const openResult = useCallback(() => {
     attemptFinished.current = true;
@@ -126,8 +205,14 @@ export default function ExamPlayer() {
     setRemaining(seeded);
     setSavedAt(data.attempt?.lastSavedAt || '');
     const map: Record<string, Answer> = {};
-    for (const a of data.answers || []) map[a.questionId] = { answerText: a.answerText ?? '', selectedOptions: a.selectedOptions ?? [], flaggedForReview: a.flaggedForReview };
+    for (const a of data.answers || []) map[a.questionId] = { answerText: a.answerText ?? '', selectedOptions: a.selectedOptions ?? [], flaggedForReview: a.flaggedForReview, timeSpentSeconds: a.timeSpentSeconds ?? null };
     setAnswers(map);
+    // Resume an Extended Response clock that was already running.
+    const essayMinutesSetting = Number(data.exam?.settings?.essayMinutes) || 0;
+    const essayQuestion = essayMinutesSetting > 0 ? (data.questions || []).find((question: Q) => LONG_ANSWER_TYPES.includes(question.type)) : undefined;
+    const used = essayQuestion ? Number(map[essayQuestion.id]?.timeSpentSeconds) || 0 : 0;
+    essayBase.current = used;
+    essayStartedAt.current = used > 0 ? Date.now() : null;
     setLoading(false);
     } catch { setLoadError('Could not load your exam. Check your connection and retry.'); setLoading(false); }
   }, [attemptId, openResult]);
@@ -144,6 +229,13 @@ export default function ExamPlayer() {
     return () => clearInterval(t);
   }, [loading, blocked, loadError]);
 
+  // The stored timeSpentSeconds is never sent back as-is; only the live essay
+  // clock is, so a stale value can't rewind the Extended Response time.
+  const answerPayload = (qid: string) => {
+    const { timeSpentSeconds: _stored, ...answer } = answersRef.current[qid] || {};
+    return { questionId: qid, ...answer, ...(qid === essayIdRef.current && essayStartedAt.current !== null ? { timeSpentSeconds: Math.floor(essayUsedRef.current()) } : {}) };
+  };
+
   const save = useCallback(async (reason: string) => {
     if (!attemptId || attemptFinished.current) return false;
     // Serialize saves so a slow older answer cannot overwrite a newer one.
@@ -151,9 +243,7 @@ export default function ExamPlayer() {
     const performSave = async (): Promise<boolean> => {
     const toSave = Array.from(dirty.current);
     const savedVersions = Object.fromEntries(toSave.map((qid) => [qid, answerVersions.current[qid] || 0]));
-    const payload = toSave.map((qid) => ({
-      questionId: qid, ...answersRef.current[qid],
-    }));
+    const payload = toSave.map((qid) => answerPayload(qid));
     setSaving(true);
     const { ok, status, data } = await post(`/api/attempts/${attemptId}/save`, { sessionToken, reason, answers: payload });
     setSaving(false);
@@ -176,7 +266,11 @@ export default function ExamPlayer() {
     if (loading || blocked || loadError) return;
     // Empty saves are lightweight check-ins: an idle reader stays connected,
     // receives time extensions, and notices a teacher pause or submission.
-    const t = setInterval(() => { if (!attemptFinished.current && !saveInFlight.current && !submitPending.current && (!countdownDeadline.current || Date.now() < countdownDeadline.current)) void save('AUTOSAVE'); }, 8000);
+    const t = setInterval(() => {
+      if (attemptFinished.current || saveInFlight.current || submitPending.current || (countdownDeadline.current && Date.now() >= countdownDeadline.current)) return;
+      if (essayIdRef.current && essayStartedAt.current !== null && !essayLockAnnounced.current) dirty.current.add(essayIdRef.current);
+      void save('AUTOSAVE');
+    }, 8000);
     return () => clearInterval(t);
   }, [loading, blocked, loadError, save]);
 
@@ -190,7 +284,7 @@ export default function ExamPlayer() {
       void fetch(`/api/attempts/${attemptId}/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
-        body: JSON.stringify({ sessionToken, reason: 'AUTOSAVE', answers: Object.keys(answersRef.current).map((qid) => ({ questionId: qid, ...answersRef.current[qid] })) }),
+        body: JSON.stringify({ sessionToken, reason: 'AUTOSAVE', answers: Object.keys(answersRef.current).map((qid) => answerPayload(qid)) }),
         keepalive: true,
       }).catch(() => { /* The page may already be closing. */ });
     };
@@ -202,7 +296,20 @@ export default function ExamPlayer() {
 
   const setAnswer = (qid: string, patch: Answer) => { setAnswers((p) => ({ ...p, [qid]: { ...p[qid], ...patch } })); answerVersions.current[qid] = (answerVersions.current[qid] || 0) + 1; dirty.current.add(qid); };
 
-  const goTo = async (next: number) => { if (!(await save('NAVIGATE'))) return false; setIdx(Math.max(0, Math.min(questions.length - 1, next))); return true; };
+  // Move straight away and save in the background. A failed save keeps the
+  // answers marked unsaved, shows the retry notice and is retried by autosave,
+  // so a weak connection never traps a student on one question.
+  const goTo = (next: number) => {
+    const target = Math.max(0, Math.min(questions.length - 1, next));
+    // Leaving the Extended Response for a later question starts the break once.
+    if (breakMinutes > 0 && essayIndex >= 0 && idx === essayIndex && target > essayIndex && !breakState) startBreak();
+    setIdx(target);
+    if (dirty.current.size || essayStartedAt.current !== null) {
+      if (essayIdRef.current && essayStartedAt.current !== null && !essayLockAnnounced.current) dirty.current.add(essayIdRef.current);
+      void save('NAVIGATE');
+    }
+    return true;
+  };
 
   const reportIntegrity = useCallback(async (type: string, detail?: string) => {
     if (!attemptId || !sessionToken || !examSettings.lockdownBrowser) return;
@@ -218,12 +325,25 @@ export default function ExamPlayer() {
     const anti = examSettings.antiCheat || {};
     const visibility = () => { if (document.hidden && anti.warnOnFocusLoss !== false) void reportIntegrity('FOCUS_LOST', 'Exam tab became hidden'); };
     const fullscreen = () => { if (fullscreenEntered.current && !document.fullscreenElement) void reportIntegrity('FULLSCREEN_EXIT'); };
+    const inAnswerBox = (target: EventTarget | null) => target instanceof HTMLElement && !!target.closest('.ep-answer textarea, .ep-answer input');
     const clipboard = (event: ClipboardEvent) => {
+      if (inAnswerBox(event.target)) {
+        // Copy, cut and paste inside the student's own answer are normal
+        // editing (the GED essay tool allows them). Only text that came from
+        // somewhere else is treated as a paste attempt.
+        if (event.type !== 'paste') {
+          const box = event.target as HTMLTextAreaElement;
+          ownClipboard.current = typeof box.selectionStart === 'number' ? box.value.slice(box.selectionStart, box.selectionEnd ?? box.selectionStart) : '';
+          return;
+        }
+        const pasted = event.clipboardData?.getData('text/plain') ?? '';
+        if (pasted && pasted === ownClipboard.current) return;
+      }
       const type = event.type === 'paste' ? 'PASTE_ATTEMPT' : 'COPY_ATTEMPT';
       if (anti.blockClipboard) event.preventDefault();
       void reportIntegrity(type);
     };
-    const context = (event: MouseEvent) => { if (anti.blockClipboard) event.preventDefault(); void reportIntegrity('CONTEXT_MENU'); };
+    const context = (event: MouseEvent) => { if (inAnswerBox(event.target)) return; if (anti.blockClipboard) event.preventDefault(); void reportIntegrity('CONTEXT_MENU'); };
     const keydown = (event: KeyboardEvent) => {
       const mod = event.metaKey || event.ctrlKey;
       if (mod && event.key.toLowerCase() === 'p') { if (anti.blockClipboard) event.preventDefault(); void reportIntegrity('PRINT_ATTEMPT'); }
@@ -257,7 +377,7 @@ export default function ExamPlayer() {
       // Submit carries the final answer snapshot atomically. A preceding save or
       // state GET can finalize an expired attempt before these answers arrive.
       if (saveInFlight.current) await saveInFlight.current;
-      const finalAnswers = Object.entries(answersRef.current).map(([questionId, answer]) => ({ questionId, ...answer }));
+      const finalAnswers = Object.keys(answersRef.current).map((questionId) => answerPayload(questionId));
       const { ok, data } = await post(`/api/attempts/${attemptId}/submit`, { sessionToken, answers: finalAnswers, autoSubmit: auto });
       if (ok && data.ok === false && typeof data.remainingSeconds === 'number') {
         setSaveError('');
@@ -281,6 +401,46 @@ export default function ExamPlayer() {
     }
   };
 
+  // The Extended Response clock starts the first time the student opens it and
+  // then keeps running, like the separate GED Extended Response clock.
+  useEffect(() => {
+    if (loading || essayIndex < 0 || idx !== essayIndex || essayStartedAt.current !== null) return;
+    essayStartedAt.current = Date.now() - essayBase.current * 1000;
+    essayBase.current = 0;
+    if (essayIdRef.current) dirty.current.add(essayIdRef.current);
+    toast.info(`Extended Response clock started: ${essayMinutes} ${essayMinutes === 1 ? 'minute' : 'minutes'}`, { description: 'It keeps running even if you move to other questions.' });
+  }, [idx, essayIndex, loading, essayMinutes]);
+
+  // When the Extended Response time ends, the response is saved and locked.
+  useEffect(() => {
+    if (!essayLocked || essayLockAnnounced.current) return;
+    if (essayIdRef.current) dirty.current.add(essayIdRef.current);
+    essayLockAnnounced.current = true;
+    void save('AUTOSAVE');
+    toast.warning('Extended Response time is over', { description: 'Your response has been saved and can no longer be changed.' });
+    if (idx === essayIndex && breakMinutes > 0 && !breakState) startBreak();
+  }, [essayLocked, timerTick]);
+
+  // Extended Response 5-minute warning.
+  useEffect(() => {
+    if (!essayStarted || essayLocked || essayRemaining > 300 || warnedAt.current.has(-300)) return;
+    warnedAt.current.add(-300);
+    if (300 - essayRemaining <= 10) toast.warning('5 minutes left for the Extended Response');
+  }, [essayRemaining, essayStarted, essayLocked]);
+
+  // Announce 15, 5 and 1 minute left once each. Thresholds already passed when
+  // the attempt loads (e.g. resuming with 3 minutes left) are not announced.
+  useEffect(() => {
+    if (loading || !timerArmed.current || remaining <= 0) return;
+    for (const threshold of TIME_WARNINGS) {
+      if (warnedAt.current.has(threshold) || remaining > threshold) continue;
+      warnedAt.current.add(threshold);
+      if (threshold - remaining > 10) continue;
+      const minutes = threshold / 60;
+      toast.warning(`${minutes} ${minutes === 1 ? 'minute' : 'minutes'} left`, { description: minutes === 1 ? 'Your exam will be submitted automatically when time runs out.' : 'Check your flagged and unanswered questions.' });
+    }
+  }, [remaining, loading]);
+
   useEffect(() => {
     if (loading || loadError || blocked || submitting || remaining !== 0 || !timerArmed.current) return;
     // Retry a failed expiry submission without a tight request loop.
@@ -301,7 +461,37 @@ export default function ExamPlayer() {
   );
   if (!questions.length) return <div className="mx-auto mt-20 max-w-xl rounded-sm border border-amber-200 bg-amber-50 p-8 text-center text-amber-900 dark:bg-amber-900/10 dark:text-amber-100"><AlertTriangle className="mx-auto mb-3 h-9 w-9" /><h2 className="font-bold">No questions are available</h2><p className="mt-1 text-sm">Ask your teacher to review this exam before you continue.</p></div>;
 
+  if (onBreak && breakState) {
+    const breakLeft = Math.max(0, Math.ceil((breakState.endsAt - Date.now()) / 1000));
+    return <section className="exam-paper ep-break" data-no-i18n>
+      <div className="ep-break-card" role="dialog" aria-modal="true" aria-labelledby="ep-break-title">
+        <Coffee size={36} aria-hidden="true" />
+        <span className="ep-eyebrow">Break</span>
+        <h1 id="ep-break-title">Take a short break</h1>
+        <p className="ep-break-clock" aria-live="off">{clock(breakLeft)}</p>
+        <p>Your questions are hidden during the break and your answers are saved.</p>
+        {timerArmed.current && <p className="ep-break-note">The exam clock keeps running during the break: <strong>{clock(remaining)}</strong> left for the rest of the exam.</p>}
+        <Button className="mt-2" onClick={() => { const ended: BreakState = { ...breakState, endsAt: Date.now() - 1 }; setBreakState(ended); try { localStorage.setItem(breakKey, JSON.stringify(ended)); } catch { /* ignore */ } }}>Return to the exam</Button>
+      </div>
+    </section>;
+  }
+
   const q = questions[idx];
+
+  // Drop-downs written into the passage as "[Select 13]".
+  let passageSlots: Record<string, PassageSlot> | undefined;
+  if (q?.passageText && q.passageText.includes('[Select')) {
+    const linked = mapSelectSlots(q.passageText, questions);
+    passageSlots = {};
+    for (const [number, questionIndex] of Object.entries(linked)) {
+      const target = questions[questionIndex];
+      passageSlots[number] = {
+        questionIndex, label: String(questionIndex + 1), active: questionIndex === idx,
+        value: answers[target.id]?.answerText ?? '',
+        options: (Array.isArray(target.options) ? target.options : []).map((opt: any, i: number) => ({ value: optionValue(opt, i), label: optionLabel(opt) })),
+      };
+    }
+  }
 
   const selectedChoices = (questionId: string) => {
     const selected = answers[questionId]?.selectedOptions;
@@ -337,7 +527,7 @@ export default function ExamPlayer() {
   // alongside native HTML5 drag for touch devices / accessibility.
   const renderDragDrop = () => {
     const bank = q?.dragBank || [];
-    const segments = splitDragText(q?.dragText || '');
+    const segments = splitDragText(dragDisplay(q).body);
     const matches = dragMatches(q.id);
     const usedKeys = new Set(Object.values(matches));
     const availableChips = bank.filter((chip) => !usedKeys.has(chip.key));
@@ -347,7 +537,7 @@ export default function ExamPlayer() {
     return (
       <div key={q.id} className="animate-in fade-in slide-in-from-bottom-2 space-y-5 duration-300">
         <p className="text-sm text-muted-foreground">Drag a word into each blank, or tap a word then tap a blank.</p>
-        <div className="rounded-sm border border-border bg-card p-5 text-lg leading-loose">
+        <div className="whitespace-pre-wrap rounded-sm border border-border bg-card p-5 text-lg leading-loose">
           {segments.map((seg, i) => {
             if (seg.kind === 'text') return <span key={i}>{seg.text}</span>;
             const key = matches[seg.blankId];
@@ -391,6 +581,17 @@ export default function ExamPlayer() {
     );
   };
 
+  // Up/Down (or Left/Right) moves between answer choices, like a radio group.
+  const moveBetweenChoices = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+    const choices = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'));
+    const at = choices.indexOf(document.activeElement as HTMLButtonElement);
+    if (at < 0) return;
+    event.preventDefault();
+    const step = event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1;
+    choices[(at + step + choices.length) % choices.length]?.focus();
+  };
+
   const renderAnswerInput = () => {
     if (q?.type === 'DRAG_DROP') return renderDragDrop();
     // Drop-down: single-select rendered as a native <select> (graded as a choice).
@@ -411,7 +612,7 @@ export default function ExamPlayer() {
     }
     if (!TEXT_ANSWER_TYPES.includes(q?.type) && Array.isArray(q?.options) && q.options.length) {
       return (
-        <div className="space-y-2" role="group" aria-label="Answer choices">
+        <div className="space-y-2" role="group" aria-label="Answer choices" onKeyDown={moveBetweenChoices}>
           <p className="text-sm text-muted-foreground">{(q.multipleSelection ?? q.partialCredit) ? 'Select all answers that apply.' : 'Select one answer.'}</p>
           {(q.options as any[]).map((opt, i) => {
             const val = String(typeof opt === 'object' ? opt.value ?? opt.text ?? i : opt);
@@ -433,26 +634,42 @@ export default function ExamPlayer() {
       );
     }
 
+    const longAnswer = LONG_ANSWER_TYPES.includes(q?.type);
+    const text = answers[q?.id]?.answerText || '';
+    const words = countWords(text);
+    const timedEssay = idx === essayIndex;
+    const lockedEssay = timedEssay && essayLocked;
     return (
-      <textarea
-        aria-label="Your answer"
-        className="w-full min-h-[140px] rounded-lg border border-border bg-card p-3 text-sm"
-        placeholder="Type your answer…"
-        value={answers[q?.id]?.answerText || ''}
-        onChange={(e) => setAnswer(q.id, { answerText: e.target.value })}
-      />
+      <div>
+        {timedEssay && <div className={`ep-essay-clock ${lockedEssay ? 'is-over' : essayRemaining <= 300 ? 'is-low' : ''}`} role="status">
+          <PenLine size={15} aria-hidden="true" />
+          {lockedEssay ? 'Extended Response time is over. Your response is saved and locked.' : <>Extended Response time left: <strong>{clock(essayRemaining)}</strong></>}
+        </div>}
+        <textarea
+          readOnly={lockedEssay}
+          aria-label="Your answer"
+          aria-describedby={longAnswer ? `words-${q.id}` : undefined}
+          className={`w-full rounded-lg border border-border bg-card p-3 text-sm ${longAnswer ? 'ep-essay' : 'min-h-[140px]'}`}
+          placeholder={longAnswer ? 'Plan, write and revise your response here…' : 'Type your answer…'}
+          spellCheck={false}
+          value={text}
+          onChange={(e) => setAnswer(q.id, { answerText: e.target.value })}
+        />
+        {longAnswer && <p id={`words-${q.id}`} className="ep-word-count" aria-live="polite">{words} {words === 1 ? 'word' : 'words'}</p>}
+      </div>
     );
   };
 
   return <ExamPaper
     title={examTitle} theme={examSettings.questionTheme}
-    status={saveError ? 'Changes not saved' : saving ? 'Saving…' : dirty.current.size ? 'Unsaved changes' : savedAt ? `Saved ${new Date(savedAt).toLocaleTimeString()}` : 'Not saved yet'}
+    status={saveError ? 'Changes not saved' : saving ? 'Saving…' : savedAt ? `Saved ${new Date(savedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · saves automatically` : 'Your answers save automatically'}
     remaining={timerArmed.current ? remaining : null}
-    questions={questions.map(question => ({ id: question.id, points: question.points, answered: answerIsComplete(question, answers[question.id]), flagged: !!answers[question.id]?.flaggedForReview }))}
-    index={idx} prompt={<MathText>{q.text}</MathText>} passage={q.passageText ? <MathText>{q.passageText}</MathText> : undefined} imageUrl={q.imageUrl}
+    questions={questions.map(question => ({ id: question.id, points: question.points, answered: answerIsComplete(question, answers[question.id]), partial: partialLabel(question, answers[question.id]), flagged: !!answers[question.id]?.flaggedForReview }))}
+    index={idx} prompt={<MathText>{q.type === 'DRAG_DROP' ? dragDisplay(q).prompt : q.text}</MathText>} passage={q.passageText ? <PassageView text={q.passageText} slots={passageSlots} disabled={submitting || (timerArmed.current && remaining === 0)} storageKey={`mrlc:exam-hl:${attemptId}:${passageHash(q.passageText)}`}
+      onSlotChange={(questionIndex, value) => { const target = questions[questionIndex]; if (target) setAnswer(target.id, { answerText: value }); }} /> : undefined} passageKey={q.passageText || undefined} imageUrl={q.imageUrl}
     onNavigate={goTo} onFlag={() => setAnswer(q.id, { flaggedForReview: !answers[q.id]?.flaggedForReview })}
-    onSubmit={() => void handleSubmit(false)} busy={saving || submitting} answerDisabled={submitting || (timerArmed.current && remaining === 0)}
-    tools={<><Button variant="outline" size="sm" disabled={saving || submitting} onClick={() => save('AUTOSAVE')} aria-label="Save answers"><Save className="h-4 w-4 mr-1" />Save</Button>{canPause && <Button variant="outline" size="sm" disabled={saving || submitting} onClick={handlePause} aria-label="Pause exam"><Pause className="h-4 w-4 mr-1" />Pause</Button>}</>}
+    onSubmit={() => void handleSubmit(false)} busy={submitting} answerDisabled={submitting || (timerArmed.current && remaining === 0)}
+    tools={<>{essayStarted && !essayLocked && idx !== essayIndex && <span className="ep-essay-chip" title="Extended Response time left"><PenLine size={13} aria-hidden="true" /> Essay {clock(essayRemaining)}</span>}<Button variant="outline" size="sm" disabled={saving || submitting} onClick={() => save('AUTOSAVE')} aria-label="Save answers"><Save className="h-4 w-4 mr-1" />Save</Button>{canPause && <Button variant="outline" size="sm" disabled={saving || submitting} onClick={handlePause} aria-label="Pause exam"><Pause className="h-4 w-4 mr-1" />Pause</Button>}</>}
     notices={<>
       {saveError && <div role="alert" className="mb-4 rounded-lg border border-destructive/40 bg-card p-4 text-sm"><p>{saveError}</p><p className="mt-1 text-muted-foreground">Keep this page open so you can retry without losing your answers.</p><Button variant="outline" className="mt-3" disabled={saving || submitting} onClick={() => timerArmed.current && remaining === 0 ? void handleSubmit(true) : void save('AUTOSAVE')}>Retry</Button></div>}
       {examSettings.lockdownBrowser && (
@@ -464,8 +681,8 @@ export default function ExamPlayer() {
 
     </>}
   >
-    {['ESSAY', 'SHORT_ANSWER', 'EXTENDED', 'WRITTEN'].includes(q.type) && <p className="mb-4 text-sm" style={{ color: 'var(--ep-muted)' }}>Write your response below.</p>}
-    {q.type === 'DROPDOWN' && <p className="mb-4 text-sm" style={{ color: 'var(--ep-muted)' }}>Choose an answer from the list.</p>}
+    {['ESSAY', 'SHORT_ANSWER', 'EXTENDED', 'WRITTEN'].includes(q.type) && <p className="mb-4 text-sm" style={{ color: 'var(--ep-muted)' }}>{LONG_ANSWER_TYPES.includes(q.type) ? 'Write your response below. You can cut, copy and paste within your own response.' : 'Write your response below.'}</p>}
+    {q.type === 'DROPDOWN' && <p className="mb-4 text-sm" style={{ color: 'var(--ep-muted)' }}>{passageSlots && Object.values(passageSlots).some((slot) => slot.active) ? 'Choose your answer in the passage, or from the list below.' : 'Choose an answer from the list.'}</p>}
     {renderAnswerInput()}
   </ExamPaper>;
 }

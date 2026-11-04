@@ -51,3 +51,27 @@ export function splitDragText(text: string): DragTextSegment[] {
   if (last < text.length) segments.push({ kind: 'text', text: text.slice(last) });
   return segments;
 }
+
+const BLANK_MARKER = /\{\{[^{}]+\}\}|_{2,}/;
+
+/**
+ * Separate a drag-and-drop question's instructions from its blanks so the
+ * player can show the instructions once as the question heading and the
+ * blanks once in the answer area. The lead is every opening paragraph that
+ * has no blank; `body` is the rest. When the first paragraph already holds a
+ * blank (a one-sentence cloze), there is no lead and the body is the whole text.
+ */
+export function splitDragPrompt(text: string): { lead: string; body: string } {
+  const paragraphs = String(text || '').split(/\n\s*\n/);
+  const firstBlank = paragraphs.findIndex((paragraph) => BLANK_MARKER.test(paragraph));
+  if (firstBlank <= 0) return { lead: '', body: String(text || '') };
+  return {
+    lead: paragraphs.slice(0, firstBlank).join('\n\n').trim(),
+    body: paragraphs.slice(firstBlank).join('\n\n'),
+  };
+}
+
+/** True when the text contains blank markers ({{id}} tokens or ___ runs). */
+export function hasDragBlanks(text: string): boolean {
+  return BLANK_MARKER.test(String(text || ''));
+}

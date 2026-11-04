@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { apiGet, apiSend } from "../../lib/api";
-import { PlayCircle, RotateCcw, Lock, Clock } from "lucide-react";
+import { PlayCircle, RotateCcw, Lock, Clock, ListChecks } from "lucide-react";
 
 type Avail = {
   id: string;
   title: string;
   durationMinutes: number | null;
+  questionCount?: number | null;
   openNow: boolean;
   requiresAccessCode: boolean;
   attemptLimit: number;
@@ -149,6 +150,11 @@ export default function ResumeAttempt() {
                       <Clock className="h-3 w-3" /> {e.durationMinutes}m
                     </span>
                   )}
+                  {typeof e.questionCount === "number" && e.questionCount > 0 && (
+                    <span className="flex items-center gap-1">
+                      <ListChecks className="h-3 w-3" /> {e.questionCount} questions
+                    </span>
+                  )}
                   <span>
                     Attempt{" "}
                     {Math.min(
@@ -188,6 +194,22 @@ export default function ResumeAttempt() {
                 </Button>
               )}
               </div>
+              {e.openNow && !exhausted && (
+                <div className="rounded-sm border border-border bg-muted/40 p-4 text-sm text-foreground">
+                  <p className="font-semibold">{e.activeAttemptId ? "Before you continue" : "Before you start"}</p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
+                    {e.durationMinutes ? (
+                      <li>You have {e.durationMinutes} minutes. The timer keeps running once you start, including any break, and your exam is submitted automatically when time runs out.</li>
+                    ) : (
+                      <li>This exam is not timed.</li>
+                    )}
+                    <li>Your answers save automatically. If your connection drops, keep the page open — you can keep working and your answers will save when you reconnect.</li>
+                    <li>Use the question numbers to move around. Flag a question to come back to it later.</li>
+                    <li>Before you submit, open Review answers to see which questions are unanswered or flagged.</li>
+                    <li>After you submit, you cannot change your answers.</li>
+                  </ul>
+                </div>
+              )}
               {(e.availableFrom || e.availableUntil) && <p className="text-sm text-muted-foreground">{e.availableFrom && `Opens ${new Date(e.availableFrom).toLocaleString()}`}{e.availableFrom && e.availableUntil && ' · '}{e.availableUntil && `Closes ${new Date(e.availableUntil).toLocaleString()}`}</p>}
               {e.requiresAccessCode && e.openNow && !exhausted && <div className="space-y-2"><label htmlFor={`code-${e.id}`} className="text-sm font-medium">Access code</label><Input id={`code-${e.id}`} required autoComplete="off" value={codes[e.id] || ''} onChange={event => setCodes(c => ({ ...c, [e.id]: event.target.value }))} aria-describedby={startError?.id === e.id ? `error-${e.id}` : undefined} /><p className="text-xs text-muted-foreground">Use the code provided by your teacher.</p></div>}
               {startError?.id === e.id && <p id={`error-${e.id}`} role="alert" className="text-sm text-destructive">{startError.message}</p>}

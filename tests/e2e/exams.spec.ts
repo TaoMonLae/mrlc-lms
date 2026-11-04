@@ -213,8 +213,9 @@ test('restored answers count toward progress and Studio blanks work in the live 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   await page.screenshot({ path: info.outputPath('player-progress-blanks.png'), fullPage: true });
   await page.getByRole('button', { name: 'Review answers', exact: true }).first().click();
-  await expect(page.getByText('3 of 3 answered · 0 flagged for review.')).toBeVisible();
+  await expect(page.getByText('3 of 3 answered · 0 unanswered · 0 flagged for review.')).toBeVisible();
   await page.getByRole('button', { name: 'Submit exam' }).click();
+  await page.getByRole('button', { name: 'Yes, submit exam' }).click();
   await expect(page).toHaveURL(/attempt-a\/result/);
 });
 
@@ -309,6 +310,7 @@ test('completed submission cannot trigger an unload save while the result screen
   await page.getByLabel('Your answer').fill('Final response');
   await page.getByRole('button', { name: 'Review answers', exact: true }).click();
   await page.getByRole('button', { name: 'Submit exam' }).click();
+  await page.getByRole('button', { name: 'Yes, submit exam' }).click();
   await expect.poll(() => writes.filter(w => w.path.endsWith('/submit')).length).toBe(1);
   await expect.poll(() => page.evaluate(() => sessionStorage.getItem('exam_attempt_session_attempt-a'))).toBeNull();
   const savesAfterSubmit = writes.filter(write => write.path.endsWith('/save')).length;
@@ -332,7 +334,7 @@ test('exam review distinguishes unanswered and flagged questions and submits onl
   await expect(page.getByRole('button', { name: 'Question 1, answered, flagged', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Review answers', exact: true }).last().click();
   await expect(page.getByRole('heading', { name: 'Review your answers' })).toBeFocused();
-  await expect(page.getByText('1 of 2 answered · 1 flagged for review.')).toBeVisible();
+  await expect(page.getByText('1 of 2 answered · 1 unanswered · 1 flagged for review.')).toBeVisible();
   expect(writes.filter(w => w.path.endsWith('/submit'))).toHaveLength(0);
   await page.getByRole('button', { name: 'Question 1 Answered', exact: true }).click();
   await expect(page.getByRole('textbox')).toHaveValue('Water becomes vapour.');
@@ -340,6 +342,9 @@ test('exam review distinguishes unanswered and flagged questions and submits onl
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   await page.getByRole('button', { name: /Review answers/ }).first().click();
   await page.getByRole('button', { name: 'Submit exam', exact: true }).click();
+  await expect(page.getByRole('alertdialog', { name: 'Submit your exam now?' })).toBeVisible();
+  expect(writes.filter(w => w.path.endsWith('/submit'))).toHaveLength(0);
+  await page.getByRole('button', { name: 'Yes, submit exam' }).click();
   await expect(page).toHaveURL(/\/result$/);
   expect(writes.find(w => w.path.endsWith('/submit'))?.body.answers[0]).toMatchObject({ answerText: 'Water becomes vapour.', flaggedForReview: true });
 });
