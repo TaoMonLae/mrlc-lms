@@ -6,7 +6,8 @@ import { authHeaders } from '../../lib/api';
 import { Save, Pause, AlertTriangle, Loader2, Coffee, PenLine } from 'lucide-react';
 import MathText from '../../components/MathText';
 import ExamPaper from '../../components/exams/ExamPaper';
-import { hasDragBlanks, splitDragPrompt, splitDragText } from '../../lib/dragBlanks';
+import OrderedAnswer from '../../components/exams/OrderedAnswer';
+import { orderedBlanks, hasDragBlanks, splitDragPrompt, splitDragText } from '../../lib/dragBlanks';
 import PassageView, { type PassageSlot } from '../../components/exams/PassageView';
 import { mapSelectSlots, passageHash } from '../../lib/passageSlots';
 
@@ -528,8 +529,11 @@ export default function ExamPlayer() {
   // alongside native HTML5 drag for touch devices / accessibility.
   const renderDragDrop = () => {
     const bank = q?.dragBank || [];
-    const segments = splitDragText(dragDisplay(q).body);
+    const { body } = dragDisplay(q);
+    const segments = splitDragText(body);
     const matches = dragMatches(q.id);
+    const rows = orderedBlanks(body);
+    if (rows) return <OrderedAnswer key={q.id} rows={rows} options={bank} matches={matches} onPlace={placeChip} onClear={clearBlank} />;
     const usedKeys = new Set(Object.values(matches));
     const availableChips = bank.filter((chip) => !usedKeys.has(chip.key));
     const blankIds = segments.filter((segment) => segment.kind === 'blank').map((segment: any) => segment.blankId);
@@ -602,7 +606,7 @@ export default function ExamPlayer() {
           aria-label="Your answer"
           value={answers[q.id]?.answerText ?? ''}
           onChange={(e) => setAnswer(q.id, { answerText: e.target.value })}
-          className="w-full max-w-md rounded-lg border border-border bg-card px-4 py-3 text-sm">
+          className="ep-choice-select w-full rounded-lg border border-border bg-card">
           <option value="">Select an answer…</option>
           {(q.options as any[]).map((opt, i) => {
             const val = String(typeof opt === 'object' ? opt.value ?? opt.text ?? i : opt);

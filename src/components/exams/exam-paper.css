@@ -128,3 +128,26 @@
   .ep-workspace { padding-block:12px 16px; }
   .ep-progress { margin-bottom:12px; }
 }
+
+.ep-legend > span { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
+.ep-legend { column-gap:10px; row-gap:3px; }
+.ep-with-passage .ep-sheet h2:not(.ep-prompt-long) { font-size:clamp(18px,1.35vw,21px); line-height:1.45; margin-bottom:16px; }
+.guided-studio .ep-sheet h2[tabindex="-1"]:focus-visible { outline:none!important; }
+.ep-inline-select { max-width:min(100%,24ch); field-sizing:content; }
+.ep-inline-select[data-empty=true] { width:7.7em; }
+@media(min-width:901px) {
+  .ep-with-passage .ep-question-layout { align-items:stretch; }
+}
+.ep-order { display:grid; gap:12px; color:var(--ep-ink,var(--gs-ink)); }
+.ep-order p { color:var(--ep-muted,var(--gs-muted)); font-size:13px; line-height:1.5; margin:0; }
+.ep-order ol, .ep-order-bank { display:grid; gap:6px; margin:0; padding:0; list-style:none; }
+.ep-order li { display:grid; grid-template-columns:2.5em minmax(0,1fr); align-items:center; gap:8px; }
+.ep-order-rank { font-size:14px; font-weight:600; }
+.ep-order button { min-height:40px; padding:7px 12px; text-align:start; font-size:14px; line-height:1.45; white-space:normal; overflow-wrap:anywhere; }
+.ep-order-slot { border:1px dashed var(--ep-muted,var(--gs-muted)); border-radius:5px; background:var(--ep-canvas,var(--gs-panel)); color:var(--ep-muted,var(--gs-muted)); }
+.ep-order-slot[data-filled=true] { border:1px solid var(--ep-accent,var(--gs-action)); background:var(--ep-tint,var(--gs-tint-50)); color:inherit; }
+.ep-order-bank strong { font-size:13px; font-weight:600; }
+.ep-order-bank button { display:flex; align-items:center; gap:8px; border:1px solid var(--ep-border,var(--gs-border)); border-radius:5px; background:var(--ep-paper,var(--gs-surface)); cursor:grab; }
+.ep-order-bank button svg { flex-shrink:0; color:var(--ep-muted,var(--gs-muted)); }
+.ep-order-bank button[aria-pressed=true] { background:var(--ep-tint,var(--gs-tint-50)); border-color:var(--ep-accent,var(--gs-action)); }
+.ep-choice-select { min-height:44px; padding:8px 30px 8px 12px; }

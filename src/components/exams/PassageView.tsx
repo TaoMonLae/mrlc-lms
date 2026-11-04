@@ -102,9 +102,9 @@ export default function PassageView({ text, slots = {}, onSlotChange, onSlotFocu
       {pieces.map((piece, i) => {
         if (piece.kind === 'slot') {
           const slot = slots[piece.number];
-          return <select key={`s${i}`} className={`ep-inline-select ${slot.active ? 'is-active' : ''}`} aria-label={`Question ${slot.label} answer`} value={slot.value} disabled={disabled}
+          return <select key={`s${i}`} className={`ep-inline-select ${slot.active ? 'is-active' : ''}`} data-empty={slot.value === ''} aria-label={`Question ${slot.label} answer`} value={slot.value} disabled={disabled}
             onFocus={() => onSlotFocus?.(slot.questionIndex)} onChange={(event) => onSlotChange?.(slot.questionIndex, event.target.value)}>
-            <option value="">Select ▾ ({slot.label})</option>
+            <option value="">Select ({slot.label})</option>
             {slot.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>;
         }

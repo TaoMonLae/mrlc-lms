@@ -368,3 +368,28 @@ test('students can retry an unsaved essay during their break', async ({ page }) 
   await page.getByRole('button', { name: 'Return to the exam' }).click();
   await expect(page.getByRole('heading', { name: 'Explain condensation.' })).toBeVisible();
 });
+
+test('ordered answers preserve the student’s saved positions when edited', async ({ page }) => {
+  const { writes } = await fixture(page);
+  await page.route('**/api/attempts/attempt-a/state', route => route.fulfill({ json: {
+    attempt: { state: 'IN_PROGRESS', sessionToken: 'session-a', remainingSeconds: 0 },
+    exam: { title: 'Story sequence', settings: {} },
+    questions: [{ id: 'order', type: 'DRAG_DROP', text: 'Put the events in order.', points: 2,
+      dragText: '1st: {{opening}}\n2nd: {{ending}}',
+      dragBank: [{ key: 'a', label: 'The store opens.' }, { key: 'b', label: 'The lights go out.' }],
+    }],
+    answers: [{ questionId: 'order', selectedOptions: { opening: 'a' } }],
+  } }));
+  await page.goto('/exam2/attempts/attempt-a/play');
+  const first = page.getByRole('button', { name: /^1st position/ });
+  const second = page.getByRole('button', { name: /^2nd position/ });
+  await expect(first).toHaveText('The store opens.');
+  await first.click();
+  await page.getByRole('button', { name: 'The lights go out.', exact: true }).click();
+  await first.click();
+  await page.getByRole('button', { name: 'The store opens.', exact: true }).dragTo(second);
+  await expect(second).toHaveText('The store opens.');
+  await page.getByRole('button', { name: 'Save answers' }).click();
+  await expect.poll(() => writes.filter(w => w.path.endsWith('/save')).flatMap(w => w.body.answers).at(-1)?.selectedOptions)
+    .toEqual({ opening: 'b', ending: 'a' });
+});

@@ -276,3 +276,33 @@ test('a student can reread a long essay prompt and return to their draft in a 53
   await preview.getByRole('button', { name: 'Back to question' }).click();
   await expect(answer).toHaveValue('Evidence from both passages.');
 });
+
+test('ordering rows and passage dropdowns fit the student paper', async ({ page }, info) => {
+  const first = 'The customer brings a torn note to the cart.';
+  const second = 'The sellers carry their things into the shelter.';
+  const passage = 'The monthly total [Select 2] as costs change.';
+  await setup(page, [
+    { id: 'order', type: 'DRAG_DROP', points: 2, text: 'Order the events.', passageText: 'Read the story. '.repeat(120), options: {
+      text: 'Order the events.\n\n1st: {{b1}}\n2nd: {{b2}}', blanks: [{ id: 'b1', answer: first }, { id: 'b2', answer: second }], distractors: [],
+    } },
+    { id: 'select', type: 'DROPDOWN', points: 1, text: '2. The monthly total [Select] as costs change.', passageText: passage, options: ['changes', 'An unusually long answer that would otherwise stretch the entire line'] },
+  ]);
+  await page.addInitScript(() => localStorage.setItem('mrlc-lms-theme', 'dark'));
+  await page.goto('/exams/studio-a/studio');
+  await page.getByRole('button', { name: 'Preview as student', exact: true }).click();
+  const preview = page.getByRole('dialog', { name: 'Student preview' });
+  const row = preview.getByRole('button', { name: /^1st position/ });
+  await preview.getByRole('button', { name: first, exact: true }).click();
+  await row.click();
+  await expect(row).toHaveText(first);
+  await row.click();
+  await expect(row).toHaveText('Place choice here');
+  await page.screenshot({ path: info.outputPath('ordering.png') });
+  await preview.getByRole('button', { name: 'Next question' }).click();
+  const slot = preview.getByRole('combobox', { name: 'Question 2 answer' });
+  expect((await slot.boundingBox())!.width).toBeLessThan(160);
+  await slot.selectOption('0');
+  await expect(preview.getByRole('combobox', { name: 'Preview answer' })).toHaveValue('0');
+  await page.screenshot({ path: info.outputPath('passage-dropdown.png') });
+  expect(await preview.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+});

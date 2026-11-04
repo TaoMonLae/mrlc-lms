@@ -24,7 +24,8 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MathField from '../../components/MathField';
 import MathText from '../../components/MathText';
-import { splitDragPrompt } from '../../lib/dragBlanks';
+import OrderedAnswer from '../../components/exams/OrderedAnswer';
+import { orderedBlanks, splitDragPrompt } from '../../lib/dragBlanks';
 import PassageView, { type PassageSlot } from '../../components/exams/PassageView';
 import { mapSelectSlots } from '../../lib/passageSlots';
 import QuestionImageField from '../../components/QuestionImageField';
@@ -1231,7 +1232,7 @@ function StudentInput({ q, value, onChange, small }: { q: Question; value: any; 
 
   if (q.uiType === 'DROPDOWN') {
     return (
-      <select aria-label="Preview answer" value={value ?? ''} onChange={(e) => onChange(e.target.value)} style={{ width: '100%', border: `1px solid ${C.border3}`, borderRadius: 10, padding: optPad, fontSize: fs, outline: 'none' }}>
+      <select className={small ? undefined : 'ep-choice-select'} aria-label="Preview answer" value={value ?? ''} onChange={(e) => onChange(e.target.value)} style={{ width: '100%', border: `1px solid ${C.border3}`, borderRadius: 10, padding: small ? optPad : undefined, fontSize: fs, outline: 'none' }}>
         <option value="">Select an answer</option>
         {q.options.map((o, i) => <option key={i} value={i}>{o.t}</option>)}
       </select>
@@ -1245,13 +1246,18 @@ function StudentInput({ q, value, onChange, small }: { q: Question; value: any; 
     </div>;
   }
   if (q.uiType === 'DRAG') {
-    const parts = splitDragPrompt(q.text || '').body.split(/_{2,}/);
+    const { body } = splitDragPrompt(q.text || '');
+    const parts = body.split(/_{2,}/);
     const matches: Record<number, number> = value || {};
     const place = (blank: number, word: number) => {
       if (!q.options[word]) return;
       const next = Object.fromEntries(Object.entries(matches).filter(([, v]) => v !== word));
       onChange({ ...next, [blank]: word }); setSelectedWord(null);
     };
+    const rows = orderedBlanks(body);
+    if (rows) return <OrderedAnswer rows={rows} options={q.options.map((o, i) => ({ key: String(i), label: o.t }))}
+      matches={matches} onPlace={(blank, word) => place(Number(blank), Number(word))}
+      onClear={blank => { const next = { ...matches }; delete next[Number(blank)]; onChange(next); }} />;
     return <div><p style={{ color: C.muted, fontSize: 12, marginBottom: 12 }}>Drag a word to a blank, or select a word then a blank. Select a filled blank to clear it.</p>
       <div style={{ lineHeight: 2.6, whiteSpace: 'pre-wrap' }}>{parts.map((part, i) => <span key={i}>{part}{i < parts.length - 1 && <button aria-label={`Blank ${i + 1}`} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); const word = e.dataTransfer.getData('text/plain'); if (word !== '') place(i, Number(word)); }} onClick={() => { if (selectedWord !== null) place(i, selectedWord); else { const next = { ...matches }; delete next[i]; onChange(next); } }} style={{ minWidth: 70, border: `1px dashed ${C.purple}`, margin: '0 4px', padding: '0 8px', borderRadius: 4 }}>{q.options[matches[i]]?.t || '…'}</button>}</span>)}</div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>{q.options.map((o, i) => <button key={i} disabled={Object.values(matches).includes(i)} draggable onDragStart={e => e.dataTransfer.setData('text/plain', String(i))} aria-pressed={selectedWord === i} onClick={() => setSelectedWord(selectedWord === i ? null : i)} style={{ padding: '6px 10px', border: `1px solid ${selectedWord === i ? C.purple : C.border}`, background: C.tint50, color: C.purpleText }}>{o.t || `Word ${i + 1}`}</button>)}</div>
@@ -1321,7 +1327,7 @@ function StudentPlayer({ questions, title, minutes, onClose }: { questions: Ques
       prompt={renderQuestionText(q.uiType === 'DRAG' ? dragPrompt(q) : q.text || 'Question text')} passage={q.passageText ? <PassageView text={q.passageText} slots={passageSlots} onSlotChange={(index, value) => setAnswers(a => ({ ...a, [index]: value === '' ? null : Number(value) }))} /> : undefined} passageKey={q.passageText || undefined} imageUrl={q.imageUrl}
       writtenResponse={q.uiType === 'ESSAY' || q.uiType === 'EXTENDED'} onNavigate={setPIdx} onFlag={() => setFlags(f => ({ ...f, [pIdx]: !f[pIdx] }))} onClose={onClose}
       onSubmit={() => { toast.success('Preview complete. No attempt was submitted.'); onClose(); }}>
-      <p className="mb-4 text-sm" style={{ color: 'var(--ep-muted)' }}>{q.uiType === 'HOTSPOT' ? 'Select all answers that apply.' : q.uiType === 'DROPDOWN' ? (passageSlots && Object.values(passageSlots).some(slot => slot.active) ? 'Choose your answer in the passage, or from the list below.' : 'Choose an answer from the list.') : ['SHORT', 'ESSAY', 'EXTENDED'].includes(q.uiType) ? 'Write your response below.' : q.uiType === 'DRAG' ? 'Complete each blank using the word bank.' : 'Select one answer.'}</p>
+      {q.uiType !== 'DRAG' && <p className="mb-4 text-sm" style={{ color: 'var(--ep-muted)' }}>{q.uiType === 'HOTSPOT' ? 'Select all answers that apply.' : q.uiType === 'DROPDOWN' ? (passageSlots && Object.values(passageSlots).some(slot => slot.active) ? 'Choose your answer in the passage, or from the list below.' : 'Choose an answer from the list.') : ['SHORT', 'ESSAY', 'EXTENDED'].includes(q.uiType) ? 'Write your response below.' : 'Select one answer.'}</p>}
       <StudentInput key={q.id} q={q} value={answers[pIdx] ?? null} onChange={v => setAnswers(a => ({ ...a, [pIdx]: v }))} />
     </ExamPaper> : <div className="p-8"><p>No questions to preview yet.</p><button onClick={onClose}>Close</button></div>}
   </dialog>;
