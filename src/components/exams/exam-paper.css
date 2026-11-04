@@ -43,15 +43,17 @@
   .ep-with-passage .ep-question-layout>.ep-sheet,
   .ep-with-passage>.ep-nav {
     position:sticky; top:calc(var(--ep-header-h, 96px) + 16px);
-    max-height:calc(100dvh - var(--ep-header-h, 96px) - 32px);
-    overflow-y:auto; overscroll-behavior:contain;
+    /* Fit header + progress + columns + footer on one screen, but never
+       shrink below 280px; on very short screens the page itself scrolls. */
+    max-height:max(280px, calc(100dvh - var(--ep-header-h, 96px) - var(--ep-above-h, 70px) - var(--ep-footer-h, 62px) - 76px));
+    overflow-y:auto;
   }
   .ep-with-passage>.ep-nav { padding-right:4px; }
 }
 /* On phones and small tablets the passage becomes a scrollable panel above the
    question, so the question is always a short scroll away. */
 @media(max-width:900px) {
-  .ep-passage { max-height:42dvh; overflow-y:auto; overscroll-behavior:contain; position:relative; }
+  .ep-passage { max-height:42dvh; overflow-y:auto; position:relative; }
   .ep-passage.is-open { max-height:none; }
   .ep-passage-toggle { display:inline-flex; }
   .ep-passage-head { position:sticky; top:0; z-index:1; background:var(--ep-paper); padding:4px 0; }
@@ -105,3 +107,7 @@
 .ep-break-card p { margin:0; color:var(--ep-muted); line-height:1.6; }
 .ep-break-clock { font-size:48px; font-weight:700; color:var(--ep-ink)!important; font-variant-numeric:tabular-nums; }
 .ep-break-note strong { color:var(--ep-ink); }
+
+/* Long prompts read as body text so the answer area stays in view. */
+.ep-sheet h2.ep-prompt-long { font-size:16px; font-weight:500; line-height:1.65; margin-bottom:18px; }
+@media(max-width:540px) { .ep-sheet h2.ep-prompt-long { font-size:15px; } }

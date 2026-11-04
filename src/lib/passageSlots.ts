@@ -87,3 +87,20 @@ export function passageHash(text: string): string {
   for (let i = 0; i < text.length; i += 1) hash = ((hash << 5) + hash + text.charCodeAt(i)) | 0;
   return (hash >>> 0).toString(36);
 }
+
+const WORD_CHAR = /[\p{L}\p{N}'’-]/u;
+
+/**
+ * Widen a selection to whole words and trim surrounding spaces, so a drag
+ * that stops one letter short still highlights the full word.
+ */
+export function snapToWords(text: string, start: number, end: number): HighlightRange {
+  let s = Math.max(0, Math.min(start, text.length));
+  let e = Math.max(s, Math.min(end, text.length));
+  while (s < e && /\s/.test(text[s])) s += 1;
+  while (e > s && /\s/.test(text[e - 1])) e -= 1;
+  if (e <= s) return { start: s, end: s };
+  while (s > 0 && WORD_CHAR.test(text[s - 1]) && WORD_CHAR.test(text[s])) s -= 1;
+  while (e < text.length && WORD_CHAR.test(text[e]) && WORD_CHAR.test(text[e - 1])) e += 1;
+  return { start: s, end: e };
+}
