@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router';
+import { Link, Navigate, useParams, useNavigate } from 'react-router';
 import { ArrowLeft, Edit, Play, Users, BarChart3, Clock, CheckCircle2, Settings, Trash2, BookOpenCheck, Loader2, ChevronDown, CalendarClock, Printer, ListChecks, Radio, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,9 +7,9 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import './exam-profile.css';
 import { toast } from 'sonner';
 import { apiSend } from '../../lib/api';
-import { apiGet } from '../../lib/api';
+
 import { useAuth } from '../../providers/AuthProvider';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import ExamPermissionsDialog, { type PermissionScope } from '../../components/exams/ExamPermissionsDialog';
 
 type SubmissionRow = {
   id: string;
@@ -21,6 +21,8 @@ type SubmissionRow = {
 };
 
 type ExamData = {
+  access: string;
+  ownerName?: string;
   id: string;
   title: string;
   subject: string;
@@ -44,31 +46,7 @@ export default function ExamProfile() {
   const [exam, setExam] = useState<ExamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
-  const [permissionOpen, setPermissionOpen] = useState(false);
-  const [permissionRows, setPermissionRows] = useState<{ teacherUserId: string; name: string; allowed: boolean }[]>([]);
-  const [permissionLoading, setPermissionLoading] = useState(false);
-  const [permissionBusy, setPermissionBusy] = useState<string | null>(null);
-  const [permissionError, setPermissionError] = useState('');
-
-  const openPermissions = async () => {
-    setPermissionOpen(true);
-    setPermissionLoading(true);
-    setPermissionError('');
-    try { setPermissionRows(await apiGet(`/api/exams/${id}/answer-key-permissions`)); }
-    catch (error: any) { setPermissionError(error.message || 'Could not load assigned teachers.'); }
-    finally { setPermissionLoading(false); }
-  };
-
-  const changePermission = async (teacherUserId: string, allowed: boolean) => {
-    setPermissionBusy(teacherUserId);
-    setPermissionError('');
-    try {
-      await apiSend(`/api/exams/${id}/answer-key-permissions`, 'PUT', { teacherUserId, allowed });
-      setPermissionRows(rows => rows.map(row => row.teacherUserId === teacherUserId ? { ...row, allowed } : row));
-      toast.success(allowed ? 'Answer-key permission granted' : 'Answer-key permission revoked');
-    } catch (error: any) { setPermissionError(error.message || 'Could not update permission.'); }
-    finally { setPermissionBusy(null); }
-  };
+  const [permissionScope, setPermissionScope] = useState<PermissionScope | null>(null);
 
   const handleSyncGradebook = async () => {
     if (!confirm('Sync best exam scores into the gradebook for this class?')) return;
@@ -96,12 +74,16 @@ export default function ExamProfile() {
 
   useEffect(() => {
     if (!id) return;
+    const controller = new AbortController();
+    setLoading(true); setExam(null); setPermissionScope(null);
     const fetchExam = async () => {
       try {
         const token = sessionStorage.getItem('auth_token');
         const res = await fetch(`/api/exams/${id}`, {
+          signal: controller.signal,
           headers: { Authorization: `Bearer ${token}` },
         });
+        if (controller.signal.aborted) return;
         if (!res.ok) {
           if (res.status === 404) {
             setExam(null);
@@ -113,6 +95,7 @@ export default function ExamProfile() {
           return;
         }
         const data = await res.json();
+        if (controller.signal.aborted) return;
         const attempts = data.attempts || [];
         const completed = attempts.filter((a: any) => a.isCompleted);
         const scored = completed.filter((a: any) => typeof a.score === 'number');
@@ -125,6 +108,8 @@ export default function ExamProfile() {
         const totalPoints = data.totalMarks ?? (data.questions || []).reduce((s: number, q: any) => s + (q.points || 0), 0);
         setExam({
           id: data.id,
+          access: data.access,
+          ownerName: data.ownerName,
           title: data.title || 'Untitled',
           subject: data.subject?.name || '—',
           className: data.class?.name || '—',
@@ -145,13 +130,15 @@ export default function ExamProfile() {
           })),
         });
       } catch (error) {
+        if (controller.signal.aborted) return;
         console.error('Error fetching exam:', error);
         toast.error('Failed to load exam');
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
-    fetchExam();
+    void fetchExam();
+    return () => controller.abort();
   }, [id]);
 
   if (loading) {
@@ -177,6 +164,10 @@ export default function ExamProfile() {
     );
   }
 
+  if (exam.id !== id) return null;
+  if (!['owner', 'editor', 'admin'].includes(exam.access)) return <Navigate to={`/exams/${id}/preview`} replace />;
+  const canShare = exam.access === 'owner' || exam.access === 'admin';
+
   const formatTime = (start: string | null, end: string | null) => {
     if (!start || !end) return '—';
     const mins = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000);
@@ -194,7 +185,7 @@ export default function ExamProfile() {
           <div className="exam-profile-title">
             <div className="exam-profile-eyebrow">EXAM OVERVIEW <Badge className={exam.status === 'PUBLISHED' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-amber-100 text-amber-800 hover:bg-amber-100'}>{exam.status}</Badge></div>
             <h1>{exam.title}</h1>
-            <p>{exam.className}<span aria-hidden="true">·</span>{exam.subject}</p>
+            <p>{exam.className}<span aria-hidden="true">·</span>{exam.subject}{exam.ownerName && <><span aria-hidden="true">·</span>Owner · {exam.ownerName}</>}</p>
           </div>
           <nav className="exam-commandbar" aria-label="Exam actions">
             <div className="exam-command-groups">
@@ -205,7 +196,7 @@ export default function ExamProfile() {
                   <DropdownMenuItem render={<Link to={`/exam2/${id}/author`} />} nativeButton={false}><Edit /><span><strong>Author content</strong><small>Question bank, content & rubrics</small></span></DropdownMenuItem>
                   <DropdownMenuItem render={<Link to={`/exam2/${id}/schedule`} />} nativeButton={false}><CalendarClock /><span><strong>Schedule</strong><small>Availability, access & release</small></span></DropdownMenuItem>
                   <DropdownMenuItem render={<Link to={`/exam2/${id}/print`} />} nativeButton={false}><Printer /><span><strong>Print exam</strong><small>Prepare a paper copy</small></span></DropdownMenuItem>
-                  {user?.role === 'ADMIN' && ['PUBLISHED', 'ACTIVE', 'SCHEDULED', 'CLOSED'].includes(exam.status) && <DropdownMenuItem onClick={openPermissions}><KeyRound /><span><strong>Answer-key permissions</strong><small>Allow an assigned teacher to correct published answers</small></span></DropdownMenuItem>}
+                  {user?.role === 'ADMIN' && ['PUBLISHED', 'ACTIVE', 'SCHEDULED', 'CLOSED'].includes(exam.status) && <DropdownMenuItem onClick={() => setPermissionScope('answer-key-permissions')}><KeyRound /><span><strong>Answer-key permissions</strong><small>Allow an assigned teacher to correct published answers</small></span></DropdownMenuItem>}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem variant="destructive" onClick={handleDelete}><Trash2 /><span><strong>Archive</strong><small>Keep records, stop new attempts</small></span></DropdownMenuItem>
                 </DropdownMenuContent>
@@ -223,6 +214,7 @@ export default function ExamProfile() {
               </DropdownMenu>
             </div>
             <div className="exam-command-primary">
+              {canShare && <button type="button" className="exam-preview-link" onClick={() => setPermissionScope('editors')}><Users size={15} />Editing access</button>}
               <Link className="exam-preview-link" to={`/exams/${id}/preview`}><Play size={15} />Preview</Link>
               <Link className="exam-studio-link" to={`/exams/${id}/studio`}><Edit size={16} />Open in Studio</Link>
             </div>
@@ -230,23 +222,7 @@ export default function ExamProfile() {
         </header>
       </div>
 
-      <Dialog open={permissionOpen} onOpenChange={setPermissionOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogTitle>Answer-key permissions</DialogTitle>
-          <DialogDescription>Choose which assigned teachers may correct the answer key after publication. Existing submitted answers are rescored when a key changes.</DialogDescription>
-          {permissionLoading && <p role="status">Loading teachers…</p>}
-          {permissionError && <p role="alert" className="text-sm text-destructive">{permissionError}</p>}
-          {!permissionLoading && !permissionRows.length && <p className="text-sm text-muted-foreground">No active teachers are assigned to this class.</p>}
-          <div className="space-y-2">
-            {permissionRows.map(row => <div key={row.teacherUserId} className="flex items-center justify-between gap-3 rounded-lg border p-3">
-              <span className="font-medium">{row.name}</span>
-              <Button variant={row.allowed ? 'outline' : 'default'} size="sm" disabled={permissionBusy !== null} onClick={() => changePermission(row.teacherUserId, !row.allowed)}>
-                {permissionBusy === row.teacherUserId ? 'Saving…' : row.allowed ? 'Revoke' : 'Grant access'}
-              </Button>
-            </div>)}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {permissionScope && <ExamPermissionsDialog key={`${id}/${permissionScope}`} examId={exam.id} scope={permissionScope} onClose={() => setPermissionScope(null)} />}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
          <div className="bg-card p-5 rounded-sm border border-border shadow-sm flex items-center gap-4">

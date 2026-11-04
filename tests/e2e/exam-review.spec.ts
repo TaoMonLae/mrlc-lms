@@ -10,6 +10,7 @@ async function fixture(page: Page, role: 'TEACHER' | 'STUDENT') {
   }, { user, release: CURRENT_RELEASE.id });
   await page.route('**/api/**', route => {
     const path = new URL(route.request().url()).pathname;
+    if (path === '/api/exams/e1/access') return route.fulfill({ json: { access: 'owner' } });
     if (path === '/api/auth/me') return route.fulfill({ json: { user } });
     if (path.endsWith('/stream')) return route.fulfill({ contentType: 'text/event-stream', body: ': fixture\n\n' });
     return route.fulfill({ json: path.includes('settings') ? {} : [] });
@@ -26,7 +27,7 @@ test('teacher can isolate pending answers and open the correct marking form', as
       { ...common, id: 'q2', number: 2, text: 'Explain condensation.', studentAnswer: 'Water vapour cools.', pointsAwarded: 4, status: 'PARTIAL' },
     ] }],
   } }));
-  await page.goto('/exams/e1/results');
+  await page.goto('/exams/e1/results?attemptId=a1');
   await expect(page.getByLabel('Answer summary')).toContainText('1 partial');
   await expect(page.getByText('Model answer', { exact: true })).toHaveCount(2);
   await page.getByRole('button', { name: 'Pending grading (1)', exact: true }).click();

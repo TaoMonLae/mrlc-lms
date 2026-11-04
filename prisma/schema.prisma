@@ -236,6 +236,7 @@ enum DutyRosterStatus {
 }
 
 model User {
+  ownedExams Exam[] @relation("ExamOwner")
   id                    String    @id @default(uuid())
   email                 String    @unique
   username              String?   @unique
@@ -666,6 +667,10 @@ model Attendance {
 }
 
 model Exam {
+  ownerId   String?
+  owner     User? @relation("ExamOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  editorIds String[] @default([])
+  archivedAsDraft Boolean @default(false)
   id              String   @id @default(uuid())
   title           String
   type            ExamType

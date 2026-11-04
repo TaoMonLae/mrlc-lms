@@ -15,6 +15,7 @@ async function fixture(page: Page, role = 'STUDENT', seconds = 0, settings = {})
   await page.route('**/api/**', async route => {
     const path = new URL(route.request().url()).pathname;
     if (path.endsWith('/stream')) return route.fulfill({ contentType: 'text/event-stream', body: ': fixture\n\n' });
+    if (path === '/api/exams/exam-a/access') return route.fulfill({ json: { access: 'owner', ownerName: 'Exam Tester' } });
     if (path === '/api/auth/me') return route.fulfill({ json: { user } });
     if (route.request().method() === 'POST') writes.push({ path, body: route.request().postDataJSON() });
     if (path === '/api/exam2/available') return route.fulfill({ json: [available] });
@@ -41,7 +42,7 @@ async function fixture(page: Page, role = 'STUDENT', seconds = 0, settings = {})
         { id: 'draft-a', title: 'Draft algebra', status: 'DRAFT' },
         { id: 'exam-a', title: 'Science checkpoint', status: 'NEEDS_GRADING' },
         { id: 'graded-a', title: 'Graded geography', status: 'GRADED' },
-      ].map(e => ({ ...e, class: 'Year 1', date: 'Sep 18', duration: '30m', type: 'Assessment', submissions: 1, total: 5 })) });
+      ].map(e => ({ ...e, access: 'owner', ownerName: 'Exam Tester', class: 'Year 1', date: 'Sep 18', duration: '30m', type: 'Assessment', submissions: 1, total: 5 })) });
     }
     if (path === '/api/student/exams') return route.fulfill({ json: { available: [{ id: 'exam-a', title: 'Science checkpoint', subject: 'Science', duration: '30 mins', questions: 2, deadline: null, type: 'QUIZ', activeAttemptId: 'attempt-a' }], submitted: [{ id: 'exam-a', attemptId: 'older-a', title: 'Science checkpoint', subject: 'Science', status: 'Graded', score: '0/10', submittedAt: 'Sep 17' }, { id: 'exam-a', attemptId: 'older-b', title: 'Science checkpoint', subject: 'Science', status: 'Grading', score: null, submittedAt: 'Sep 18' }] } });
     return route.fulfill({ json: path.includes('settings') ? { lockdownBrowserEnabled: false } : [] });
@@ -59,7 +60,7 @@ test('teacher tabs filter real content and Grade Now reaches the grading queue',
   await expect(page.getByText('Science checkpoint', { exact: true })).toBeVisible();
   await expect(page.getByText('Graded geography', { exact: true })).toHaveCount(0);
   await page.screenshot({ path: info.outputPath('teacher-exams.png') });
-  await page.getByRole('button', { name: 'Grade Now' }).click();
+  await page.getByRole('link', { name: 'Grade now' }).click();
   await expect(page).toHaveURL(/exam2\/grading\?examId=exam-a/);
   await expect(page.getByRole('heading', { name: 'Manual Grading Queue' })).toBeVisible();
 });
@@ -393,3 +394,33 @@ test('ordered answers preserve the student’s saved positions when edited', asy
   await expect.poll(() => writes.filter(w => w.path.endsWith('/save')).flatMap(w => w.body.answers).at(-1)?.selectedOptions)
     .toEqual({ opening: 'b', ending: 'a' });
 });
+
+for (const url of ['/exams', '/teacher/exams']) {
+  test(`exam directory at ${url} shows the owner and routes read-only teachers to preview`, async ({ page }, info) => {
+    await page.emulateMedia({ colorScheme: url === '/teacher/exams' ? 'dark' : 'light' });
+    await fixture(page, 'TEACHER');
+    const rows = [
+      { id: 'mine', access: 'owner', ownerName: 'Exam Tester', title: 'Reasoning through language arts', status: 'DRAFT' },
+      { id: 'other', access: 'viewer', ownerName: 'Lin Aung', title: 'Social studies chapter test', status: 'PUBLISHED' },
+      { id: 'shared', access: 'editor', ownerName: 'Hnin Wai', title: 'Physical science final', status: 'DRAFT' },
+    ];
+    await page.route(`**/api${url}`, route => route.fulfill({ json: rows.map(row => ({
+      ...row, class: url === '/exams' ? { name: 'GED' } : 'GED', subject: { name: 'GED preparation' },
+      type: 'GED preparation', date: 'Nov 05, 2026', duration: '60 min', durationMinutes: 60,
+      submissions: 3, total: 13, totalMarks: 50,
+    })) }));
+    await page.goto(url);
+    const viewerRow = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: rows[1].title }) });
+    await expect(viewerRow.getByText('Read only', { exact: true })).toBeVisible();
+    await expect(viewerRow.getByRole('link', { name: 'View exam', exact: true })).toHaveAttribute('href', '/exams/other/preview');
+    expect(await viewerRow.locator('a').evaluateAll(links => links.every(link => link.getAttribute('href') === '/exams/other/preview'))).toBe(true);
+    await expect(viewerRow.getByRole('button')).toHaveCount(0);
+    await expect(page.getByText('Can edit', { exact: true })).toBeVisible();
+    await expect(page.getByText('Owner', { exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+    await page.screenshot({ path: info.outputPath(url === '/exams' ? 'exam-library.png' : 'teacher-assessments.png'), fullPage: true, animations: 'disabled' });
+    await page.getByRole('searchbox', { name: 'Search exams' }).fill('Lin Aung');
+    await expect(viewerRow).toBeVisible();
+    await expect(page.getByRole('heading', { name: rows[0].title })).toHaveCount(0);
+  });
+}

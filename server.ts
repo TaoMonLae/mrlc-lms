@@ -7,6 +7,7 @@ import { accountStillMatchesToken, consumeRecoveryCode } from "./lib/sessionAcce
 import { announcementAudienceWhere } from "./lib/announcementAudience";
 import { notificationService, syncTeacherAppUpdates, type NotificationInput } from "./lib/notifications";
 import { registerNotificationRoutes } from "./notificationRoutes";
+import { canShareExam, canWriteExam, examAccess } from "./shared/examAccess";
 import { saveStudioQuestions } from "./shared/examStudioPersistence";
 import { correctionData, scoreWithCorrectedKey } from "./shared/examAnswerKey";
 import { buildExamReviewQuestions } from "./shared/examReview";
@@ -8636,15 +8637,18 @@ async function startServer() {
   const { payrollCanManage } = registerHrRoutes(app, { APP_URL, authMiddleware, createAuditLog, logger, prisma, schemas, validate });
 
   // ── Exams API ───────────────────────────────────────────────────────────────
-  async function canManageExamClass(jwtUser: JwtPayload, classId: string): Promise<boolean> {
+  async function canManageExamClass(jwtUser: JwtPayload, classId: string, db: Pick<PrismaClient, "teacher"> = prisma): Promise<boolean> {
     if (jwtUser.role === "ADMIN") return true;
     if (jwtUser.role !== "TEACHER") return false;
-    const teacher = await prisma.teacher.findUnique({
+    const teacher = await db.teacher.findUnique({
       where: { userId: jwtUser.userId },
       include: { classes: true },
     });
     return Boolean(teacher?.classes.some((ct) => ct.classId === classId));
   }
+
+  const examOwnerName = (owner: { firstName: string; lastName: string } | null) =>
+    owner ? [owner.firstName, owner.lastName].filter(Boolean).join(" ") : null;
 
   app.get("/api/exams", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
@@ -8652,6 +8656,7 @@ async function startServer() {
     const showArchived = (req.query.archived === "1" || req.query.archived === "true") && jwtUser.role !== "STUDENT";
     const statusFilter = showArchived ? { status: "ARCHIVED" } : { status: { not: "ARCHIVED" } };
     try {
+      if (!["STUDENT", "ADMIN", "TEACHER"].includes(jwtUser.role)) { res.sendStatus(403); return; }
       let exams;
       if (jwtUser.role === "STUDENT") {
         const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
@@ -8663,6 +8668,7 @@ async function startServer() {
         exams = await prisma.exam.findMany({
           where: { classId: student.classId, status: { in: ["PUBLISHED", "ACTIVE", "SCHEDULED"] } },
           include: {
+            owner: { select: { firstName: true, lastName: true } },
             class: true,
             subject: true,
             questions: {
@@ -8682,6 +8688,7 @@ async function startServer() {
         exams = await prisma.exam.findMany({
           where,
           include: {
+            owner: { select: { firstName: true, lastName: true } },
             class: true,
             subject: true,
             questions: {
@@ -8693,7 +8700,9 @@ async function startServer() {
           }
         });
       }
-      res.json(exams.map(({ answerKeyEditTeacherIds: _answerKeyEditTeacherIds, ...exam }) => exam));
+      res.json(exams.map(({ answerKeyEditTeacherIds, editorIds, ownerId, owner, accessCodeHash, ...exam }) => ({
+        ...exam, ...(jwtUser.role === "STUDENT" ? {} : { access: examAccess(jwtUser, { ownerId, editorIds }), ownerName: examOwnerName(owner) }),
+      })));
     } catch (err: any) {
       if (err?.code === "P2021" || err?.code === "P2022") { logExamDatabaseError("Error fetching exams", err); res.status(503).json({ error: "Exam database is out of date — run `npx prisma migrate deploy` then restart the server." }); return; }
       logExamDatabaseError("Error fetching exams", err);
@@ -8705,10 +8714,12 @@ async function startServer() {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
     try {
+      if (!["STUDENT", "ADMIN", "TEACHER"].includes(jwtUser.role)) { res.sendStatus(403); return; }
       const isStudent = jwtUser.role === "STUDENT";
       const exam = await prisma.exam.findUnique({
         where: { id },
         include: {
+          owner: { select: { firstName: true, lastName: true } },
           class: { include: { _count: { select: { students: true } } } },
           subject: true,
           questions: isStudent
@@ -8743,7 +8754,7 @@ async function startServer() {
               },
           attempts: isStudent
             ? false
-            : { include: { student: { include: { user: true } } } },
+            : { include: { student: { include: { user: { select: { firstName: true, lastName: true } } } } } },
         },
       });
       if (!exam) {
@@ -8788,10 +8799,12 @@ async function startServer() {
         }
       }
       const profile = await prisma.schoolProfile.findFirst();
-      const { answerKeyEditTeacherIds, ...safeExam } = exam;
+      const { ownerId, editorIds, owner, accessCodeHash, answerKeyEditTeacherIds, ...safeExam } = exam;
       res.json({
         ...safeExam,
-        canEditAnswerKey: jwtUser.role === "ADMIN" || (jwtUser.role === "TEACHER" && answerKeyEditTeacherIds.includes(jwtUser.userId)),
+        ...(!isStudent && !canWriteExam(jwtUser, exam) ? { questions: exam.questions.map(({ id, points }) => ({ id, points })), attempts: [] } : {}),
+        ...(!isStudent ? { access: examAccess(jwtUser, exam), ownerName: examOwnerName(owner) } : {}),
+        canEditAnswerKey: jwtUser.role === "ADMIN" || (jwtUser.role === "TEACHER" && canWriteExam(jwtUser, exam) && answerKeyEditTeacherIds.includes(jwtUser.userId)),
         lockdownPolicy: lockdownBrowserPolicy(profile),
       });
     } catch (err: any) {
@@ -8820,6 +8833,57 @@ async function startServer() {
       })));
     } catch (err) { logger.error("Error loading answer-key permissions:", err); res.status(500).json({ error: "Internal Server Error" }); }
   });
+
+  // A class assignment grants visibility. Only the exam owner or an administrator
+  // can change its editor roster, independently of answer-key correction rights.
+  const accessSelect = { classId: true, ownerId: true, editorIds: true, owner: { select: { firstName: true, lastName: true } } } as const;
+  app.get("/api/exams/:id/access", authMiddleware, asyncHandler(async (req, res) => {
+    const actor = (req as any).user as JwtPayload;
+    const exam = await prisma.exam.findUnique({ where: { id: req.params.id }, select: accessSelect });
+    if (!exam) { res.sendStatus(404); return; }
+    if (!await canManageExamClass(actor, exam.classId)) { res.sendStatus(403); return; }
+    res.json({ access: examAccess(actor, exam), ownerName: examOwnerName(exam.owner) });
+  }));
+
+  app.get("/api/exams/:id/editors", authMiddleware, asyncHandler(async (req, res) => {
+    const actor = (req as any).user as JwtPayload;
+    const exam = await prisma.exam.findUnique({ where: { id: req.params.id }, select: accessSelect });
+    if (!exam) { res.sendStatus(404); return; }
+    if (!canShareExam(actor, exam) || !await canManageExamClass(actor, exam.classId)) { res.sendStatus(403); return; }
+    const teachers = await prisma.user.findMany({
+      where: { role: "TEACHER", isActive: true, ...(exam.ownerId ? { id: { not: exam.ownerId } } : {}),
+        teacherProfile: { classes: { some: { classId: exam.classId } } } },
+      select: { id: true, firstName: true, lastName: true }, orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
+    });
+    res.json(teachers.map(t => ({ teacherUserId: t.id, name: examOwnerName(t), allowed: exam.editorIds.includes(t.id) })));
+  }));
+
+  app.put("/api/exams/:id/editors", authMiddleware, asyncHandler(async (req, res) => {
+    const actor = (req as any).user as JwtPayload;
+    const data = z.object({ teacherUserId: z.string().min(1), allowed: z.boolean() }).strict().safeParse(req.body);
+    if (!data.success) { res.status(400).json({ error: "Choose a teacher and an access level" }); return; }
+    const { teacherUserId, allowed } = data.data;
+    const result = await prisma.$transaction(async tx => {
+      // Serialize grants/revocations so simultaneous changes to different teachers survive.
+      const [exam] = await tx.$queryRaw<{ classId: string; ownerId: string | null; editorIds: string[] }[]>`
+        SELECT "classId", "ownerId", "editorIds" FROM "Exam" WHERE id = ${req.params.id} FOR UPDATE`;
+      if (!exam) return { status: 404, error: "Exam not found" };
+      if (!canShareExam(actor, exam) || !await canManageExamClass(actor, exam.classId, tx)) return { status: 403, error: "Only the exam owner or an administrator can change editing access" };
+      if (teacherUserId === exam.ownerId) return { status: 400, error: "The owner already has editing access" };
+      if (allowed) {
+        const teacher = await tx.classTeacher.findFirst({ where: { classId: exam.classId, teacher: { userId: teacherUserId, user: { role: "TEACHER", isActive: true } } } });
+        if (!teacher) return { status: 400, error: "Choose an active teacher assigned to this class" };
+      }
+      const editors = new Set(exam.editorIds);
+      if (allowed) editors.add(teacherUserId); else editors.delete(teacherUserId);
+      await tx.exam.update({ where: { id: req.params.id }, data: { editorIds: [...editors] } });
+      return { status: 200 };
+    });
+    if (result.status !== 200) { res.status(result.status).json({ error: result.error }); return; }
+    await createAuditLog(actor.userId, actor.email, allowed ? "GRANT" : "REVOKE", "EXAM", req.params.id,
+      `Exam editing ${allowed ? "granted to" : "revoked from"} teacher ${teacherUserId}.`, req.ip, req.get("user-agent") || null, "SUCCESS");
+    res.json({ teacherUserId, allowed });
+  }));
 
   app.put("/api/exams/:id/answer-key-permissions", authMiddleware, async (req, res) => {
     const actor = (req as any).user as JwtPayload;
@@ -8851,9 +8915,9 @@ async function startServer() {
     if (!parsed.success) { res.status(400).json({ error: "Invalid answer-key correction" }); return; }
     try {
       const result = await prisma.$transaction(async tx => {
-        const exam = await tx.exam.findUnique({ where: { id: req.params.id }, select: { id: true, classId: true, status: true, negativeMarking: true, answerKeyEditTeacherIds: true } });
+        const exam = await tx.exam.findUnique({ where: { id: req.params.id }, select: { id: true, classId: true, status: true, negativeMarking: true, ownerId: true, editorIds: true, answerKeyEditTeacherIds: true } });
         if (!exam) throw Object.assign(new Error("Exam not found"), { http: 404 });
-        if (!await canManageExamClass(actor, exam.classId)) throw Object.assign(new Error("Forbidden"), { http: 403 });
+        if (!canWriteExam(actor, exam) || !await canManageExamClass(actor, exam.classId)) throw Object.assign(new Error("Forbidden"), { http: 403 });
         if (actor.role === "TEACHER" && !exam.answerKeyEditTeacherIds.includes(actor.userId)) throw Object.assign(new Error("Admin permission is required to correct this answer key"), { http: 403 });
         if (!["PUBLISHED", "ACTIVE", "SCHEDULED", "CLOSED"].includes(exam.status)) throw Object.assign(new Error("This exam is not published"), { http: 409 });
         const question = await tx.question.findFirst({ where: { id: parsed.data.questionId, examId: exam.id } });
@@ -8972,6 +9036,7 @@ async function startServer() {
       const result = await prisma.$transaction(async (tx) => {
         const exam = await tx.exam.create({
           data: {
+            ownerId: jwtUser.userId,
             title: title.trim(),
             classId,
             subjectId,
@@ -9069,7 +9134,9 @@ async function startServer() {
           include: { attempts: { select: { id: true } } },
         });
         if (!existing) throw Object.assign(new Error("Exam not found"), { http: 404 });
-        if (jwtUser.role === "TEACHER" && existing.status !== "DRAFT" && questions !== undefined) {
+        if (!canWriteExam(jwtUser, existing)) throw Object.assign(new Error("Read-only exam"), { http: 403 });
+        if (jwtUser.role === "TEACHER" && existing.classId !== classId && existing.ownerId !== jwtUser.userId) throw Object.assign(new Error("Only the owner may move an exam to another class"), { http: 403 });
+        if (jwtUser.role === "TEACHER" && existing.status !== "DRAFT" && (questions !== undefined || status === "DRAFT")) {
           throw Object.assign(new Error("Published question content is locked. Use the answer-key correction permission to fix answers."), { http: 403 });
         }
         if (existing.attempts.length > 0 && questions !== undefined) {
@@ -9086,6 +9153,8 @@ async function startServer() {
             classId,
             subjectId,
             type: examType || "FINAL",
+            ...(status === "ARCHIVED" && existing.status !== "ARCHIVED" ? { archivedAsDraft: existing.status === "DRAFT" } : {}),
+            ...(classId !== existing.classId ? { editorIds: [], answerKeyEditTeacherIds: [] } : {}),
             status: status !== undefined ? (status || existing.status || "DRAFT") : (existing.status || "DRAFT"),
             durationMinutes: duration ? Number(duration) : null,
             totalMarks: totalMarks != null ? Number(totalMarks) : null,
@@ -9142,7 +9211,7 @@ async function startServer() {
     try {
       const exam = await prisma.exam.findUnique({ where: { id } });
       if (!exam) { res.status(404).json({ error: "Exam not found" }); return; }
-      if (!(await canManageExamClass(jwtUser, exam.classId))) {
+      if (!canWriteExam(jwtUser, exam) || !(await canManageExamClass(jwtUser, exam.classId))) {
         res.status(403).json({ error: "Forbidden: You cannot archive this exam" });
         return;
       }
@@ -9150,7 +9219,7 @@ async function startServer() {
         res.json({ ok: true, status: "ARCHIVED" });
         return;
       }
-      await prisma.exam.update({ where: { id }, data: { status: "ARCHIVED" } });
+      await prisma.exam.update({ where: { id, status: exam.status }, data: { status: "ARCHIVED", archivedAsDraft: exam.status === "DRAFT" } });
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "ARCHIVE", "EXAM", id,
         `Exam '${exam.title}' archived.`, req.ip, req.headers["user-agent"] || null, "WARNING",
@@ -9272,7 +9341,7 @@ async function startServer() {
         },
       });
       if (!exam) { res.status(404).json({ error: "Exam not found" }); return; }
-      if (!(await canManageExamClass(jwtUser, exam.classId))) {
+      if (!canWriteExam(jwtUser, exam) || !(await canManageExamClass(jwtUser, exam.classId))) {
         res.status(403).json({ error: "Forbidden: not your class" });
         return;
       }
@@ -9329,7 +9398,7 @@ async function startServer() {
     }
   });
 
-  // Restore an archived exam back to DRAFT (ADMIN or TEACHER).
+  // Restore an archived exam without unlocking previously published questions (ADMIN or TEACHER).
   app.post("/api/exams/:id/restore", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
@@ -9340,18 +9409,19 @@ async function startServer() {
     try {
       const existing = await prisma.exam.findUnique({ where: { id } });
       if (!existing) { res.status(404).json({ error: "Exam not found" }); return; }
-      if (!(await canManageExamClass(jwtUser, existing.classId))) {
+      if (!canWriteExam(jwtUser, existing) || !(await canManageExamClass(jwtUser, existing.classId))) {
         res.status(403).json({ error: "Forbidden: You cannot restore this exam" });
         return;
       }
+      if (!["ARCHIVED", "DRAFT"].includes(existing.status)) { res.status(409).json({ error: "Only archived exams can be restored" }); return; }
       const exam = existing.status === "DRAFT"
         ? existing
-        : await prisma.exam.update({ where: { id }, data: { status: "DRAFT" } });
+        : await prisma.exam.update({ where: { id, status: "ARCHIVED" }, data: { status: existing.archivedAsDraft || jwtUser.role === "ADMIN" ? "DRAFT" : "CLOSED", archivedAsDraft: false } });
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "RESTORE", "EXAM", id,
-        `Exam '${exam.title}' restored to DRAFT.`, req.ip, req.headers["user-agent"] || null, "SUCCESS",
+        `Exam '${exam.title}' restored to ${exam.status}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS",
       );
-      res.json({ ok: true, status: "DRAFT" });
+      res.json({ ok: true, status: exam.status });
     } catch (err: any) {
       if (err?.code === "P2025") { res.status(404).json({ error: "Exam not found" }); return; }
       logger.error("Error restoring exam:", err);
@@ -9382,7 +9452,7 @@ async function startServer() {
           title: true,
           status: true,
           type: true,
-          classId: true,
+          classId: true, ownerId: true, editorIds: true,
           durationMinutes: true,
           totalMarks: true,
           class: { select: { name: true, students: { select: { id: true } } } },
@@ -9426,7 +9496,7 @@ async function startServer() {
       }
 
       if (jwtUser.role === "TEACHER") {
-        if (!(await canManageExamClass(jwtUser, exam.classId))) {
+        if (!canWriteExam(jwtUser, exam) || !(await canManageExamClass(jwtUser, exam.classId))) {
           res.status(403).json({ error: "Forbidden" });
           return;
         }
@@ -9503,7 +9573,7 @@ async function startServer() {
         where: { id: attemptId },
         select: {
           id: true,
-          exam: { select: { classId: true } },
+          exam: { select: { classId: true, ownerId: true, editorIds: true } },
           student: { select: { id: true, studentCode: true } },
           answers: { select: { id: true, maxPoints: true, pointsAwarded: true, question: { select: { id: true, points: true } } } },
         },
@@ -9512,7 +9582,7 @@ async function startServer() {
         res.status(404).json({ error: "Attempt not found" });
         return;
       }
-      if (!(await canManageExamClass(jwtUser, attempt.exam.classId))) {
+      if (!canWriteExam(jwtUser, attempt.exam) || !(await canManageExamClass(jwtUser, attempt.exam.classId))) {
         res.status(403).json({ error: "Forbidden" });
         return;
       }
@@ -11024,7 +11094,7 @@ async function startServer() {
       const ids = await teacherClassIds(req);
       const exams = await prisma.exam.findMany({
         where: { classId: { in: ids }, status: { not: "ARCHIVED" } },
-        include: { class: { include: { students: true } }, subject: true, attempts: true },
+        include: { owner: { select: { firstName: true, lastName: true } }, class: { include: { students: true } }, subject: true, attempts: true },
         orderBy: { date: "desc" },
       });
       res.json(exams.map((e) => {
@@ -11033,6 +11103,7 @@ async function startServer() {
         const tm = e.totalMarks || 100;
         const avg = graded.length ? `${round1(graded.reduce((acc, a) => acc + (a.score! / tm) * 100, 0) / graded.length)}%` : undefined;
         return {
+          access: examAccess((req as any).user, e), ownerName: examOwnerName(e.owner),
           id: e.id, title: e.title, class: e.class?.name || "—", date: fmtDate(e.date),
           duration: e.durationMinutes ? `${e.durationMinutes}m` : "N/A",
           type: e.subject?.name || e.type,

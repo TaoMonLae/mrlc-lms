@@ -1,3 +1,4 @@
+import { canWriteExam } from "./shared/examAccess";
 import { manualGradeScores } from "./shared/examGrading";
 import { summarizeExamAnswers } from "./shared/examReview";
 import { examAvailability } from "./shared/examAvailability";
@@ -86,18 +87,17 @@ export function registerExamPhase2Routes(deps: Deps): void {
     next();
   };
 
-  // Per-class scoping: a TEACHER may only touch exams of classes they teach
-  // (ADMIN passes). `examGuard(param)` reads the exam id from that route param.
-  const canManageExam = async (req: express.Request, examId: string): Promise<{ ok: boolean; found: boolean }> => {
-    const exam = await prisma.exam.findUnique({ where: { id: examId }, select: { classId: true } });
+  // Preview needs class access. Management also requires ownership or an edit grant.
+  const canManageExam = async (req: express.Request, examId: string, requireEdit = true): Promise<{ ok: boolean; found: boolean }> => {
+    const exam = await prisma.exam.findUnique({ where: { id: examId }, select: { classId: true, ownerId: true, editorIds: true } });
     if (!exam) return { ok: false, found: false };
-    return { ok: await canManageExamClass(user(req), exam.classId), found: true };
+    return { ok: (!requireEdit || canWriteExam(user(req), exam)) && await canManageExamClass(user(req), exam.classId), found: true };
   };
-  const examGuard = (param = "id"): express.RequestHandler => async (req, res, next) => {
+  const examGuard = (param = "id", requireEdit = true): express.RequestHandler => async (req, res, next) => {
     try {
-      const { ok, found } = await canManageExam(req, req.params[param]);
+      const { ok, found } = await canManageExam(req, req.params[param], requireEdit);
       if (!found) { res.status(404).json({ error: "Exam not found" }); return; }
-      if (!ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      if (!ok) { res.status(403).json({ error: "You do not have permission to manage this exam" }); return; }
       next();
     } catch (err) {
       logger.error("exam guard failed", err);
@@ -110,7 +110,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
       const attempt = await prisma.examAttempt.findUnique({ where: { id: req.params[param] }, select: { examId: true } });
       if (!attempt) { res.status(404).json({ error: "Attempt not found" }); return; }
       const { ok } = await canManageExam(req, attempt.examId);
-      if (!ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      if (!ok) { res.status(403).json({ error: "You do not have permission to manage this exam" }); return; }
       next();
     } catch (err) {
       logger.error("attempt guard failed", err);
@@ -264,7 +264,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
     const b = req.body || {};
     const has = (key: string) => Object.prototype.hasOwnProperty.call(b, key);
     try {
-      const existing = await prisma.exam.findUnique({ where: { id }, select: { accessCodeHash: true, totalMarks: true } });
+      const existing = await prisma.exam.findUnique({ where: { id }, select: { accessCodeHash: true, totalMarks: true, status: true } });
       if (!existing) { res.status(404).json({ error: "Exam not found" }); return; }
       const availableFrom = b.availableFrom ? new Date(b.availableFrom) : null;
       const availableUntil = b.availableUntil ? new Date(b.availableUntil) : null;
@@ -288,6 +288,9 @@ export function registerExamPhase2Routes(deps: Deps): void {
       }
       if (b.status !== undefined && !["DRAFT", "SCHEDULED", "ACTIVE", "CLOSED", "PUBLISHED"].includes(b.status)) {
         res.status(400).json({ error: "Invalid exam status" }); return;
+      }
+      if (b.status === "DRAFT" && existing.status !== "DRAFT" && user(req).role !== "ADMIN") {
+        res.status(403).json({ error: "Only an administrator can reopen a published exam as a draft." }); return;
       }
       if (b.requiresAccessCode && !String(b.accessCode || "").trim() && !existing.accessCodeHash) {
         res.status(400).json({ error: "Set an access code before requiring one" }); return;
@@ -384,12 +387,16 @@ export function registerExamPhase2Routes(deps: Deps): void {
       if (examId) {
         const scope = await canManageExam(req, examId);
         if (!scope.found) { res.status(404).json({ error: "Exam not found" }); return; }
-        if (!scope.ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+        if (!scope.ok) { res.status(403).json({ error: "You do not have permission to manage this exam" }); return; }
       }
       let studentScope: any = {};
       if (user(req).role === "TEACHER" && !examId) {
         const teacher = await prisma.teacher.findUnique({ where: { userId: user(req).userId }, include: { classes: true } });
-        studentScope = { student: { classId: { in: (teacher?.classes || []).map((c: any) => c.classId) } } };
+        const classIds = (teacher?.classes || []).map((c: any) => c.classId);
+        studentScope = {
+          student: { classId: { in: classIds } },
+          OR: [{ examId: null }, { exam: { classId: { in: classIds }, OR: [{ ownerId: user(req).userId }, { editorIds: { has: user(req).userId } }] } }],
+        };
       }
       const rows = await prisma.examAccommodation.findMany({
         where: { ...(studentId ? { studentId } : {}), ...(examId ? { examId } : {}), ...studentScope },
@@ -423,8 +430,8 @@ export function registerExamPhase2Routes(deps: Deps): void {
     const student = await prisma.student.findUnique({ where: { id: studentId }, select: { classId: true } });
     if (!student) return false;
     if (!examId) return !!student.classId && canManageExamClass(user(req), student.classId);
-    const exam = await prisma.exam.findUnique({ where: { id: examId }, select: { classId: true } });
-    if (!exam || !(await canManageExamClass(user(req), exam.classId))) return false;
+    const exam = await prisma.exam.findUnique({ where: { id: examId }, select: { classId: true, ownerId: true, editorIds: true } });
+    if (!exam || !canWriteExam(user(req), exam) || !(await canManageExamClass(user(req), exam.classId))) return false;
     if (student.classId === exam.classId) return true;
     return !!(await prisma.examAssignment.findUnique({ where: { examId_studentId: { examId, studentId } }, select: { id: true } }));
   }
@@ -686,7 +693,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
   // TEACHER PREVIEW — render the exam exactly as a student would see it, but
   // read-only: no attempt is created, no scoring, no timer. Correct answers are
   // stripped so the preview matches the student view.
-  app.get("/api/exams/:examId/preview", authMiddleware, teacherGuard, examGuard("examId"), async (req, res) => {
+  app.get("/api/exams/:examId/preview", authMiddleware, teacherGuard, examGuard("examId", false), async (req, res) => {
     const { examId } = req.params;
     try {
       const exam = await prisma.exam.findUnique({ where: { id: examId } });
@@ -1410,7 +1417,7 @@ function registerAuthoringRoutes(deps: any) {
       const row = await prisma[model].findUnique({ where: { id: req.params.id }, select: { examId: true } });
       if (!row) { res.status(404).json({ error: "Not found" }); return; }
       const { ok } = await canManageExam(req, row.examId);
-      if (!ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      if (!ok) { res.status(403).json({ error: "You do not have permission to manage this exam" }); return; }
       req.managedExamId = row.examId;
       next();
     } catch (err: any) {
@@ -1466,7 +1473,7 @@ function registerAuthoringRoutes(deps: any) {
       if (!owner.examId) { res.status(409).json({ error: "Use the question-bank editor for reusable questions" }); return; }
       ownerExamId = owner.examId;
       const { ok } = await canManageExam(req, ownerExamId);
-      if (!ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      if (!ok) { res.status(403).json({ error: "You do not have permission to manage this exam" }); return; }
       const ownerExam = await prisma.exam.findUnique({ where: { id: ownerExamId }, select: { status: true, _count: { select: { attempts: true } } } });
       if (ownerExam && (ownerExam._count.attempts > 0 || (user(req).role === "TEACHER" && ownerExam.status !== "DRAFT"))) {
         res.status(409).json({ error: "Published question content is locked. Use the approved answer-key correction flow." }); return;
@@ -1672,7 +1679,7 @@ function registerGradingAndOps(deps: any) {
       if (user(req).role === "TEACHER") {
         const teacher = await prisma.teacher.findUnique({ where: { userId: user(req).userId }, include: { classes: true } });
         const classIds = (teacher?.classes || []).map((c: any) => c.classId);
-        attemptScope = { ...(examId ? { examId } : {}), exam: { classId: { in: classIds } } };
+        attemptScope = { ...(examId ? { examId } : {}), exam: { classId: { in: classIds }, OR: [{ ownerId: user(req).userId }, { editorIds: { has: user(req).userId } }] } };
       }
       const rows = await prisma.manualGrade.findMany({
         where: {
@@ -1716,7 +1723,7 @@ function registerGradingAndOps(deps: any) {
       const gradeRow = await prisma.manualGrade.findUnique({ where: { id: req.params.gradeId }, select: { attempt: { select: { examId: true } } } });
       if (!gradeRow) { res.status(404).json({ error: "not found" }); return; }
       const scope = await canManageExam(req, gradeRow.attempt.examId);
-      if (!scope.ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      if (!scope.ok) { res.status(403).json({ error: "You do not have permission to manage this exam" }); return; }
       const result = await prisma.$transaction(async (tx: any) => {
         const grade = await tx.manualGrade.findUnique({ where: { id: req.params.gradeId } });
         if (!grade) throw Object.assign(new Error("not found"), { http: 404 });

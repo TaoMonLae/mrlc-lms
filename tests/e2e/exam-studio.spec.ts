@@ -16,6 +16,7 @@ async function setup(page: Page, questions: any[] = [], attempts: any[] = []) {
     const method = route.request().method();
     if (path === '/api/exam-media') return route.fulfill({ json: { url: '/test-question.png' } });
     if (path.endsWith('/stream')) return route.fulfill({ contentType: 'text/event-stream', body: ': test\n\n' });
+    if (path === '/api/exams/studio-a/access') return route.fulfill({ json: { access: 'owner' } });
     if (path === '/api/auth/me') return route.fulfill({ json: { user } });
     if (['PUT', 'POST', 'DELETE'].includes(method)) {
       writes.push({ path, body: route.request().postDataJSON() });

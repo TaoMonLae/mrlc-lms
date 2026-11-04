@@ -1,3 +1,4 @@
+import ExamManagementGate from "./components/exams/ExamManagementGate";
 import { Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { lazyWithRetry as lazy } from "./lib/lazyWithRetry";
@@ -547,8 +548,8 @@ export default function App() {
                   <Route path="/exams/:id" element={<ExamProfile />} />
                   {/* Classic edit removed — the Guided Studio is the only builder.
                       Keep the /edit path as a redirect so old links/bookmarks resolve. */}
-                  <Route path="/exams/:id/edit" element={<GuidedStudio />} />
-                  <Route path="/exams/:id/studio" element={<GuidedStudio />} />
+                  <Route path="/exams/:id/edit" element={<ExamManagementGate><GuidedStudio /></ExamManagementGate>} />
+                  <Route path="/exams/:id/studio" element={<ExamManagementGate><GuidedStudio /></ExamManagementGate>} />
                   <Route path="/exams/:id/preview" element={<ExamPreview />} />
                   
                   <Route path="/teachers/:id" element={<TeacherProfile />} />
@@ -559,14 +560,14 @@ export default function App() {
                   <Route path="/bank/new" element={<QuestionEditor />} />
                   <Route path="/bank/:id" element={<QuestionEditor />} />
 
-                  <Route path="/exam2/:examId/author" element={<ExamAuthoring />} />
-                  <Route path="/exam2/:examId/schedule" element={<ExamScheduling />} />
-                  <Route path="/exam2/:examId/invigilator" element={<InvigilatorDashboard />} />
-                  <Route path="/exam2/:examId/analytics" element={<ExamAnalytics />} />
-                  <Route path="/exam2/:examId/questions/:qid/analytics" element={<QuestionAnalytics />} />
-                  <Route path="/exam2/:examId/print" element={<PrintableExport />} />
-                  <Route path="/exam2/grading" element={<ManualGradingQueue />} />
-                  <Route path="/exam2/grade/:attemptId/:questionId" element={<RubricGrading />} />
+                  <Route path="/exam2/:examId/author" element={<ExamManagementGate><ExamAuthoring /></ExamManagementGate>} />
+                  <Route path="/exam2/:examId/schedule" element={<ExamManagementGate><ExamScheduling /></ExamManagementGate>} />
+                  <Route path="/exam2/:examId/invigilator" element={<ExamManagementGate><InvigilatorDashboard /></ExamManagementGate>} />
+                  <Route path="/exam2/:examId/analytics" element={<ExamManagementGate><ExamAnalytics /></ExamManagementGate>} />
+                  <Route path="/exam2/:examId/questions/:qid/analytics" element={<ExamManagementGate><QuestionAnalytics /></ExamManagementGate>} />
+                  <Route path="/exam2/:examId/print" element={<ExamManagementGate><PrintableExport /></ExamManagementGate>} />
+                  <Route path="/exam2/grading" element={<ExamManagementGate><ManualGradingQueue /></ExamManagementGate>} />
+                  <Route path="/exam2/grade/:attemptId/:questionId" element={<ExamManagementGate><RubricGrading /></ExamManagementGate>} />
                   <Route path="/exam2/accommodations" element={<AccommodationManagement />} />
 
                   <Route path="/gradebook" element={<GradebookPage />} />
@@ -579,7 +580,7 @@ export default function App() {
                 </Route>
 
                 <Route path="/exams/:id/take" element={<ExamTake />} />
-                <Route path="/exams/:id/results" element={<ExamResults />} />
+                <Route path="/exams/:id/results" element={<ExamManagementGate studentResults><ExamResults /></ExamManagementGate>} />
 
                 <Route element={<ProtectedRoute requiredPermission="manage_users" />}>
                   <Route path="/users" element={<UsersList />} />

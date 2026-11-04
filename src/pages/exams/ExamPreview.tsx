@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { ArrowLeft, Eye, Loader2, AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { apiGet } from '../../lib/api';
 import MathText from '../../components/MathText';
 import { splitDragText } from '../../lib/dragBlanks';
@@ -37,18 +37,18 @@ export default function ExamPreview() {
       <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto" />
       <h2 className="text-lg font-bold text-foreground">Can't preview this exam</h2>
       <p className="text-sm text-muted-foreground">{error}</p>
-      <Button render={<Link to={`/exams/${id}`} />} nativeButton={false}>Back to exam</Button>
+      <Link to="/exams" className={buttonVariants({ variant: 'outline' })}>Back to exams</Link>
     </div>
   );
 
   return (
     <div className="max-w-3xl mx-auto pb-24" data-no-i18n>
-      <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground" render={<Link to={`/exams/${id}`} />} nativeButton={false}>
-        <ArrowLeft className="mr-2 h-4 w-4" /> Back to exam
-      </Button>
+      <Link to="/exams" className={buttonVariants({ variant: 'ghost', size: 'sm', className: '-ml-3 mb-2 text-muted-foreground' })}>
+        <ArrowLeft className="mr-2 h-4 w-4" /> Back to exams
+      </Link>
 
       <div className="mb-4 flex items-center gap-2 rounded-lg border border-aubergine-200 bg-aubergine-50 dark:bg-aubergine-900/20 px-4 py-2 text-sm text-aubergine-700 dark:text-aubergine-300">
-        <Eye className="h-4 w-4" /> Preview mode — this is how students see the exam. Nothing is saved or scored.
+        <Eye className="h-4 w-4" /> Read-only preview · Browse the exam questions.
       </div>
 
       <div className="mb-6">
@@ -63,7 +63,7 @@ export default function ExamPreview() {
 
       {questions.length === 0 ? (
         <div className="py-16 text-center text-sm text-muted-foreground border border-dashed border-border rounded-sm">
-          No questions yet. Add questions in the editor or author content.
+          This exam has no questions yet.
         </div>
       ) : (
         <div className="space-y-6">

@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
-import { Plus, Search, MoreHorizontal, Clock, CheckCircle2 } from 'lucide-react';
+import { Plus, MoreHorizontal, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { DirectoryColumns, DirectoryRow, DirectorySearch, type ExamAccess } from '../../components/exams/ExamDirectory';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +17,9 @@ type ExamListRow = {
   id: string;
   title: string;
   subject: string;
-  durationMinutes: number;
+  durationMinutes: number | null;
+  access?: ExamAccess;
+  ownerName?: string | null;
   totalPoints: number;
   status: string;
   className: string;
@@ -47,7 +48,7 @@ export default function ExamsList() {
     try {
       await apiSend(`/api/exams/${exam.id}/restore`, 'POST');
       setExams((prev) => prev.filter((e) => e.id !== exam.id));
-      toast.success('Exam restored to draft');
+      toast.success('Exam restored');
     } catch (e: any) {
       toast.error(e.message || 'Failed to restore exam');
     }
@@ -71,15 +72,14 @@ export default function ExamsList() {
             const body = await res.json().catch(() => ({}));
             throw new Error(body.error || 'Failed to fetch exams');
           }
-          return;
         }
         const data = await res.json();
         if (controller.signal.aborted) return;
         setExams((Array.isArray(data) ? data : []).map((e: any) => ({
           id: e.id,
-          title: e.title || 'Untitled',
+          title: e.title || 'Untitled', access: e.access, ownerName: e.ownerName,
           subject: e.subject?.name || '—',
-          durationMinutes: e.durationMinutes || 0,
+          durationMinutes: e.durationMinutes ?? null,
           totalPoints: e.totalMarks ?? (e.questions || []).reduce((sum: number, q: any) => sum + (q.points || 0), 0),
           status: e.status || (e.type === 'MOCK' ? 'DRAFT' : 'PUBLISHED'),
           className: e.class?.name || '—',
@@ -95,47 +95,27 @@ export default function ExamsList() {
   }, [showArchived, retry]);
 
   const filteredExams = exams.filter(e => {
-    const q = searchTerm.toLowerCase();
-    return e.title.toLowerCase().includes(q) || e.subject.toLowerCase().includes(q) || e.className.toLowerCase().includes(q);
+    return [e.title, e.subject, e.className, e.ownerName].join(' ').toLowerCase().includes(searchTerm.trim().toLowerCase());
   });
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Exams</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage assessments, quizzes, and standard tests.</p>
-        </div>
-        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+    <section className="exam-directory">
+      <header className="exam-directory-header">
+        <div><h1>Exam library</h1><p>Browse exams by class, subject and owner.</p></div>
+        <div className="exam-directory-header-actions">
           <Button variant="outline" render={<Link to="/exam2/grading" />} nativeButton={false}>Grading queue</Button>
           <Button variant="outline" render={<Link to="/exam2/accommodations" />} nativeButton={false}>Accommodations</Button>
-          <Button variant="outline" className={showArchived ? 'border-aubergine-400 text-aubergine-600' : ''} onClick={() => setShowArchived((v) => !v)}>
-            {showArchived ? 'Show active' : 'Show archived'}
-          </Button>
-          {!showArchived && (
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/exams/new" />} nativeButton={false}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Exam
-            </Button>
-          )}
+          {!showArchived && <Button render={<Link to="/exams/new" />} nativeButton={false}><Plus size={16} />Create exam</Button>}
         </div>
-      </div>
-
-      <div className="bg-card p-4 rounded-sm border border-border shadow-sm flex flex-col sm:flex-row gap-4 items-center">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            aria-label="Search exams by title or subject" placeholder="Search exams by title, subject..."
-            className="pl-9"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      </header>
+      <div className="exam-directory-toolbar">
+        <div className="flex flex-wrap items-center gap-3"><strong>{showArchived ? 'Archived exams' : 'Current exams'}</strong>
+          <Button variant="ghost" onClick={() => setShowArchived(v => !v)}>{showArchived ? 'Show active' : 'Show archived'}</Button>
         </div>
+        <DirectorySearch value={searchTerm} onChange={setSearchTerm} />
       </div>
-
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div role="status" className="flex items-center justify-center py-12">
           <span className="ml-3 text-muted-foreground">Loading exams...</span>
         </div>
       ) : loadError ? (
@@ -146,84 +126,37 @@ export default function ExamsList() {
           <p className="text-sm text-muted-foreground">{searchTerm ? 'Try adjusting your search.' : showArchived ? 'Archived exams will appear here. Your active exams are still available under Show active.' : 'Create your first exam to get started.'}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredExams.map(exam => (
-            <div key={exam.id} className="bg-card border border-border rounded-sm overflow-hidden shadow-sm flex flex-col hover:border-aubergine-200 dark:hover:border-aubergine-900/50 transition-colors">
-              <div className="p-5 flex-1">
-                <div className="flex justify-between items-start mb-4">
-                  <Badge variant={exam.status === 'PUBLISHED' ? 'default' : exam.status === 'DRAFT' ? 'secondary' : 'outline'}
-                    className={
-                      exam.status === 'PUBLISHED' ? 'bg-emerald-500 hover:bg-emerald-600' :
-                      exam.status === 'DRAFT' ? 'bg-amber-100 text-amber-800 hover:bg-amber-100' : ''
-                    }
-                  >
-                    {exam.status}
-                  </Badge>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger render={<Button variant="ghost" size="sm" aria-label={`Actions for ${exam.title}`} className="h-8 w-8 p-0" />} nativeButton={true}>
-                      <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem render={<Link to={`/exams/${exam.id}`} />} nativeButton={false}>View Dashboard</DropdownMenuItem>
-                      <DropdownMenuItem render={<Link to={`/exams/${exam.id}/studio`} />} nativeButton={false}>Open in Studio</DropdownMenuItem>
-                      <DropdownMenuItem render={<Link to={`/exam2/${exam.id}/author`} />} nativeButton={false}>Author content</DropdownMenuItem>
-                      <DropdownMenuItem render={<Link to={`/exam2/${exam.id}/schedule`} />} nativeButton={false}>Schedule &amp; release</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem render={<Link to={`/exams/${exam.id}/preview`} />} nativeButton={false}>Preview</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      {showArchived ? (
-                        <DropdownMenuItem className="text-emerald-600" onClick={() => handleRestore(exam)}>Restore exam</DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem className="text-red-600" onClick={() => handleArchive(exam)}>Archive exam</DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                <h3 className="font-bold text-lg text-foreground mb-1">{exam.title}</h3>
-                <p className="text-muted-foreground text-sm mb-4">{exam.subject}</p>
-
-                <div className="space-y-2 mt-auto">
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
-                    {exam.durationMinutes} Minutes
-                  </div>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <CheckCircle2 className="mr-2 h-4 w-4 text-muted-foreground" />
-                    {exam.totalPoints} Points Total
-                  </div>
-                </div>
-              </div>
-              <div className="bg-muted/50 p-4 border-t border-border flex justify-between items-center">
-                <span className="text-xs text-muted-foreground font-medium">{exam.className}</span>
-                <Button variant="ghost" size="sm" className="text-aubergine-600 hover:text-aubergine-700 hover:bg-aubergine-50 dark:hover:bg-aubergine-900/20" render={<Link to={`/exams/${exam.id}`} />} nativeButton={false}>
-                  Manage <ArrowRight className="ml-1 h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
+        <>
+          <DirectoryColumns detail="Exam details" />
+          <ul className="exam-directory-list">{filteredExams.map(exam =>
+            <DirectoryRow key={exam.id} {...exam} actions={<>
+              <Link className="exam-directory-link" to={`/exams/${exam.id}`}>Manage <ArrowRight size={15} /></Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<Button variant="ghost" size="sm" aria-label={`Actions for ${exam.title}`} className="size-11 p-0" />} nativeButton={true}>
+                  <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem render={<Link to={`/exams/${exam.id}`} />} nativeButton={false}>View Dashboard</DropdownMenuItem>
+                  <DropdownMenuItem render={<Link to={`/exams/${exam.id}/studio`} />} nativeButton={false}>Open in Studio</DropdownMenuItem>
+                  <DropdownMenuItem render={<Link to={`/exam2/${exam.id}/author`} />} nativeButton={false}>Author content</DropdownMenuItem>
+                  <DropdownMenuItem render={<Link to={`/exam2/${exam.id}/schedule`} />} nativeButton={false}>Schedule &amp; release</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem render={<Link to={`/exams/${exam.id}/preview`} />} nativeButton={false}>Preview</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {showArchived ? (
+                    <DropdownMenuItem className="text-accent-foreground" onClick={() => handleRestore(exam)}>Restore exam</DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem className="text-destructive" onClick={() => handleArchive(exam)}>Archive exam</DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>}>
+              <span>{exam.durationMinutes ? `${exam.durationMinutes} min` : 'Untimed'}</span>
+              <span>{exam.totalPoints} points</span>
+            </DirectoryRow>
+          )}</ul>
+        </>
       )}
-    </div>
+    </section>
   );
-}
-
-function ArrowRight(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M5 12h14" />
-      <path d="m12 5 7 7-7 7" />
-    </svg>
-  )
 }

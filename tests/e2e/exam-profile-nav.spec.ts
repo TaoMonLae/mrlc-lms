@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { CURRENT_RELEASE } from '../../src/data/releases';
 test.use({ serviceWorkers: 'block' });
-async function setup(page: Page) {
+async function setup(page: Page, access: 'owner' | 'editor' | 'viewer' = 'owner') {
   const user = { id: 'nav-teacher', role: 'TEACHER', firstName: 'Exam', lastName: 'Teacher', isActive: true, cursorEffect: 'NONE' };
   const writes: string[] = [];
   await page.addInitScript(({ user, releaseId }) => {
@@ -13,7 +13,9 @@ async function setup(page: Page) {
     if (path.endsWith('/stream')) return route.fulfill({ contentType: 'text/event-stream', body: ': test\n\n' });
     if (path === '/api/auth/me') return route.fulfill({ json: { user } });
     if (['POST', 'DELETE'].includes(route.request().method())) { if (path.startsWith('/api/exams/')) writes.push(path); return route.fulfill({ json: { count: 2 } }); }
-    if (path === '/api/exams/nav-a') return route.fulfill({ json: { id: 'nav-a', title: 'Mathematical Reasoning — GED Practice Test', status: 'PUBLISHED', type: 'FINAL', class: { name: 'GED Preparation', _count: { students: 20 } }, subject: { name: 'Mathematical Reasoning' }, durationMinutes: 120, totalMarks: 200, attempts: [] } });
+    if (path === '/api/exams/nav-a/access') return route.fulfill({ json: { access } });
+    if (path === '/api/exams/nav-a/preview') return route.fulfill({ json: { exam: { title: 'Read-only algebra exam' }, questions: [] } });
+    if (path === '/api/exams/nav-a') return route.fulfill({ json: { id: 'nav-a', access, ownerName: 'Exam Teacher', title: 'Mathematical Reasoning — GED Practice Test', status: 'PUBLISHED', type: 'FINAL', class: { name: 'GED Preparation', _count: { students: 20 } }, subject: { name: 'Mathematical Reasoning' }, durationMinutes: 120, totalMarks: 200, attempts: [] } });
     return route.fulfill({ json: path.includes('settings') ? {} : [] });
   });
   await page.goto('/exams/nav-a');
@@ -65,4 +67,46 @@ test('grouped actions retain confirmation and existing write handlers', async ({
   await page.getByRole('menuitem', { name: /^Archive/ }).click();
   await expect(page).toHaveURL(/\/exams$/);
   expect(writes).toContain('/api/exams/nav-a');
+});
+
+test('owners can grant and revoke editing for a named class teacher', async ({ page }, info) => {
+  await setup(page);
+  let allowed = false;
+  const changes: boolean[] = [];
+  await page.route('**/api/exams/nav-a/editors', route => {
+    if (route.request().method() === 'PUT') {
+      const body = route.request().postDataJSON();
+      expect(body.teacherUserId).toBe('second-teacher');
+      allowed = body.allowed;
+      changes.push(allowed);
+      return route.fulfill({ json: { allowed } });
+    }
+    return route.fulfill({ json: [{ teacherUserId: 'second-teacher', name: 'Other Teacher', allowed }] });
+  });
+  await page.getByRole('button', { name: 'Editing access', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Manage editing access' });
+  await expect(dialog.getByText('View only', { exact: true })).toBeVisible();
+  await dialog.getByRole('button', { name: 'Grant editing access for Other Teacher' }).click();
+  await expect(dialog.getByText('Can edit', { exact: true })).toBeVisible();
+  await page.screenshot({ path: info.outputPath('editing-access.png') });
+  await dialog.getByRole('button', { name: 'Revoke editing access for Other Teacher' }).click();
+  await expect(dialog.getByText('View only', { exact: true })).toBeVisible();
+  expect(changes).toEqual([true, false]);
+});
+
+test('shared editors cannot grant editing access to anyone else', async ({ page }) => {
+  await setup(page, 'editor');
+  await expect(page.getByRole('link', { name: 'Open in Studio' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Editing access', exact: true })).toHaveCount(0);
+});
+
+test('viewers opening management links land in the read-only exam', async ({ page }) => {
+  await setup(page, 'viewer');
+  await expect(page).toHaveURL(/nav-a\/preview$/);
+  await expect(page.getByRole('link', { name: 'Back to exams' })).toHaveAttribute('href', '/exams');
+  for (const url of ['/exams/nav-a/studio', '/exam2/nav-a/schedule', '/exams/nav-a/results', '/exam2/nav-a/invigilator']) {
+    await page.goto(url);
+    await expect(page.getByRole('heading', { name: 'Read-only algebra exam' })).toBeVisible();
+    await expect(page).toHaveURL(/nav-a\/preview$/);
+  }
 });
