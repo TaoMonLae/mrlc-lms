@@ -267,7 +267,7 @@ test('idle students keep checking in, receive extra time, and notice invigilator
   paused = true;
   await page.clock.fastForward(8_000);
   await expect(page.getByRole('heading', { name: 'Session locked' })).toBeVisible();
-  await expect(page.getByText('This attempt has been paused. Resume it from My Exams before continuing.')).toBeVisible();
+  await expect(page.getByText('This attempt has been paused. Return to My Exams; an invigilator may need to resume it.')).toBeVisible();
 });
 
 test('invigilator actions match attempt state and explain what reopening clears', async ({ page }, info) => {
@@ -484,4 +484,92 @@ test('live student player uses saved theme colors', async ({ page }, info) => {
   await expect(paper).toHaveCSS('background-color', 'rgb(232, 232, 232)');
   await expect(page.locator('.ep-answer textarea')).toHaveCSS('color', 'rgb(16, 16, 16)');
   await page.screenshot({ path: info.outputPath('student-focus-light.png') });
+});
+
+function liveSession(state = 'IN_PROGRESS', remainingSeconds: number | null = 120) {
+  return {
+    summary: { notStarted: 0, inProgress: state === 'IN_PROGRESS' ? 1 : 0, paused: state === 'PAUSED' ? 1 : 0, submitted: 0, disconnected: 0 },
+    students: [{ studentId: 's1', name: 'Ada Lee', attemptId: 'a1', state, remainingSeconds, securityWarnings: 0 }],
+  };
+}
+
+test('slow invigilator refreshes do not overlap or overwrite a completed pause', async ({ page }) => {
+  await fixture(page, 'TEACHER');
+  await page.clock.install();
+  let reads = 0;
+  let delayed: any;
+  let delayNext = false;
+  let state = 'IN_PROGRESS';
+  await page.route('**/api/exams/exam-a/invigilator', async route => {
+    reads++;
+    if (delayNext) { delayNext = false; delayed = route; return; }
+    await route.fulfill({ json: liveSession(state) });
+  });
+  await page.route('**/api/attempts/a1/invigilate', async route => {
+    expect(route.request().postDataJSON()).toEqual({ action: 'PAUSE' });
+    state = 'PAUSED';
+    await route.fulfill({ json: { ok: true } });
+  });
+  await page.goto('/exam2/exam-a/invigilator');
+  const actions = page.getByRole('group', { name: 'Actions for Ada Lee' });
+  await expect(actions.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
+  const initialReads = reads;
+  delayNext = true;
+  await page.clock.fastForward(10001);
+  await expect.poll(() => reads).toBe(initialReads + 1);
+  await page.clock.fastForward(10001);
+  expect(reads).toBe(initialReads + 1);
+  await actions.getByRole('button', { name: 'Pause', exact: true }).click();
+  await expect(actions.getByRole('button', { name: 'Resume', exact: true })).toBeVisible();
+  await delayed.fulfill({ json: liveSession('IN_PROGRESS') }).catch(() => {});
+  await expect(actions.getByRole('button', { name: 'Resume', exact: true })).toBeVisible();
+  expect(reads).toBe(initialReads + 2);
+});
+
+test('conflicting invigilator actions reload current state and failed reloads disable controls', async ({ page }) => {
+  await fixture(page, 'TEACHER');
+  let state = 'IN_PROGRESS';
+  let unavailable = false;
+  let commands = 0;
+  await page.route('**/api/exams/exam-a/invigilator', route => route.fulfill(unavailable
+    ? { status: 503, json: { error: 'Unavailable' } } : { json: liveSession(state) }));
+  await page.route('**/api/attempts/a1/invigilate', route => {
+    commands++;
+    state = commands === 1 ? 'PAUSED' : 'IN_PROGRESS';
+    if (commands === 2) unavailable = true;
+    return route.fulfill({ status: 409, json: { error: 'Attempt changed while applying action' } });
+  });
+  await page.goto('/exam2/exam-a/invigilator');
+  const actions = page.getByRole('group', { name: 'Actions for Ada Lee' });
+  await actions.getByRole('button', { name: 'Pause', exact: true }).click();
+  await expect(actions.getByRole('button', { name: 'Resume', exact: true })).toBeVisible();
+  await expect(page.getByText('Attempt changed while applying action', { exact: true })).toBeVisible();
+  await actions.getByRole('button', { name: 'Resume', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Could not refresh the live session');
+  await expect(actions.getByRole('button', { name: 'Resume', exact: true })).toBeDisabled();
+  unavailable = false;
+  await page.getByRole('button', { name: 'Retry', exact: true }).click();
+  await expect(actions.getByRole('button', { name: 'Pause', exact: true })).toBeEnabled();
+});
+
+test('invigilator validates notes and time input and hides extra time for untimed attempts', async ({ page }) => {
+  const { writes } = await fixture(page, 'TEACHER');
+  let remaining: number | null = 120;
+  await page.route('**/api/exams/exam-a/invigilator', route => route.fulfill({ json: liveSession('IN_PROGRESS', remaining) }));
+  await page.goto('/exam2/exam-a/invigilator');
+  const actions = page.getByRole('group', { name: 'Actions for Ada Lee' });
+  page.once('dialog', dialog => dialog.accept('   '));
+  await actions.getByRole('button', { name: 'Note', exact: true }).click();
+  await expect(page.getByText('Enter a note between 1 and 2000 characters.')).toBeVisible();
+  page.once('dialog', dialog => dialog.accept('1.5'));
+  await actions.getByRole('button', { name: '+Time', exact: true }).click();
+  await expect(page.getByText('Enter a whole number of minutes between 1 and 1440.')).toBeVisible();
+  expect(writes.filter(write => write.path.endsWith('/invigilate'))).toHaveLength(0);
+  page.once('dialog', dialog => dialog.accept('  Connection lost at 10:00  '));
+  await actions.getByRole('button', { name: 'Note', exact: true }).click();
+  await expect.poll(() => writes.filter(write => write.path.endsWith('/invigilate'))).toEqual([{ path: '/api/attempts/a1/invigilate', body: { action: 'INCIDENT_NOTE', note: 'Connection lost at 10:00' } }]);
+  remaining = null;
+  await page.reload();
+  await expect(actions.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
+  await expect(actions.getByRole('button', { name: '+Time', exact: true })).toHaveCount(0);
 });

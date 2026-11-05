@@ -149,9 +149,9 @@ test('empty or failed exam responses show recovery and retry loads the page', as
   await expect(page.getByRole('heading', { name: 'Responses overview' })).toBeVisible();
   await page.route('**/api/exams/nav-a/invigilator', route => route.fulfill({ json: { summary: {}, students: [{studentId:'s1',name:'Student',state:null}] } }));
   await page.goto('/exam2/nav-a/invigilator');
-  await expect(page.getByRole('heading', { name: 'This exam page couldn’t open' })).toBeVisible();
+  await expect(page.getByRole('alert')).toContainText('Could not refresh the live session');
   await managementPages(page);
-  await page.getByRole('button', { name: 'Try again', exact: true }).click();
+  await page.getByRole('button', { name: 'Retry', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Invigilator Dashboard' })).toBeVisible();
 });
 

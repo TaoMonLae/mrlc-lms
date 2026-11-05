@@ -265,7 +265,7 @@ export default function ExamPlayer() {
         return true;
       }
       if (status === 409 && data.error === 'SESSION_CONFLICT') { setBlocked('This attempt was opened in another window or device. This session is now read-only.'); return false; }
-      if (status === 409 && data.error === 'ATTEMPT_PAUSED') { setBlocked('This attempt has been paused. Resume it from My Exams before continuing.'); return false; }
+      if (status === 409 && data.error === 'ATTEMPT_PAUSED') { setBlocked('This attempt has been paused. Return to My Exams; an invigilator may need to resume it.'); return false; }
       if (status === 409 && (data.error === 'TIME_EXPIRED' || data.autoSubmitted || ['SUBMITTED', 'AUTO_SUBMITTED', 'PENDING_GRADING', 'FINALIZED', 'RELEASED'].includes(data.state))) { toast.info('Your attempt has been submitted.'); openResult(); return false; }
       if (status === 409 && data.state === 'INVALIDATED') { setBlocked('This attempt has been voided by your teacher.'); return false; }
       setSaveError(data.error || 'Your answers could not be saved. Please retry.');
