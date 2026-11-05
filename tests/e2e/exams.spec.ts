@@ -475,3 +475,13 @@ test('a queued navigation save is cancelled when the student submits', async ({ 
   expect(saveCount).toBe(1);
   expect(writes.find(write => write.path.endsWith('/submit'))?.body.answers[0].answerText).toBe('Final response');
 });
+
+test('live student player uses saved theme colors', async ({ page }, info) => {
+  await fixture(page, 'STUDENT', 600, { questionTheme: 'focus' });
+  await page.goto('/exam2/attempts/attempt-a/play');
+  const paper = page.locator('.exam-paper');
+  await expect(paper).toHaveAttribute('data-question-theme', 'focus');
+  await expect(paper).toHaveCSS('background-color', 'rgb(232, 232, 232)');
+  await expect(page.locator('.ep-answer textarea')).toHaveCSS('color', 'rgb(16, 16, 16)');
+  await page.screenshot({ path: info.outputPath('student-focus-light.png') });
+});

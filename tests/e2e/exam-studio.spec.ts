@@ -307,3 +307,50 @@ test('ordering rows and passage dropdowns fit the student paper', async ({ page 
   await page.screenshot({ path: info.outputPath('passage-dropdown.png') });
   expect(await preview.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
 });
+
+test('saved question themes reach the sample, live card and full preview after reload', async ({ page }, info) => {
+  const { writes } = await setup(page, [choice]);
+  let theme = 'ged';
+  await page.route('**/api/exams/studio-a', route => {
+    if (route.request().method() === 'PUT') {
+      const body = route.request().postDataJSON(); theme = body.settings.questionTheme;
+      writes.push({ path: '/api/exams/studio-a', body });
+      return route.fulfill({ json: { id: 'studio-a' } });
+    }
+    return route.fulfill({ json: { id: 'studio-a', title: 'Science — Solar system', status: 'DRAFT', classId: 'class-a', subjectId: 'subject-a', type: 'QUIZ', durationMinutes: 30, questions: [choice], attempts: [], settings: { questionTheme: theme } } });
+  });
+  await page.goto('/exams/studio-a/studio');
+  await page.getByRole('button', { name: 'Details', exact: true }).click();
+  const choices = [['focus','High-contrast focus'], ['classic','Classroom classic'], ['colorful','Colorful K–5'], ['ged','GED neutral']];
+  const backgrounds = new Set<string>();
+  for (const [value, label] of choices) {
+    await page.getByRole('combobox', { name: 'Student question theme' }).click();
+    await page.getByRole('option', { name: label, exact: true }).click();
+    const sample = page.getByLabel('Selected theme sample');
+    await expect(sample).toHaveClass(new RegExp(`ep-${value}`));
+    backgrounds.add(await sample.evaluate(el => getComputedStyle(el).backgroundColor));
+    await page.getByRole('button', { name: 'Preview as student', exact: true }).click();
+    const paper = page.getByRole('dialog', { name: 'Student preview' }).locator('.exam-paper');
+    await expect(paper).toHaveAttribute('data-question-theme', value);
+    expect(await paper.evaluate(el => getComputedStyle(el).getPropertyValue('--ep-accent'))).toBe(await sample.evaluate(el => getComputedStyle(el).getPropertyValue('--ep-accent')));
+    await page.screenshot({ path: info.outputPath(`theme-${value}-light.png`) });
+    await page.keyboard.press('Escape');
+  }
+  expect(backgrounds.size).toBe(4);
+  await page.getByRole('combobox', { name: 'Student question theme' }).click();
+  await page.getByRole('option', { name: 'High-contrast focus', exact: true }).click();
+  await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'All changes saved' })).toBeVisible();
+  expect(theme).toBe('focus');
+  await page.reload();
+  await page.getByRole('button', { name: 'Questions', exact: true }).click();
+  await expect(page.locator('.ep-mini-preview')).toHaveClass(/ep-focus/);
+  await page.getByRole('button', { name: 'Preview as student', exact: true }).click();
+  await expect(page.getByRole('dialog').locator('.exam-paper')).toHaveAttribute('data-question-theme', 'focus');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Toggle theme between light and dark mode' }).click();
+  await page.getByRole('menuitem', { name: 'Dark', exact: true }).click();
+  await page.getByRole('button', { name: 'Preview as student', exact: true }).click();
+  await expect(page.getByRole('dialog').locator('.exam-paper')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+  await page.screenshot({ path: info.outputPath('theme-focus-dark.png') });
+});

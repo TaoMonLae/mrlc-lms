@@ -110,3 +110,64 @@ test('viewers opening management links land in the read-only exam', async ({ pag
     await expect(page).toHaveURL(/nav-a\/preview$/);
   }
 });
+
+async function managementPages(page: Page) {
+  await page.route('**/api/exams/nav-a/results', route => route.fulfill({ json: { exam: { id: 'nav-a', title: 'Algebra exam', className: 'GED', subject: 'Math', studentCount: 0 }, attempts: [] } }));
+  await page.route('**/api/exams/nav-a/invigilator', route => route.fulfill({ json: { summary: { notStarted: 0, inProgress: 0, paused: 0, submitted: 0, disconnected: 0 }, students: [] } }));
+  await page.route('**/api/exams/nav-a/result-policy', route => route.fulfill({ json: { releaseMode: 'HIDDEN' } }));
+}
+
+test('exam destinations stay visible during navigation even when animation frames are suspended', async ({ page }) => {
+  await setup(page); await managementPages(page);
+  await expect(page.getByRole('heading', { name: 'Mathematical Reasoning — GED Practice Test' })).toBeVisible();
+  await page.evaluate(() => { (window as any).savedRAF = window.requestAnimationFrame; window.requestAnimationFrame = () => 0; });
+  await page.getByRole('button', { name: 'Review all answers' }).click({ force: true });
+  await expect(page.getByRole('heading', { name: 'Responses overview' })).toBeVisible();
+  await expect(page.locator('#main-content > div')).toHaveCSS('opacity', '1');
+  await page.evaluate(() => { window.requestAnimationFrame = (window as any).savedRAF; });
+  await page.goBack();
+  await page.getByRole('button', { name: 'Responses', exact: true }).click();
+  await page.getByRole('menuitem', { name: /^Monitor attempts/ }).click();
+  await expect(page.getByRole('heading', { name: 'Invigilator Dashboard' })).toBeVisible();
+  await expect(page.locator('#main-content > div')).toHaveCSS('opacity', '1');
+  await page.goBack();
+  await page.getByRole('link', { name: 'Open in Studio' }).click();
+  await expect(page.getByRole('heading', { name: 'Build your first question' })).toBeVisible();
+  await expect(page.locator('#main-content > div')).toHaveCSS('opacity', '1');
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Build your first question' })).toBeVisible();
+});
+
+test('empty or failed exam responses show recovery and retry loads the page', async ({ page }) => {
+  await setup(page); await managementPages(page);
+  let fail = true;
+  await page.route('**/api/exams/nav-a/results', route => route.fulfill({ json: fail ? null : { exam: { title: 'Recovered exam', className: 'GED', subject: 'Math', studentCount: 0 }, attempts: [] } }));
+  await page.goto('/exams/nav-a/results');
+  await expect(page.getByRole('heading', { name: 'Student responses unavailable' })).toBeVisible();
+  fail = false;
+  await page.getByRole('button', { name: 'Try again' }).click();
+  await expect(page.getByRole('heading', { name: 'Responses overview' })).toBeVisible();
+  await page.route('**/api/exams/nav-a/invigilator', route => route.fulfill({ json: { summary: {}, students: [{studentId:'s1',name:'Student',state:null}] } }));
+  await page.goto('/exam2/nav-a/invigilator');
+  await expect(page.getByRole('heading', { name: 'This exam page couldn’t open' })).toBeVisible();
+  await managementPages(page);
+  await page.getByRole('button', { name: 'Try again', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Invigilator Dashboard' })).toBeVisible();
+});
+
+test('stalled access check times out visibly and can be retried', async ({ page }) => {
+  await setup(page); await managementPages(page);
+  await page.clock.install();
+  let stall = true;
+  await page.route('**/api/exams/nav-a/access', async route => {
+    if (stall) return;
+    return route.fulfill({ json: { access: 'owner' } });
+  });
+  await page.goto('/exams/nav-a/results');
+  await expect(page.getByRole('status')).toHaveText('Checking exam access…');
+  await page.clock.fastForward(21000);
+  await expect(page.getByRole('alert')).toContainText('Loading took too long');
+  stall = false;
+  await page.getByRole('button', { name: 'Retry', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Responses overview' })).toBeVisible();
+});

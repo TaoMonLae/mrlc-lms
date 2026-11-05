@@ -73,7 +73,7 @@ function StudentResultsRedirect({ examId }: { examId: string }) {
   const navigate = useNavigate();
   useEffect(() => {
     const controller = new AbortController();
-    apiGet<{ submitted: { id: string; attemptId?: string }[] }>('/api/student/exams', { signal: controller.signal })
+    apiGet<{ submitted: { id: string; attemptId?: string }[] }>('/api/student/exams', { signal: controller.signal, timeoutMs: 20000 })
       .then(data => {
         if (controller.signal.aborted) return;
         const match = (data?.submitted || []).find(exam => exam.id === examId);
@@ -101,8 +101,11 @@ function TeacherReview({ examId }: { examId: string }) {
     setLoading(true);
     setError('');
     setData(null);
-    apiGet<ReviewData>(`/api/exams/${examId}/results`, { signal: controller.signal })
-      .then(result => { if (!controller.signal.aborted) setData(result); })
+    apiGet<ReviewData>(`/api/exams/${examId}/results`, { signal: controller.signal, timeoutMs: 20000 })
+      .then(result => {
+        if (!result?.exam || !Array.isArray(result.attempts)) throw new Error('Student responses could not be loaded. Please try again.');
+        if (!controller.signal.aborted) setData(result);
+      })
       .catch((cause: Error) => { if (!controller.signal.aborted) setError(cause.message || 'Could not load student answers.'); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
@@ -138,7 +141,7 @@ function TeacherReview({ examId }: { examId: string }) {
 
   if (loading && !data) return <div className="flex items-center justify-center gap-2 py-24 text-sm text-muted-foreground"><Loader2 className="size-5 animate-spin" />Loading student responses…</div>;
   if (error) return <div role="alert" className="mx-auto max-w-xl rounded-sm border border-border bg-card p-8"><AlertCircle className="mb-3 size-6 text-destructive" /><h1 className="text-lg font-semibold">Student responses unavailable</h1><p className="mt-2 text-sm text-muted-foreground">{error}</p><Button className="mt-5" variant="outline" onClick={() => setRetry(value => value + 1)}>Try again</Button></div>;
-  if (!data) return null;
+  if (!data) return <p role="status">Loading student responses…</p>;
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-5 pb-8">

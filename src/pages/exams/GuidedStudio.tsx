@@ -14,7 +14,6 @@ import {
   ArrowLeft, ArrowUp, ArrowDown, Copy, Check, ChevronDown, Loader2, Plus, Trash2, X,
   FileText, ListChecks, CalendarClock, Play, PanelRight, Eye, CircleDot, SquareCheck, AlignLeft, TextCursorInput, ChevronRight, BookOpen, KeyRound,
 } from 'lucide-react';
-import { motion, useReducedMotion } from 'motion/react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import './guided-studio.css';
 import ExamPaper from '../../components/exams/ExamPaper';
@@ -209,17 +208,19 @@ export default function GuidedStudio() {
   useEffect(() => {
     if (!id) return;
     let active = true;
+    const controller = new AbortController();
+    const readOptions = { signal: controller.signal, timeoutMs: 20000 };
     setLoading(true);
     setLoadError('');
     savedSnapshot.current = null;
-    // Phase-2 tables may not be migrated in every environment; those reads are
-    // best-effort and fall back to the settings JSON on the base exam.
+    // Load the full editing state before enabling changes. Abort stale requests
+    // and surface a recoverable error when any required read times out.
     Promise.all([
-      apiGet<any>(`/api/exams/${id}`),
-      apiGet<any>(`/api/exams/${id}/result-policy`),
-      apiGet<any[]>(`/api/accommodations?examId=${id}`),
-      apiGet<any[]>('/api/classes'),
-      apiGet<any[]>('/api/subjects'),
+      apiGet<any>(`/api/exams/${id}`, readOptions),
+      apiGet<any>(`/api/exams/${id}/result-policy`, readOptions),
+      apiGet<any[]>(`/api/accommodations?examId=${id}`, readOptions),
+      apiGet<any[]>('/api/classes', readOptions),
+      apiGet<any[]>('/api/subjects', readOptions),
     ]).then(([exam, policy, accoms, classRows, subjectRows]) => {
       if (!active) return;
       setClasses(classRows.map(c => ({ id: c.id, name: c.name })));
@@ -278,7 +279,7 @@ export default function GuidedStudio() {
     }).catch((e: any) => {
       if (active) setLoadError(e.message || 'Failed to load exam.');
     }).finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+    return () => { active = false; controller.abort(); };
   }, [id, loadVersion]);
 
   // roster for accommodations (filtered by class)
@@ -656,7 +657,7 @@ export default function GuidedStudio() {
               <button aria-pressed={previewDevice === 'phone'} onClick={() => setPreviewDevice('phone')}>Phone view</button>
             </div>
             <div style={{ maxWidth: previewDevice === 'phone' ? 230 : '100%', margin: previewDevice === 'phone' ? '0 auto' : undefined }}>
-              <PreviewCard q={cur} index={sel} total={questions.length} minutes={duration} />
+              <PreviewCard q={cur} index={sel} total={questions.length} minutes={duration} theme={questionTheme} />
             </div>
             <p className="gs-preview-note">Try answering as a student.<br />Preview answers are not saved.</p>
             <button className="gs-preview-expand" onClick={() => setPlayerOpen(true)}><Play size={13} /> Open full preview <ChevronRight size={14} /></button>
@@ -677,7 +678,7 @@ export default function GuidedStudio() {
         }}
       />
       {/* Player overlay */}
-      {playerOpen && <StudentPlayer questions={questions} title={title} minutes={duration} onClose={() => setPlayerOpen(false)} />}
+      {playerOpen && <StudentPlayer questions={questions} title={title} minutes={duration} theme={questionTheme} onClose={() => setPlayerOpen(false)} />}
 
       {/* Publish modal */}
       {published && (
@@ -918,7 +919,6 @@ function QuestionEditor(props: {
 }
 
 function EmptyEditor({ onAdd }: { onAdd: (type: UIType) => void }) {
-  const reduceMotion = useReducedMotion();
   const labels: Record<UIType, [string, string]> = {
     MCQ: ['Multiple choice', 'Choose one correct answer'], TF: ['True or false', 'A quick knowledge check'],
     SHORT: ['Short answer', 'A written response'], ESSAY: ['Essay', 'A longer, graded response'],
@@ -926,7 +926,7 @@ function EmptyEditor({ onAdd }: { onAdd: (type: UIType) => void }) {
     HOTSPOT: ['Multiple selection', 'Choose all correct answers'], EXTENDED: ['Extended response', 'Evidence and reasoning'],
   };
   const icons = { MCQ: CircleDot, TF: Check, SHORT: AlignLeft, ESSAY: FileText, DRAG: TextCursorInput, DROPDOWN: ChevronDown, HOTSPOT: SquareCheck, EXTENDED: BookOpen };
-  return <motion.div className="gs-empty" initial={reduceMotion ? false : { opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .18 }}>
+  return <div className="gs-empty">
     <div className="gs-empty-intro"><span className="gs-kicker"><ListChecks size={15} /> QUESTION BUILDER</span>
       <h2>Build your first question</h2>
       <p>What would you like to assess? Choose a response type, then add your question and answer key.</p>
@@ -936,7 +936,7 @@ function EmptyEditor({ onAdd }: { onAdd: (type: UIType) => void }) {
       <div className="gs-types">{TYPES.filter(t => t.objective === objective).map(t => { const Icon = icons[t.key]; return <button key={t.key} onClick={() => onAdd(t.key)}><span className="gs-type-icon"><Icon size={19} /></span><span><strong>{labels[t.key][0]}</strong><small>{labels[t.key][1]}</small></span><Plus size={15} className="gs-type-add" /></button>; })}</div>
     </section>)}</div>
     <div className="gs-empty-hint"><Eye size={16} /><span>See it from the student’s side. A live preview appears as you build.</span></div>
-  </motion.div>;
+  </div>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -1002,12 +1002,18 @@ function DetailsStep(p: any) {
       </p>
       <Field label="Student question theme">
         <Select value={p.questionTheme} onValueChange={p.setQuestionTheme}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectTrigger aria-label="Student question theme"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="ged">GED neutral</SelectItem><SelectItem value="classic">Classroom classic</SelectItem>
             <SelectItem value="colorful">Colorful K–5</SelectItem><SelectItem value="focus">High-contrast focus</SelectItem>
           </SelectContent>
         </Select>
+        <div className={`exam-paper ep-${p.questionTheme} ep-theme-sample`} aria-label="Selected theme sample">
+          <p>Question preview</p>
+          <strong>Which answer would you choose?</strong>
+          <div className="ep-theme-sample-answer">A <span>Sample answer</span><Check size={16} aria-hidden="true" /></div>
+        </div>
+        <p className="gs-preview-note">Applies to the student question screen and previews. Save changes to apply it to the exam.</p>
       </Field>
       <Field label="Instructions"><textarea value={p.instructions} onChange={(e: any) => p.setInstructions(e.target.value)} rows={4} style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit' }} placeholder="Shown to students before they begin." /></Field>
 
@@ -1203,22 +1209,22 @@ function renderQuestionText(text: string) {
   return <MathText text={text} />;
 }
 
-function PreviewCard({ q, index, total, minutes }: { q?: Question; index: number; total: number; minutes: number }) {
+function PreviewCard({ q, index, total, minutes, theme }: { q?: Question; index: number; total: number; minutes: number; theme: QuestionTheme }) {
   const [answer, setAnswer] = useState<any>(null);
   useEffect(() => setAnswer(null), [q]);
-  if (!q) return <div style={{ padding: 24, textAlign: 'center', color: C.muted2, fontSize: 13 }}>Select or add a question to preview.</div>;
+  if (!q) return <div style={{ padding: 24, textAlign: 'center', color: 'var(--ep-muted)', fontSize: 13 }}>Select or add a question to preview.</div>;
   return (
-    <div style={{ borderRadius: 16, background: C.surface, border: `1px solid ${C.border2}`, boxShadow: '0 8px 24px -14px rgba(0,0,0,.25)', overflow: 'hidden' }}>
-      <div style={{ height: 5, background: C.purple }} />
+    <div className={`exam-paper ep-${theme} ep-mini-preview`}>
+      <div style={{ height: 5, background: 'var(--ep-accent)' }} />
       <div style={{ padding: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: C.muted2 }}>Q{index + 1} / {total}</span>
-          <span style={{ fontSize: 11, color: C.muted2 }}>◷ {String(minutes).padStart(2, '0')}:00</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--ep-muted)' }}>Q{index + 1} / {total}</span>
+          <span style={{ fontSize: 11, color: 'var(--ep-muted)' }}>◷ {String(minutes).padStart(2, '0')}:00</span>
         </div>
-        <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 14, lineHeight: 1.4 }}>{renderQuestionText(q.text || 'Your question text appears here.')}</div>
-        {q.passageText && <div style={{ fontSize: 12, lineHeight: 1.55, whiteSpace: 'pre-wrap', color: C.muted, background: C.panel, border: `1px solid ${C.border2}`, borderRadius: 10, padding: 10, marginBottom: 12 }}>{q.passageText}</div>}
+        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ep-ink)', marginBottom: 14, lineHeight: 1.4 }}>{renderQuestionText(q.text || 'Your question text appears here.')}</div>
+        {q.passageText && <div style={{ fontSize: 12, lineHeight: 1.55, whiteSpace: 'pre-wrap', color: 'var(--ep-ink)', background: 'var(--ep-canvas)', border: `1px solid ${C.border2}`, borderRadius: 10, padding: 10, marginBottom: 12 }}>{q.passageText}</div>}
         {q.imageUrl && <img src={q.imageUrl} alt="Question illustration" style={{ display: 'block', maxWidth: '100%', maxHeight: 180, objectFit: 'contain', borderRadius: 10, marginBottom: 12, border: `1px solid ${C.border2}` }} />}
-        <StudentInput key={q.id} q={q} value={answer} onChange={setAnswer} small />
+        <div className="ep-answer"><StudentInput key={q.id} q={q} value={answer} onChange={setAnswer} small /></div>
       </div>
     </div>
   );
@@ -1283,7 +1289,7 @@ function StudentInput({ q, value, onChange, small }: { q: Question; value: any; 
 /* Focus student player overlay                                        */
 /* ------------------------------------------------------------------ */
 
-function StudentPlayer({ questions, title, minutes, onClose }: { questions: Question[]; title: string; minutes: number; onClose: () => void }) {
+function StudentPlayer({ questions, title, minutes, theme, onClose }: { questions: Question[]; title: string; minutes: number; theme: QuestionTheme; onClose: () => void }) {
   const [pIdx, setPIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<number, any>>({});
   const [flags, setFlags] = useState<Record<number, boolean>>({});
@@ -1322,7 +1328,7 @@ function StudentPlayer({ questions, title, minutes, onClose }: { questions: Ques
     return value !== null && value !== undefined && String(value).trim() !== '';
   };
   return <dialog ref={dialogRef} onCancel={onClose} aria-label="Student preview" className="guided-studio ep-preview-dialog">
-    {q ? <ExamPaper title={title || 'Untitled exam'} preview status={minutes > 0 && remaining === 0 ? 'Preview timer ended · you can keep exploring' : 'Preview only · answers are not saved'} remaining={minutes > 0 ? remaining : null}
+    {q ? <ExamPaper title={title || 'Untitled exam'} theme={theme} preview status={minutes > 0 && remaining === 0 ? 'Preview timer ended · you can keep exploring' : 'Preview only · answers are not saved'} remaining={minutes > 0 ? remaining : null}
       questions={questions.map((item, i) => ({ id: item.id, points: item.points, answered: complete(item, i), partial: partial(item, i), flagged: !!flags[i] }))} index={pIdx}
       prompt={renderQuestionText(q.uiType === 'DRAG' ? dragPrompt(q) : q.text || 'Question text')} passage={q.passageText ? <PassageView text={q.passageText} slots={passageSlots} onSlotChange={(index, value) => setAnswers(a => ({ ...a, [index]: value === '' ? null : Number(value) }))} /> : undefined} passageKey={q.passageText || undefined} imageUrl={q.imageUrl}
       writtenResponse={q.uiType === 'ESSAY' || q.uiType === 'EXTENDED'} onNavigate={setPIdx} onFlag={() => setFlags(f => ({ ...f, [pIdx]: !f[pIdx] }))} onClose={onClose}

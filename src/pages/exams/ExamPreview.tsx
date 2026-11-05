@@ -4,6 +4,7 @@ import { ArrowLeft, Eye, Loader2, AlertTriangle } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { apiGet } from '../../lib/api';
 import MathText from '../../components/MathText';
+import '../../components/exams/exam-paper.css';
 import { splitDragText } from '../../lib/dragBlanks';
 
 type DragBankItem = { key: string; label: string };
@@ -20,15 +21,21 @@ export default function ExamPreview() {
   const { id } = useParams<{ id: string }>();
   const [questions, setQuestions] = useState<Q[]>([]);
   const [title, setTitle] = useState('');
-  const [meta, setMeta] = useState<{ durationMinutes?: number | null; totalMarks?: number | null; status?: string }>({});
+  const [meta, setMeta] = useState<{ durationMinutes?: number | null; totalMarks?: number | null; status?: string; questionTheme?: string }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    apiGet(`/api/exams/${id}/preview`)
-      .then((d) => { setQuestions(d.questions || []); setTitle(d.exam?.title || 'Exam'); setMeta(d.exam || {}); })
-      .catch((e) => setError(e.message || 'Could not load preview'))
-      .finally(() => setLoading(false));
+    const controller = new AbortController();
+    setLoading(true); setError('');
+    apiGet(`/api/exams/${id}/preview`, { signal: controller.signal, timeoutMs: 20000 })
+      .then((d) => {
+        if (!d?.exam || !Array.isArray(d.questions)) throw new Error('Could not load preview. Please try again.');
+        if (!controller.signal.aborted) { setQuestions(d.questions); setTitle(d.exam.title || 'Exam'); setMeta(d.exam); }
+      })
+      .catch((e) => { if (!controller.signal.aborted) setError(e.message || 'Could not load preview'); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
   }, [id]);
 
   if (loading) return <div className="flex items-center justify-center py-32 text-muted-foreground"><Loader2 className="h-6 w-6 animate-spin mr-2" /> Loading preview…</div>;
@@ -42,7 +49,7 @@ export default function ExamPreview() {
   );
 
   return (
-    <div className="max-w-3xl mx-auto pb-24" data-no-i18n>
+    <div className={`exam-paper ep-${['classic', 'colorful', 'focus'].includes(meta.questionTheme || '') ? meta.questionTheme : 'ged'} ep-readonly max-w-3xl mx-auto pb-24`} data-question-theme={meta.questionTheme || 'ged'} data-no-i18n>
       <Link to="/exams" className={buttonVariants({ variant: 'ghost', size: 'sm', className: '-ml-3 mb-2 text-muted-foreground' })}>
         <ArrowLeft className="mr-2 h-4 w-4" /> Back to exams
       </Link>
@@ -70,7 +77,7 @@ export default function ExamPreview() {
           {questions.map((q, idx) => {
             const isChoice = !TEXT_ANSWER_TYPES.includes(q.type) && Array.isArray(q.options) && q.options.length > 0;
             return (
-              <div key={q.id} className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-4">
+              <div key={q.id} className="ep-readonly-question border rounded-sm p-6 space-y-4">
                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Question {idx + 1} · {q.points} pts</span>
                 {q.passageText && (
                   <div className="rounded-lg bg-muted/50 p-4 text-sm text-foreground whitespace-pre-wrap leading-relaxed">

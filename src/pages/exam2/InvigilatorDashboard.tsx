@@ -24,7 +24,8 @@ export default function InvigilatorDashboard() {
   const load = useCallback(async (signal?: AbortSignal) => {
     setRefreshing(true);
     try {
-      const next = await apiGet(`/api/exams/${examId}/invigilator`, { signal });
+      const next = await apiGet(`/api/exams/${examId}/invigilator`, { signal, timeoutMs: 20000 });
+      if (!next?.summary || !Array.isArray(next.students)) throw new Error('Invalid live session response');
       if (!signal?.aborted) { setData(next); setLoadError(''); }
     } catch {
       if (!signal?.aborted) setLoadError('Could not refresh the live session. Displayed information may be out of date.');

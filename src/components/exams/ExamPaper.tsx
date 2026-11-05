@@ -111,7 +111,7 @@ export default function ExamPaper(p: Props) {
     filter === 'all' ? true : filter === 'flagged' ? item.flagged : !item.answered);
   const submit = () => { if (p.preview) { p.onSubmit(); return; } setConfirming(true); };
 
-  return <section ref={root} className={`exam-paper ${p.theme === 'focus' ? 'ep-focus' : p.theme === 'colorful' ? 'ep-colorful' : ''}`} data-no-i18n>
+  return <section ref={root} className={`exam-paper ep-${['classic', 'colorful', 'focus'].includes(p.theme || '') ? p.theme : 'ged'}`} data-question-theme={p.theme || 'ged'} data-no-i18n>
     <header ref={header} className="ep-header">
       <div className="ep-title"><span className="ep-eyebrow">{p.preview ? 'Student preview' : 'Assessment'}</span><h1>{p.title}</h1><p role="status">{p.status}</p></div>
       <div className={`ep-timer ${timerClass}`} aria-label={`Time remaining: ${time}`}><Clock size={17} /><div><span>Time remaining</span><strong>{time}</strong></div></div>

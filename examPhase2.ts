@@ -688,7 +688,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
         };
       });
       res.json({
-        exam: { id: exam.id, title: exam.title, status: exam.status, durationMinutes: exam.durationMinutes, totalMarks: exam.totalMarks },
+        exam: { id: exam.id, title: exam.title, status: exam.status, durationMinutes: exam.durationMinutes, totalMarks: exam.totalMarks, questionTheme: exam.settings && typeof exam.settings === "object" ? (exam.settings as any).questionTheme : "ged" },
         questions,
       });
     } catch (err: any) {

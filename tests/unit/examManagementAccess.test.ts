@@ -8,7 +8,8 @@ import { registerExamBankRoutes } from '../../examBank';
 
 test('exam access follows the stored exam, including child and shared-bank writes', async () => {
   const app = express();
-  const exam = { id: 'e1', classId: 'c1', status: 'DRAFT', _count: { attempts: 0 }, ownerId: 'owner', editorIds: [] as string[], sections: [], stimuli: [], questionGroups: [], questions: [], rubrics: [], examQuestions: [], blueprintRules: [] };
+  const exam = { settings: { questionTheme: 'focus', privateSetting: 'not-for-preview' }, id: 'e1', classId: 'c1', status: 'DRAFT', _count: { attempts: 0 }, ownerId: 'owner', editorIds: [] as string[], sections: [], stimuli: [], questionGroups: [], questions: [], rubrics: [], examQuestions: [], blueprintRules: [] };
+  let responseBody: any;
   let writes = 0;
   let cloneOwner: string | undefined;
   let questionScope: any;
@@ -56,12 +57,14 @@ test('exam access follows the stored exam, including child and shared-bank write
       const req = new IncomingMessage(socket) as any;
       req.method = method; req.url = url; req.headers = { 'x-user': actor }; req.body = body;
       const res = new ServerResponse(req) as any;
-      res.json = () => { res.emit('finish'); resolve(res.statusCode); return res; };
+      res.json = (data: any) => { responseBody = data; res.emit('finish'); resolve(res.statusCode); return res; };
       app(req, res, reject);
     });
   }
 
   assert.equal(await request('GET', '/api/exams/e1/preview'), 200);
+  assert.equal(responseBody.exam.questionTheme, 'focus');
+  assert.equal(responseBody.exam.settings, undefined);
   assert.equal(await request('GET', '/api/exams/e1/preview', 'outside'), 403);
   for (const [method, url] of [
     ['PUT', '/api/exams/e1/schedule'], ['POST', '/api/exams/e1/assignments'],

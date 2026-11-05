@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Link, Navigate, useParams, useSearchParams } from 'react-router';
+import { Link, Navigate, useParams, useSearchParams, useLocation } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { apiGet } from '../../lib/api';
+import ExamRouteBoundary from './ExamRouteBoundary';
 import { useAuth } from '../../providers/AuthProvider';
 
 /** Scoped exam routes must resolve access before mounting forms or loading student responses. */
@@ -9,10 +10,12 @@ export default function ExamManagementGate({ children, studentResults = false }:
   const { id, examId } = useParams();
   const [query] = useSearchParams();
   const { user } = useAuth();
+  const location = useLocation();
   const target = id ?? examId ?? query.get('examId');
   // The global grading queue is scoped by its API. Students open their own released results.
-  if (!target || (studentResults && user?.role === 'STUDENT')) return children;
-  return <AccessCheck key={`${user?.id}/${target}`} examId={target}>{children}</AccessCheck>;
+  const content = !target || (studentResults && user?.role === 'STUDENT') ? children
+    : <AccessCheck key={`${user?.id}/${target}`} examId={target}>{children}</AccessCheck>;
+  return <ExamRouteBoundary key={`${user?.id}/${location.pathname}`}>{content}</ExamRouteBoundary>;
 }
 
 function AccessCheck({ examId, children }: { examId: string; children: ReactNode }) {
@@ -23,8 +26,11 @@ function AccessCheck({ examId, children }: { examId: string; children: ReactNode
   useEffect(() => {
     const controller = new AbortController();
     setError('');
-    apiGet<{ access: string }>(`/api/exams/${encodeURIComponent(examId)}/access`, { signal: controller.signal })
-      .then(data => { if (!controller.signal.aborted) setAccess(data?.access || 'viewer'); })
+    apiGet<{ access: string }>(`/api/exams/${encodeURIComponent(examId)}/access`, { signal: controller.signal, timeoutMs: 20000 })
+      .then(data => {
+        if (!['owner', 'editor', 'admin', 'viewer'].includes(data?.access)) throw new Error('Could not check your exam access. Please try again.');
+        if (!controller.signal.aborted) setAccess(data.access);
+      })
       .catch(reason => { if (!controller.signal.aborted) setError(reason.message || 'Could not check your access.'); });
     return () => controller.abort();
   }, [examId, retry]);
