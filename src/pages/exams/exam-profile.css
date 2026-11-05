@@ -14,8 +14,8 @@
 .exam-command-trigger[data-popup-open] > svg:last-child { transform: rotate(180deg); }
 .exam-command-trigger:hover, .exam-preview-link:hover { background: var(--accent); color: var(--accent-foreground); }
 .exam-preview-link { color: var(--muted-foreground); }
-.exam-studio-link { background: #14736d; color: #fff; border: 1px solid #14736d; }
-.exam-studio-link:hover { background: #105f5a; }
+.exam-studio-link { background: var(--primary); color: var(--primary-foreground); border: 1px solid var(--primary); }
+.exam-studio-link:hover { background: color-mix(in srgb, var(--primary) 90%, var(--background)); }
 .exam-command-menu { width: 294px; max-width: calc(100vw - 24px); padding: 8px; border-radius: 12px; }
 .exam-menu-heading { font-size: 10px; font-weight: 650; letter-spacing: .1em; color: var(--muted-foreground); padding: 8px 10px 12px; border-bottom: 1px solid var(--border); margin-bottom: 5px; }
 .exam-command-menu [role=menuitem] { padding: 11px 10px; gap: 12px; border-radius: 7px; cursor: pointer; align-items: flex-start; }

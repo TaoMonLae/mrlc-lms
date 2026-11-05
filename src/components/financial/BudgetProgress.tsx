@@ -27,7 +27,7 @@ function budgetTone(utilization: number) {
   if (utilization >= 80) {
     return { label: "Watch", text: "text-academic-gold-foreground", bar: "[&>div]:bg-academic-gold", Icon: Clock3 };
   }
-  return { label: "On track", text: "text-academic-teal", bar: "[&>div]:bg-academic-teal", Icon: Check };
+  return { label: "On track", text: "text-academic-teal", bar: "[&>div]:bg-action-solid", Icon: Check };
 }
 
 export function BudgetProgress({
@@ -171,7 +171,7 @@ export function BudgetHealthIndicator({
     ? { status: "Exceeded", dot: "bg-academic-coral", text: "text-academic-coral" }
     : utilization >= warningThreshold
       ? { status: "Watch", dot: "bg-academic-gold", text: "text-academic-gold-foreground" }
-      : { status: "On track", dot: "bg-academic-teal", text: "text-academic-teal" };
+      : { status: "On track", dot: "bg-action-solid", text: "text-academic-teal" };
 
   return (
     <div className={cn("flex items-center gap-2", health.text, size === "small" ? "text-xs" : "text-sm")}>

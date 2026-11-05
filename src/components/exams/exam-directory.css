@@ -20,8 +20,8 @@
 .exam-directory-access strong { display:flex; align-items:center; gap:6px; font-weight:600; color:var(--foreground); }
 .exam-directory-status { display:inline-flex; align-items:center; gap:6px; color:var(--muted-foreground); font-size:.6875rem; font-weight:600; }
 .exam-directory-status::before { content:""; width:7px; height:7px; border-radius:50%; border:1px solid currentColor; }
-.exam-directory-status:is([data-status=PUBLISHED],[data-status=ACTIVE],[data-status=GRADED])::before { background:var(--accent-foreground); border-color:var(--accent-foreground); }
-.exam-directory-status[data-status=NEEDS_GRADING]::before { background:var(--primary); border-color:var(--foreground); }
+.exam-directory-status:is([data-status=PUBLISHED],[data-status=ACTIVE],[data-status=GRADED])::before { background:var(--success); border-color:var(--success); }
+.exam-directory-status[data-status=NEEDS_GRADING]::before { background:var(--warning); border-color:var(--warning); }
 .exam-directory-row-actions { justify-content:flex-end; }
 .exam-directory-link { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:44px; padding:0 12px; font-size:.875rem; font-weight:550; color:var(--accent-foreground); }
 .exam-directory-link:hover { text-decoration:underline; }

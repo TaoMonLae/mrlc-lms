@@ -156,7 +156,7 @@ function StudyRegister({ deck, routes }: { deck: DeckDetail; routes: ReturnType<
             <div className="flex flex-col items-center border-r border-academic-coral/60 py-5" aria-hidden="true">
               <span className="text-xl font-semibold tabular-nums tracking-tight text-foreground sm:text-2xl">{pad2(deckNumber.get(current.id) ?? index + 1)}</span>
               {isStudent && mastery[current.id] && (
-                <span className={`mt-2 block h-4 w-[3px] ${mastery[current.id] === 'KNOWN' ? 'bg-academic-teal' : 'bg-academic-coral'}`} />
+                <span className={`mt-2 block h-4 w-[3px] ${mastery[current.id] === 'KNOWN' ? 'bg-action-solid' : 'bg-academic-coral'}`} />
               )}
             </div>
             <button
@@ -270,7 +270,7 @@ function StudyRegister({ deck, routes }: { deck: DeckDetail; routes: ReturnType<
                       <span className="text-sm text-muted-foreground [overflow-wrap:anywhere] sm:pl-4"><MathText>{card.definition}</MathText></span>
                       {isStudent && (
                         <span className="col-start-2 flex items-center gap-1.5 text-xs font-medium sm:col-start-auto sm:justify-end">
-                          <span aria-hidden="true" className={`block h-3.5 w-[3px] ${state === 'KNOWN' ? 'bg-academic-teal' : state === 'LEARNING' ? 'bg-academic-coral' : 'bg-border'}`} />
+                          <span aria-hidden="true" className={`block h-3.5 w-[3px] ${state === 'KNOWN' ? 'bg-action-solid' : state === 'LEARNING' ? 'bg-academic-coral' : 'bg-border'}`} />
                           <span className={state === 'KNOWN' ? 'text-accent-foreground' : state === 'LEARNING' ? 'text-foreground' : 'text-muted-foreground'}>
                             {state === 'KNOWN' ? 'Known' : state === 'LEARNING' ? 'Still learning' : 'New'}
                           </span>
@@ -308,7 +308,7 @@ function Face({
 function TallyButton({
   tone, pressed, count, disabled, onClick, children,
 }: { tone: 'known' | 'learning'; pressed: boolean; count: number; disabled: boolean; onClick: () => void; children: React.ReactNode }) {
-  const mark = tone === 'known' ? 'bg-academic-teal' : 'bg-academic-coral';
+  const mark = tone === 'known' ? 'bg-action-solid' : 'bg-academic-coral';
   const pressedStyle = tone === 'known'
     ? 'border-academic-teal bg-accent text-accent-foreground'
     : 'border-academic-coral bg-academic-coral/12 text-foreground';

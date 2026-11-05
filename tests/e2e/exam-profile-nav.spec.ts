@@ -46,6 +46,7 @@ test('grouped exam navigation preserves every destination and keyboard dismissal
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Toggle theme between light and dark mode' }).click();
   await page.getByRole('menuitem', { name: 'Light', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Light', exact: true }).click();
   await expect(page.locator('html')).not.toHaveClass(/dark/);
   await nav.getByRole('button', { name: 'Responses' }).click();
   await page.screenshot({ animations: 'disabled', path: info.outputPath('exam-responses-light.png') });
@@ -170,4 +171,21 @@ test('stalled access check times out visibly and can be retried', async ({ page 
   stall = false;
   await page.getByRole('button', { name: 'Retry', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Responses overview' })).toBeVisible();
+});
+
+test('Blue and Slate shell supports light and dark modes', async ({ page }, info) => {
+  await setup(page);
+  await expect(page.getByRole('heading', { name: 'Mathematical Reasoning — GED Practice Test' })).toBeVisible();
+  const tokens = () => page.evaluate(() => {
+    const css = getComputedStyle(document.documentElement);
+    return { background: css.getPropertyValue('--background').trim(), primary: css.getPropertyValue('--primary').trim() };
+  });
+  expect(await tokens()).toEqual({ background: '#101722', primary: '#a7c5ff' });
+  await page.screenshot({ path: info.outputPath('blue-slate-dark.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Toggle theme between light and dark mode' }).click();
+  await page.getByRole('menuitem', { name: 'Light', exact: true }).click();
+  await expect.poll(tokens).toEqual({ background: '#f4f6fa', primary: '#2457bd' });
+  await expect(page.locator('.academic-workspace')).toHaveCSS('background-image', 'none');
+  await expect(page.getByRole('menu')).toHaveCount(0);
+  await page.screenshot({ path: info.outputPath('blue-slate-light.png'), fullPage: true, animations: 'disabled' });
 });

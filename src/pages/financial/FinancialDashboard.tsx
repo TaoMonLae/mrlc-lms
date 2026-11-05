@@ -356,7 +356,7 @@ export default function FinancialDashboard() {
                 <div>
                   {budgetRows.map((budget, index) => {
                     const used = budget.allocatedAmount > 0 ? (budget.spentAmount / budget.allocatedAmount) * 100 : 0;
-                    const barTone = used >= 100 ? 'bg-academic-coral' : used >= 80 ? 'bg-academic-gold' : 'bg-academic-teal';
+                    const barTone = used >= 100 ? 'bg-academic-coral' : used >= 80 ? 'bg-academic-gold' : 'bg-action-solid';
                     return (
                       <Link key={budget.id} to={`/budgets/${budget.id}`} className={`block px-5 py-4 hover:bg-muted/45 ${index ? 'border-t border-border' : ''}`}>
                         <div className="flex items-start justify-between gap-4">

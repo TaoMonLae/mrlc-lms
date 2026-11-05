@@ -181,7 +181,7 @@ export default function ChatWidget() {
       <button
         onClick={() => setOpen(true)}
         aria-label="Open chat"
-        className="fixed bottom-4 right-4 z-50 grid size-11 place-items-center rounded-sm border border-academic-navy-deep bg-academic-navy-deep text-white transition-colors hover:bg-academic-teal"
+        className="fixed bottom-4 right-4 z-50 grid size-11 place-items-center rounded-sm border border-academic-navy-deep bg-academic-navy-deep text-white transition-colors hover:bg-action-solid"
       >
         <MessageSquare className="h-5 w-5" />
         {unread > 0 && (

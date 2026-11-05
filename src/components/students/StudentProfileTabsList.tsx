@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-const triggerClass = 'h-14 flex-none rounded-none px-5 font-semibold data-active:bg-transparent data-active:text-foreground dark:data-active:bg-transparent dark:data-active:text-foreground data-active:shadow-none group-data-horizontal/tabs:after:bottom-0 after:bg-academic-teal focus-visible:ring-inset';
+const triggerClass = 'h-14 flex-none rounded-none px-5 font-semibold data-active:bg-transparent data-active:text-foreground dark:data-active:bg-transparent dark:data-active:text-foreground data-active:shadow-none group-data-horizontal/tabs:after:bottom-0 after:bg-action-solid focus-visible:ring-inset';
 
 export function StudentProfileTabsList({ canViewFees, canViewCases }: { canViewFees: boolean; canViewCases: boolean }) {
   const scrollRef = React.useRef<HTMLDivElement>(null);

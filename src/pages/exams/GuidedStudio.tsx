@@ -83,7 +83,7 @@ const isObjective = (t: UIType) => typeDef(t).objective;
 const singleCorrect = (t: UIType) => t === 'MCQ' || t === 'TF' || t === 'DROPDOWN';
 
 const C = {
-  purple: '#14736d', purpleText: 'var(--gs-purple-text)', purpleDeep: '#155c58',
+  purple: '#2457bd', purpleText: 'var(--gs-purple-text)', purpleDeep: '#20499a',
   tint50: 'var(--gs-tint-50)', tint100: 'var(--gs-tint-100)', tint7: 'var(--gs-tint-7)', tintBar: 'var(--gs-tint-bar)',
   ink: 'var(--gs-ink)', muted: 'var(--gs-muted)', muted2: 'var(--gs-muted-2)',
   border: 'var(--gs-border)', border2: 'var(--gs-border-2)', border3: 'var(--gs-border-3)',
@@ -1348,6 +1348,6 @@ function PublishModal({ title, className, count, points, onEdit, onDashboard }: 
     <Check size={32} className="text-academic-teal" />
     <DialogTitle>Exam published</DialogTitle>
     <DialogDescription>{title} is published{className ? ` for ${className}` : ''}. Students can start when its availability window opens. {count} questions · {points} points.</DialogDescription>
-    <div className="flex gap-3"><button className="rounded border px-4 py-2" onClick={onEdit}>Back to editing</button><button className="rounded bg-academic-teal px-4 py-2 text-white" onClick={onDashboard}>View dashboard</button></div>
+    <div className="flex gap-3"><button className="rounded border px-4 py-2" onClick={onEdit}>Back to editing</button><button className="rounded bg-action-solid px-4 py-2 text-white" onClick={onDashboard}>View dashboard</button></div>
   </DialogContent></Dialog>;
 }
