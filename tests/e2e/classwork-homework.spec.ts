@@ -99,3 +99,28 @@ test('teacher sees review progress and assigns homework within the selected clas
   expect(created[0].classId).toBe('class-a');
   await expect(page).toHaveURL(/\/classwork\?class=class-a$/);
 });
+
+for (const theme of ['light', 'dark']) {
+  test(`classwork and homework inherit shared ${theme} colors`, async ({ page }) => {
+    await fixture(page, 'TEACHER');
+    await page.addInitScript(theme => localStorage.setItem('mrlc-lms-theme', theme), theme);
+    for (const [route, selector, prefix] of [
+      ['/classwork?class=class-a', '.cw-workspace', 'cw'],
+      ['/teacher/homework', '.hw-workspace', 'hw'],
+    ]) {
+      await page.goto(route);
+      await expect(page.locator(selector)).toBeVisible();
+      const colors = await page.locator(selector).evaluate((element, prefix) => {
+        const style = getComputedStyle(element);
+        return {
+          ink: style.getPropertyValue(`--${prefix}-ink`).trim(),
+          foreground: style.getPropertyValue('--foreground').trim(),
+          action: style.getPropertyValue(`--${prefix}-blue`).trim(),
+          primary: style.getPropertyValue('--primary').trim(),
+        };
+      }, prefix);
+      expect(colors.ink).toBe(colors.foreground);
+      expect(colors.action).toBe(colors.primary);
+    }
+  });
+}

@@ -71,11 +71,17 @@ export default function LandingPage() {
 
   const followSection = (event: MouseEvent<HTMLAnchorElement>) => {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    const target = document.getElementById(event.currentTarget.hash.slice(1));
+    const link = event.currentTarget;
+    const target = document.getElementById(link.hash.slice(1));
     setMenuOpen(false);
     // Preserve normal fragment/history behavior while moving keyboard focus
     // out of the disclosure before it is hidden.
-    requestAnimationFrame(() => target?.focus({ preventScroll: true }));
+    requestAnimationFrame(() => {
+      // Do not steal focus if the learner has already moved to another control.
+      if ([link, target, document.body].includes(document.activeElement as HTMLElement)) {
+        target?.focus({ preventScroll: true });
+      }
+    });
   };
 
   return <div className="landing">

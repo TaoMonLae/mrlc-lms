@@ -1,10 +1,10 @@
 .school-about{
-  --about-ink:#19324d;
-  --about-muted:#526875;
-  --about-line:#d6dfe2;
-  --about-surface:#fff;
-  --about-tint:#f2f6f6;
-  --about-accent:#11786f;
+  --about-ink:var(--foreground);
+  --about-muted:var(--muted-foreground);
+  --about-line:var(--border);
+  --about-surface:var(--card);
+  --about-tint:var(--muted);
+  --about-accent:var(--primary);
   max-width:1180px;
   margin:0 auto;
   background:var(--about-surface);
@@ -13,12 +13,12 @@
   font-size:15px;
   line-height:1.65}
   .dark .school-about{
-    --about-ink:#e5edf3;
-    --about-muted:#b3c2ce;
-    --about-line:#354753;
-    --about-surface:#13232e;
-    --about-tint:#1b3039;
-    --about-accent:#76d6ca}
+    --about-ink:var(--foreground);
+    --about-muted:var(--muted-foreground);
+    --about-line:var(--border);
+    --about-surface:var(--card);
+    --about-tint:var(--muted);
+    --about-accent:var(--primary)}
     .school-about *{
       min-width:0}
       .school-about a:focus-visible,.school-about summary:focus-visible{

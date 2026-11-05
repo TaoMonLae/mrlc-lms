@@ -2,12 +2,12 @@
    ruled, square surfaces; Washington Post owns lead/briefing hierarchy;
    Matter owns compact source metadata and view controls. Publisher imagery only. */
 .news-page {
-  --news-paper: #fff;
-  --news-ink: #171917;
-  --news-muted: #62675f;
-  --news-rule: #d6d9d2;
-  --news-soft: #f2f3f0;
-  --news-action: #ffc500;
+  --news-paper:var(--card);
+  --news-ink:var(--foreground);
+  --news-muted:var(--muted-foreground);
+  --news-rule:var(--border);
+  --news-soft:var(--muted);
+  --news-action:var(--primary);
   --news-serif: Georgia, "Khit Haungg", "Padauk", "Times New Roman", serif;
   --news-small: 0.875rem;
   --news-body: 1rem;
@@ -188,13 +188,14 @@
   border: 0;
   border-radius: 0;
   background: var(--news-action);
-  color: #171917 !important;
+  color: var(--primary-foreground) !important;
   font-size: var(--news-small);
   font-weight: 700;
 }
 .news-action:hover,
 .news-search-submit:hover {
-  background: #f4b900;
+  background: var(--primary);
+  filter: brightness(.92);
 }
 .news-view-switch {
   display: flex;
@@ -785,11 +786,11 @@
 }
 
 .dark .news-page {
-  --news-paper: #151d24;
-  --news-ink: #f4f5f1;
-  --news-muted: #b0b8bb;
-  --news-rule: #3b474e;
-  --news-soft: #1e2a32;
+  --news-paper:var(--card);
+  --news-ink:var(--foreground);
+  --news-muted:var(--muted-foreground);
+  --news-rule:var(--border);
+  --news-soft:var(--muted);
 }
 @media (max-width: 1100px) {
   .news-page {
@@ -1036,7 +1037,7 @@
 .news-text-size { flex-wrap: wrap; }
 .news-text-size output { font-variant-numeric: tabular-nums; }
 .news-selection { bottom: max(24px, env(safe-area-inset-bottom)); }
-.news-page ::selection { background: var(--news-action); color: #171917; }
+.news-page ::selection { background: var(--news-action); color: var(--primary-foreground); }
 @media (max-width: 760px) {
   .news-study-desk > p:not(.news-eyebrow) { flex-basis: 100%; }
   .news-study-desk > a { margin-top: 0; }

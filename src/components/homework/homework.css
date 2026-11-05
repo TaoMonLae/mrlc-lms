@@ -1,10 +1,10 @@
 .hw-workspace {
-  --hw-blue: #087f83;
-  --hw-tint: #eef7f7;
-  --hw-line: #dbe3e7;
-  --hw-ink: #102a3c;
-  --hw-muted: #526779;
-  --hw-paper: #fff;
+  --hw-blue:var(--primary);
+  --hw-tint:var(--accent);
+  --hw-line:var(--border);
+  --hw-ink:var(--foreground);
+  --hw-muted:var(--muted-foreground);
+  --hw-paper:var(--card);
   max-width: 1280px;
   margin: auto;
   padding: 8px 0 48px;
@@ -43,7 +43,7 @@
 }
 .hw-workspace .hw-primary {
   background: var(--hw-blue);
-  color: white;
+  color: var(--primary-foreground);
   border-radius: 999px;
   padding-inline: 22px;
 }
@@ -257,16 +257,16 @@
   cursor: not-allowed;
 }
 .dark .hw-workspace {
-  --hw-blue: #6ed6d0;
-  --hw-tint: #152d38;
-  --hw-line: #344151;
-  --hw-ink: #e8eaed;
-  --hw-muted: #acb8c8;
-  --hw-paper: #17212e;
+  --hw-blue:var(--primary);
+  --hw-tint:var(--accent);
+  --hw-line:var(--border);
+  --hw-ink:var(--foreground);
+  --hw-muted:var(--muted-foreground);
+  --hw-paper:var(--card);
 }
 .dark .hw-workspace .hw-primary {
-  background: #6ed6d0;
-  color: #102a3c;
+  background: var(--primary);
+  color: var(--primary-foreground);
 }
 .hw-upload-zone {
   display: flex;

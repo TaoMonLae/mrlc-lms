@@ -285,3 +285,19 @@ test('theme controls remain usable when saving and reading the theme preference 
   await expect(page.locator('html')).toHaveClass(/\blight\b/);
   expect(errors).toEqual([]);
 });
+
+for (const theme of ['light', 'dark'] as const) {
+  test(`public pages and sign-in follow the ${theme} workspace palette`, async ({ page }, info) => {
+    await fixture(page, { theme });
+    const primary = theme === 'light' ? 'rgb(36, 87, 189)' : 'rgb(167, 197, 255)';
+    for (const route of ['/', '/kiosk-downloads']) {
+      await page.goto(route);
+      await expect(page.locator(route === '/' ? '.landing-header-cta' : '.kiosk-download-button').first()).toHaveCSS('background-color', primary);
+    }
+    await page.goto('/login');
+    await expect(page.locator('#identifier')).toHaveCSS('background-color', theme === 'light' ? 'rgb(255, 255, 255)' : 'rgb(25, 35, 50)');
+    await page.screenshot({ path: info.outputPath(`login-${theme}.png`), animations: 'disabled' });
+    await page.goto('/reset-password');
+    await expect(page.locator('main')).toHaveCSS('background-color', theme === 'light' ? 'rgb(244, 246, 250)' : 'rgb(16, 23, 34)');
+  });
+}

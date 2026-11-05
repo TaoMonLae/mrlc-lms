@@ -32,15 +32,15 @@ export default function ResetPassword() {
     } finally { setSubmitting(false); }
   };
 
-  return <main className="min-h-screen bg-slate-100 px-4 py-10 flex items-center justify-center">
-    <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl sm:p-8">
-      <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-700"><KeyRound aria-hidden="true" /></div>
-      <h1 className="text-2xl font-bold text-slate-900">Choose a new password</h1>
+  return <main className="min-h-screen bg-background px-4 py-10 flex items-center justify-center">
+    <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl sm:p-8">
+      <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-accent text-primary"><KeyRound aria-hidden="true" /></div>
+      <h1 className="text-2xl font-bold text-foreground">Choose a new password</h1>
       {complete ? <div className="mt-6 space-y-4">
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4" role="status"><p className="flex items-center gap-2 font-semibold text-emerald-800"><CheckCircle2 className="h-5 w-5" aria-hidden="true" />Password updated</p><p className="mt-1 text-sm text-emerald-800">All previous sessions were signed out for your protection.</p></div>
         <Button className="w-full" render={<Link to="/login" />}>Continue to sign in</Button>
       </div> : <form onSubmit={submit} className="mt-6 space-y-4">
-        <p className="text-sm text-slate-600">Use at least 8 characters and avoid reusing a password from another service.</p>
+        <p className="text-sm text-muted-foreground">Use at least 8 characters and avoid reusing a password from another service.</p>
         {error && <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{error}</p>}
         <div className="space-y-2"><Label htmlFor="new-password">New password</Label><Input id="new-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" required /></div>
         <div className="space-y-2"><Label htmlFor="confirm-password">Confirm new password</Label><Input id="confirm-password" type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" required /></div>
