@@ -1,3 +1,5 @@
+import { ensureEditableExamContent } from "./lib/examContent";
+import { examScheduleUpdate } from "./shared/examSchedule";
 import { canWriteExam } from "./shared/examAccess";
 import { manualGradeScores } from "./shared/examGrading";
 import { summarizeExamAnswers } from "./shared/examReview";
@@ -262,61 +264,25 @@ export function registerExamPhase2Routes(deps: Deps): void {
   app.put("/api/exams/:id/schedule", authMiddleware, teacherGuard, examGuard(), async (req, res) => {
     const { id } = req.params;
     const b = req.body || {};
-    const has = (key: string) => Object.prototype.hasOwnProperty.call(b, key);
     try {
-      const existing = await prisma.exam.findUnique({ where: { id }, select: { accessCodeHash: true, totalMarks: true, status: true } });
+      const existing = await prisma.exam.findUnique({ where: { id }, select: { accessCodeHash: true, totalMarks: true, status: true, availableFrom: true, availableUntil: true } });
       if (!existing) { res.status(404).json({ error: "Exam not found" }); return; }
-      const availableFrom = b.availableFrom ? new Date(b.availableFrom) : null;
-      const availableUntil = b.availableUntil ? new Date(b.availableUntil) : null;
-      const resultReleaseAt = b.resultReleaseAt ? new Date(b.resultReleaseAt) : null;
-      if ([availableFrom, availableUntil, resultReleaseAt].some((d) => d && Number.isNaN(d.getTime()))) {
-        res.status(400).json({ error: "One or more schedule dates are invalid" }); return;
-      }
-      if (availableFrom && availableUntil && availableUntil <= availableFrom) {
-        res.status(400).json({ error: "Available until must be after available from" }); return;
-      }
-      const attemptLimit = num(b.attemptLimit) ?? 1;
-      const gracePeriodMinutes = num(b.gracePeriodMinutes) ?? 0;
-      const durationMinutes = num(b.durationMinutes);
-      const passMark = num(b.passMark);
-      if (!Number.isInteger(attemptLimit) || attemptLimit < 1) { res.status(400).json({ error: "Attempt limit must be a positive integer" }); return; }
-      if (!Number.isInteger(gracePeriodMinutes) || gracePeriodMinutes < 0) { res.status(400).json({ error: "Grace period must be a non-negative integer" }); return; }
-      if (durationMinutes !== null && (!Number.isInteger(durationMinutes) || durationMinutes < 1)) { res.status(400).json({ error: "Duration must be a positive integer" }); return; }
-      if (passMark !== null && passMark < 0) { res.status(400).json({ error: "Pass mark cannot be negative" }); return; }
-      if (passMark !== null && existing.totalMarks != null && passMark > Number(existing.totalMarks)) {
-        res.status(400).json({ error: `Pass mark cannot exceed the exam total of ${existing.totalMarks}` }); return;
-      }
-      if (b.status !== undefined && !["DRAFT", "SCHEDULED", "ACTIVE", "CLOSED", "PUBLISHED"].includes(b.status)) {
-        res.status(400).json({ error: "Invalid exam status" }); return;
-      }
+      let data;
+      try { data = examScheduleUpdate(b, existing); }
+      catch (error: any) { res.status(400).json({ error: error.message }); return; }
       if (b.status === "DRAFT" && existing.status !== "DRAFT" && user(req).role !== "ADMIN") {
         res.status(403).json({ error: "Only an administrator can reopen a published exam as a draft." }); return;
       }
       if (b.requiresAccessCode && !String(b.accessCode || "").trim() && !existing.accessCodeHash) {
         res.status(400).json({ error: "Set an access code before requiring one" }); return;
       }
-      const data: any = {
-        ...(has("availableFrom") ? { availableFrom } : {}),
-        ...(has("availableUntil") ? { availableUntil } : {}),
-        ...(has("resultReleaseAt") ? { resultReleaseAt } : {}),
-        ...(has("attemptLimit") ? { attemptLimit } : {}),
-        ...(has("gracePeriodMinutes") ? { gracePeriodMinutes } : {}),
-        ...(has("allowLateStart") ? { allowLateStart: b.allowLateStart !== false } : {}),
-        ...(has("requiresAccessCode") ? { requiresAccessCode: !!b.requiresAccessCode } : {}),
-        ...(has("requiresInvigilator") ? { requiresInvigilator: !!b.requiresInvigilator } : {}),
-        ...(has("shuffleQuestions") ? { shuffleQuestions: !!b.shuffleQuestions } : {}),
-        ...(has("shuffleOptions") ? { shuffleOptions: !!b.shuffleOptions } : {}),
-        ...(has("negativeMarking") ? { negativeMarking: !!b.negativeMarking } : {}),
-        ...(has("passMark") ? { passMark } : {}),
-        ...(has("durationMinutes") && durationMinutes !== null ? { durationMinutes } : {}),
-        ...(has("status") ? { status: b.status } : {}),
-      };
-      if (String(b.accessCode || "").trim()) data.accessCodeHash = await bcrypt.hash(String(b.accessCode).trim(), 10);
-      else if (b.requiresAccessCode === false) data.accessCodeHash = null;
+      let accessCodeHash: string | null | undefined;
+      if (String(b.accessCode || "").trim()) accessCodeHash = await bcrypt.hash(String(b.accessCode).trim(), 10);
+      else if (b.requiresAccessCode === false) accessCodeHash = null;
 
-      const exam = await prisma.exam.update({ where: { id }, data });
+      const exam = await prisma.exam.update({ where: { id }, data: { ...data, accessCodeHash } });
       await createAuditLog(user(req).userId, user(req).email, "UPDATE", "EXAM", id, `Exam '${exam.title}' schedule updated.`, ipOf(req), uaOf(req), "SUCCESS");
-      const { accessCodeHash, ...safe } = exam;
+      const { accessCodeHash: _hash, ...safe } = exam;
       res.json(safe);
     } catch (err: any) {
       if (err?.code === "P2025") { res.status(404).json({ error: "Exam not found" }); return; }
@@ -1418,6 +1384,7 @@ function registerAuthoringRoutes(deps: any) {
       if (!row) { res.status(404).json({ error: "Not found" }); return; }
       const { ok } = await canManageExam(req, row.examId);
       if (!ok) { res.status(403).json({ error: "You do not have permission to manage this exam" }); return; }
+      if (model !== "gradingRubric" && !await ensureEditableExamContent(prisma, user(req).role, row.examId, res)) return;
       req.managedExamId = row.examId;
       next();
     } catch (err: any) {
@@ -1474,10 +1441,7 @@ function registerAuthoringRoutes(deps: any) {
       ownerExamId = owner.examId;
       const { ok } = await canManageExam(req, ownerExamId);
       if (!ok) { res.status(403).json({ error: "You do not have permission to manage this exam" }); return; }
-      const ownerExam = await prisma.exam.findUnique({ where: { id: ownerExamId }, select: { status: true, _count: { select: { attempts: true } } } });
-      if (ownerExam && (ownerExam._count.attempts > 0 || (user(req).role === "TEACHER" && ownerExam.status !== "DRAFT"))) {
-        res.status(409).json({ error: "Published question content is locked. Use the approved answer-key correction flow." }); return;
-      }
+      if (!await ensureEditableExamContent(prisma, user(req).role, ownerExamId, res)) return;
     } catch (err: any) {
       logger.error("question guard failed", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -1543,7 +1507,12 @@ function registerAuthoringRoutes(deps: any) {
     shuffleQuestions: !!b.shuffleQuestions, questionsToPick: num(b.questionsToPick),
   });
   app.post("/api/exams/:id/sections", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
-    try { const row = await prisma.examSection.create({ data: { examId: req.params.id, ...sectionData(req.body || {}) } }); await audit(req, "CREATE", "EXAM_SECTION", row.id, `Section '${row.title}' created.`); res.status(201).json(row); }
+    try {
+      if (!await ensureEditableExamContent(prisma, user(req).role, req.params.id, res)) return;
+      const row = await prisma.examSection.create({ data: { examId: req.params.id, ...sectionData(req.body || {}) } });
+      await audit(req, "CREATE", "EXAM_SECTION", row.id, `Section '${row.title}' created.`);
+      res.status(201).json(row);
+    }
     catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
   app.put("/api/sections/:id", authMiddleware, teacherGuard, childExamGuard("examSection"), async (req: any, res: any) => {
@@ -1566,7 +1535,12 @@ function registerAuthoringRoutes(deps: any) {
     content: b.content || null, mediaUrl: b.mediaUrl || null, caption: b.caption || null, data: b.data ?? null,
   });
   app.post("/api/exams/:id/stimuli", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
-    try { const row = await prisma.stimulus.create({ data: { examId: req.params.id, ...stimulusData(req.body || {}) } }); await audit(req, "CREATE", "STIMULUS", row.id, `Stimulus '${row.title || row.type}' created.`); res.status(201).json(row); }
+    try {
+      if (!await ensureEditableExamContent(prisma, user(req).role, req.params.id, res)) return;
+      const row = await prisma.stimulus.create({ data: { examId: req.params.id, ...stimulusData(req.body || {}) } });
+      await audit(req, "CREATE", "STIMULUS", row.id, `Stimulus '${row.title || row.type}' created.`);
+      res.status(201).json(row);
+    }
     catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
   app.put("/api/stimuli/:id", authMiddleware, teacherGuard, childExamGuard("stimulus"), async (req: any, res: any) => {
@@ -1586,6 +1560,7 @@ function registerAuthoringRoutes(deps: any) {
   const groupData = (b: any) => ({ sectionId: b.sectionId || null, stimulusId: b.stimulusId || null, title: b.title || null, instructions: b.instructions || null, orderIndex: num(b.orderIndex) ?? 0 });
   app.post("/api/exams/:id/question-groups", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try {
+      if (!await ensureEditableExamContent(prisma, user(req).role, req.params.id, res)) return;
       const referenceError = await sameExamReferenceError(req.params.id, req.body || {});
       if (referenceError) { res.status(400).json({ error: referenceError }); return; }
       const row = await prisma.questionGroup.create({ data: { examId: req.params.id, ...groupData(req.body || {}) } }); await audit(req, "CREATE", "QUESTION_GROUP", row.id, `Question group created.`); res.status(201).json(row);
@@ -1688,7 +1663,7 @@ function registerGradingAndOps(deps: any) {
         },
         include: {
           question: true, rubric: { include: { criteria: true } },
-          attempt: { include: { student: { include: { user: true } }, exam: true } },
+          attempt: { include: { student: { select: { id: true, studentCode: true, user: { select: { firstName: true, lastName: true } } } }, exam: true } },
         },
         orderBy: { createdAt: "asc" },
       });

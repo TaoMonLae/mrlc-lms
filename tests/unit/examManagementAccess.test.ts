@@ -8,11 +8,12 @@ import { registerExamBankRoutes } from '../../examBank';
 
 test('exam access follows the stored exam, including child and shared-bank writes', async () => {
   const app = express();
-  const exam = { id: 'e1', classId: 'c1', status: 'DRAFT', ownerId: 'owner', editorIds: [] as string[], sections: [], examQuestions: [], blueprintRules: [] };
+  const exam = { id: 'e1', classId: 'c1', status: 'DRAFT', _count: { attempts: 0 }, ownerId: 'owner', editorIds: [] as string[], sections: [], stimuli: [], questionGroups: [], questions: [], rubrics: [], examQuestions: [], blueprintRules: [] };
   let writes = 0;
   let cloneOwner: string | undefined;
   let questionScope: any;
   let gradeScope: any;
+  let gradeInclude: any;
   const foreignExam = { ...exam, id: 'e2', ownerId: 'other-owner' };
   const prisma = {
     exam: { findUnique: async ({ where }: any) => where.id === 'e2' ? foreignExam : exam, findMany: async () => [exam] },
@@ -27,12 +28,12 @@ test('exam access follows the stored exam, including child and shared-bank write
     examAttempt: { findUnique: async () => ({ examId: exam.id }) },
     manualGrade: {
       findUnique: async () => ({ attempt: { examId: exam.id } }),
-      findMany: async ({ where }: any) => { gradeScope = where; return []; },
+      findMany: async ({ where, include }: any) => { gradeScope = where; gradeInclude = include; return []; },
     },
     teacher: { findUnique: async () => ({ id: 't1', classes: [{ classId: 'c1' }] }) },
     subjectTeacher: { findMany: async () => [{ subjectId: 'subject1' }] },
     student: { findUnique: async () => ({ classId: exam.classId }) },
-    $transaction: (fn: Function) => fn({ exam: { create: async ({ data }: any) => {
+    $transaction: (fn: Function) => fn({ exam: { findUnique: async () => exam, create: async ({ data }: any) => {
       cloneOwner = data.ownerId;
       assert.equal(data.editorIds, undefined);
       return { id: 'copy', ...data };
@@ -81,6 +82,9 @@ test('exam access follows the stored exam, including child and shared-bank write
   assert.deepEqual(questionScope.OR, [{ subjectId: { in: ['subject1'] } }, { subjectId: null }]);
   assert.equal(await request('GET', '/api/grading/queue?examId=e2'), 200);
   assert.equal(gradeScope.attempt.examId, 'e2');
+  assert.deepEqual(gradeInclude.attempt.include.student.select, {
+    id: true, studentCode: true, user: { select: { firstName: true, lastName: true } },
+  });
   assert.deepEqual(gradeScope.attempt.exam, { classId: { in: ['c1'] }, OR: [{ ownerId: 'colleague' }, { editorIds: { has: 'colleague' } }] });
   assert.equal(writes, 0);
   assert.equal(await request('PUT', '/api/sections/s1', 'owner'), 200);
@@ -89,7 +93,14 @@ test('exam access follows the stored exam, including child and shared-bank write
   assert.equal(await request('PUT', '/api/sections/s1', 'outside'), 403);
   assert.equal(await request('POST', '/api/exams/e1/clone', 'colleague', { ownerId: 'someone-else', editorIds: ['outside'] }), 201);
   assert.equal(cloneOwner, 'colleague');
+  exam._count.attempts = 1;
+  assert.equal(await request('PUT', '/api/sections/s1', 'owner'), 409);
+  assert.equal(await request('POST', '/api/exams/e1/questions', 'owner', { questionId: 'q1' }), 409);
+  assert.equal(await request('POST', '/api/exams/e1/stimuli', 'owner'), 409);
+  exam._count.attempts = 0;
   exam.status = 'PUBLISHED';
+  assert.equal(await request('PUT', '/api/sections/s1', 'owner'), 409);
+  assert.equal(await request('POST', '/api/exams/e1/blueprint', 'owner'), 409);
   assert.equal(await request('PUT', '/api/exams/e1/schedule', 'colleague', { status: 'DRAFT' }), 403);
   exam.editorIds = [];
   assert.equal(await request('PUT', '/api/sections/s1'), 403);

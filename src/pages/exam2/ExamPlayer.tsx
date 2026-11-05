@@ -238,24 +238,39 @@ export default function ExamPlayer() {
   };
 
   const save = useCallback(async (reason: string) => {
-    if (!attemptId || attemptFinished.current) return false;
+    if (!attemptId || attemptFinished.current || submitPending.current) return false;
     // Serialize saves so a slow older answer cannot overwrite a newer one.
-    while (saveInFlight.current) { if (!(await saveInFlight.current)) return false; }
+    while (saveInFlight.current) {
+      if (!(await saveInFlight.current)) return false;
+    }
+    if (attemptFinished.current || submitPending.current) return false;
     const performSave = async (): Promise<boolean> => {
-    const toSave = Array.from(dirty.current);
-    const savedVersions = Object.fromEntries(toSave.map((qid) => [qid, answerVersions.current[qid] || 0]));
-    const payload = toSave.map((qid) => answerPayload(qid));
-    setSaving(true);
-    const { ok, status, data } = await post(`/api/attempts/${attemptId}/save`, { sessionToken, reason, answers: payload });
-    setSaving(false);
-    if (ok) { setSaveError(''); toSave.forEach((qid) => { if ((answerVersions.current[qid] || 0) === savedVersions[qid]) dirty.current.delete(qid); }); setSavedAt(data.lastSavedAt || new Date().toISOString()); if (typeof data.remainingSeconds === 'number') { if (data.remainingSeconds > 0) timerArmed.current = true; countdownDeadline.current = timerArmed.current ? Date.now() + data.remainingSeconds * 1000 : null; setRemaining(data.remainingSeconds); } return true; }
-    if (status === 409 && data.error === 'SESSION_CONFLICT') { setBlocked('This attempt was opened in another window or device. This session is now read-only.'); return false; }
-    if (status === 409 && data.error === 'ATTEMPT_PAUSED') { setBlocked('This attempt has been paused. Resume it from My Exams before continuing.'); return false; }
-    if (status === 409 && (data.error === 'TIME_EXPIRED' || data.autoSubmitted || ['SUBMITTED', 'AUTO_SUBMITTED', 'PENDING_GRADING', 'FINALIZED', 'RELEASED'].includes(data.state))) { toast.info('Your attempt has been submitted.'); openResult(); return false; }
-    if (status === 409 && data.state === 'INVALIDATED') { setBlocked('This attempt has been voided by your teacher.'); return false; }
-    setSaveError(data.error || 'Your answers could not be saved. Please retry.');
-    if (reason !== 'AUTOSAVE') toast.error(data.error || 'Your answers could not be saved. Check your connection and try again.');
-    return false;
+      const toSave = Array.from(dirty.current);
+      const savedVersions = Object.fromEntries(toSave.map((qid) => [qid, answerVersions.current[qid] || 0]));
+      const payload = toSave.map((qid) => answerPayload(qid));
+      setSaving(true);
+      const { ok, status, data } = await post(`/api/attempts/${attemptId}/save`, { sessionToken, reason, answers: payload });
+      setSaving(false);
+      if (ok) {
+        setSaveError('');
+        for (const questionId of toSave) {
+          if ((answerVersions.current[questionId] || 0) === savedVersions[questionId]) dirty.current.delete(questionId);
+        }
+        setSavedAt(data.lastSavedAt || new Date().toISOString());
+        if (typeof data.remainingSeconds === 'number') {
+          if (data.remainingSeconds > 0) timerArmed.current = true;
+          countdownDeadline.current = timerArmed.current ? Date.now() + data.remainingSeconds * 1000 : null;
+          setRemaining(data.remainingSeconds);
+        }
+        return true;
+      }
+      if (status === 409 && data.error === 'SESSION_CONFLICT') { setBlocked('This attempt was opened in another window or device. This session is now read-only.'); return false; }
+      if (status === 409 && data.error === 'ATTEMPT_PAUSED') { setBlocked('This attempt has been paused. Resume it from My Exams before continuing.'); return false; }
+      if (status === 409 && (data.error === 'TIME_EXPIRED' || data.autoSubmitted || ['SUBMITTED', 'AUTO_SUBMITTED', 'PENDING_GRADING', 'FINALIZED', 'RELEASED'].includes(data.state))) { toast.info('Your attempt has been submitted.'); openResult(); return false; }
+      if (status === 409 && data.state === 'INVALIDATED') { setBlocked('This attempt has been voided by your teacher.'); return false; }
+      setSaveError(data.error || 'Your answers could not be saved. Please retry.');
+      if (reason !== 'AUTOSAVE') toast.error(data.error || 'Your answers could not be saved. Check your connection and try again.');
+      return false;
     };
     const pending = performSave();
     saveInFlight.current = pending;
@@ -667,7 +682,7 @@ export default function ExamPlayer() {
 
   return <ExamPaper
     title={examTitle} theme={examSettings.questionTheme}
-    status={saveError ? 'Changes not saved' : saving ? 'Saving…' : savedAt ? `Saved ${new Date(savedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · saves automatically` : 'Your answers save automatically'}
+    status={saveError ? 'Changes not saved' : saving ? 'Saving…' : dirty.current.size ? 'Changes pending · saves automatically' : savedAt ? `Saved ${new Date(savedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · saves automatically` : 'Your answers save automatically'}
     remaining={timerArmed.current ? remaining : null}
     questions={questions.map(question => ({ id: question.id, points: question.points, answered: answerIsComplete(question, answers[question.id]), partial: partialLabel(question, answers[question.id]), flagged: !!answers[question.id]?.flaggedForReview }))}
     writtenResponse={LONG_ANSWER_TYPES.includes(q.type)} index={idx} prompt={<MathText>{q.type === 'DRAG_DROP' ? dragDisplay(q).prompt : q.text}</MathText>} passage={q.passageText ? <PassageView text={q.passageText} slots={passageSlots} disabled={submitting || (timerArmed.current && remaining === 0)} storageKey={`mrlc:exam-hl:${attemptId}:${passageHash(q.passageText)}`}

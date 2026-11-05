@@ -1386,13 +1386,6 @@ export const schemas = {
     securityWarnings: z.number().int().min(0).optional(),
     autoSubmitted: z.boolean().optional(),
   }),
-  examGrade: z.object({
-    answers: z.array(z.object({
-      answerId: reqStr,
-      pointsAwarded: z.union([z.string(), z.number()]).nullable(),
-      isCorrect: z.boolean().nullable().optional(),
-    })).min(1, "at least one answer grade is required"),
-  }),
   classCreate: z.object({
     name: reqStr, level: reqStr, academicYear: reqStr,
     description: optStr, room: optStr, capacity: optNum, status: optStr,
@@ -9557,91 +9550,9 @@ async function startServer() {
     }
   });
 
-  // DEPRECATED: manual grading is now handled by the grading queue + rubric flow
-  // (GET /api/grading/queue, POST /api/grading/:attemptId/:questionId, finalize).
-  // Retained for backward compatibility; the app UI no longer calls this.
-  app.put("/api/exam-attempts/:attemptId/grade", authMiddleware, validate(schemas.examGrade), async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const { attemptId } = req.params;
-    const grades = req.body.answers as Array<{ answerId: string; pointsAwarded: string | number | null; isCorrect?: boolean | null }>;
-    try {
-      const attempt = await prisma.examAttempt.findUnique({
-        where: { id: attemptId },
-        select: {
-          id: true,
-          exam: { select: { classId: true, ownerId: true, editorIds: true } },
-          student: { select: { id: true, studentCode: true } },
-          answers: { select: { id: true, maxPoints: true, pointsAwarded: true, question: { select: { id: true, points: true } } } },
-        },
-      });
-      if (!attempt) {
-        res.status(404).json({ error: "Attempt not found" });
-        return;
-      }
-      if (!canWriteExam(jwtUser, attempt.exam) || !(await canManageExamClass(jwtUser, attempt.exam.classId))) {
-        res.status(403).json({ error: "Forbidden" });
-        return;
-      }
-
-      const answersById = new Map(attempt.answers.map((answer) => [answer.id, answer]));
-      if (grades.some((grade) => !answersById.has(grade.answerId))) {
-        res.status(400).json({ error: "One or more answers do not belong to this attempt" });
-        return;
-      }
-      const result = await prisma.$transaction(async (tx) => {
-        for (const grade of grades) {
-          const existingAnswer = answersById.get(grade.answerId)!;
-          const points = grade.pointsAwarded == null ? null : Number(grade.pointsAwarded);
-          const maximum = Number(existingAnswer.maxPoints ?? existingAnswer.question.points ?? 0);
-          if (points != null && (!Number.isFinite(points) || points < 0 || points > maximum)) {
-            throw Object.assign(new Error(`pointsAwarded must be between 0 and ${maximum}`), { http: 400 });
-          }
-          await tx.examAnswer.update({
-            where: { id: grade.answerId },
-            data: {
-              pointsAwarded: points,
-              isCorrect: grade.isCorrect ?? (points != null ? points > 0 : null),
-            },
-          });
-        }
-        const refreshed = await tx.examAnswer.findMany({ where: { attemptId } });
-        const score = refreshed.reduce((sum, answer) => sum + Number(answer.pointsAwarded || 0), 0);
-        return tx.examAttempt.update({
-          where: { id: attemptId },
-          data: { score: Math.max(0, score), isCompleted: true, state: "FINALIZED", gradingStatus: "COMPLETE", gradedAt: new Date() },
-        });
-      });
-
-      await createAuditLog(
-        jwtUser.userId,
-        jwtUser.email,
-        "GRADE",
-        "EXAM_ATTEMPT",
-        attemptId,
-        `Graded exam attempt for student ${attempt.student.studentCode}.`,
-        req.ip,
-        req.headers["user-agent"] || null,
-        "SUCCESS"
-      );
-
-      // Check badges for exam completion
-      checkAndAwardBadges(attempt.student.id, 'EXAM').catch(err =>
-        logger.error(`Error checking badges for student ${attempt.student.id}:`, err)
-      );
-
-      res.json(result);
-    } catch (err: any) {
-      logger.error("Error grading exam attempt:", err);
-      if (err.http) {
-        res.status(err.http).json({ error: err.message });
-        return;
-      }
-      res.status(500).json({ error: "Internal Server Error" });
-    }
+  // The legacy bulk writer bypassed finalization locks and rubric bookkeeping.
+  app.put("/api/exam-attempts/:attemptId/grade", authMiddleware, (_req, res) => {
+    res.status(410).json({ error: "This endpoint has been retired. Use the grading queue to save and finalize marks." });
   });
 
   // ── Users (single + update) ─────────────────────────────────────────────────

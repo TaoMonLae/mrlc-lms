@@ -424,3 +424,54 @@ for (const url of ['/exams', '/teacher/exams']) {
     await expect(page.getByRole('heading', { name: rows[0].title })).toHaveCount(0);
   });
 }
+
+test('an older save cannot mark newer text as saved or race a final submission', async ({ page }) => {
+  const { writes } = await fixture(page);
+  await page.clock.install();
+  let releaseSave!: () => void;
+  const held = new Promise<void>(resolve => { releaseSave = resolve; });
+  let saveCount = 0;
+  await page.route('**/api/attempts/attempt-a/save', async route => {
+    saveCount++;
+    await held;
+    await route.fulfill({ json: { ok: true, remainingSeconds: 0, lastSavedAt: new Date().toISOString() } });
+  });
+  await page.goto('/exam2/attempts/attempt-a/play');
+  const answer = page.getByRole('textbox');
+  await answer.fill('First version');
+  await page.getByRole('button', { name: 'Save answers' }).click();
+  await expect.poll(() => saveCount).toBe(1);
+  await answer.fill('Newer version');
+  releaseSave();
+  await expect(page.getByRole('status').filter({ hasText: 'Changes pending' })).toBeVisible();
+  await page.getByRole('button', { name: 'Review answers', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit exam', exact: true }).click();
+  await page.getByRole('button', { name: 'Yes, submit exam' }).click();
+  await expect(page).toHaveURL(/\/result$/);
+  expect(writes.find(write => write.path.endsWith('/submit'))?.body.answers[0].answerText).toBe('Newer version');
+});
+
+test('a queued navigation save is cancelled when the student submits', async ({ page }) => {
+  const { writes } = await fixture(page);
+  await page.clock.install();
+  let releaseSave!: () => void;
+  const held = new Promise<void>(resolve => { releaseSave = resolve; });
+  let saveCount = 0;
+  await page.route('**/api/attempts/attempt-a/save', async route => {
+    saveCount++;
+    await held;
+    await route.fulfill({ json: { ok: true, remainingSeconds: 0 } });
+  });
+  await page.goto('/exam2/attempts/attempt-a/play');
+  await page.getByRole('textbox').fill('Final response');
+  await page.getByRole('button', { name: 'Save answers' }).click();
+  await expect.poll(() => saveCount).toBe(1);
+  await page.getByRole('button', { name: 'Next question' }).click();
+  await page.getByRole('button', { name: 'Review answers', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Submit exam', exact: true }).click();
+  await page.getByRole('button', { name: 'Yes, submit exam' }).click();
+  releaseSave();
+  await expect(page).toHaveURL(/\/result$/);
+  expect(saveCount).toBe(1);
+  expect(writes.find(write => write.path.endsWith('/submit'))?.body.answers[0].answerText).toBe('Final response');
+});
