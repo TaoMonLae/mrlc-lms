@@ -84,7 +84,7 @@ export default function LandingPage() {
     });
   };
 
-  return <div className="landing">
+  return <div className="landing landing-homepage">
     <a className="landing-skip" href="#main-content" onClick={followSection}>Skip to content</a>
     <header ref={headerRef} className="landing-header" onKeyDown={event => {
       if (event.key === 'Escape' && menuOpen) {

@@ -301,3 +301,31 @@ for (const theme of ['light', 'dark'] as const) {
     await expect(page.locator('main')).toHaveCSS('background-color', theme === 'light' ? 'rgb(244, 246, 250)' : 'rgb(16, 23, 34)');
   });
 }
+
+for (const viewport of [{ width: 768, height: 1024 }, { width: 1024, height: 768 }, { width: 1920, height: 1080 }, { width: 667, height: 375 }]) {
+  test(`landing reflows at ${viewport.width} by ${viewport.height}`, async ({ page }, info) => {
+    await page.setViewportSize(viewport);
+    await fixture(page, { theme: viewport.width === 1024 ? 'dark' : 'light' });
+    await openLanding(page);
+    for (const selector of ['.landing-hero', '#platform', '#learning-quest', '#whats-new', '#about', '.landing-close']) {
+      await page.locator(selector).scrollIntoViewIfNeeded();
+      await expectNoHorizontalOverflow(page);
+    }
+    if (viewport.width <= 1100) {
+      expect(await page.locator('.landing-people-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length)).toBe(1);
+    }
+    await page.screenshot({ path: info.outputPath('responsive-landing.png'), fullPage: true, animations: 'disabled' });
+  });
+}
+
+test('landing motion is finite and honors reduced motion', async ({ page }) => {
+  await fixture(page);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await openLanding(page);
+  await expect(page.locator('.landing-daybook')).toHaveCSS('animation-name', 'landing-book-settle');
+  await expect(page.locator('.landing-daybook')).toHaveCSS('animation-iteration-count', '1');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(page.locator('.landing-daybook')).toHaveCSS('animation-name', 'none');
+  await expect(page.locator('.landing-daybook-rows > div').first()).toHaveCSS('animation-name', 'none');
+  await expect(page.locator('.landing-hero h1')).toBeVisible();
+});
