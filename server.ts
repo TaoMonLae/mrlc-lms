@@ -62,6 +62,7 @@ import { registerElibraryRoutes } from "./elibraryRoutes";
 import { registerHrRoutes } from "./hrRoutes";
 import { registerFinancialReportRoutes } from "./financialReportRoutes";
 import { registerDutyRoutes } from "./dutyRoutes";
+import { registerCouncilRoutes } from "./councilRoutes";
 import { registerFamilyRoutes } from "./familyRoutes";
 import { isGuardianApiRequestAllowed } from "./shared/familyAccess";
 import { composeQuestionSet, registerExamBankRoutes } from "./examBank";
@@ -8625,6 +8626,7 @@ async function startServer() {
 
   registerFinancialReportRoutes(app, { authMiddleware, expenseCanView, logger, prisma });
 
+  registerCouncilRoutes(app, { authMiddleware, createAuditLog, logger, prisma, schemas, validate });
   registerDutyRoutes(app, { authMiddleware, createAuditLog, logger, prisma, schemas, validate });
 
   const { payrollCanManage } = registerHrRoutes(app, { APP_URL, authMiddleware, createAuditLog, logger, prisma, schemas, validate });

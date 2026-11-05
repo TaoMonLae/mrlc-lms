@@ -310,6 +310,8 @@ import { AuthProvider } from "./providers/AuthProvider";
 import { ReleaseUpdatesProvider } from "./providers/ReleaseUpdatesProvider";
 import { I18nProvider } from "./i18n/I18nProvider";
 
+const CouncilPage = lazy(() => import("./pages/council/CouncilPage"));
+const ForumPage = lazy(() => import("./pages/council/ForumPage"));
 const LandingPage = lazy(() => import("./pages/Landing"));
 const KioskDownloads = lazy(() => import("./pages/KioskDownloads"));
 const FocusApp = lazy(() => import("./pages/FocusApp"));
@@ -769,6 +771,12 @@ export default function App() {
                   <Route path="/donors/:id/edit" element={<DonorEdit />} />
                   <Route path="/donors/:id" element={<DonorProfile />} />
                   </Route>
+                </Route>
+
+                <Route element={<ProtectedRoute strictRoles={['ADMIN', 'STAFF', 'TEACHER', 'STUDENT']} />}>
+                  <Route path="/council" element={<CouncilPage />} />
+                  <Route path="/student-forum" element={<ForumPage />} />
+                  <Route path="/student-forum/:id" element={<ForumPage />} />
                 </Route>
 
                 <Route element={<ProtectedRoute requiredPermission="view_duties" />}>

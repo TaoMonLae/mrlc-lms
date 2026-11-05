@@ -4744,3 +4744,81 @@ model EvidenceCaseProgress {
   @@unique([userId, caseId])
   @@index([userId, solved])
 }
+
+// Council rosters preserve group membership and task wording at publication.
+model CouncilPlan {
+  id String @id @default(uuid())
+  name String
+  config Json
+  createdById String
+  createdAt DateTime @default(now())
+  entries CouncilDutyEntry[]
+}
+model CouncilDutyEntry {
+  id String @id @default(uuid())
+  planId String
+  plan CouncilPlan @relation(fields: [planId], references: [id], onDelete: Restrict)
+  date String
+  dutyNumber Int
+  dutyName String
+  dutyType String
+  instructions String
+  groupNumber Int
+  groupName String
+  members Json
+  status String @default("PENDING")
+  rating Int?
+  note String @default("")
+  version Int @default(0)
+  reviewedById String?
+  reviewedByName String?
+  updatedAt DateTime @updatedAt
+  @@unique([planId, date, dutyNumber])
+  @@index([date])
+}
+model CouncilForumTopic {
+  id String @id @default(uuid())
+  title String
+  body String
+  category String
+  authorId String
+  authorName String
+  pinned Boolean @default(false)
+  locked Boolean @default(false)
+  hidden Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  replies CouncilForumReply[]
+  reports CouncilForumReport[]
+  @@index([hidden, pinned, updatedAt])
+}
+model CouncilForumReply {
+  id String @id @default(uuid())
+  topicId String
+  topic CouncilForumTopic @relation(fields: [topicId], references: [id], onDelete: Restrict)
+  authorId String
+  authorName String
+  body String
+  hidden Boolean @default(false)
+  createdAt DateTime @default(now())
+  @@index([topicId, createdAt])
+}
+model CouncilForumReport {
+  id String @id @default(uuid())
+  topicId String
+  topic CouncilForumTopic @relation(fields: [topicId], references: [id], onDelete: Restrict)
+  replyId String?
+  reporterId String
+  reason String
+  resolved Boolean @default(false)
+  createdAt DateTime @default(now())
+  @@index([resolved, createdAt])
+}
+
+model CouncilAppointment {
+  id        String @id @default(uuid())
+  studentId String @unique
+  role      String
+  startDate String
+  endDate   String
+}

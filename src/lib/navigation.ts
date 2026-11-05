@@ -72,6 +72,8 @@ export type AdminNavEntry = { title: string; url: string; icon: any } | NavGroup
 export const isNavGroup = (e: AdminNavEntry): e is NavGroup => 'items' in e;
 
 const COMMUNITY_ITEMS: NavGroupItem[] = [
+  { title: "Student Council", url: "/council", icon: Users },
+  { title: "Student Forum", url: "/student-forum", icon: MessageSquare },
   { title: "Announcements", url: "/announcements", icon: Megaphone },
   { title: "Chat", url: "/chat", icon: MessageSquare },
   { title: "Social Space", url: "/social", icon: Sparkles },
@@ -302,6 +304,8 @@ export const ROLE_NAV: Partial<Record<UserRole, AdminNavEntry[]>> = {
 };
 
 export const NAVIGATION_ITEMS: NavItem[] = [
+  { title: "Student Council", url: "/council", icon: Users, roles: ["STAFF"] },
+  { title: "Student Forum", url: "/student-forum", icon: MessageSquare, roles: ["STAFF"] },
   { title: "Notifications", url: "/notifications/settings", icon: Bell, roles: ["STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"] },
   // Admin / General Navigation
   {

@@ -59,7 +59,7 @@ test('one Games link opens the game shelf; community retains its group', () => {
     assert.ok(community && isNavGroup(community), `${role} is missing Community`);
     assert.deepEqual(
       community.items.map((item) => item.title),
-      ['Announcements', 'Chat', 'Social Space', 'News'],
+      ['Student Council', 'Student Forum', 'Announcements', 'Chat', 'Social Space', 'News'],
     );
   }
 
