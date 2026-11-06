@@ -8,7 +8,7 @@ import { apiGet, apiSend } from '../../lib/api';
 import { MathText } from '@/src/components/MathText';
 import {
   DeckGate, DeckShell, ModeIntro, ProgressRule, ResultSummary, StatePanel,
-  normalizeAnswer, percent, shuffle, useDeck, useDeckRoutes,
+  matchesFlashcardAnswer, percent, shuffle, useDeck, useDeckRoutes,
   type DeckDetail, type FlashCard,
 } from './shared';
 
@@ -84,7 +84,7 @@ function Spelling({ deck, routes }: { deck: DeckDetail; routes: ReturnType<typeo
 
   const submit = () => {
     if (!current || checked || !input.trim()) return;
-    const correct = normalizeAnswer(input) === normalizeAnswer(current.term);
+    const correct = matchesFlashcardAnswer(input, current.term);
     setChecked({ correct });
     setAnswers((prev) => [...prev, { term: current.term, typed: input, correct }]);
     requestAnimationFrame(() => nextRef.current?.focus());
@@ -109,7 +109,7 @@ function Spelling({ deck, routes }: { deck: DeckDetail; routes: ReturnType<typeo
   if (!started) {
     return (
       <ModeIntro title="Spell each term" action={<Button size="lg" onClick={start} className="w-full sm:w-auto">Start · {deck.cards.length} words</Button>}>
-        <p className="text-sm text-muted-foreground">You'll see each definition{speechSupported ? ' and hear the word' : ''}. Type the term exactly; capital letters and extra spaces don't count against you.</p>
+        <p className="text-sm text-muted-foreground">You'll see each definition{speechSupported ? ' and hear the word' : ''}. Type the term; capital letters, extra spaces and simple punctuation don't count against you.</p>
         {speechSupported ? (
           <label className="flex min-h-10 cursor-pointer items-center gap-2 text-sm text-foreground">
             <input type="checkbox" className="h-4 w-4 accent-[var(--color-academic-teal)]" checked={readAloud} onChange={(e) => setReadAloud(e.target.checked)} />

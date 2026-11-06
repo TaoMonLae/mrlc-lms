@@ -8,7 +8,7 @@ import { apiGet, apiSend } from '../../lib/api';
 import { MathText } from '@/src/components/MathText';
 import {
   DeckGate, DeckShell, ModeIntro, ProgressRule, ResultSummary, StatePanel,
-  normalizeAnswer, percent, shuffle, useDeck, useDeckRoutes,
+  matchesFlashcardAnswer, percent, shuffle, useDeck, useDeckRoutes,
   type DeckDetail, type FlashCard,
 } from './shared';
 
@@ -29,7 +29,7 @@ interface AnsweredRecord { type: QType; term: string; correct: string; picked: s
 const TYPE_OPTIONS: { key: QType; label: string; desc: string }[] = [
   { key: 'MC', label: 'Multiple choice', desc: 'Pick the right definition from up to four.' },
   { key: 'TF', label: 'True or false', desc: 'Decide whether a definition belongs to the term.' },
-  { key: 'FILL', label: 'Write the term', desc: 'Read the definition and type the term.' },
+  { key: 'FILL', label: 'Write the term', desc: 'Read the definition and type the term. Simple punctuation is optional.' },
 ];
 
 function correctAnswerFor(q: Question): string {
@@ -113,7 +113,7 @@ function Quiz({ deck, routes }: { deck: DeckDetail; routes: ReturnType<typeof us
   const record = (value: string) => {
     if (answered || !current) return;
     const correct = correctAnswerFor(current);
-    const isCorrect = current.type === 'FILL' ? normalizeAnswer(value) === normalizeAnswer(correct) : value === correct;
+    const isCorrect = current.type === 'FILL' ? matchesFlashcardAnswer(value, correct) : value === correct;
     setAnswered({ value, isCorrect });
     setAnswers((prev) => [...prev, { type: current.type, term: current.term, correct, picked: value, isCorrect }]);
     requestAnimationFrame(() => nextRef.current?.focus());
