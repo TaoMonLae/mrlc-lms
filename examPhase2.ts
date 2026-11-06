@@ -1,3 +1,7 @@
+import { invigilationChange } from "./lib/examInvigilation";
+import { ensureEditableExamContent } from "./lib/examContent";
+import { examScheduleUpdate } from "./shared/examSchedule";
+import { canWriteExam } from "./shared/examAccess";
 import { manualGradeScores } from "./shared/examGrading";
 import { summarizeExamAnswers } from "./shared/examReview";
 import { examAvailability } from "./shared/examAvailability";
@@ -86,18 +90,17 @@ export function registerExamPhase2Routes(deps: Deps): void {
     next();
   };
 
-  // Per-class scoping: a TEACHER may only touch exams of classes they teach
-  // (ADMIN passes). `examGuard(param)` reads the exam id from that route param.
-  const canManageExam = async (req: express.Request, examId: string): Promise<{ ok: boolean; found: boolean }> => {
-    const exam = await prisma.exam.findUnique({ where: { id: examId }, select: { classId: true } });
+  // Preview needs class access. Management also requires ownership or an edit grant.
+  const canManageExam = async (req: express.Request, examId: string, requireEdit = true): Promise<{ ok: boolean; found: boolean }> => {
+    const exam = await prisma.exam.findUnique({ where: { id: examId }, select: { classId: true, ownerId: true, editorIds: true } });
     if (!exam) return { ok: false, found: false };
-    return { ok: await canManageExamClass(user(req), exam.classId), found: true };
+    return { ok: (!requireEdit || canWriteExam(user(req), exam)) && await canManageExamClass(user(req), exam.classId), found: true };
   };
-  const examGuard = (param = "id"): express.RequestHandler => async (req, res, next) => {
+  const examGuard = (param = "id", requireEdit = true): express.RequestHandler => async (req, res, next) => {
     try {
-      const { ok, found } = await canManageExam(req, req.params[param]);
+      const { ok, found } = await canManageExam(req, req.params[param], requireEdit);
       if (!found) { res.status(404).json({ error: "Exam not found" }); return; }
-      if (!ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      if (!ok) { res.status(403).json({ error: "You do not have permission to manage this exam" }); return; }
       next();
     } catch (err) {
       logger.error("exam guard failed", err);
@@ -110,7 +113,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
       const attempt = await prisma.examAttempt.findUnique({ where: { id: req.params[param] }, select: { examId: true } });
       if (!attempt) { res.status(404).json({ error: "Attempt not found" }); return; }
       const { ok } = await canManageExam(req, attempt.examId);
-      if (!ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      if (!ok) { res.status(403).json({ error: "You do not have permission to manage this exam" }); return; }
       next();
     } catch (err) {
       logger.error("attempt guard failed", err);
@@ -262,58 +265,25 @@ export function registerExamPhase2Routes(deps: Deps): void {
   app.put("/api/exams/:id/schedule", authMiddleware, teacherGuard, examGuard(), async (req, res) => {
     const { id } = req.params;
     const b = req.body || {};
-    const has = (key: string) => Object.prototype.hasOwnProperty.call(b, key);
     try {
-      const existing = await prisma.exam.findUnique({ where: { id }, select: { accessCodeHash: true, totalMarks: true } });
+      const existing = await prisma.exam.findUnique({ where: { id }, select: { accessCodeHash: true, totalMarks: true, status: true, availableFrom: true, availableUntil: true } });
       if (!existing) { res.status(404).json({ error: "Exam not found" }); return; }
-      const availableFrom = b.availableFrom ? new Date(b.availableFrom) : null;
-      const availableUntil = b.availableUntil ? new Date(b.availableUntil) : null;
-      const resultReleaseAt = b.resultReleaseAt ? new Date(b.resultReleaseAt) : null;
-      if ([availableFrom, availableUntil, resultReleaseAt].some((d) => d && Number.isNaN(d.getTime()))) {
-        res.status(400).json({ error: "One or more schedule dates are invalid" }); return;
-      }
-      if (availableFrom && availableUntil && availableUntil <= availableFrom) {
-        res.status(400).json({ error: "Available until must be after available from" }); return;
-      }
-      const attemptLimit = num(b.attemptLimit) ?? 1;
-      const gracePeriodMinutes = num(b.gracePeriodMinutes) ?? 0;
-      const durationMinutes = num(b.durationMinutes);
-      const passMark = num(b.passMark);
-      if (!Number.isInteger(attemptLimit) || attemptLimit < 1) { res.status(400).json({ error: "Attempt limit must be a positive integer" }); return; }
-      if (!Number.isInteger(gracePeriodMinutes) || gracePeriodMinutes < 0) { res.status(400).json({ error: "Grace period must be a non-negative integer" }); return; }
-      if (durationMinutes !== null && (!Number.isInteger(durationMinutes) || durationMinutes < 1)) { res.status(400).json({ error: "Duration must be a positive integer" }); return; }
-      if (passMark !== null && passMark < 0) { res.status(400).json({ error: "Pass mark cannot be negative" }); return; }
-      if (passMark !== null && existing.totalMarks != null && passMark > Number(existing.totalMarks)) {
-        res.status(400).json({ error: `Pass mark cannot exceed the exam total of ${existing.totalMarks}` }); return;
-      }
-      if (b.status !== undefined && !["DRAFT", "SCHEDULED", "ACTIVE", "CLOSED", "PUBLISHED"].includes(b.status)) {
-        res.status(400).json({ error: "Invalid exam status" }); return;
+      let data;
+      try { data = examScheduleUpdate(b, existing); }
+      catch (error: any) { res.status(400).json({ error: error.message }); return; }
+      if (b.status === "DRAFT" && existing.status !== "DRAFT" && user(req).role !== "ADMIN") {
+        res.status(403).json({ error: "Only an administrator can reopen a published exam as a draft." }); return;
       }
       if (b.requiresAccessCode && !String(b.accessCode || "").trim() && !existing.accessCodeHash) {
         res.status(400).json({ error: "Set an access code before requiring one" }); return;
       }
-      const data: any = {
-        ...(has("availableFrom") ? { availableFrom } : {}),
-        ...(has("availableUntil") ? { availableUntil } : {}),
-        ...(has("resultReleaseAt") ? { resultReleaseAt } : {}),
-        ...(has("attemptLimit") ? { attemptLimit } : {}),
-        ...(has("gracePeriodMinutes") ? { gracePeriodMinutes } : {}),
-        ...(has("allowLateStart") ? { allowLateStart: b.allowLateStart !== false } : {}),
-        ...(has("requiresAccessCode") ? { requiresAccessCode: !!b.requiresAccessCode } : {}),
-        ...(has("requiresInvigilator") ? { requiresInvigilator: !!b.requiresInvigilator } : {}),
-        ...(has("shuffleQuestions") ? { shuffleQuestions: !!b.shuffleQuestions } : {}),
-        ...(has("shuffleOptions") ? { shuffleOptions: !!b.shuffleOptions } : {}),
-        ...(has("negativeMarking") ? { negativeMarking: !!b.negativeMarking } : {}),
-        ...(has("passMark") ? { passMark } : {}),
-        ...(has("durationMinutes") && durationMinutes !== null ? { durationMinutes } : {}),
-        ...(has("status") ? { status: b.status } : {}),
-      };
-      if (String(b.accessCode || "").trim()) data.accessCodeHash = await bcrypt.hash(String(b.accessCode).trim(), 10);
-      else if (b.requiresAccessCode === false) data.accessCodeHash = null;
+      let accessCodeHash: string | null | undefined;
+      if (String(b.accessCode || "").trim()) accessCodeHash = await bcrypt.hash(String(b.accessCode).trim(), 10);
+      else if (b.requiresAccessCode === false) accessCodeHash = null;
 
-      const exam = await prisma.exam.update({ where: { id }, data });
+      const exam = await prisma.exam.update({ where: { id }, data: { ...data, accessCodeHash } });
       await createAuditLog(user(req).userId, user(req).email, "UPDATE", "EXAM", id, `Exam '${exam.title}' schedule updated.`, ipOf(req), uaOf(req), "SUCCESS");
-      const { accessCodeHash, ...safe } = exam;
+      const { accessCodeHash: _hash, ...safe } = exam;
       res.json(safe);
     } catch (err: any) {
       if (err?.code === "P2025") { res.status(404).json({ error: "Exam not found" }); return; }
@@ -384,12 +354,16 @@ export function registerExamPhase2Routes(deps: Deps): void {
       if (examId) {
         const scope = await canManageExam(req, examId);
         if (!scope.found) { res.status(404).json({ error: "Exam not found" }); return; }
-        if (!scope.ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+        if (!scope.ok) { res.status(403).json({ error: "You do not have permission to manage this exam" }); return; }
       }
       let studentScope: any = {};
       if (user(req).role === "TEACHER" && !examId) {
         const teacher = await prisma.teacher.findUnique({ where: { userId: user(req).userId }, include: { classes: true } });
-        studentScope = { student: { classId: { in: (teacher?.classes || []).map((c: any) => c.classId) } } };
+        const classIds = (teacher?.classes || []).map((c: any) => c.classId);
+        studentScope = {
+          student: { classId: { in: classIds } },
+          OR: [{ examId: null }, { exam: { classId: { in: classIds }, OR: [{ ownerId: user(req).userId }, { editorIds: { has: user(req).userId } }] } }],
+        };
       }
       const rows = await prisma.examAccommodation.findMany({
         where: { ...(studentId ? { studentId } : {}), ...(examId ? { examId } : {}), ...studentScope },
@@ -423,8 +397,8 @@ export function registerExamPhase2Routes(deps: Deps): void {
     const student = await prisma.student.findUnique({ where: { id: studentId }, select: { classId: true } });
     if (!student) return false;
     if (!examId) return !!student.classId && canManageExamClass(user(req), student.classId);
-    const exam = await prisma.exam.findUnique({ where: { id: examId }, select: { classId: true } });
-    if (!exam || !(await canManageExamClass(user(req), exam.classId))) return false;
+    const exam = await prisma.exam.findUnique({ where: { id: examId }, select: { classId: true, ownerId: true, editorIds: true } });
+    if (!exam || !canWriteExam(user(req), exam) || !(await canManageExamClass(user(req), exam.classId))) return false;
     if (student.classId === exam.classId) return true;
     return !!(await prisma.examAssignment.findUnique({ where: { examId_studentId: { examId, studentId } }, select: { id: true } }));
   }
@@ -587,18 +561,24 @@ export function registerExamPhase2Routes(deps: Deps): void {
           const finalized = await finalizeSubmission(existing.id, true, ipOf(req), uaOf(req));
           return res.status(409).json({ error: "TIME_EXPIRED", autoSubmitted: true, attempt: { id: finalized.id, state: finalized.state } });
         }
+        if (existing.state === "PAUSED") {
+          const pause = await prisma.attemptEvent.findFirst({ where: { attemptId: existing.id, type: "PAUSE" }, orderBy: { createdAt: "desc" } });
+          // An older student break must not authorize a later teacher pause
+          // whose event is missing in historical data.
+          const currentPause = existing.pausedAt && pause?.createdAt
+            && new Date(pause.createdAt).getTime() >= new Date(existing.pausedAt).getTime();
+          if (pause?.actorRole !== "STUDENT" || !currentPause) {
+            res.status(409).json({ error: "ATTEMPT_PAUSED", message: "An invigilator must resume this attempt before you can continue." });
+            return;
+          }
+        }
         // New device/session takeover: issue a fresh token, log it.
         const sessionToken = crypto.randomUUID();
         // Resuming from PAUSED: push the deadline forward by the paused duration
         // so pausing genuinely freezes the clock (mirrors the invigilator RESUME action).
         let pauseComp: any = {};
-        if (existing.state === "PAUSED" && existing.pausedAt && existing.serverDeadline) {
-          const extra = Math.max(0, now - new Date(existing.pausedAt).getTime());
-          pauseComp = {
-            pausedAt: null,
-            accumulatedPauseSeconds: (existing.accumulatedPauseSeconds || 0) + Math.floor(extra / 1000),
-            serverDeadline: new Date(new Date(existing.serverDeadline).getTime() + extra),
-          };
+        if (existing.state === "PAUSED") {
+          pauseComp = invigilationChange(existing, { action: "RESUME" }, now).data;
         }
         const resumed = await prisma.$transaction(async (tx: any) => {
           const claimed = await tx.examAttempt.updateMany({
@@ -686,7 +666,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
   // TEACHER PREVIEW — render the exam exactly as a student would see it, but
   // read-only: no attempt is created, no scoring, no timer. Correct answers are
   // stripped so the preview matches the student view.
-  app.get("/api/exams/:examId/preview", authMiddleware, teacherGuard, examGuard("examId"), async (req, res) => {
+  app.get("/api/exams/:examId/preview", authMiddleware, teacherGuard, examGuard("examId", false), async (req, res) => {
     const { examId } = req.params;
     try {
       const exam = await prisma.exam.findUnique({ where: { id: examId } });
@@ -715,7 +695,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
         };
       });
       res.json({
-        exam: { id: exam.id, title: exam.title, status: exam.status, durationMinutes: exam.durationMinutes, totalMarks: exam.totalMarks },
+        exam: { id: exam.id, title: exam.title, status: exam.status, durationMinutes: exam.durationMinutes, totalMarks: exam.totalMarks, questionTheme: exam.settings && typeof exam.settings === "object" ? (exam.settings as any).questionTheme : "ged" },
         questions,
       });
     } catch (err: any) {
@@ -790,7 +770,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
       if (!attempt) { res.status(404).json({ error: "Attempt not found" }); return; }
       if (!student || attempt.studentId !== student.id) { res.status(403).json({ error: "Forbidden" }); return; }
       if (attempt.state === "PAUSED") {
-        res.status(409).json({ error: "ATTEMPT_PAUSED", message: "This attempt is paused. Resume it from My Exams." });
+        res.status(409).json({ error: "ATTEMPT_PAUSED", message: "This attempt is paused. Return to My Exams; an invigilator may need to resume it." });
         return;
       }
       // PAUSED is handled by the early return above; only a live IN_PROGRESS
@@ -932,7 +912,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
           data: { state: "PAUSED", pausedAt, lastSavedAt: pausedAt },
         });
         if (claimed.count !== 1) return null;
-        await tx.attemptEvent.create({ data: { attemptId: attempt.id, type: "PAUSE", actorRole: "STUDENT", ipAddress: ipOf(req), userAgent: uaOf(req) } }).catch(() => {});
+        await tx.attemptEvent.create({ data: { attemptId: attempt.id, type: "PAUSE", actorRole: "STUDENT", createdAt: pausedAt, ipAddress: ipOf(req), userAgent: uaOf(req) } });
         return tx.examAttempt.findUnique({ where: { id: attempt.id } });
       });
       if (!updated) { res.status(409).json({ error: "ATTEMPT_CHANGED", message: "The attempt changed before it could be paused." }); return; }
@@ -993,6 +973,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
     ua: string | null,
     finalAnswers: any[] = [],
     expectedSessionToken?: string,
+    invigilationEvent?: any,
   ) {
     return prisma.$transaction(async (tx: any) => {
       const claimWhere: any = { id: attemptId, state: { in: expectedSessionToken ? ["IN_PROGRESS"] : ["IN_PROGRESS", "PAUSED"] } };
@@ -1001,6 +982,9 @@ export function registerExamPhase2Routes(deps: Deps): void {
       if (claimed.count !== 1) {
         const current = await tx.examAttempt.findUnique({ where: { id: attemptId } });
         if (!current) throw new Error("attempt missing");
+        if (invigilationEvent && (current.invalidatedAt || !["SUBMITTED", "AUTO_SUBMITTED", "PENDING_GRADING", "FINALIZED", "RELEASED"].includes(current.state))) {
+          throw Object.assign(new Error("Attempt changed before it could be submitted"), { http: 409 });
+        }
         if (expectedSessionToken && current.state === "PAUSED") throw Object.assign(new Error("Attempt is paused"), { examCode: "ATTEMPT_PAUSED" });
         if (expectedSessionToken && current.state === "IN_PROGRESS") throw Object.assign(new Error("Session changed"), { examCode: "SESSION_CONFLICT" });
         return current;
@@ -1120,6 +1104,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
       });
       await tx.attemptSnapshot.create({ data: { attemptId, reason: "FINAL", answers: attempt.answers.map((a: any) => ({ questionId: a.questionId, answerText: a.answerText, selectedOptions: a.selectedOptions })), questionOrder: attempt.questionOrder ?? undefined, remainingSeconds: 0 } });
       await tx.attemptEvent.create({ data: { attemptId, type: autoSubmitted ? "AUTO_SUBMIT" : "SUBMIT", actorRole: "STUDENT", ipAddress: ip, userAgent: ua } });
+      if (invigilationEvent) await tx.attemptEvent.create({ data: invigilationEvent });
       if (attempt.assignmentId) await tx.examAssignment.update({ where: { id: attempt.assignmentId }, data: { status: "COMPLETED" } }).catch(() => {});
       return updated;
     });
@@ -1410,7 +1395,8 @@ function registerAuthoringRoutes(deps: any) {
       const row = await prisma[model].findUnique({ where: { id: req.params.id }, select: { examId: true } });
       if (!row) { res.status(404).json({ error: "Not found" }); return; }
       const { ok } = await canManageExam(req, row.examId);
-      if (!ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      if (!ok) { res.status(403).json({ error: "You do not have permission to manage this exam" }); return; }
+      if (model !== "gradingRubric" && !await ensureEditableExamContent(prisma, user(req).role, row.examId, res)) return;
       req.managedExamId = row.examId;
       next();
     } catch (err: any) {
@@ -1466,11 +1452,8 @@ function registerAuthoringRoutes(deps: any) {
       if (!owner.examId) { res.status(409).json({ error: "Use the question-bank editor for reusable questions" }); return; }
       ownerExamId = owner.examId;
       const { ok } = await canManageExam(req, ownerExamId);
-      if (!ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
-      const ownerExam = await prisma.exam.findUnique({ where: { id: ownerExamId }, select: { status: true, _count: { select: { attempts: true } } } });
-      if (ownerExam && (ownerExam._count.attempts > 0 || (user(req).role === "TEACHER" && ownerExam.status !== "DRAFT"))) {
-        res.status(409).json({ error: "Published question content is locked. Use the approved answer-key correction flow." }); return;
-      }
+      if (!ok) { res.status(403).json({ error: "You do not have permission to manage this exam" }); return; }
+      if (!await ensureEditableExamContent(prisma, user(req).role, ownerExamId, res)) return;
     } catch (err: any) {
       logger.error("question guard failed", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -1536,7 +1519,12 @@ function registerAuthoringRoutes(deps: any) {
     shuffleQuestions: !!b.shuffleQuestions, questionsToPick: num(b.questionsToPick),
   });
   app.post("/api/exams/:id/sections", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
-    try { const row = await prisma.examSection.create({ data: { examId: req.params.id, ...sectionData(req.body || {}) } }); await audit(req, "CREATE", "EXAM_SECTION", row.id, `Section '${row.title}' created.`); res.status(201).json(row); }
+    try {
+      if (!await ensureEditableExamContent(prisma, user(req).role, req.params.id, res)) return;
+      const row = await prisma.examSection.create({ data: { examId: req.params.id, ...sectionData(req.body || {}) } });
+      await audit(req, "CREATE", "EXAM_SECTION", row.id, `Section '${row.title}' created.`);
+      res.status(201).json(row);
+    }
     catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
   app.put("/api/sections/:id", authMiddleware, teacherGuard, childExamGuard("examSection"), async (req: any, res: any) => {
@@ -1559,7 +1547,12 @@ function registerAuthoringRoutes(deps: any) {
     content: b.content || null, mediaUrl: b.mediaUrl || null, caption: b.caption || null, data: b.data ?? null,
   });
   app.post("/api/exams/:id/stimuli", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
-    try { const row = await prisma.stimulus.create({ data: { examId: req.params.id, ...stimulusData(req.body || {}) } }); await audit(req, "CREATE", "STIMULUS", row.id, `Stimulus '${row.title || row.type}' created.`); res.status(201).json(row); }
+    try {
+      if (!await ensureEditableExamContent(prisma, user(req).role, req.params.id, res)) return;
+      const row = await prisma.stimulus.create({ data: { examId: req.params.id, ...stimulusData(req.body || {}) } });
+      await audit(req, "CREATE", "STIMULUS", row.id, `Stimulus '${row.title || row.type}' created.`);
+      res.status(201).json(row);
+    }
     catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
   app.put("/api/stimuli/:id", authMiddleware, teacherGuard, childExamGuard("stimulus"), async (req: any, res: any) => {
@@ -1579,6 +1572,7 @@ function registerAuthoringRoutes(deps: any) {
   const groupData = (b: any) => ({ sectionId: b.sectionId || null, stimulusId: b.stimulusId || null, title: b.title || null, instructions: b.instructions || null, orderIndex: num(b.orderIndex) ?? 0 });
   app.post("/api/exams/:id/question-groups", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try {
+      if (!await ensureEditableExamContent(prisma, user(req).role, req.params.id, res)) return;
       const referenceError = await sameExamReferenceError(req.params.id, req.body || {});
       if (referenceError) { res.status(400).json({ error: referenceError }); return; }
       const row = await prisma.questionGroup.create({ data: { examId: req.params.id, ...groupData(req.body || {}) } }); await audit(req, "CREATE", "QUESTION_GROUP", row.id, `Question group created.`); res.status(201).json(row);
@@ -1672,7 +1666,7 @@ function registerGradingAndOps(deps: any) {
       if (user(req).role === "TEACHER") {
         const teacher = await prisma.teacher.findUnique({ where: { userId: user(req).userId }, include: { classes: true } });
         const classIds = (teacher?.classes || []).map((c: any) => c.classId);
-        attemptScope = { ...(examId ? { examId } : {}), exam: { classId: { in: classIds } } };
+        attemptScope = { ...(examId ? { examId } : {}), exam: { classId: { in: classIds }, OR: [{ ownerId: user(req).userId }, { editorIds: { has: user(req).userId } }] } };
       }
       const rows = await prisma.manualGrade.findMany({
         where: {
@@ -1681,7 +1675,7 @@ function registerGradingAndOps(deps: any) {
         },
         include: {
           question: true, rubric: { include: { criteria: true } },
-          attempt: { include: { student: { include: { user: true } }, exam: true } },
+          attempt: { include: { student: { select: { id: true, studentCode: true, user: { select: { firstName: true, lastName: true } } } }, exam: true } },
         },
         orderBy: { createdAt: "asc" },
       });
@@ -1716,7 +1710,7 @@ function registerGradingAndOps(deps: any) {
       const gradeRow = await prisma.manualGrade.findUnique({ where: { id: req.params.gradeId }, select: { attempt: { select: { examId: true } } } });
       if (!gradeRow) { res.status(404).json({ error: "not found" }); return; }
       const scope = await canManageExam(req, gradeRow.attempt.examId);
-      if (!scope.ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      if (!scope.ok) { res.status(403).json({ error: "You do not have permission to manage this exam" }); return; }
       const result = await prisma.$transaction(async (tx: any) => {
         const grade = await tx.manualGrade.findUnique({ where: { id: req.params.gradeId } });
         if (!grade) throw Object.assign(new Error("not found"), { http: 404 });
@@ -1954,7 +1948,7 @@ function registerGradingAndOps(deps: any) {
       const examId = req.params.id;
       const [assignments, attempts] = await Promise.all([
         prisma.examAssignment.findMany({ where: { examId }, include: { student: { include: { user: true } } } }),
-        prisma.examAttempt.findMany({ where: { examId }, include: { student: { include: { user: true } } } }),
+        prisma.examAttempt.findMany({ where: { examId }, include: { student: { include: { user: true } }, events: { orderBy: { createdAt: "desc" }, take: 1, select: { type: true, createdAt: true } } } }),
       ]);
       const byStudent: Record<string, any> = {};
       const activeStates = new Set(["IN_PROGRESS", "PAUSED"]);
@@ -1972,9 +1966,13 @@ function registerGradingAndOps(deps: any) {
 
       const now = Date.now();
       const currentAttempts = Object.values(byStudent) as any[];
-      let rows = assignments.length
-        ? assignments.map((assignment: any) => ({ student: assignment.student, attempt: byStudent[assignment.studentId] }))
-        : currentAttempts.map((attempt: any) => ({ student: attempt.student, attempt }));
+      const assignedIds = new Set(assignments.map((assignment: any) => assignment.studentId));
+      // Keep existing attempts visible even if assignments changed after a start.
+      let rows = [
+        ...assignments.map((assignment: any) => ({ student: assignment.student, attempt: byStudent[assignment.studentId] })),
+        ...currentAttempts.filter(attempt => !assignedIds.has(attempt.studentId))
+          .map(attempt => ({ student: attempt.student, attempt })),
+      ];
       if (!assignments.length) {
         const exam = await prisma.exam.findUnique({ where: { id: examId }, select: { classId: true } });
         if (!exam) { res.status(404).json({ error: "Exam not found" }); return; }
@@ -1984,10 +1982,9 @@ function registerGradingAndOps(deps: any) {
           rows = [...roster.map((student: any) => ({ student, attempt: byStudent[student.id] })), ...rows.filter((row: any) => !rosterIds.has(row.student?.id))];
         }
       }
-      const live = await Promise.all(rows.map(async (r: any) => {
+      const live = rows.map((r: any) => {
         const at = r.attempt;
-        let lastEvent: any = null;
-        if (at) lastEvent = await prisma.attemptEvent.findFirst({ where: { attemptId: at.id }, orderBy: { createdAt: "desc" } });
+        const lastEvent = at?.events?.[0];
         const lastCheckIn = at?.lastSavedAt ?? at?.startedAt ?? at?.createdAt;
         const disconnected = at?.state === "IN_PROGRESS" && lastCheckIn && (now - new Date(lastCheckIn).getTime() > 90_000);
         return {
@@ -1997,13 +1994,14 @@ function registerGradingAndOps(deps: any) {
           state: at?.state || "NOT_STARTED",
           remainingSeconds: at?.serverDeadline && activeStates.has(at.state) ? remainingSeconds(at) : null,
           lastSavedAt: at?.lastSavedAt || null,
+          lastCheckInAt: lastCheckIn || null,
           disconnected: !!disconnected,
           securityWarnings: at?.securityWarnings || 0,
           ipAddress: at?.ipAddress || null,
           deviceInfo: at?.deviceInfo || null,
           lastActivity: lastEvent ? { type: lastEvent.type, at: lastEvent.createdAt } : null,
         };
-      }));
+      });
       res.json({
         examId,
         summary: {
@@ -2025,54 +2023,13 @@ function registerGradingAndOps(deps: any) {
     try {
       const attempt = await prisma.examAttempt.findUnique({ where: { id: attemptId } });
       if (!attempt) { res.status(404).json({ error: "Attempt not found" }); return; }
-      let data: any = {};
-      let evType = action;
+      const change = invigilationChange(attempt, b);
+      const { data, payload } = change;
+      const event = { attemptId, type: action, actorId: user(req).userId, actorRole: user(req).role, payload, ipAddress: ipOf(req), userAgent: uaOf(req) };
       if (action === "FORCE_SUBMIT") {
-        if (["IN_PROGRESS", "PAUSED"].includes(attempt.state)) {
-          await finalizeSubmission(attemptId, true, ipOf(req), uaOf(req));
-        } else if (!["SUBMITTED", "AUTO_SUBMITTED", "PENDING_GRADING", "FINALIZED", "RELEASED"].includes(attempt.state)) {
-          res.status(409).json({ error: "Only an active attempt can be force submitted" });
-          return;
-        }
-        await prisma.attemptEvent.create({ data: { attemptId, type: evType, actorId: user(req).userId, actorRole: user(req).role, payload: b, ipAddress: ipOf(req), userAgent: uaOf(req) } }).catch(() => {});
-        await createAuditLog(user(req).userId, user(req).email, "INVIGILATE", "EXAM_ATTEMPT", attemptId, `Invigilator action ${action}${b.note ? `: ${b.note}` : ""}.`, ipOf(req), uaOf(req), "SUCCESS");
-        res.json({ ok: true, action });
-        return;
-      }
-      switch (action) {
-        case "EXTRA_TIME": {
-          if (!["IN_PROGRESS", "PAUSED"].includes(attempt.state)) { res.status(409).json({ error: "Extra time can only be added to an active attempt" }); return; }
-          const mins = num(b.minutes) || 0;
-          if (!Number.isInteger(mins) || mins <= 0 || mins > 1440) { res.status(400).json({ error: "Minutes must be a whole number between 1 and 1440" }); return; }
-          const base = attempt.serverDeadline ? new Date(attempt.serverDeadline).getTime() : Date.now();
-          data = { serverDeadline: new Date(base + mins * 60000), effectiveDurationMinutes: (attempt.effectiveDurationMinutes || 0) + mins };
-          break;
-        }
-        case "PAUSE":
-          if (attempt.state !== "IN_PROGRESS") { res.status(409).json({ error: "Only an in-progress attempt can be paused" }); return; }
-          data = { state: "PAUSED", pausedAt: new Date() };
-          break;
-        case "RESUME": {
-          if (attempt.state !== "PAUSED") { res.status(409).json({ error: "Only a paused attempt can be resumed" }); return; }
-          // Push the deadline forward by the paused duration.
-          let extra = 0;
-          if (attempt.pausedAt) extra = Date.now() - new Date(attempt.pausedAt).getTime();
-          data = { state: "IN_PROGRESS", pausedAt: null, accumulatedPauseSeconds: (attempt.accumulatedPauseSeconds || 0) + Math.floor(extra / 1000), serverDeadline: attempt.serverDeadline ? new Date(new Date(attempt.serverDeadline).getTime() + extra) : null };
-          break;
-        }
-        case "REOPEN": {
-          if (!["SUBMITTED", "AUTO_SUBMITTED", "PENDING_GRADING", "FINALIZED"].includes(attempt.state)) { res.status(409).json({ error: "This attempt cannot be reopened" }); return; }
-          const mins = num(b.minutes) ?? 15;
-          if (!Number.isInteger(mins) || mins <= 0 || mins > 1440) { res.status(400).json({ error: "Minutes must be a whole number between 1 and 1440" }); return; }
-          data = { state: "IN_PROGRESS", isCompleted: false, submittedAt: null, completedAt: null, serverDeadline: new Date(Date.now() + mins * 60000), sessionToken: null };
-          break;
-        }
-        case "INVALIDATE": data = { state: "INVALIDATED", invalidatedAt: new Date(), sessionToken: null }; break;
-        case "INCIDENT_NOTE": data = {}; break;
-        default: res.status(400).json({ error: "Unknown action" }); return;
-      }
-      if (action === "REOPEN") {
-        await prisma.$transaction(async (tx: any) => {
+        await finalizeSubmission(attemptId, true, ipOf(req), uaOf(req), [], undefined, event);
+      } else await prisma.$transaction(async (tx: any) => {
+        if (action === "REOPEN") {
           const claimed = await tx.examAttempt.updateMany({ where: { id: attemptId, state: attempt.state, updatedAt: attempt.updatedAt }, data: { ...data, score: null, gradingStatus: null, gradedAt: null, releasedAt: null } });
           if (claimed.count !== 1) throw Object.assign(new Error("Attempt changed while applying action"), { http: 409 });
           await tx.examAnswer.updateMany({ where: { attemptId }, data: { isCorrect: null, pointsAwarded: null, autoScore: null, manualScore: null, gradingState: null } });
@@ -2085,13 +2042,13 @@ function registerGradingAndOps(deps: any) {
               secondMarkerScore: null, secondMarkerId: null, moderationComment: null,
             },
           });
-        });
-      } else if (Object.keys(data).length) {
-        const claimed = await prisma.examAttempt.updateMany({ where: { id: attemptId, state: attempt.state, updatedAt: attempt.updatedAt }, data });
-        if (claimed.count !== 1) { res.status(409).json({ error: "Attempt changed while applying action" }); return; }
-      }
-      await prisma.attemptEvent.create({ data: { attemptId, type: evType, actorId: user(req).userId, actorRole: user(req).role, payload: b, ipAddress: ipOf(req), userAgent: uaOf(req) } }).catch(() => {});
-      await createAuditLog(user(req).userId, user(req).email, "INVIGILATE", "EXAM_ATTEMPT", attemptId, `Invigilator action ${action}${b.note ? `: ${b.note}` : ""}.`, ipOf(req), uaOf(req), "SUCCESS");
+        } else if (Object.keys(data).length) {
+          const claimed = await tx.examAttempt.updateMany({ where: { id: attemptId, state: attempt.state, updatedAt: attempt.updatedAt }, data });
+          if (claimed.count !== 1) throw Object.assign(new Error("Attempt changed while applying action"), { http: 409 });
+        }
+        await tx.attemptEvent.create({ data: event });
+      });
+      await createAuditLog(user(req).userId, user(req).email, "INVIGILATE", "EXAM_ATTEMPT", attemptId, `Invigilator action ${action}${payload.note ? `: ${payload.note}` : ""}.`, ipOf(req), uaOf(req), "SUCCESS").catch((err: unknown) => logger.error("Invigilator audit log failed; attempt event was saved", err));
       res.json({ ok: true, action });
     } catch (err: any) {
       if (err?.http) { res.status(err.http).json({ error: err.message }); return; }

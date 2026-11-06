@@ -74,7 +74,7 @@ export default function TeacherDashboard() {
   const firstName = user?.name?.trim().split(/\s+/)[0];
   const teacherStats = [
     { title: "My Students", value: String(stats.studentCount), description: `Across ${stats.classCount} classes`, icon: Users, color: "text-academic-sky", bgColor: "bg-academic-sky/10", accent: "bg-academic-sky" },
-    { title: "Attendance", value: `${stats.attendanceRate}%`, description: "Average this period", icon: CheckCircle2, color: "text-academic-teal", bgColor: "bg-academic-teal/10", accent: "bg-academic-teal" },
+    { title: "Attendance", value: `${stats.attendanceRate}%`, description: "Average this period", icon: CheckCircle2, color: "text-academic-teal", bgColor: "bg-academic-teal/10", accent: "bg-action-solid" },
     { title: "My Classes", value: String(stats.classCount), description: "Assigned to you", icon: BookOpen, color: "text-academic-navy dark:text-slate-200", bgColor: "bg-academic-navy/10 dark:bg-white/10", accent: "bg-academic-navy dark:bg-slate-300" },
     { title: "Exams Slated", value: String(stats.upcomingExamCount), description: "Upcoming exams", icon: GraduationCap, color: "text-[#b7791f] dark:text-academic-gold", bgColor: "bg-academic-gold/15", accent: "bg-academic-gold" },
   ];
@@ -97,7 +97,7 @@ export default function TeacherDashboard() {
           <Button
             id="dashboard-mark-attendance-btn"
             size="sm"
-            className="h-10 rounded-lg bg-academic-teal px-4 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm hover:bg-aubergine-700"
+            className="h-10 rounded-lg bg-action-solid px-4 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm hover:bg-aubergine-700"
             onClick={() => navigate('/teacher/attendance')}
           >
             Mark Attendance

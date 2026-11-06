@@ -373,7 +373,7 @@ export default function IncomeExpenseReport() {
                       </div>
                       <p className="font-mono text-xs text-muted-foreground">{share.toFixed(1)}%</p>
                     </div>
-                    <div className="mt-3 h-1.5 bg-muted"><div className={index ? "h-full bg-[#0c2538]" : "h-full bg-academic-teal"} style={{ width: `${share}%` }} /></div>
+                    <div className="mt-3 h-1.5 bg-muted"><div className={index ? "h-full bg-[#0c2538]" : "h-full bg-action-solid"} style={{ width: `${share}%` }} /></div>
                   </div>
                 );
               })}

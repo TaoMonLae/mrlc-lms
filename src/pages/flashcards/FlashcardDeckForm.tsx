@@ -260,7 +260,7 @@ export default function FlashcardDeckForm() {
               <div className="mt-2 grid grid-cols-1 border-l border-t border-border sm:grid-cols-2 lg:grid-cols-3">
                 {classes.map((c) => (
                   <label key={c.id} className={`flex min-h-11 cursor-pointer items-center gap-2.5 border-b border-r border-border px-3 text-sm ${classIds.includes(c.id) ? 'bg-accent text-accent-foreground' : 'text-foreground hover:bg-muted/40'}`}>
-                    <Checkbox checked={classIds.includes(c.id)} onCheckedChange={() => toggleClass(c.id)} className="data-checked:border-academic-teal data-checked:bg-academic-teal data-checked:text-white" />
+                    <Checkbox checked={classIds.includes(c.id)} onCheckedChange={() => toggleClass(c.id)} className="data-checked:border-academic-teal data-checked:bg-action-solid data-checked:text-white" />
                     {c.name}
                   </label>
                 ))}
@@ -271,7 +271,7 @@ export default function FlashcardDeckForm() {
             </p>
           </fieldset>
           <label htmlFor="deck-shared" className="flex cursor-pointer items-start gap-2.5 border-t border-border pt-4 text-sm">
-            <Checkbox checked={shared} onCheckedChange={(v) => setShared(!!v)} id="deck-shared" className="mt-0.5 data-checked:border-academic-teal data-checked:bg-academic-teal data-checked:text-white" />
+            <Checkbox checked={shared} onCheckedChange={(v) => setShared(!!v)} id="deck-shared" className="mt-0.5 data-checked:border-academic-teal data-checked:bg-action-solid data-checked:text-white" />
             <span>
               <span className="block font-medium text-foreground">Share with other teachers</span>
               <span className="block text-muted-foreground">They can copy it into their own library. Your original stays yours to edit.</span>

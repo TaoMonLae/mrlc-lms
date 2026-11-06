@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import React, { useEffect, useState } from 'react';
 import { CheckCircle2, Clock, ClipboardList, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -106,6 +107,7 @@ export default function StudentDutyView() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">My Duties</h1>
         <p className="text-sm text-muted-foreground">Your assigned chores and duty history</p>
+        <Link to="/council" className="inline-flex min-h-11 items-center text-primary underline underline-offset-4">Open Council team duties and weekly rotation →</Link>
       </div>
 
       {statistics && (

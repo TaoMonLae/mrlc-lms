@@ -62,7 +62,7 @@ export default function FamilyInbox() {
           {message.reply && <div className="mt-5 bg-muted p-4"><p className="text-xs font-bold uppercase tracking-[0.1em] text-muted-foreground">MRLC reply · {message.repliedByName}</p><p className="mt-2 whitespace-pre-line text-sm leading-6">{message.reply}</p></div>}
           <label className="mt-5 block text-sm font-semibold" htmlFor={`reply-${message.id}`}>{message.reply ? "Update reply" : "Reply to guardian"}</label>
           <textarea id={`reply-${message.id}`} value={drafts[message.id] ?? ""} onChange={(event) => setDrafts((current) => ({ ...current, [message.id]: event.target.value }))} rows={3} maxLength={2000} className="mt-2 block w-full resize-y border border-border bg-background p-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-academic-teal" placeholder="Write a clear reply…" />
-          <button type="button" onClick={() => reply(message.id)} disabled={saving === message.id || (drafts[message.id]?.trim().length ?? 0) < 2} className="mt-3 inline-flex min-h-11 items-center gap-2 bg-academic-navy-deep px-5 text-sm font-bold text-white hover:bg-academic-teal disabled:opacity-50"><Send className="size-4" />{saving === message.id ? "Sending…" : "Send reply"}</button>
+          <button type="button" onClick={() => reply(message.id)} disabled={saving === message.id || (drafts[message.id]?.trim().length ?? 0) < 2} className="mt-3 inline-flex min-h-11 items-center gap-2 bg-academic-navy-deep px-5 text-sm font-bold text-white hover:bg-action-solid disabled:opacity-50"><Send className="size-4" />{saving === message.id ? "Sending…" : "Send reply"}</button>
         </article>;
       })}</div>}
   </div>;

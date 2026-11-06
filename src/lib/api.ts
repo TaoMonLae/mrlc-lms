@@ -42,13 +42,28 @@ async function responseError(res: Response): Promise<ApiError> {
 
 export async function apiGet<T = any>(
   path: string,
-  options: { signal?: AbortSignal } = {},
+  options: { signal?: AbortSignal; timeoutMs?: number } = {},
 ): Promise<T> {
-  const res = await fetch(path, { headers: authHeaders(), signal: options.signal });
-  if (!res.ok) {
-    throw await responseError(res);
+  const controller = new AbortController();
+  const abort = () => controller.abort(options.signal?.reason);
+  if (options.signal?.aborted) abort();
+  else options.signal?.addEventListener('abort', abort, { once: true });
+  let timedOut = false;
+  const timer = options.timeoutMs == null ? undefined : setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, options.timeoutMs);
+  try {
+    const res = await fetch(path, { headers: authHeaders(), signal: controller.signal });
+    if (!res.ok) throw await responseError(res);
+    return await res.json() as T;
+  } catch (error) {
+    if (timedOut && !options.signal?.aborted) throw new Error('Loading took too long. Check your connection and try again.');
+    throw error;
+  } finally {
+    clearTimeout(timer);
+    options.signal?.removeEventListener('abort', abort);
   }
-  return res.json() as Promise<T>;
 }
 
 /** Send a write request (POST/PUT/PATCH/DELETE) with auth + JSON body. */

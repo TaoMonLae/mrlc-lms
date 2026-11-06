@@ -5,6 +5,7 @@ import {
   UserSquare2,
   Library,
   BookOpen,
+  BookOpenCheck,
   CalendarCheck,
   FileCheck,
   Wallet,
@@ -71,6 +72,8 @@ export type AdminNavEntry = { title: string; url: string; icon: any } | NavGroup
 export const isNavGroup = (e: AdminNavEntry): e is NavGroup => 'items' in e;
 
 const COMMUNITY_ITEMS: NavGroupItem[] = [
+  { title: "Student Council", url: "/council", icon: Users },
+  { title: "Student Forum", url: "/student-forum", icon: MessageSquare },
   { title: "Announcements", url: "/announcements", icon: Megaphone },
   { title: "Chat", url: "/chat", icon: MessageSquare },
   { title: "Social Space", url: "/social", icon: Sparkles },
@@ -204,6 +207,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
       { title: "GED Readiness", url: "/gradebook/ged-readiness", icon: GraduationCap },
       { title: "Class Performance", url: "/gradebook/reports", icon: BarChart3 },
       { title: "Documents", url: "/documents", icon: FileText },
+      { title: "Volunteer Documents", url: "/documents/volunteers", icon: FileText },
       { title: "Flashcards", url: "/flashcards", icon: Layers },
       { title: "Conduct", url: "/conduct", icon: ShieldAlert },
       { title: "Student Success", url: "/student-success", icon: HeartPulse },
@@ -300,6 +304,8 @@ export const ROLE_NAV: Partial<Record<UserRole, AdminNavEntry[]>> = {
 };
 
 export const NAVIGATION_ITEMS: NavItem[] = [
+  { title: "Student Council", url: "/council", icon: Users, roles: ["STAFF"] },
+  { title: "Student Forum", url: "/student-forum", icon: MessageSquare, roles: ["STAFF"] },
   { title: "Notifications", url: "/notifications/settings", icon: Bell, roles: ["STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"] },
   // Admin / General Navigation
   {
@@ -396,6 +402,11 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Pac-Man",
     url: "/games/pacman",
     icon: Ghost,
+  },
+  {
+    title: "Evidence Detective",
+    url: "/games/evidence-detective",
+    icon: BookOpenCheck,
   },
   {
     title: "Word Connect",
@@ -499,7 +510,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Volunteer Documents",
     url: "/documents/volunteers",
     icon: FileText,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "TEACHER", "STAFF", "ACCOUNTANT", "LIBRARIAN", "CASE_WORKER"],
   },
   {
     title: "Library",

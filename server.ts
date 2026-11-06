@@ -7,6 +7,7 @@ import { accountStillMatchesToken, consumeRecoveryCode } from "./lib/sessionAcce
 import { announcementAudienceWhere } from "./lib/announcementAudience";
 import { notificationService, syncTeacherAppUpdates, type NotificationInput } from "./lib/notifications";
 import { registerNotificationRoutes } from "./notificationRoutes";
+import { canShareExam, canWriteExam, examAccess } from "./shared/examAccess";
 import { saveStudioQuestions } from "./shared/examStudioPersistence";
 import { correctionData, scoreWithCorrectedKey } from "./shared/examAnswerKey";
 import { buildExamReviewQuestions } from "./shared/examReview";
@@ -42,7 +43,7 @@ import * as OTPAuth from "otpauth";
 import QRCode from "qrcode";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient, type Role } from "@prisma/client";
+import { PrismaClient, type Prisma, type Role } from "@prisma/client";
 import dotenv from "dotenv";
 import { spawn } from "child_process";
 import { ZipArchive } from "archiver";
@@ -61,6 +62,7 @@ import { registerElibraryRoutes } from "./elibraryRoutes";
 import { registerHrRoutes } from "./hrRoutes";
 import { registerFinancialReportRoutes } from "./financialReportRoutes";
 import { registerDutyRoutes } from "./dutyRoutes";
+import { registerCouncilRoutes } from "./councilRoutes";
 import { registerFamilyRoutes } from "./familyRoutes";
 import { isGuardianApiRequestAllowed } from "./shared/familyAccess";
 import { composeQuestionSet, registerExamBankRoutes } from "./examBank";
@@ -86,6 +88,7 @@ import { registerNeonSnakeServer } from "./neonSnakeServer";
 import { registerCheckersGameRoutes } from "./checkersGame";
 import { registerChessGameRoutes } from "./chessGame";
 import { registerPacmanGameRoutes } from "./pacmanGame";
+import { registerEvidenceDetectiveRoutes } from "./evidenceDetective";
 import { registerLanguageQuestRoutes } from "./languageQuest";
 import { registerDailyQuestRoutes } from "./dailyQuest";
 import { registerWordTrailRoutes } from "./wordTrail";
@@ -1383,13 +1386,6 @@ export const schemas = {
     })).optional(),
     securityWarnings: z.number().int().min(0).optional(),
     autoSubmitted: z.boolean().optional(),
-  }),
-  examGrade: z.object({
-    answers: z.array(z.object({
-      answerId: reqStr,
-      pointsAwarded: z.union([z.string(), z.number()]).nullable(),
-      isCorrect: z.boolean().nullable().optional(),
-    })).min(1, "at least one answer grade is required"),
   }),
   classCreate: z.object({
     name: reqStr, level: reqStr, academicYear: reqStr,
@@ -8630,20 +8626,24 @@ async function startServer() {
 
   registerFinancialReportRoutes(app, { authMiddleware, expenseCanView, logger, prisma });
 
+  registerCouncilRoutes(app, { authMiddleware, createAuditLog, logger, prisma, schemas, validate });
   registerDutyRoutes(app, { authMiddleware, createAuditLog, logger, prisma, schemas, validate });
 
   const { payrollCanManage } = registerHrRoutes(app, { APP_URL, authMiddleware, createAuditLog, logger, prisma, schemas, validate });
 
   // ── Exams API ───────────────────────────────────────────────────────────────
-  async function canManageExamClass(jwtUser: JwtPayload, classId: string): Promise<boolean> {
+  async function canManageExamClass(jwtUser: JwtPayload, classId: string, db: Pick<PrismaClient, "teacher"> = prisma): Promise<boolean> {
     if (jwtUser.role === "ADMIN") return true;
     if (jwtUser.role !== "TEACHER") return false;
-    const teacher = await prisma.teacher.findUnique({
+    const teacher = await db.teacher.findUnique({
       where: { userId: jwtUser.userId },
       include: { classes: true },
     });
     return Boolean(teacher?.classes.some((ct) => ct.classId === classId));
   }
+
+  const examOwnerName = (owner: { firstName: string; lastName: string } | null) =>
+    owner ? [owner.firstName, owner.lastName].filter(Boolean).join(" ") : null;
 
   app.get("/api/exams", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
@@ -8651,6 +8651,7 @@ async function startServer() {
     const showArchived = (req.query.archived === "1" || req.query.archived === "true") && jwtUser.role !== "STUDENT";
     const statusFilter = showArchived ? { status: "ARCHIVED" } : { status: { not: "ARCHIVED" } };
     try {
+      if (!["STUDENT", "ADMIN", "TEACHER"].includes(jwtUser.role)) { res.sendStatus(403); return; }
       let exams;
       if (jwtUser.role === "STUDENT") {
         const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
@@ -8662,6 +8663,7 @@ async function startServer() {
         exams = await prisma.exam.findMany({
           where: { classId: student.classId, status: { in: ["PUBLISHED", "ACTIVE", "SCHEDULED"] } },
           include: {
+            owner: { select: { firstName: true, lastName: true } },
             class: true,
             subject: true,
             questions: {
@@ -8681,6 +8683,7 @@ async function startServer() {
         exams = await prisma.exam.findMany({
           where,
           include: {
+            owner: { select: { firstName: true, lastName: true } },
             class: true,
             subject: true,
             questions: {
@@ -8692,7 +8695,9 @@ async function startServer() {
           }
         });
       }
-      res.json(exams.map(({ answerKeyEditTeacherIds: _answerKeyEditTeacherIds, ...exam }) => exam));
+      res.json(exams.map(({ answerKeyEditTeacherIds, editorIds, ownerId, owner, accessCodeHash, ...exam }) => ({
+        ...exam, ...(jwtUser.role === "STUDENT" ? {} : { access: examAccess(jwtUser, { ownerId, editorIds }), ownerName: examOwnerName(owner) }),
+      })));
     } catch (err: any) {
       if (err?.code === "P2021" || err?.code === "P2022") { logExamDatabaseError("Error fetching exams", err); res.status(503).json({ error: "Exam database is out of date — run `npx prisma migrate deploy` then restart the server." }); return; }
       logExamDatabaseError("Error fetching exams", err);
@@ -8704,10 +8709,12 @@ async function startServer() {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
     try {
+      if (!["STUDENT", "ADMIN", "TEACHER"].includes(jwtUser.role)) { res.sendStatus(403); return; }
       const isStudent = jwtUser.role === "STUDENT";
       const exam = await prisma.exam.findUnique({
         where: { id },
         include: {
+          owner: { select: { firstName: true, lastName: true } },
           class: { include: { _count: { select: { students: true } } } },
           subject: true,
           questions: isStudent
@@ -8742,7 +8749,7 @@ async function startServer() {
               },
           attempts: isStudent
             ? false
-            : { include: { student: { include: { user: true } } } },
+            : { include: { student: { include: { user: { select: { firstName: true, lastName: true } } } } } },
         },
       });
       if (!exam) {
@@ -8787,10 +8794,12 @@ async function startServer() {
         }
       }
       const profile = await prisma.schoolProfile.findFirst();
-      const { answerKeyEditTeacherIds, ...safeExam } = exam;
+      const { ownerId, editorIds, owner, accessCodeHash, answerKeyEditTeacherIds, ...safeExam } = exam;
       res.json({
         ...safeExam,
-        canEditAnswerKey: jwtUser.role === "ADMIN" || (jwtUser.role === "TEACHER" && answerKeyEditTeacherIds.includes(jwtUser.userId)),
+        ...(!isStudent && !canWriteExam(jwtUser, exam) ? { questions: exam.questions.map(({ id, points }) => ({ id, points })), attempts: [] } : {}),
+        ...(!isStudent ? { access: examAccess(jwtUser, exam), ownerName: examOwnerName(owner) } : {}),
+        canEditAnswerKey: jwtUser.role === "ADMIN" || (jwtUser.role === "TEACHER" && canWriteExam(jwtUser, exam) && answerKeyEditTeacherIds.includes(jwtUser.userId)),
         lockdownPolicy: lockdownBrowserPolicy(profile),
       });
     } catch (err: any) {
@@ -8819,6 +8828,57 @@ async function startServer() {
       })));
     } catch (err) { logger.error("Error loading answer-key permissions:", err); res.status(500).json({ error: "Internal Server Error" }); }
   });
+
+  // A class assignment grants visibility. Only the exam owner or an administrator
+  // can change its editor roster, independently of answer-key correction rights.
+  const accessSelect = { classId: true, ownerId: true, editorIds: true, owner: { select: { firstName: true, lastName: true } } } as const;
+  app.get("/api/exams/:id/access", authMiddleware, asyncHandler(async (req, res) => {
+    const actor = (req as any).user as JwtPayload;
+    const exam = await prisma.exam.findUnique({ where: { id: req.params.id }, select: accessSelect });
+    if (!exam) { res.sendStatus(404); return; }
+    if (!await canManageExamClass(actor, exam.classId)) { res.sendStatus(403); return; }
+    res.json({ access: examAccess(actor, exam), ownerName: examOwnerName(exam.owner) });
+  }));
+
+  app.get("/api/exams/:id/editors", authMiddleware, asyncHandler(async (req, res) => {
+    const actor = (req as any).user as JwtPayload;
+    const exam = await prisma.exam.findUnique({ where: { id: req.params.id }, select: accessSelect });
+    if (!exam) { res.sendStatus(404); return; }
+    if (!canShareExam(actor, exam) || !await canManageExamClass(actor, exam.classId)) { res.sendStatus(403); return; }
+    const teachers = await prisma.user.findMany({
+      where: { role: "TEACHER", isActive: true, ...(exam.ownerId ? { id: { not: exam.ownerId } } : {}),
+        teacherProfile: { classes: { some: { classId: exam.classId } } } },
+      select: { id: true, firstName: true, lastName: true }, orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
+    });
+    res.json(teachers.map(t => ({ teacherUserId: t.id, name: examOwnerName(t), allowed: exam.editorIds.includes(t.id) })));
+  }));
+
+  app.put("/api/exams/:id/editors", authMiddleware, asyncHandler(async (req, res) => {
+    const actor = (req as any).user as JwtPayload;
+    const data = z.object({ teacherUserId: z.string().min(1), allowed: z.boolean() }).strict().safeParse(req.body);
+    if (!data.success) { res.status(400).json({ error: "Choose a teacher and an access level" }); return; }
+    const { teacherUserId, allowed } = data.data;
+    const result = await prisma.$transaction(async tx => {
+      // Serialize grants/revocations so simultaneous changes to different teachers survive.
+      const [exam] = await tx.$queryRaw<{ classId: string; ownerId: string | null; editorIds: string[] }[]>`
+        SELECT "classId", "ownerId", "editorIds" FROM "Exam" WHERE id = ${req.params.id} FOR UPDATE`;
+      if (!exam) return { status: 404, error: "Exam not found" };
+      if (!canShareExam(actor, exam) || !await canManageExamClass(actor, exam.classId, tx)) return { status: 403, error: "Only the exam owner or an administrator can change editing access" };
+      if (teacherUserId === exam.ownerId) return { status: 400, error: "The owner already has editing access" };
+      if (allowed) {
+        const teacher = await tx.classTeacher.findFirst({ where: { classId: exam.classId, teacher: { userId: teacherUserId, user: { role: "TEACHER", isActive: true } } } });
+        if (!teacher) return { status: 400, error: "Choose an active teacher assigned to this class" };
+      }
+      const editors = new Set(exam.editorIds);
+      if (allowed) editors.add(teacherUserId); else editors.delete(teacherUserId);
+      await tx.exam.update({ where: { id: req.params.id }, data: { editorIds: [...editors] } });
+      return { status: 200 };
+    });
+    if (result.status !== 200) { res.status(result.status).json({ error: result.error }); return; }
+    await createAuditLog(actor.userId, actor.email, allowed ? "GRANT" : "REVOKE", "EXAM", req.params.id,
+      `Exam editing ${allowed ? "granted to" : "revoked from"} teacher ${teacherUserId}.`, req.ip, req.get("user-agent") || null, "SUCCESS");
+    res.json({ teacherUserId, allowed });
+  }));
 
   app.put("/api/exams/:id/answer-key-permissions", authMiddleware, async (req, res) => {
     const actor = (req as any).user as JwtPayload;
@@ -8850,9 +8910,9 @@ async function startServer() {
     if (!parsed.success) { res.status(400).json({ error: "Invalid answer-key correction" }); return; }
     try {
       const result = await prisma.$transaction(async tx => {
-        const exam = await tx.exam.findUnique({ where: { id: req.params.id }, select: { id: true, classId: true, status: true, negativeMarking: true, answerKeyEditTeacherIds: true } });
+        const exam = await tx.exam.findUnique({ where: { id: req.params.id }, select: { id: true, classId: true, status: true, negativeMarking: true, ownerId: true, editorIds: true, answerKeyEditTeacherIds: true } });
         if (!exam) throw Object.assign(new Error("Exam not found"), { http: 404 });
-        if (!await canManageExamClass(actor, exam.classId)) throw Object.assign(new Error("Forbidden"), { http: 403 });
+        if (!canWriteExam(actor, exam) || !await canManageExamClass(actor, exam.classId)) throw Object.assign(new Error("Forbidden"), { http: 403 });
         if (actor.role === "TEACHER" && !exam.answerKeyEditTeacherIds.includes(actor.userId)) throw Object.assign(new Error("Admin permission is required to correct this answer key"), { http: 403 });
         if (!["PUBLISHED", "ACTIVE", "SCHEDULED", "CLOSED"].includes(exam.status)) throw Object.assign(new Error("This exam is not published"), { http: 409 });
         const question = await tx.question.findFirst({ where: { id: parsed.data.questionId, examId: exam.id } });
@@ -8971,6 +9031,7 @@ async function startServer() {
       const result = await prisma.$transaction(async (tx) => {
         const exam = await tx.exam.create({
           data: {
+            ownerId: jwtUser.userId,
             title: title.trim(),
             classId,
             subjectId,
@@ -9068,7 +9129,9 @@ async function startServer() {
           include: { attempts: { select: { id: true } } },
         });
         if (!existing) throw Object.assign(new Error("Exam not found"), { http: 404 });
-        if (jwtUser.role === "TEACHER" && existing.status !== "DRAFT" && questions !== undefined) {
+        if (!canWriteExam(jwtUser, existing)) throw Object.assign(new Error("Read-only exam"), { http: 403 });
+        if (jwtUser.role === "TEACHER" && existing.classId !== classId && existing.ownerId !== jwtUser.userId) throw Object.assign(new Error("Only the owner may move an exam to another class"), { http: 403 });
+        if (jwtUser.role === "TEACHER" && existing.status !== "DRAFT" && (questions !== undefined || status === "DRAFT")) {
           throw Object.assign(new Error("Published question content is locked. Use the answer-key correction permission to fix answers."), { http: 403 });
         }
         if (existing.attempts.length > 0 && questions !== undefined) {
@@ -9085,6 +9148,8 @@ async function startServer() {
             classId,
             subjectId,
             type: examType || "FINAL",
+            ...(status === "ARCHIVED" && existing.status !== "ARCHIVED" ? { archivedAsDraft: existing.status === "DRAFT" } : {}),
+            ...(classId !== existing.classId ? { editorIds: [], answerKeyEditTeacherIds: [] } : {}),
             status: status !== undefined ? (status || existing.status || "DRAFT") : (existing.status || "DRAFT"),
             durationMinutes: duration ? Number(duration) : null,
             totalMarks: totalMarks != null ? Number(totalMarks) : null,
@@ -9141,7 +9206,7 @@ async function startServer() {
     try {
       const exam = await prisma.exam.findUnique({ where: { id } });
       if (!exam) { res.status(404).json({ error: "Exam not found" }); return; }
-      if (!(await canManageExamClass(jwtUser, exam.classId))) {
+      if (!canWriteExam(jwtUser, exam) || !(await canManageExamClass(jwtUser, exam.classId))) {
         res.status(403).json({ error: "Forbidden: You cannot archive this exam" });
         return;
       }
@@ -9149,7 +9214,7 @@ async function startServer() {
         res.json({ ok: true, status: "ARCHIVED" });
         return;
       }
-      await prisma.exam.update({ where: { id }, data: { status: "ARCHIVED" } });
+      await prisma.exam.update({ where: { id, status: exam.status }, data: { status: "ARCHIVED", archivedAsDraft: exam.status === "DRAFT" } });
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "ARCHIVE", "EXAM", id,
         `Exam '${exam.title}' archived.`, req.ip, req.headers["user-agent"] || null, "WARNING",
@@ -9271,7 +9336,7 @@ async function startServer() {
         },
       });
       if (!exam) { res.status(404).json({ error: "Exam not found" }); return; }
-      if (!(await canManageExamClass(jwtUser, exam.classId))) {
+      if (!canWriteExam(jwtUser, exam) || !(await canManageExamClass(jwtUser, exam.classId))) {
         res.status(403).json({ error: "Forbidden: not your class" });
         return;
       }
@@ -9328,7 +9393,7 @@ async function startServer() {
     }
   });
 
-  // Restore an archived exam back to DRAFT (ADMIN or TEACHER).
+  // Restore an archived exam without unlocking previously published questions (ADMIN or TEACHER).
   app.post("/api/exams/:id/restore", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
@@ -9339,18 +9404,19 @@ async function startServer() {
     try {
       const existing = await prisma.exam.findUnique({ where: { id } });
       if (!existing) { res.status(404).json({ error: "Exam not found" }); return; }
-      if (!(await canManageExamClass(jwtUser, existing.classId))) {
+      if (!canWriteExam(jwtUser, existing) || !(await canManageExamClass(jwtUser, existing.classId))) {
         res.status(403).json({ error: "Forbidden: You cannot restore this exam" });
         return;
       }
+      if (!["ARCHIVED", "DRAFT"].includes(existing.status)) { res.status(409).json({ error: "Only archived exams can be restored" }); return; }
       const exam = existing.status === "DRAFT"
         ? existing
-        : await prisma.exam.update({ where: { id }, data: { status: "DRAFT" } });
+        : await prisma.exam.update({ where: { id, status: "ARCHIVED" }, data: { status: existing.archivedAsDraft || jwtUser.role === "ADMIN" ? "DRAFT" : "CLOSED", archivedAsDraft: false } });
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "RESTORE", "EXAM", id,
-        `Exam '${exam.title}' restored to DRAFT.`, req.ip, req.headers["user-agent"] || null, "SUCCESS",
+        `Exam '${exam.title}' restored to ${exam.status}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS",
       );
-      res.json({ ok: true, status: "DRAFT" });
+      res.json({ ok: true, status: exam.status });
     } catch (err: any) {
       if (err?.code === "P2025") { res.status(404).json({ error: "Exam not found" }); return; }
       logger.error("Error restoring exam:", err);
@@ -9381,7 +9447,7 @@ async function startServer() {
           title: true,
           status: true,
           type: true,
-          classId: true,
+          classId: true, ownerId: true, editorIds: true,
           durationMinutes: true,
           totalMarks: true,
           class: { select: { name: true, students: { select: { id: true } } } },
@@ -9425,7 +9491,7 @@ async function startServer() {
       }
 
       if (jwtUser.role === "TEACHER") {
-        if (!(await canManageExamClass(jwtUser, exam.classId))) {
+        if (!canWriteExam(jwtUser, exam) || !(await canManageExamClass(jwtUser, exam.classId))) {
           res.status(403).json({ error: "Forbidden" });
           return;
         }
@@ -9486,91 +9552,9 @@ async function startServer() {
     }
   });
 
-  // DEPRECATED: manual grading is now handled by the grading queue + rubric flow
-  // (GET /api/grading/queue, POST /api/grading/:attemptId/:questionId, finalize).
-  // Retained for backward compatibility; the app UI no longer calls this.
-  app.put("/api/exam-attempts/:attemptId/grade", authMiddleware, validate(schemas.examGrade), async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const { attemptId } = req.params;
-    const grades = req.body.answers as Array<{ answerId: string; pointsAwarded: string | number | null; isCorrect?: boolean | null }>;
-    try {
-      const attempt = await prisma.examAttempt.findUnique({
-        where: { id: attemptId },
-        select: {
-          id: true,
-          exam: { select: { classId: true } },
-          student: { select: { id: true, studentCode: true } },
-          answers: { select: { id: true, maxPoints: true, pointsAwarded: true, question: { select: { id: true, points: true } } } },
-        },
-      });
-      if (!attempt) {
-        res.status(404).json({ error: "Attempt not found" });
-        return;
-      }
-      if (!(await canManageExamClass(jwtUser, attempt.exam.classId))) {
-        res.status(403).json({ error: "Forbidden" });
-        return;
-      }
-
-      const answersById = new Map(attempt.answers.map((answer) => [answer.id, answer]));
-      if (grades.some((grade) => !answersById.has(grade.answerId))) {
-        res.status(400).json({ error: "One or more answers do not belong to this attempt" });
-        return;
-      }
-      const result = await prisma.$transaction(async (tx) => {
-        for (const grade of grades) {
-          const existingAnswer = answersById.get(grade.answerId)!;
-          const points = grade.pointsAwarded == null ? null : Number(grade.pointsAwarded);
-          const maximum = Number(existingAnswer.maxPoints ?? existingAnswer.question.points ?? 0);
-          if (points != null && (!Number.isFinite(points) || points < 0 || points > maximum)) {
-            throw Object.assign(new Error(`pointsAwarded must be between 0 and ${maximum}`), { http: 400 });
-          }
-          await tx.examAnswer.update({
-            where: { id: grade.answerId },
-            data: {
-              pointsAwarded: points,
-              isCorrect: grade.isCorrect ?? (points != null ? points > 0 : null),
-            },
-          });
-        }
-        const refreshed = await tx.examAnswer.findMany({ where: { attemptId } });
-        const score = refreshed.reduce((sum, answer) => sum + Number(answer.pointsAwarded || 0), 0);
-        return tx.examAttempt.update({
-          where: { id: attemptId },
-          data: { score: Math.max(0, score), isCompleted: true, state: "FINALIZED", gradingStatus: "COMPLETE", gradedAt: new Date() },
-        });
-      });
-
-      await createAuditLog(
-        jwtUser.userId,
-        jwtUser.email,
-        "GRADE",
-        "EXAM_ATTEMPT",
-        attemptId,
-        `Graded exam attempt for student ${attempt.student.studentCode}.`,
-        req.ip,
-        req.headers["user-agent"] || null,
-        "SUCCESS"
-      );
-
-      // Check badges for exam completion
-      checkAndAwardBadges(attempt.student.id, 'EXAM').catch(err =>
-        logger.error(`Error checking badges for student ${attempt.student.id}:`, err)
-      );
-
-      res.json(result);
-    } catch (err: any) {
-      logger.error("Error grading exam attempt:", err);
-      if (err.http) {
-        res.status(err.http).json({ error: err.message });
-        return;
-      }
-      res.status(500).json({ error: "Internal Server Error" });
-    }
+  // The legacy bulk writer bypassed finalization locks and rubric bookkeeping.
+  app.put("/api/exam-attempts/:attemptId/grade", authMiddleware, (_req, res) => {
+    res.status(410).json({ error: "This endpoint has been retired. Use the grading queue to save and finalize marks." });
   });
 
   // ── Users (single + update) ─────────────────────────────────────────────────
@@ -10088,7 +10072,10 @@ async function startServer() {
   app.get("/api/settings", authMiddleware, async (req, res) => {
     try {
       const profile = await prisma.schoolProfile.findFirst();
-      res.json(profile || {});
+      // The official chop is available only through the volunteer document
+      // signing workflow, never through general school settings.
+      const { schoolChopDataUrl: _schoolChopDataUrl, ...settings } = profile || {};
+      res.json(settings);
     } catch (err) {
       logger.error("Error fetching settings:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -10160,7 +10147,8 @@ async function startServer() {
         : await saveProfile;
       await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "SETTINGS", profile.id,
         "School settings updated.", req.ip, req.headers["user-agent"] || null, "SUCCESS");
-      res.json(profile);
+      const { schoolChopDataUrl: _schoolChopDataUrl, ...settings } = profile;
+      res.json(settings);
     } catch (err) {
       logger.error("Error updating settings:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -11019,7 +11007,7 @@ async function startServer() {
       const ids = await teacherClassIds(req);
       const exams = await prisma.exam.findMany({
         where: { classId: { in: ids }, status: { not: "ARCHIVED" } },
-        include: { class: { include: { students: true } }, subject: true, attempts: true },
+        include: { owner: { select: { firstName: true, lastName: true } }, class: { include: { students: true } }, subject: true, attempts: true },
         orderBy: { date: "desc" },
       });
       res.json(exams.map((e) => {
@@ -11028,6 +11016,7 @@ async function startServer() {
         const tm = e.totalMarks || 100;
         const avg = graded.length ? `${round1(graded.reduce((acc, a) => acc + (a.score! / tm) * 100, 0) / graded.length)}%` : undefined;
         return {
+          access: examAccess((req as any).user, e), ownerName: examOwnerName(e.owner),
           id: e.id, title: e.title, class: e.class?.name || "—", date: fmtDate(e.date),
           duration: e.durationMinutes ? `${e.durationMinutes}m` : "N/A",
           type: e.subject?.name || e.type,
@@ -12295,6 +12284,10 @@ async function startServer() {
   registerLanguageQuestRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
   registerDailyQuestRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
   const gameControls = registerGameControlRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
+  registerEvidenceDetectiveRoutes({
+    app, prisma, authMiddleware,
+    gameAccessMiddleware: gameControls.accessMiddleware("EVIDENCE_DETECTIVE", true),
+  });
   registerFocusRoutes(app, prisma, authMiddleware, JWT_SECRET);
   registerWordTrailRoutes({
     app,
@@ -13245,6 +13238,15 @@ async function startServer() {
         });
         const others = unassigned.filter((s) => s.user && s.user.id !== jwtUser.userId).map((s) => userBrief(s.user));
         if (others.length) groups.push({ key: "unassigned", label: "Students (no class)", contacts: others });
+        // Some active student accounts have not yet been linked to a Student
+        // record. They should still be discoverable for a teacher invitation.
+        const listedStudentIds = new Set(groups.flatMap((g) => g.contacts.map((c) => c.id)));
+        const studentAccounts = await prisma.user.findMany({
+          where: { id: { not: jwtUser.userId }, isActive: true, role: "STUDENT" },
+          select: sel, orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
+        });
+        const otherStudents = studentAccounts.filter((u) => !listedStudentIds.has(u.id)).map(userBrief);
+        if (otherStudents.length) groups.push({ key: "student-accounts", label: "Other student accounts", contacts: otherStudents });
       }
 
       res.json({ groups });
@@ -13264,7 +13266,7 @@ async function startServer() {
           conversation: {
             include: {
               participants: { include: { user: { select: { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true } } } },
-              messages: { where: { deletedAt: null }, orderBy: { createdAt: "desc" }, take: 1, include: { sender: { select: { id: true, firstName: true, lastName: true } } } },
+              messages: { where: { deletedAt: null, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] }, orderBy: { createdAt: "desc" }, take: 1, include: { sender: { select: { id: true, firstName: true, lastName: true } } } },
             },
           },
         },
@@ -13275,24 +13277,76 @@ async function startServer() {
           where: {
             conversationId: c.id,
             deletedAt: null,
+            OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
             senderId: { not: jwtUser.userId },
             ...(p.lastReadAt ? { createdAt: { gt: p.lastReadAt } } : {}),
           },
         });
         const last = c.messages[0];
-        const others = c.participants.filter((x) => x.userId !== jwtUser.userId).map((x) => userBrief(x.user));
+        const activeParticipants = c.participants.filter((x) => !x.leftAt);
+        const others = activeParticipants.filter((x) => x.userId !== jwtUser.userId).map((x) => userBrief(x.user));
         const title = c.title || (c.type === "DIRECT" ? (others[0]?.name ?? "Conversation") : others.map((o) => o.name).join(", "));
         return {
           id: c.id, type: c.type, title,
-          participants: c.participants.map((x) => userBrief(x.user)),
+          isPinned: p.isPinned,
+          participants: activeParticipants.map((x) => userBrief(x.user)),
           lastMessage: last ? { body: last.body, senderId: last.senderId, senderName: fullName(last.sender), createdAt: last.createdAt } : null,
           lastMessageAt: c.lastMessageAt, unread,
         };
       }));
-      items.sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
+      items.sort((a, b) => Number(b.isPinned) - Number(a.isPinned) || new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
       res.json(items);
     } catch (err) {
       logger.error("Error fetching conversations:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Search message text only in conversations the requester currently belongs to.
+  app.get("/api/chat/search", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const query = typeof req.query.q === "string" ? req.query.q.trim() : "";
+    if (query.length < 2 || query.length > 100) { res.status(400).json({ error: "Search needs 2 to 100 characters" }); return; }
+    try {
+      const matches = await prisma.chatMessage.findMany({
+        where: {
+          body: { contains: query, mode: "insensitive" },
+          deletedAt: null,
+          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+          conversation: { participants: { some: { userId: jwtUser.userId, leftAt: null } } },
+        },
+        orderBy: { createdAt: "desc" }, take: 50,
+        include: {
+          sender: { select: { firstName: true, lastName: true } },
+          conversation: { select: { title: true, type: true, participants: { select: { userId: true, leftAt: true, user: { select: { firstName: true, lastName: true } } } } } },
+        },
+      });
+      res.json(matches.map((m) => ({
+        id: m.id, conversationId: m.conversationId, body: m.body, createdAt: m.createdAt,
+        senderName: fullName(m.sender),
+        conversationTitle: m.conversation.title || (m.conversation.type === "DIRECT"
+          ? fullName(m.conversation.participants.find((p) => p.userId !== jwtUser.userId)?.user)
+          : m.conversation.participants.filter((p) => !p.leftAt && p.userId !== jwtUser.userId).map((p) => fullName(p.user)).join(", ")),
+      })));
+    } catch (err) {
+      logger.error("Error searching chat messages:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.patch("/api/chat/conversations/:id/pin", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (typeof req.body?.pinned !== "boolean") { res.status(400).json({ error: "pinned must be a boolean" }); return; }
+    try {
+      const part = await prisma.conversationParticipant.findUnique({
+        where: { conversationId_userId: { conversationId: req.params.id, userId: jwtUser.userId } },
+      });
+      if (!part || part.leftAt) { res.status(404).json({ error: "Conversation not found" }); return; }
+      await prisma.conversationParticipant.update({ where: { id: part.id }, data: { isPinned: req.body.pinned } });
+      chatNotify([jwtUser.userId], { type: "pin-changed", conversationId: req.params.id });
+      res.json({ pinned: req.body.pinned });
+    } catch (err) {
+      logger.error("Error updating chat pin:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -13306,7 +13360,7 @@ async function startServer() {
       const ids = Array.from(new Set([jwtUser.userId, ...participantIds.filter((x) => typeof x === "string" && x)]));
       if (ids.length < 2) { res.status(400).json({ error: "Pick at least one person to message" }); return; }
       const users = await prisma.user.findMany({ where: { id: { in: ids }, isActive: true }, select: { id: true, role: true } });
-      if (users.length !== ids.length) { res.status(400).json({ error: "One or more recipients are invalid" }); return; }
+      if (users.length !== ids.length || users.some((u) => u.role === "GUARDIAN")) { res.status(400).json({ error: "One or more recipients are invalid" }); return; }
       // Hierarchical guard: at least one staff participant.
       if (!users.some((u) => isStaffRole(u.role))) {
         res.status(403).json({ error: "A conversation must include a teacher or staff member" });
@@ -13317,10 +13371,20 @@ async function startServer() {
       // Reuse an existing DIRECT conversation between the same two people.
       if (type === "DIRECT") {
         const existing = await prisma.conversation.findFirst({
-          where: { type: "DIRECT", AND: ids.map((uid) => ({ participants: { some: { userId: uid } } })) },
+          where: {
+            type: "DIRECT",
+            AND: ids.map((uid) => ({ participants: { some: { userId: uid } } })),
+            participants: { some: { userId: ids.find((uid) => uid !== jwtUser.userId)!, leftAt: null } },
+          },
           include: { participants: { include: { user: { select: { firstName: true, lastName: true } } } } },
         });
         if (existing && existing.participants.length === 2) {
+          // A previous participant may have left. Rejoining must restore their
+          // access, otherwise the client opens a thread it cannot read.
+          await prisma.conversationParticipant.updateMany({
+            where: { conversationId: existing.id, userId: jwtUser.userId, leftAt: { not: null } },
+            data: { leftAt: null, lastReadAt: new Date() },
+          });
           const otherParticipant = existing.participants.find(p => p.userId !== jwtUser.userId);
           const otherName = otherParticipant ? fullName(otherParticipant.user) : 'the other person';
           res.json({
@@ -13380,6 +13444,10 @@ async function startServer() {
 
         // Add new members
         if (toAdd.length) await prisma.conversationParticipant.createMany({ data: toAdd.map((uid) => ({ conversationId: conv!.id, userId: uid })), skipDuplicates: true });
+        await prisma.conversationParticipant.updateMany({
+          where: { conversationId: conv.id, userId: { in: Array.from(memberIds) }, leftAt: { not: null } },
+          data: { leftAt: null },
+        });
 
         // Remove departed members (soft delete by setting leftAt)
         if (toRemove.length) {
@@ -13414,12 +13482,21 @@ async function startServer() {
         include: { participants: { include: { user: { select: { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true } } } } },
       });
       if (!conv) { res.status(404).json({ error: "Conversation not found" }); return; }
-      const messages = await prisma.chatMessage.findMany({
-        // Hide already-expired ephemeral photos even before cleanup runs.
-        where: { conversationId: req.params.id, deletedAt: null, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
-        orderBy: { createdAt: "asc" },
-        take: 500,
-        include: { sender: { select: { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true } } },
+      const visibleMessages: Prisma.ChatMessageWhereInput = { conversationId: req.params.id, deletedAt: null, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] };
+      const withSender = { sender: { select: { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true } } } as const;
+      const around = typeof req.query.around === "string" ? req.query.around : null;
+      const target = around ? await prisma.chatMessage.findFirst({ where: { ...visibleMessages, id: around }, select: { createdAt: true } }) : null;
+      if (around && !target) { res.status(404).json({ error: "Message not found" }); return; }
+      // Search results may be older than the latest page. Load their nearby
+      // messages so opening a result lands on the actual message.
+      const messages = target ? [
+        ...(await prisma.chatMessage.findMany({ where: { ...visibleMessages, createdAt: { lte: target.createdAt } }, orderBy: { createdAt: "desc" }, take: 50, include: withSender })).reverse(),
+        ...await prisma.chatMessage.findMany({ where: { ...visibleMessages, createdAt: { gt: target.createdAt } }, orderBy: { createdAt: "asc" }, take: 50, include: withSender }),
+      ] : (await prisma.chatMessage.findMany({ where: visibleMessages, orderBy: { createdAt: "desc" }, take: 500, include: withSender })).reverse();
+      const pinnedMessages = await prisma.chatMessage.findMany({
+        where: { ...visibleMessages, pinnedAt: { not: null } },
+        orderBy: { pinnedAt: "desc" }, take: 5,
+        include: withSender,
       });
 
       // Audit log for admin oversight access
@@ -13432,15 +13509,102 @@ async function startServer() {
       res.json({
         id: conv.id, type: conv.type,
         title: conv.title,
-        participants: conv.participants.map((x) => ({ ...userBrief(x.user), lastReadAt: x.lastReadAt })),
+        participants: conv.participants.filter((x) => !x.leftAt).map((x) => ({ ...userBrief(x.user), lastReadAt: x.lastReadAt })),
         oversight: !part && isAdmin,
+        pinnedMessages: pinnedMessages.map((m) => ({ id: m.id, body: m.body, attachmentUrl: m.attachmentUrl, senderName: fullName(m.sender), pinnedAt: m.pinnedAt })),
         messages: messages.map((m) => ({
-          id: m.id, body: m.body, attachmentUrl: m.attachmentUrl, expiresAt: m.expiresAt,
+          id: m.id, body: m.body, attachmentUrl: m.attachmentUrl, expiresAt: m.expiresAt, pinnedAt: m.pinnedAt,
           sender: userBrief(m.sender), createdAt: m.createdAt, mine: m.senderId === jwtUser.userId,
         })),
       });
     } catch (err) {
       logger.error("Error fetching messages:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.patch("/api/chat/messages/:id/pin", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (typeof req.body?.pinned !== "boolean") { res.status(400).json({ error: "pinned must be a boolean" }); return; }
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") { res.status(403).json({ error: "Only teachers and admins can pin messages" }); return; }
+    try {
+      const msg = await prisma.chatMessage.findUnique({ where: { id: req.params.id } });
+      if (!msg || msg.deletedAt) { res.status(404).json({ error: "Message not found" }); return; }
+      const { part, isAdmin } = await chatAccess(jwtUser, msg.conversationId);
+      if (!part && !isAdmin) { res.status(403).json({ error: "Forbidden" }); return; }
+      if (msg.expiresAt) { res.status(400).json({ error: "Disappearing photos cannot be pinned" }); return; }
+      if (req.body.pinned && !msg.pinnedAt) {
+        const count = await prisma.chatMessage.count({ where: { conversationId: msg.conversationId, pinnedAt: { not: null }, deletedAt: null } });
+        if (count >= 5) { res.status(409).json({ error: "Unpin a message before adding another (maximum 5)" }); return; }
+      }
+      const updated = await prisma.chatMessage.update({ where: { id: msg.id }, data: { pinnedAt: req.body.pinned ? new Date() : null, pinnedById: req.body.pinned ? jwtUser.userId : null } });
+      const members = await prisma.conversationParticipant.findMany({ where: { conversationId: msg.conversationId, leftAt: null }, select: { userId: true } });
+      chatNotify(members.map((p) => p.userId), { type: "message-pin-changed", conversationId: msg.conversationId });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "CHAT_MESSAGE", msg.id, `${req.body.pinned ? "Pinned" : "Unpinned"} message ${msg.id}.`, req.ip, req.headers["user-agent"] || null, "INFO");
+      res.json({ pinnedAt: updated.pinnedAt });
+    } catch (err) {
+      logger.error("Error updating message pin:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Staff can manage membership in ordinary group chats they belong to.
+  // Class channels derive their roster from enrollment and are synced above.
+  app.post("/api/chat/conversations/:id/participants", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const userId = typeof req.body?.userId === "string" ? req.body.userId : "";
+    try {
+      const conv = await prisma.conversation.findUnique({
+        where: { id: req.params.id },
+        include: { participants: { select: { userId: true, leftAt: true, user: { select: { role: true } } } } },
+      });
+      if (!conv) { res.status(404).json({ error: "Conversation not found" }); return; }
+      if (conv.type !== "GROUP") { res.status(400).json({ error: "Only group chat members can be changed here" }); return; }
+      if (!["ADMIN", "TEACHER"].includes(jwtUser.role) || (jwtUser.role !== "ADMIN" && !conv.participants.some((p) => p.userId === jwtUser.userId && !p.leftAt))) {
+        res.status(403).json({ error: "Forbidden" }); return;
+      }
+      const invitee = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, role: true, isActive: true } });
+      if (!invitee?.isActive || invitee.role === "GUARDIAN") { res.status(400).json({ error: "Choose an active school user" }); return; }
+      const existing = conv.participants.find((p) => p.userId === userId);
+      if (existing && !existing.leftAt) { res.status(409).json({ error: "Already in this conversation" }); return; }
+      if (existing) {
+        await prisma.conversationParticipant.update({ where: { conversationId_userId: { conversationId: conv.id, userId } }, data: { leftAt: null, lastReadAt: new Date() } });
+      } else {
+        await prisma.conversationParticipant.create({ data: { conversationId: conv.id, userId, lastReadAt: new Date() } });
+      }
+      chatNotify(conv.participants.filter((p) => !p.leftAt).map((p) => p.userId).concat(userId), { type: "members-changed", conversationId: conv.id });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "CONVERSATION_PARTICIPANT", conv.id, `Added user ${userId} to group chat.`, req.ip, req.headers["user-agent"] || null, "INFO");
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error adding chat member:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/chat/conversations/:id/participants/:userId", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const conv = await prisma.conversation.findUnique({
+        where: { id: req.params.id },
+        include: { participants: { select: { userId: true, leftAt: true, user: { select: { role: true } } } } },
+      });
+      if (!conv) { res.status(404).json({ error: "Conversation not found" }); return; }
+      if (conv.type !== "GROUP") { res.status(400).json({ error: "Only group chat members can be changed here" }); return; }
+      const active = conv.participants.filter((p) => !p.leftAt);
+      const target = active.find((p) => p.userId === req.params.userId);
+      if (!target) { res.status(404).json({ error: "Member not found" }); return; }
+      if (target.userId === jwtUser.userId || !["ADMIN", "TEACHER"].includes(jwtUser.role) || (jwtUser.role !== "ADMIN" && (!active.some((p) => p.userId === jwtUser.userId) || target.user.role === "ADMIN"))) {
+        res.status(403).json({ error: "Forbidden" }); return;
+      }
+      if (!active.some((p) => p.userId !== target.userId && isStaffRole(p.user.role))) {
+        res.status(400).json({ error: "A group needs at least one teacher or staff member" }); return;
+      }
+      await prisma.conversationParticipant.update({ where: { conversationId_userId: { conversationId: conv.id, userId: target.userId } }, data: { leftAt: new Date() } });
+      chatNotify(active.map((p) => p.userId), { type: "members-changed", conversationId: conv.id });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "CONVERSATION_PARTICIPANT", conv.id, `Removed user ${target.userId} from group chat.`, req.ip, req.headers["user-agent"] || null, "WARNING");
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error removing chat member:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });

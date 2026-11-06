@@ -75,3 +75,15 @@ export function splitDragPrompt(text: string): { lead: string; body: string } {
 export function hasDragBlanks(text: string): boolean {
   return BLANK_MARKER.test(String(text || ''));
 }
+
+/** Only promote a standalone list of ordinal blanks. Keep sentence blanks inline. */
+export function orderedBlanks(body: string) {
+  const lines = body.trim().split(/\n/).map(line => line.trim()).filter(Boolean);
+  const rows: { label: string; blankId: string }[] = [];
+  for (const line of lines) {
+    const match = /^(\d+(?:st|nd|rd|th))\s*:\s*(?:\{\{([^{}]+)\}\}|_{2,})$/i.exec(line);
+    if (!match) return null;
+    rows.push({ label: match[1], blankId: match[2] ?? String(rows.length) });
+  }
+  return rows.length > 1 ? rows : null;
+}

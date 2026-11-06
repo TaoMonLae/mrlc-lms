@@ -16,6 +16,7 @@ async function setup(page: Page, questions: any[] = [], attempts: any[] = []) {
     const method = route.request().method();
     if (path === '/api/exam-media') return route.fulfill({ json: { url: '/test-question.png' } });
     if (path.endsWith('/stream')) return route.fulfill({ contentType: 'text/event-stream', body: ': test\n\n' });
+    if (path === '/api/exams/studio-a/access') return route.fulfill({ json: { access: 'owner' } });
     if (path === '/api/auth/me') return route.fulfill({ json: { user } });
     if (['PUT', 'POST', 'DELETE'].includes(method)) {
       writes.push({ path, body: route.request().postDataJSON() });
@@ -235,11 +236,121 @@ test('student paper preview supports dropdowns, flags, passages and a non-submit
   await page.screenshot({ path: info.outputPath('exam-paper-passage.png'), fullPage: true });
   expect(await preview.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
   await preview.getByRole('button', { name: 'Review answers', exact: true }).click();
-  await expect(preview.getByText('2 of 2 answered · 1 flagged for review.')).toBeVisible();
+  await expect(preview.getByText('2 of 2 answered · 0 unanswered · 1 flagged for review.')).toBeVisible();
   await preview.getByRole('button', { name: 'Question 1 Answered', exact: true }).click();
   await expect(preview.getByRole('combobox')).toHaveValue('0');
   await preview.getByRole('button', { name: /Review answers/ }).first().click();
   await preview.getByRole('button', { name: 'Finish preview' }).click();
   await expect(preview).not.toBeVisible();
   expect(writes.filter(w => w.path.includes('/attempts/'))).toHaveLength(0);
+});
+
+test('a student can reread a long essay prompt and return to their draft in a 53-question exam', async ({ page }) => {
+  const questions = Array.from({ length: 53 }, (_, i) => ({
+    ...choice, id: `q${i + 1}`, passageText: 'Read both passages. '.repeat(120),
+    ...(i === 20 ? { type: 'ESSAY', text: 'Compare the two arguments. '.repeat(22) } : {}),
+  }));
+  await setup(page, questions);
+  await page.goto('/exams/studio-a/studio');
+  await page.getByRole('button', { name: 'Preview as student', exact: true }).click();
+  const preview = page.getByRole('dialog', { name: 'Student preview' });
+  await preview.getByRole('button', { name: 'Question 20, unanswered', exact: true }).click();
+  await preview.getByRole('button', { name: 'Next question' }).click();
+  const navigator = preview.getByRole('navigation', { name: 'Question navigation' });
+  await expect.poll(() => navigator.evaluate(nav => {
+    const bounds = nav.getBoundingClientRect();
+    const active = nav.querySelector('[aria-current]')?.getBoundingClientRect();
+    return !!active && active.left >= bounds.left && active.right <= bounds.right &&
+      active.top >= bounds.top && active.bottom <= bounds.bottom;
+  })).toBe(true);
+  const write = preview.getByRole('button', { name: 'Go to response' });
+  await write.click();
+  const answer = preview.getByRole('textbox');
+  await expect(answer).toBeFocused();
+  await answer.fill('Evidence from both passages.');
+  await preview.getByRole('button', { name: 'Read prompt again' }).click();
+  await expect(preview.getByRole('heading', { name: /Compare the two/ })).toBeFocused();
+  await write.click();
+  await expect(answer).toHaveValue('Evidence from both passages.');
+  await preview.getByRole('button', { name: 'Review answers', exact: true }).click();
+  await expect(preview.getByRole('button', { name: 'Finish preview' })).toBeInViewport();
+  await preview.getByRole('button', { name: 'Back to question' }).click();
+  await expect(answer).toHaveValue('Evidence from both passages.');
+});
+
+test('ordering rows and passage dropdowns fit the student paper', async ({ page }, info) => {
+  const first = 'The customer brings a torn note to the cart.';
+  const second = 'The sellers carry their things into the shelter.';
+  const passage = 'The monthly total [Select 2] as costs change.';
+  await setup(page, [
+    { id: 'order', type: 'DRAG_DROP', points: 2, text: 'Order the events.', passageText: 'Read the story. '.repeat(120), options: {
+      text: 'Order the events.\n\n1st: {{b1}}\n2nd: {{b2}}', blanks: [{ id: 'b1', answer: first }, { id: 'b2', answer: second }], distractors: [],
+    } },
+    { id: 'select', type: 'DROPDOWN', points: 1, text: '2. The monthly total [Select] as costs change.', passageText: passage, options: ['changes', 'An unusually long answer that would otherwise stretch the entire line'] },
+  ]);
+  await page.addInitScript(() => localStorage.setItem('mrlc-lms-theme', 'dark'));
+  await page.goto('/exams/studio-a/studio');
+  await page.getByRole('button', { name: 'Preview as student', exact: true }).click();
+  const preview = page.getByRole('dialog', { name: 'Student preview' });
+  const row = preview.getByRole('button', { name: /^1st position/ });
+  await preview.getByRole('button', { name: first, exact: true }).click();
+  await row.click();
+  await expect(row).toHaveText(first);
+  await row.click();
+  await expect(row).toHaveText('Place choice here');
+  await page.screenshot({ path: info.outputPath('ordering.png') });
+  await preview.getByRole('button', { name: 'Next question' }).click();
+  const slot = preview.getByRole('combobox', { name: 'Question 2 answer' });
+  expect((await slot.boundingBox())!.width).toBeLessThan(160);
+  await slot.selectOption('0');
+  await expect(preview.getByRole('combobox', { name: 'Preview answer' })).toHaveValue('0');
+  await page.screenshot({ path: info.outputPath('passage-dropdown.png') });
+  expect(await preview.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+});
+
+test('saved question themes reach the sample, live card and full preview after reload', async ({ page }, info) => {
+  const { writes } = await setup(page, [choice]);
+  let theme = 'ged';
+  await page.route('**/api/exams/studio-a', route => {
+    if (route.request().method() === 'PUT') {
+      const body = route.request().postDataJSON(); theme = body.settings.questionTheme;
+      writes.push({ path: '/api/exams/studio-a', body });
+      return route.fulfill({ json: { id: 'studio-a' } });
+    }
+    return route.fulfill({ json: { id: 'studio-a', title: 'Science — Solar system', status: 'DRAFT', classId: 'class-a', subjectId: 'subject-a', type: 'QUIZ', durationMinutes: 30, questions: [choice], attempts: [], settings: { questionTheme: theme } } });
+  });
+  await page.goto('/exams/studio-a/studio');
+  await page.getByRole('button', { name: 'Details', exact: true }).click();
+  const choices = [['focus','High-contrast focus'], ['classic','Classroom classic'], ['colorful','Colorful K–5'], ['ged','GED neutral']];
+  const backgrounds = new Set<string>();
+  for (const [value, label] of choices) {
+    await page.getByRole('combobox', { name: 'Student question theme' }).click();
+    await page.getByRole('option', { name: label, exact: true }).click();
+    const sample = page.getByLabel('Selected theme sample');
+    await expect(sample).toHaveClass(new RegExp(`ep-${value}`));
+    backgrounds.add(await sample.evaluate(el => getComputedStyle(el).backgroundColor));
+    await page.getByRole('button', { name: 'Preview as student', exact: true }).click();
+    const paper = page.getByRole('dialog', { name: 'Student preview' }).locator('.exam-paper');
+    await expect(paper).toHaveAttribute('data-question-theme', value);
+    expect(await paper.evaluate(el => getComputedStyle(el).getPropertyValue('--ep-accent'))).toBe(await sample.evaluate(el => getComputedStyle(el).getPropertyValue('--ep-accent')));
+    await page.screenshot({ path: info.outputPath(`theme-${value}-light.png`) });
+    await page.keyboard.press('Escape');
+  }
+  expect(backgrounds.size).toBe(4);
+  await page.getByRole('combobox', { name: 'Student question theme' }).click();
+  await page.getByRole('option', { name: 'High-contrast focus', exact: true }).click();
+  await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'All changes saved' })).toBeVisible();
+  expect(theme).toBe('focus');
+  await page.reload();
+  await page.getByRole('button', { name: 'Questions', exact: true }).click();
+  await expect(page.locator('.ep-mini-preview')).toHaveClass(/ep-focus/);
+  await page.getByRole('button', { name: 'Preview as student', exact: true }).click();
+  await expect(page.getByRole('dialog').locator('.exam-paper')).toHaveAttribute('data-question-theme', 'focus');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Toggle theme between light and dark mode' }).click();
+  await page.getByRole('menuitem', { name: 'Dark', exact: true }).click();
+  await page.getByRole('button', { name: 'Preview as student', exact: true }).click();
+  await expect(page.getByRole('dialog').locator('.exam-paper')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+  await page.screenshot({ path: info.outputPath('theme-focus-dark.png') });
 });

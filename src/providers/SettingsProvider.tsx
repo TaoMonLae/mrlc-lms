@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { SchoolProfile, BrandingSettings, SystemSettings } from '../types/settings';
 import { isCursorEffect } from '../lib/cursorEffects';
 
@@ -17,7 +17,7 @@ const DEFAULT_SCHOOL: SchoolProfile = {
   shortName: 'MRLC',
   address: 'Malaysia',
   phone: '',
-  email: 'admin@mrlc.edu',
+  email: '',
   website: '',
   academicYear: '2025-2026',
   principalName: '',
@@ -78,9 +78,9 @@ function applyServerData(
     ...prev,
     name: data.name ?? prev.name,
     shortName: data.shortName !== undefined ? (data.shortName ?? '') : prev.shortName,
-    address: data.address !== undefined ? data.address : prev.address,
-    phone: data.contactPhone !== undefined ? data.contactPhone : prev.phone,
-    email: data.contactEmail !== undefined ? data.contactEmail : prev.email,
+    address: data.address !== undefined ? (data.address ?? '') : prev.address,
+    phone: data.contactPhone !== undefined ? (data.contactPhone ?? '') : prev.phone,
+    email: data.contactEmail !== undefined ? (data.contactEmail ?? '') : prev.email,
     website: data.website !== undefined ? (data.website ?? '') : prev.website,
     academicYear: data.academicYear !== undefined ? (data.academicYear ?? '') : prev.academicYear,
     principalName: data.principalName !== undefined ? (data.principalName ?? '') : prev.principalName,
@@ -91,7 +91,7 @@ function applyServerData(
     logoUrl: data.logoUrl !== undefined ? data.logoUrl : prev.logoUrl,
     signatureUrl: data.signatureUrl !== undefined ? data.signatureUrl : prev.signatureUrl,
     loginHeroUrl: data.loginHeroUrl !== undefined ? data.loginHeroUrl : prev.loginHeroUrl,
-    primaryColor: data.primaryColor !== undefined ? data.primaryColor : prev.primaryColor,
+    primaryColor: data.primaryColor ?? prev.primaryColor,
     accentColor: data.accentColor !== undefined ? data.accentColor : prev.accentColor,
     darkModeDefault: data.darkModeDefault !== undefined ? data.darkModeDefault : prev.darkModeDefault,
     reportHeaderStyle: data.reportHeaderStyle !== undefined ? data.reportHeaderStyle : prev.reportHeaderStyle,
@@ -122,71 +122,75 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [schoolProfile, setSchoolProfile] = useState<SchoolProfile>(DEFAULT_SCHOOL);
   const [brandingSettings, setBrandingSettings] = useState<BrandingSettings>(DEFAULT_BRANDING);
   const [systemSettings, setSystemSettings] = useState<SystemSettings>(DEFAULT_SYSTEM);
-  const [triggerReload, setTriggerReload] = useState(0);
+  const activeLoad = useRef<AbortController | null>(null);
+  const settingsToken = useRef<string | null | undefined>(undefined);
 
-  // Reload settings function
-  const reloadSettings = async () => {
+  const resetSettings = useCallback(() => {
+    setSchoolProfile(DEFAULT_SCHOOL);
+    setBrandingSettings(DEFAULT_BRANDING);
+    setSystemSettings(DEFAULT_SYSTEM);
+  }, []);
+
+  const reloadSettings = useCallback(async () => {
+    activeLoad.current?.abort();
+    const controller = new AbortController();
+    activeLoad.current = controller;
     const token = sessionStorage.getItem('auth_token');
-    if (!token) {
-      // Public routes still need the saved school identity and cursor. Reset
-      // first so a logout cannot leak the previous user's authenticated data,
-      // then hydrate only the explicitly public fields from the server.
-      setSchoolProfile(DEFAULT_SCHOOL);
-      setBrandingSettings(DEFAULT_BRANDING);
-      setSystemSettings(DEFAULT_SYSTEM);
-      try {
-        const res = await fetch(`/api/public/branding?t=${Date.now()}`, { cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
-          applyServerData(data, setSchoolProfile, setBrandingSettings, setSystemSettings);
-        }
-      } catch (error) {
-        console.error('Failed to load public school branding:', error);
-      }
-      return;
-    }
+    // Clear the previous identity even if the new session's request fails.
+    // Visitors hydrate only the explicitly public fields from the server.
+    if (!token || settingsToken.current !== token) resetSettings();
+    settingsToken.current = token;
 
     try {
-      const res = await fetch('/api/settings', {
-        headers: { Authorization: `Bearer ${token}` }
+      let res = await fetch(token ? '/api/settings' : '/api/public/branding', {
+        ...(token ? { headers: { Authorization: `Bearer ${token}` } } : { cache: 'no-store' as const }),
+        signal: controller.signal,
       });
+      if (token && (res.status === 401 || res.status === 403)
+        && !controller.signal.aborted && activeLoad.current === controller) {
+        resetSettings();
+        res = await fetch('/api/public/branding', { cache: 'no-store', signal: controller.signal });
+      }
       if (res.ok) {
         const data = await res.json();
-        if (data && data.name) {
+        // A response started before logout (or a newer reload) must never
+        // restore private settings over the visitor's public school profile.
+        if (controller.signal.aborted || activeLoad.current !== controller
+          || sessionStorage.getItem('auth_token') !== token) return;
+        if (data && (!token || data.name)) {
           applyServerData(data, setSchoolProfile, setBrandingSettings, setSystemSettings);
         }
       }
     } catch (error) {
-      console.error('Failed to reload settings:', error);
+      if (!controller.signal.aborted) console.error('Failed to reload school settings:', error);
+    } finally {
+      if (activeLoad.current === controller) activeLoad.current = null;
     }
-  };
+  }, [resetSettings]);
 
   // Initial load and watch for auth changes
   useEffect(() => {
-    const handleAuthChange = () => {
-      // Trigger settings reload when auth state changes
-      setTriggerReload(prev => prev + 1);
+    const handleAuthChange = () => { void reloadSettings(); };
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === null || event.key === 'auth_token' || event.key === 'auth_user') handleAuthChange();
     };
 
     // Listen for storage changes (for cross-tab login/logout)
-    window.addEventListener('storage', handleAuthChange);
+    window.addEventListener('storage', handleStorageChange);
 
     // Custom event listener for same-window login/logout
     window.addEventListener('auth-state-changed', handleAuthChange);
 
     // Initial load
-    reloadSettings();
+    void reloadSettings();
 
     return () => {
-      window.removeEventListener('storage', handleAuthChange);
+      activeLoad.current?.abort();
+      activeLoad.current = null;
+      window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('auth-state-changed', handleAuthChange);
     };
-  }, []);
-
-  // Reload settings when trigger changes
-  useEffect(() => {
-    reloadSettings();
-  }, [triggerReload]);
+  }, [reloadSettings]);
 
   const save = async (payload: Record<string, any>) => {
     const token = sessionStorage.getItem('auth_token');
@@ -200,7 +204,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       throw new Error(err.error || 'Failed to save settings');
     }
     const saved = await res.json();
-    applyServerData(saved, setSchoolProfile, setBrandingSettings, setSystemSettings);
+    if (token && sessionStorage.getItem('auth_token') === token) {
+      // An older read must not overwrite a successful update. A save that
+      // finishes after logout must not reintroduce authenticated fields.
+      activeLoad.current?.abort();
+      activeLoad.current = null;
+      applyServerData(saved, setSchoolProfile, setBrandingSettings, setSystemSettings);
+    }
     // Let anything outside this provider's tree (e.g. DynamicFavicon, which
     // has to work for logged-out visitors too and so can't consume this
     // context) know branding just changed, without a full page refresh.

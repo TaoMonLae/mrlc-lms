@@ -1,9 +1,10 @@
-import ReleaseUpdates from "./pages/ReleaseUpdates";
-import FinanceProcedures from './pages/financial/FinanceProcedures';
-import FinanceWorkspace from './components/financial/FinanceWorkspace';
+import ExamManagementGate from "./components/exams/ExamManagementGate";
 import { Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { lazyWithRetry as lazy } from "./lib/lazyWithRetry";
+const ReleaseUpdates = lazy(() => import("./pages/ReleaseUpdates"));
+const FinanceProcedures = lazy(() => import("./pages/financial/FinanceProcedures"));
+const FinanceWorkspace = lazy(() => import("./components/financial/FinanceWorkspace"));
 const AppLayout = lazy(() => import("./components/layout/AppLayout").then((module) => ({ default: module.AppLayout })));
 import { ExternalLearnerBoundary, ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { StudentFocusMonitor } from "./components/focus/StudentFocusMonitor";
@@ -204,6 +205,7 @@ const ChessLobbyPage = lazy(() => import("./pages/games/chess/Lobby"));
 const ChessLeaderboardPage = lazy(() => import("./pages/games/chess/Leaderboard"));
 const PacmanSelectPage = lazy(() => import("./pages/games/pacman/index"));
 const PacmanPlayPage = lazy(() => import("./pages/games/pacman/PlayPage"));
+const EvidenceDetectivePage = lazy(() => import("./pages/games/evidence-detective/EvidenceDetective"));
 const PeriodicTableHubPage = lazy(() => import("./pages/games/periodic-table/index"));
 const PeriodicTableQuizPage = lazy(() => import("./pages/games/periodic-table/ElementQuiz"));
 const PeriodicTableMatchPage = lazy(() => import("./pages/games/periodic-table/ElementMatch"));
@@ -308,6 +310,8 @@ import { AuthProvider } from "./providers/AuthProvider";
 import { ReleaseUpdatesProvider } from "./providers/ReleaseUpdatesProvider";
 import { I18nProvider } from "./i18n/I18nProvider";
 
+const CouncilPage = lazy(() => import("./pages/council/CouncilPage"));
+const ForumPage = lazy(() => import("./pages/council/ForumPage"));
 const LandingPage = lazy(() => import("./pages/Landing"));
 const KioskDownloads = lazy(() => import("./pages/KioskDownloads"));
 const FocusApp = lazy(() => import("./pages/FocusApp"));
@@ -354,7 +358,7 @@ export default function App() {
               </Route>
               <Route path="/documents/:id/print" element={<DocumentPrint />} />
               <Route path="/documents/:id/id-card" element={<StudentIdCardPrint />} />
-              <Route element={<ProtectedRoute strictRoles={['ADMIN']} />}>
+              <Route element={<ProtectedRoute strictRoles={['ADMIN', 'TEACHER', 'STAFF', 'ACCOUNTANT', 'LIBRARIAN', 'CASE_WORKER']} />}>
                 <Route path="/documents/volunteer/:id/print" element={<VolunteerDocumentPrint />} />
               </Route>
               <Route path="/payroll/payslips/:id/print" element={<PayslipPrint />} />
@@ -474,6 +478,7 @@ export default function App() {
 
                 <Route path="/games/pacman" element={<GameAccessGate gameKey="PACMAN"><PacmanSelectPage /></GameAccessGate>} />
                 <Route path="/games/pacman/play" element={<GameAccessGate gameKey="PACMAN" consumeTime><PacmanPlayPage /></GameAccessGate>} />
+                <Route path="/games/evidence-detective" element={<GameAccessGate gameKey="EVIDENCE_DETECTIVE" consumeTime><EvidenceDetectivePage /></GameAccessGate>} />
                 <Route path="/games/word-connect" element={<GameAccessGate gameKey="WORD_CONNECT"><WordConnectPage /></GameAccessGate>} />
                 <Route path="/games/word-connect/play/:levelId" element={<GameAccessGate gameKey="WORD_CONNECT" consumeTime><WordConnectPlayPage /></GameAccessGate>} />
 
@@ -545,8 +550,8 @@ export default function App() {
                   <Route path="/exams/:id" element={<ExamProfile />} />
                   {/* Classic edit removed — the Guided Studio is the only builder.
                       Keep the /edit path as a redirect so old links/bookmarks resolve. */}
-                  <Route path="/exams/:id/edit" element={<GuidedStudio />} />
-                  <Route path="/exams/:id/studio" element={<GuidedStudio />} />
+                  <Route path="/exams/:id/edit" element={<ExamManagementGate><GuidedStudio /></ExamManagementGate>} />
+                  <Route path="/exams/:id/studio" element={<ExamManagementGate><GuidedStudio /></ExamManagementGate>} />
                   <Route path="/exams/:id/preview" element={<ExamPreview />} />
                   
                   <Route path="/teachers/:id" element={<TeacherProfile />} />
@@ -557,14 +562,14 @@ export default function App() {
                   <Route path="/bank/new" element={<QuestionEditor />} />
                   <Route path="/bank/:id" element={<QuestionEditor />} />
 
-                  <Route path="/exam2/:examId/author" element={<ExamAuthoring />} />
-                  <Route path="/exam2/:examId/schedule" element={<ExamScheduling />} />
-                  <Route path="/exam2/:examId/invigilator" element={<InvigilatorDashboard />} />
-                  <Route path="/exam2/:examId/analytics" element={<ExamAnalytics />} />
-                  <Route path="/exam2/:examId/questions/:qid/analytics" element={<QuestionAnalytics />} />
-                  <Route path="/exam2/:examId/print" element={<PrintableExport />} />
-                  <Route path="/exam2/grading" element={<ManualGradingQueue />} />
-                  <Route path="/exam2/grade/:attemptId/:questionId" element={<RubricGrading />} />
+                  <Route path="/exam2/:examId/author" element={<ExamManagementGate><ExamAuthoring /></ExamManagementGate>} />
+                  <Route path="/exam2/:examId/schedule" element={<ExamManagementGate><ExamScheduling /></ExamManagementGate>} />
+                  <Route path="/exam2/:examId/invigilator" element={<ExamManagementGate><InvigilatorDashboard /></ExamManagementGate>} />
+                  <Route path="/exam2/:examId/analytics" element={<ExamManagementGate><ExamAnalytics /></ExamManagementGate>} />
+                  <Route path="/exam2/:examId/questions/:qid/analytics" element={<ExamManagementGate><QuestionAnalytics /></ExamManagementGate>} />
+                  <Route path="/exam2/:examId/print" element={<ExamManagementGate><PrintableExport /></ExamManagementGate>} />
+                  <Route path="/exam2/grading" element={<ExamManagementGate><ManualGradingQueue /></ExamManagementGate>} />
+                  <Route path="/exam2/grade/:attemptId/:questionId" element={<ExamManagementGate><RubricGrading /></ExamManagementGate>} />
                   <Route path="/exam2/accommodations" element={<AccommodationManagement />} />
 
                   <Route path="/gradebook" element={<GradebookPage />} />
@@ -577,7 +582,7 @@ export default function App() {
                 </Route>
 
                 <Route path="/exams/:id/take" element={<ExamTake />} />
-                <Route path="/exams/:id/results" element={<ExamResults />} />
+                <Route path="/exams/:id/results" element={<ExamManagementGate studentResults><ExamResults /></ExamManagementGate>} />
 
                 <Route element={<ProtectedRoute requiredPermission="manage_users" />}>
                   <Route path="/users" element={<UsersList />} />
@@ -585,7 +590,7 @@ export default function App() {
                   <Route path="/users/:id/edit" element={<UserEdit />} />
                 </Route>
 
-                <Route element={<ProtectedRoute strictRoles={['ADMIN']} />}>
+                <Route element={<ProtectedRoute strictRoles={['ADMIN', 'TEACHER', 'STAFF', 'ACCOUNTANT', 'LIBRARIAN', 'CASE_WORKER']} />}>
                   <Route path="/documents/volunteers" element={<VolunteerDocuments />} />
                 </Route>
                 <Route element={<ProtectedRoute requiredPermission="manage_all" />}>
@@ -766,6 +771,12 @@ export default function App() {
                   <Route path="/donors/:id/edit" element={<DonorEdit />} />
                   <Route path="/donors/:id" element={<DonorProfile />} />
                   </Route>
+                </Route>
+
+                <Route element={<ProtectedRoute strictRoles={['ADMIN', 'STAFF', 'TEACHER', 'STUDENT']} />}>
+                  <Route path="/council" element={<CouncilPage />} />
+                  <Route path="/student-forum" element={<ForumPage />} />
+                  <Route path="/student-forum/:id" element={<ForumPage />} />
                 </Route>
 
                 <Route element={<ProtectedRoute requiredPermission="view_duties" />}>

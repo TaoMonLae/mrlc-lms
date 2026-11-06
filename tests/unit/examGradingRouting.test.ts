@@ -11,7 +11,7 @@ test('Express grading routes save, finalize a zero mark, and reject later edits'
   let attempt: any = { id: 'a1', examId: 'e1', state: 'PENDING_GRADING' };
   let answer: any = { maxPoints: 5, pointsAwarded: null };
   const prisma: any = {
-    exam: { findUnique: async () => ({ id: 'e1', classId: 'class1' }) },
+    exam: { findUnique: async () => ({ id: 'e1', classId: 'class1', ownerId: 'teacher1', editorIds: [] }) },
     examAttempt: {
       findUnique: async ({ where }: any) => where.id === 'a1' ? attempt : null,
       updateMany: async () => ({ count: 1 }),

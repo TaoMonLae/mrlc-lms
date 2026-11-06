@@ -1,4 +1,4 @@
-import { ArrowRight, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Check, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router';
 import { useAuth } from '../../providers/AuthProvider';
 import { LEVELS } from './word-connect/content';
@@ -6,12 +6,13 @@ import { isComplete } from './word-connect/engine';
 import { useAdventure } from './word-connect/useAdventure';
 import './game-hub.css';
 
-type GameArt = 'trail' | 'quest' | 'sudoku' | 'chess' | 'checkers' | 'periodic' | 'snake' | 'pacman' | 'daily';
+type GameArt = 'trail' | 'quest' | 'sudoku' | 'chess' | 'checkers' | 'periodic' | 'snake' | 'pacman' | 'daily' | 'evidence';
 type GameCard = { title: string; description: string; to: string; art: GameArt; detail: string };
 
 const wordGames: GameCard[] = [
   { title: 'Learning Quest', description: 'Stories, lessons, and language challenges.', to: '/games/language-quest', art: 'quest', detail: 'Language adventure' },
   { title: 'Word Trail', description: 'Follow clues and build a path of words.', to: '/games/word-trail', art: 'trail', detail: 'Word puzzle' },
+  { title: 'Evidence Detective', description: 'Read a source, choose proof, and explain your reasoning.', to: '/games/evidence-detective', art: 'evidence', detail: 'Reading & reasoning' },
   { title: 'Daily Quest', description: 'A fresh little challenge for today.', to: '/daily-quest', art: 'daily', detail: 'Daily challenge' },
 ];
 const thinkingGames: GameCard[] = [
@@ -33,6 +34,7 @@ function Preview({ art }: { art: GameArt }) {
   if (art === 'snake') return <div className="gh-snake" aria-hidden="true"><svg viewBox="0 0 240 130"><path d="M30 92h58V35h60v62h40" /><circle cx="194" cy="97" r="10" /></svg></div>;
   if (art === 'pacman') return <div className="gh-maze" aria-hidden="true"><svg viewBox="0 0 240 130"><path d="M18 16h92v32H58v64h164V78h-70V16h70M18 16v96h24M100 78h36" /><circle cx="67" cy="31" r="3" /><circle cx="94" cy="31" r="3" /><circle cx="120" cy="31" r="3" /><circle cx="180" cy="96" r="3" /></svg><span>◕</span></div>;
   if (art === 'trail') return <div className="gh-trail" aria-hidden="true"><span>W</span><i /><span>O</span><i /><span>R</span><i /><span>D</span></div>;
+  if (art === 'evidence') return <div className="gh-evidence" aria-hidden="true"><div><span>CASE 05</span><p>What does the<br />source show?</p><b>“46 of 120 riders…”</b></div><i><Check size={20} /></i></div>;
   if (art === 'quest') return <div className="gh-quest" aria-hidden="true"><span>hello</span><span>မင်္ဂလာပါ</span><b>✦</b></div>;
   return <div className="gh-daily" aria-hidden="true"><span>01</span><b>Today’s clue</b><i>?</i></div>;
 }

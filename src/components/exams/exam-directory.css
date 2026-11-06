@@ -1,0 +1,46 @@
+.exam-directory { container-type:inline-size; max-width:90rem; margin-inline:auto; color:var(--foreground); }
+.exam-directory-header, .exam-directory-toolbar, .exam-directory-header-actions, .exam-directory-row-actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.exam-directory-header { align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:24px; }
+.exam-directory-header h1 { font-size:1.5rem; line-height:1.2; font-weight:650; letter-spacing:-.025em; }
+.exam-directory-header p { max-width:65ch; margin-top:6px; color:var(--muted-foreground); font-size:.875rem; }
+.exam-directory-toolbar { justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid var(--border); }
+.exam-directory-toolbar button, .exam-directory-header button, .exam-directory-header a, .exam-directory-row-actions button { min-height:44px; }
+.exam-directory-search { display:flex; width:min(100%,24rem); gap:8px; align-items:center; padding:0 12px; min-height:44px; background:var(--card); color:var(--muted-foreground); border:1px solid var(--border); border-radius:4px; }
+.exam-directory-search input { flex:1; width:100%; min-width:0; color:var(--foreground); background:transparent; font-size:.875rem; }
+.exam-directory-search input:focus { outline:none; }
+.exam-directory-search:focus-within { outline:2px solid var(--ring); outline-offset:2px; }
+.exam-directory-columns, .exam-directory-row { display:grid; grid-template-columns:minmax(12rem,2.4fr) minmax(8rem,1fr) minmax(8rem,1fr) 13rem; align-items:center; gap:16px; padding-inline:16px; }
+.exam-directory-columns { padding-block:9px; border-block:1px solid var(--border); color:var(--muted-foreground); font-size:.6875rem; font-weight:600; }
+.exam-directory-list { list-style:none; margin:0; padding:0; }
+.exam-directory-row { padding-block:14px; border-bottom:1px solid var(--border); background:var(--card); }
+.exam-directory-row h2 { margin:4px 0 3px; font-size:1.125rem; line-height:1.4; font-weight:650; overflow-wrap:anywhere; }
+.exam-directory-row h2 a:hover { text-decoration:underline; }
+.exam-directory-identity p, .exam-directory-details, .exam-directory-access { font-size:.875rem; line-height:1.5; color:var(--muted-foreground); overflow-wrap:anywhere; }
+.exam-directory-details, .exam-directory-access { display:grid; gap:2px; font-variant-numeric:tabular-nums; }
+.exam-directory-access strong { display:flex; align-items:center; gap:6px; font-weight:600; color:var(--foreground); }
+.exam-directory-status { display:inline-flex; align-items:center; gap:6px; color:var(--muted-foreground); font-size:.6875rem; font-weight:600; }
+.exam-directory-status::before { content:""; width:7px; height:7px; border-radius:50%; border:1px solid currentColor; }
+.exam-directory-status:is([data-status=PUBLISHED],[data-status=ACTIVE],[data-status=GRADED])::before { background:var(--success); border-color:var(--success); }
+.exam-directory-status[data-status=NEEDS_GRADING]::before { background:var(--warning); border-color:var(--warning); }
+.exam-directory-row-actions { justify-content:flex-end; }
+.exam-directory-link { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:44px; padding:0 12px; font-size:.875rem; font-weight:550; color:var(--accent-foreground); }
+.exam-directory-link:hover { text-decoration:underline; }
+.exam-directory-message { padding:32px 16px; border-block:1px solid var(--border); }
+.exam-directory-message p { margin:5px 0 12px; color:var(--muted-foreground); font-size:.875rem; }
+@container (max-width:54rem) {
+  .exam-directory-columns { display:none; }
+  .exam-directory-row { grid-template-columns:minmax(0,1fr) minmax(8rem,.55fr); gap:10px 16px; }
+  .exam-directory-row-actions { justify-content:flex-start; }
+  .exam-directory-list { border-top:1px solid var(--border); }
+}
+@container (max-width:35rem) {
+  .exam-directory-header { margin-bottom:16px; }
+  .exam-directory-row { grid-template-columns:minmax(0,1fr); gap:8px; }
+  .exam-directory-search { width:100%; }
+  .exam-directory-details, .exam-directory-access { display:flex; align-items:center; flex-wrap:wrap; gap:4px 12px; }
+  .exam-directory-row-actions { border-top:1px solid var(--border); padding-top:4px; }
+}
+
+.exam-directory-toolbar [role=tablist] { height:auto; }
+.exam-directory-action { border:1px solid var(--border); border-radius:4px; }
+@container (max-width:35rem) { .exam-directory-search input { font-size:1rem; } }
