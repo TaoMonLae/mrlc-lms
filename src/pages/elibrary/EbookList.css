@@ -1,6 +1,6 @@
 /* Counterprint's cover-led catalogue, with MRLC reading progress and subject filters. */
-.elibrary-catalog-page.elibrary-workspace { --elib-action:#147c72; letter-spacing:0; max-width:1400px; margin:auto; }
-.dark .elibrary-catalog-page.elibrary-workspace { --elib-action:#83d8c1; }
+.elibrary-catalog-page.elibrary-workspace { --elib-action:var(--link); letter-spacing:0; max-width:1400px; margin:auto; }
+.dark .elibrary-catalog-page.elibrary-workspace { --elib-action:var(--link); }
 .library-heading { display:flex; justify-content:space-between; gap:24px; align-items:center; padding:8px 0 24px; border-bottom:1px solid var(--elib-rule); }
 .library-heading p { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--elib-action); }
 .library-heading h1 { font-size:34px; font-weight:600; line-height:1.2; letter-spacing:-.035em; margin:8px 0; }

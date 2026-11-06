@@ -92,6 +92,7 @@ export function buildExamReviewQuestions(answers: any[], frozenContent: unknown,
       return labelFor(value, keyOptions);
     };
     let correctAnswer = accepted.map(correctedLabel).join(', ') || null;
+    const choiceLabels = ['MCQ', 'TRUE_FALSE'].includes(type) ? keyOptions.map(option => option.label) : [];
     let blankRows: Array<{ label: string; student: string | null; correct: string; isCorrect: boolean }> = [];
     if (type === 'DRAG_DROP') {
       const scoringOptions = snapshot?.scoringOptions ?? current?.options;
@@ -114,7 +115,7 @@ export function buildExamReviewQuestions(answers: any[], frozenContent: unknown,
       imageUrl: snapshot?.imageUrl ?? current?.imageUrl ?? null,
       explanation: snapshot?.explanation ?? current?.explanation ?? null,
       maxPoints: points, pointsAwarded: awarded, status,
-      studentAnswer, correctAnswer, blankRows,
+      studentAnswer, correctAnswer, blankRows, choiceLabels,
       answerKeyCorrected: corrected,
     };
   }).filter(Boolean);

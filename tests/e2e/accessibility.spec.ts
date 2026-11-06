@@ -4,6 +4,12 @@ import { expect, test } from '@playwright/test';
 const adminEmail = process.env.SEED_ADMIN_EMAIL || 'admin@mrlc.edu';
 const adminPassword = process.env.SEED_ADMIN_PASSWORD || 'admin123';
 
+async function settleTheme(page: import('@playwright/test').Page, dark: boolean) {
+  // Theme tokens animate. Scan the settled palette, not a frame between the two.
+  await page.addStyleTag({ content: '*, *::before, *::after { transition-duration: 0s !important; animation-duration: 0s !important; }' });
+  await page.evaluate(value => document.documentElement.classList.toggle('dark', value), dark);
+}
+
 function seriousViolations(results: Awaited<ReturnType<AxeBuilder['analyze']>>) {
   return results.violations
     .filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))
@@ -18,7 +24,7 @@ test('login has no serious or critical accessibility violations', async ({ page 
   await expect(page.getByRole('heading', { name: 'Sign in to your school day.' })).toBeVisible();
   await page.waitForTimeout(600); // scan the settled UI, not a translucent animation frame
   for (const dark of [false, true]) {
-    await page.evaluate(value => document.documentElement.classList.toggle('dark', value), dark);
+    await settleTheme(page, dark);
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
     expect(seriousViolations(results)).toEqual([]);
   }
@@ -35,7 +41,7 @@ test('authenticated dashboard has no serious or critical accessibility violation
   await expect(page.getByText('Loading student support…')).toHaveCount(0);
   await page.waitForTimeout(600);
   for (const dark of [false, true]) {
-    await page.evaluate(value => document.documentElement.classList.toggle('dark', value), dark);
+    await settleTheme(page, dark);
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
     expect(seriousViolations(results)).toEqual([]);
   }
@@ -45,7 +51,7 @@ test('password recovery has no serious or critical accessibility violations', as
   await page.goto('/forgot-password');
   await expect(page.getByRole('heading', { name: 'Reset your password' })).toBeVisible();
   for (const dark of [false, true]) {
-    await page.evaluate(value => document.documentElement.classList.toggle('dark', value), dark);
+    await settleTheme(page, dark);
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
     expect(seriousViolations(results)).toEqual([]);
   }

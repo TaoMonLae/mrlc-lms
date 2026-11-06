@@ -31,7 +31,7 @@ const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as con
 
 // Retained for legacy API compatibility. The redesigned timetable intentionally
 // uses one published-record color; schedule type is expressed with text.
-const colorForSubject = (_subjectId: string) => 'bg-academic-teal';
+const colorForSubject = (_subjectId: string) => 'bg-action-solid';
 
 const timetableSchema = z.object({
   classId: z.string().optional(),

@@ -15,7 +15,8 @@ import {
   PowerUpType,
   VisualTheme
 } from './types';
-import { apiSend } from '../../../lib/api';
+import { apiGet, apiSend } from '../../../lib/api';
+import { useAuth } from '../../../providers/AuthProvider';
 import { soundEngine } from './utils/audio';
 import { calculateGhostTarget, getNextGhostDirection } from './utils/ghostAI';
 import {
@@ -27,6 +28,7 @@ import {
 } from './utils/gamePhysics';
 import { countDotsAndEnergizers, getMazeSpawns, isWalkableForPacman, TILE_SIZE } from './utils/mazes';
 import { getLevelLayout, TOTAL_LEVELS } from './utils/levels';
+import { emptyStageProgress, GAME_MODES, readStageProgress, type StageProgress, validStage, writeStageProgress } from './utils/stageProgress';
 import { ParticleSystem } from './utils/particles';
 import { pacmanDirectionForSwipe } from './utils/touchControls';
 
@@ -49,6 +51,10 @@ const DEFAULT_STATS: GameStats = {
 const MAX_PACMAN_SPEED = 9.5;
 const MAX_GHOST_SPEED = 10.5;
 const TIME_ATTACK_SECONDS = 120;
+type ProgressSync = 'loading' | 'account' | 'device' | 'unavailable';
+const syncForAll = (value: ProgressSync): Record<GameMode, ProgressSync> => ({
+  CLASSIC: value, TIME_ATTACK: value, SURVIVAL: value, PRACTICE: value
+});
 const GHOST_HOUSE_DELAYS = {
   PINKY: 1.5,
   INKY: 3.5,
@@ -87,6 +93,8 @@ function resetRoundPositions(
 
 export default function PacmanGame() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const userId = user?.id;
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -112,6 +120,9 @@ export default function PacmanGame() {
   const [score, setScore] = useState<number>(0);
   const [highScore, setHighScore] = useState<number>(0);
   const [level, setLevel] = useState<number>(1);
+  const [savedStages, setSavedStages] = useState<StageProgress>(emptyStageProgress);
+  const [progressSync, setProgressSync] = useState<Record<GameMode, ProgressSync>>(() => syncForAll('loading'));
+  const [progressLoaded, setProgressLoaded] = useState(false);
   const levelName = useMemo(() => getLevelLayout(level).name, [level]);
   const nextLevelName = useMemo(() => level < TOTAL_LEVELS ? getLevelLayout(level + 1).name : null, [level]);
   const [lives, setLives] = useState<number>(3);
@@ -251,6 +262,54 @@ export default function PacmanGame() {
   useEffect(() => {
     levelRef.current = level;
   }, [level]);
+
+  useEffect(() => {
+    if (!userId) {
+      setSavedStages(emptyStageProgress());
+      setProgressLoaded(true);
+      return;
+    }
+    setProgressLoaded(false);
+    setProgressSync(syncForAll('loading'));
+    const local = readStageProgress(localStorage, userId);
+    setSavedStages(local);
+    let cancelled = false;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 5000);
+    apiGet<{ progress: { gameMode: string; level: number }[] }>('/api/games/pacman/progress', { signal: controller.signal })
+      .then(({ progress }) => {
+        if (cancelled) return;
+        const merged = { ...local };
+        for (const entry of progress) {
+          const mode = GAME_MODES.find((value) => value === entry.gameMode);
+          const level = validStage(entry.level);
+          if (mode && level) merged[mode] = Math.max(merged[mode], level);
+        }
+        setSavedStages((current) => {
+          const latest = { ...current };
+          for (const mode of GAME_MODES) latest[mode] = Math.max(latest[mode], merged[mode]);
+          return latest;
+        });
+        const sync = syncForAll('account');
+        for (const mode of GAME_MODES) {
+          writeStageProgress(localStorage, userId, mode, merged[mode]);
+          const serverLevel = progress.find((entry) => entry.gameMode === mode)?.level ?? 1;
+          if (local[mode] > serverLevel) {
+            sync[mode] = 'device';
+            void apiSend('/api/games/pacman/progress', 'POST', { gameMode: mode, level: local[mode] })
+              .then(() => { if (!cancelled) setProgressSync((current) => ({ ...current, [mode]: 'account' })); })
+              .catch(() => { if (!cancelled) setProgressSync((current) => ({ ...current, [mode]: 'device' })); });
+          }
+        }
+        setProgressSync(sync);
+      })
+      .catch(() => { if (!cancelled) setProgressSync(syncForAll('device')); })
+      .finally(() => {
+        window.clearTimeout(timeout);
+        if (!cancelled) setProgressLoaded(true);
+      });
+    return () => { cancelled = true; controller.abort(); window.clearTimeout(timeout); };
+  }, [userId]);
   useEffect(() => () => {
     if (deathTimeoutRef.current) clearTimeout(deathTimeoutRef.current);
   }, []);
@@ -483,18 +542,29 @@ export default function PacmanGame() {
     });
   }, [gameMode]);
 
-  // Start new game
-  const handleStartGame = () => {
+  const saveCheckpoint = useCallback((mode: GameMode, stage: number) => {
+    if (!userId || !validStage(stage) || stage < 2) return;
+    const savedLocally = writeStageProgress(localStorage, userId, mode, stage);
+    setSavedStages((current) => ({ ...current, [mode]: Math.max(current[mode], stage) }));
+    setProgressSync((current) => ({ ...current, [mode]: savedLocally ? 'device' : 'unavailable' }));
+    void apiSend('/api/games/pacman/progress', 'POST', { gameMode: mode, level: stage })
+      .then(() => setProgressSync((current) => ({ ...current, [mode]: 'account' })))
+      .catch(() => setProgressSync((current) => ({ ...current, [mode]: savedLocally ? 'device' : 'unavailable' })));
+  }, [userId]);
+
+  // A resumed stage is a fresh run: score and lives never carry over.
+  const startGame = (startLevel: number) => {
+    const stage = validStage(startLevel) ?? 1;
     if (deathTimeoutRef.current) clearTimeout(deathTimeoutRef.current);
     deathTimeoutRef.current = null;
     scoreRef.current = 0;
-    levelRef.current = 1;
+    levelRef.current = stage;
     setScore(0);
-    setLevel(1);
+    setLevel(stage);
     setLives(gameMode === 'SURVIVAL' ? 1 : 3);
     setIsNewHighScore(false);
     modalPauseRef.current = false;
-    initLevel(1);
+    initLevel(stage);
     setStatus('PLAYING');
     soundEngine.playGameStart();
 
@@ -506,9 +576,12 @@ export default function PacmanGame() {
     });
   };
 
-  // Restart current game
+  const handleStartGame = () => startGame(1);
+  const handleContinueGame = () => startGame(savedStages[gameMode]);
+
+  // Restart the current stage from its beginning.
   const handleRestartGame = () => {
-    handleStartGame();
+    startGame(level);
   };
 
   // Move to Next Level
@@ -719,6 +792,7 @@ export default function PacmanGame() {
         }
         if (remaining === 0 && !levelClearTriggered) {
           levelClearTriggered = true;
+          if (levelRef.current < TOTAL_LEVELS) saveCheckpoint(gameMode, levelRef.current + 1);
           setStatus(levelRef.current === TOTAL_LEVELS ? 'GAME_COMPLETE' : 'LEVEL_CLEAR');
           soundEngine.playLevelClear();
           confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
@@ -1148,7 +1222,7 @@ export default function PacmanGame() {
           .filter((ft) => ft.life < 0.8);
       });
     },
-    [status, maze, spawnFruit, spawnPowerUpItem, recordScore, addScore, gameMode]
+    [status, maze, spawnFruit, spawnPowerUpItem, recordScore, addScore, gameMode, saveCheckpoint]
   );
 
   // Track high score across every scoring event (dots, energizers, fruit,
@@ -1325,6 +1399,10 @@ export default function PacmanGame() {
             onPauseGame={() => setStatus('PAUSED')}
             onRestartGame={handleRestartGame}
             onNextLevel={handleNextLevel}
+            savedStage={savedStages[gameMode]}
+            onContinueGame={handleContinueGame}
+            progressSync={progressSync[gameMode]}
+            progressLoaded={progressLoaded}
             showTouchControls={showTouchControls}
             boostCooldown={boostCooldown}
             activePowerUp={activePowerUp}

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { ArrowLeft, Eye, Loader2, AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { apiGet } from '../../lib/api';
 import MathText from '../../components/MathText';
+import '../../components/exams/exam-paper.css';
 import { splitDragText } from '../../lib/dragBlanks';
 
 type DragBankItem = { key: string; label: string };
@@ -20,15 +21,21 @@ export default function ExamPreview() {
   const { id } = useParams<{ id: string }>();
   const [questions, setQuestions] = useState<Q[]>([]);
   const [title, setTitle] = useState('');
-  const [meta, setMeta] = useState<{ durationMinutes?: number | null; totalMarks?: number | null; status?: string }>({});
+  const [meta, setMeta] = useState<{ durationMinutes?: number | null; totalMarks?: number | null; status?: string; questionTheme?: string }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    apiGet(`/api/exams/${id}/preview`)
-      .then((d) => { setQuestions(d.questions || []); setTitle(d.exam?.title || 'Exam'); setMeta(d.exam || {}); })
-      .catch((e) => setError(e.message || 'Could not load preview'))
-      .finally(() => setLoading(false));
+    const controller = new AbortController();
+    setLoading(true); setError('');
+    apiGet(`/api/exams/${id}/preview`, { signal: controller.signal, timeoutMs: 20000 })
+      .then((d) => {
+        if (!d?.exam || !Array.isArray(d.questions)) throw new Error('Could not load preview. Please try again.');
+        if (!controller.signal.aborted) { setQuestions(d.questions); setTitle(d.exam.title || 'Exam'); setMeta(d.exam); }
+      })
+      .catch((e) => { if (!controller.signal.aborted) setError(e.message || 'Could not load preview'); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
   }, [id]);
 
   if (loading) return <div className="flex items-center justify-center py-32 text-muted-foreground"><Loader2 className="h-6 w-6 animate-spin mr-2" /> Loading preview…</div>;
@@ -37,18 +44,18 @@ export default function ExamPreview() {
       <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto" />
       <h2 className="text-lg font-bold text-foreground">Can't preview this exam</h2>
       <p className="text-sm text-muted-foreground">{error}</p>
-      <Button render={<Link to={`/exams/${id}`} />} nativeButton={false}>Back to exam</Button>
+      <Link to="/exams" className={buttonVariants({ variant: 'outline' })}>Back to exams</Link>
     </div>
   );
 
   return (
-    <div className="max-w-3xl mx-auto pb-24" data-no-i18n>
-      <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground" render={<Link to={`/exams/${id}`} />} nativeButton={false}>
-        <ArrowLeft className="mr-2 h-4 w-4" /> Back to exam
-      </Button>
+    <div className={`exam-paper ep-${['classic', 'colorful', 'focus'].includes(meta.questionTheme || '') ? meta.questionTheme : 'ged'} ep-readonly max-w-3xl mx-auto pb-24`} data-question-theme={meta.questionTheme || 'ged'} data-no-i18n>
+      <Link to="/exams" className={buttonVariants({ variant: 'ghost', size: 'sm', className: '-ml-3 mb-2 text-muted-foreground' })}>
+        <ArrowLeft className="mr-2 h-4 w-4" /> Back to exams
+      </Link>
 
       <div className="mb-4 flex items-center gap-2 rounded-lg border border-aubergine-200 bg-aubergine-50 dark:bg-aubergine-900/20 px-4 py-2 text-sm text-aubergine-700 dark:text-aubergine-300">
-        <Eye className="h-4 w-4" /> Preview mode — this is how students see the exam. Nothing is saved or scored.
+        <Eye className="h-4 w-4" /> Read-only preview · Browse the exam questions.
       </div>
 
       <div className="mb-6">
@@ -63,14 +70,14 @@ export default function ExamPreview() {
 
       {questions.length === 0 ? (
         <div className="py-16 text-center text-sm text-muted-foreground border border-dashed border-border rounded-sm">
-          No questions yet. Add questions in the editor or author content.
+          This exam has no questions yet.
         </div>
       ) : (
         <div className="space-y-6">
           {questions.map((q, idx) => {
             const isChoice = !TEXT_ANSWER_TYPES.includes(q.type) && Array.isArray(q.options) && q.options.length > 0;
             return (
-              <div key={q.id} className="bg-card border border-border rounded-sm p-6 shadow-sm space-y-4">
+              <div key={q.id} className="ep-readonly-question border rounded-sm p-6 space-y-4">
                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Question {idx + 1} · {q.points} pts</span>
                 {q.passageText && (
                   <div className="rounded-lg bg-muted/50 p-4 text-sm text-foreground whitespace-pre-wrap leading-relaxed">

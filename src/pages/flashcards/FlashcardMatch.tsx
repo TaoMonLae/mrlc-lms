@@ -192,7 +192,7 @@ function Match({ deck, routes }: { deck: DeckDetail; routes: ReturnType<typeof u
               'border-input bg-card text-foreground hover:border-foreground'
             } ${tile.kind === 'term' ? 'font-semibold' : ''}`}
           >
-            {isMatched && <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] bg-academic-teal" />}
+            {isMatched && <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] bg-action-solid" />}
             <MathText>{tile.text}</MathText>
             {isMatched && <span className="sr-only"> (matched)</span>}
           </button>

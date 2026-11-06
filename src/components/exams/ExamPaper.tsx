@@ -7,7 +7,7 @@ export type PaperQuestion = { id: string; answered: boolean; flagged: boolean; p
 type ReviewFilter = 'all' | 'unanswered' | 'flagged';
 type Props = {
   title: string; status: string; remaining: number | null; questions: PaperQuestion[]; index: number;
-  prompt: ReactNode; passage?: ReactNode; imageUrl?: string | null; children: ReactNode;
+  prompt: ReactNode; writtenResponse?: boolean; passage?: ReactNode; imageUrl?: string | null; children: ReactNode;
   /** Identifies the passage text. The passage keeps its scroll position while this stays the same. */
   passageKey?: string;
   onNavigate: (index: number) => boolean | void | Promise<boolean | void>;
@@ -29,6 +29,7 @@ export default function ExamPaper(p: Props) {
   const heading = useRef<HTMLHeadingElement>(null);
   const passageBox = useRef<HTMLElement>(null);
   const sheet = useRef<HTMLElement>(null);
+  const navigator = useRef<HTMLElement>(null);
   const firstRender = useRef(true);
   const lastPassageKey = useRef(p.passageKey);
 
@@ -70,13 +71,29 @@ export default function ExamPaper(p: Props) {
     }
   }, [p.passageKey]);
 
+  function focusPrompt() {
+    heading.current?.focus({ preventScroll: true });
+    if (sheet.current && getComputedStyle(sheet.current).overflowY === 'auto') {
+      sheet.current.scrollTop = 0;
+    } else {
+      (sheet.current ?? heading.current)?.scrollIntoView({ block: 'start' });
+    }
+  }
+
   useEffect(() => {
     if (firstRender.current) { firstRender.current = false; return; }
-    if (sheet.current) sheet.current.scrollTop = 0;
-    heading.current?.focus({ preventScroll: true });
-    // With a passage beside the question both columns scroll on their own, so
-    // only bring the question into view when it sits below the passage (phones).
-    heading.current?.scrollIntoView({ block: 'nearest' });
+    focusPrompt();
+    // Move only the question strip, so following Next never moves the passage or page.
+    const nav = navigator.current;
+    const current = nav?.querySelector('[aria-current]');
+    if (nav && current) {
+      const box = nav.getBoundingClientRect();
+      const item = current.getBoundingClientRect();
+      if (item.bottom > box.bottom - 5) nav.scrollTop += item.bottom - box.bottom + 5;
+      else if (item.top < box.top + 5) nav.scrollTop += item.top - box.top - 5;
+      if (item.right > box.right - 5) nav.scrollLeft += item.right - box.right + 5;
+      else if (item.left < box.left + 5) nav.scrollLeft += item.left - box.left - 5;
+    }
   }, [p.index, review]);
 
   useEffect(() => { if (!review) setConfirming(false); }, [review]);
@@ -94,7 +111,7 @@ export default function ExamPaper(p: Props) {
     filter === 'all' ? true : filter === 'flagged' ? item.flagged : !item.answered);
   const submit = () => { if (p.preview) { p.onSubmit(); return; } setConfirming(true); };
 
-  return <section ref={root} className={`exam-paper ${p.theme === 'focus' ? 'ep-focus' : p.theme === 'colorful' ? 'ep-colorful' : ''}`} data-no-i18n>
+  return <section ref={root} className={`exam-paper ep-${['classic', 'colorful', 'focus'].includes(p.theme || '') ? p.theme : 'ged'}`} data-question-theme={p.theme || 'ged'} data-no-i18n>
     <header ref={header} className="ep-header">
       <div className="ep-title"><span className="ep-eyebrow">{p.preview ? 'Student preview' : 'Assessment'}</span><h1>{p.title}</h1><p role="status">{p.status}</p></div>
       <div className={`ep-timer ${timerClass}`} aria-label={`Time remaining: ${time}`}><Clock size={17} /><div><span>Time remaining</span><strong>{time}</strong></div></div>
@@ -102,9 +119,9 @@ export default function ExamPaper(p: Props) {
     </header>
     <div className="ep-workspace">
       {p.notices && <div className="ep-notices">{p.notices}</div>}
-      <div ref={progress} className="ep-progress"><span><strong>{answered}</strong> of {p.questions.length} answered</span><progress aria-label="Questions answered" max={p.questions.length || 1} value={answered} /><button disabled={p.busy} onClick={() => openReview()}>Review answers{flagged > 0 ? ` · ${flagged} flagged` : ''}</button></div>
+      <div ref={progress} className="ep-progress"><span><strong>{answered}</strong> of {p.questions.length} answered</span><progress aria-label="Questions answered" max={p.questions.length || 1} value={answered} />{!review && <button disabled={p.busy} onClick={() => openReview()}>Review answers{flagged > 0 ? ` · ${flagged} flagged` : ''}</button>}</div>
       <div className={`ep-layout ${p.passage && !review ? 'ep-with-passage' : ''}`}>
-        <aside className="ep-nav"><span className="ep-eyebrow">Questions</span><nav aria-label="Question navigation">{p.questions.map((item, i) => <button key={item.id} disabled={p.busy} onClick={() => void navigate(i)} aria-current={!review && p.index === i ? 'step' : undefined} aria-label={`Question ${i + 1}, ${statusOf(item).toLowerCase()}${item.flagged ? ', flagged' : ''}`} className={`${item.answered ? 'is-answered' : item.partial ? 'is-partial' : ''} ${item.flagged ? 'is-flagged' : ''}`}><span>{i + 1}</span>{item.flagged ? <Flag size={10} /> : item.answered ? <Check size={10} /> : null}</button>)}</nav><p className="ep-legend"><Check size={12} /> Answered <span className="ep-legend-partial" aria-hidden="true" /> Partly <Flag size={12} /> For review</p></aside>
+        <aside className="ep-nav"><span className="ep-eyebrow">Questions</span><nav ref={navigator} aria-label="Question navigation">{p.questions.map((item, i) => <button key={item.id} disabled={p.busy} onClick={() => void navigate(i)} aria-current={!review && p.index === i ? 'step' : undefined} aria-label={`Question ${i + 1}, ${statusOf(item).toLowerCase()}${item.flagged ? ', flagged' : ''}`} className={`${item.answered ? 'is-answered' : item.partial ? 'is-partial' : ''} ${item.flagged ? 'is-flagged' : ''}`}><span>{i + 1}</span>{item.flagged ? <Flag size={10} /> : item.answered ? <Check size={10} /> : null}</button>)}</nav><p className="ep-legend"><span><Check size={12} /> Answered</span><span><i className="ep-legend-partial" aria-hidden="true" /> Partly answered</span><span><Flag size={12} /> For review</span></p></aside>
         <div className="ep-document">
           {review ? <article className="ep-sheet ep-review"><span className="ep-eyebrow">Final review</span><h2 ref={heading} tabIndex={-1}>Review your answers</h2>
             <p>{answered} of {p.questions.length} answered · {unanswered} unanswered · {flagged} flagged for review.</p>
@@ -113,18 +130,18 @@ export default function ExamPaper(p: Props) {
               {([['all', `All (${p.questions.length})`], ['unanswered', `Unanswered (${unanswered})`], ['flagged', `Flagged (${flagged})`]] as [ReviewFilter, string][]).map(([key, label]) =>
                 <button key={key} type="button" aria-pressed={filter === key} onClick={() => setFilter(key)}>{label}</button>)}
             </div>
-            <div className="ep-review-list">
-              {reviewItems.length === 0 && <p className="ep-review-empty">{filter === 'flagged' ? 'No questions are flagged.' : 'Every question has an answer.'}</p>}
-              {reviewItems.map(({ item, i }) => <button key={item.id} disabled={p.busy} onClick={() => void navigate(i)}><span>Question {i + 1}</span><span>{item.flagged && <Flag size={14} />}{statusOf(item)}<ArrowRight size={15} /></span></button>)}
-            </div>
             {confirming ? <div className="ep-confirm" role="alertdialog" aria-labelledby="ep-confirm-title" aria-describedby="ep-confirm-text">
               <strong id="ep-confirm-title">Submit your exam now?</strong>
               <p id="ep-confirm-text">{unanswered > 0 ? `You have ${unanswered} unanswered ${unanswered === 1 ? 'question' : 'questions'}. ` : ''}{flagged > 0 ? `${flagged} ${flagged === 1 ? 'question is' : 'questions are'} still flagged. ` : ''}You cannot change your answers after you submit.</p>
               <div className="ep-review-actions">
-                <button disabled={p.busy} onClick={() => { setConfirming(false); if (unanswered > 0) setFilter('unanswered'); }} autoFocus>{unanswered > 0 ? 'Go back and answer' : 'Go back'}</button>
+                <button disabled={p.busy} onClick={() => { setConfirming(false); if (unanswered > 0) void navigate(p.questions.findIndex(item => !item.answered)); else setReview(false); }} autoFocus>{unanswered > 0 ? 'Go back and answer' : 'Go back'}</button>
                 <button className="ep-primary" disabled={p.busy} onClick={p.onSubmit}>{p.busy ? 'Please wait…' : 'Yes, submit exam'}</button>
               </div>
             </div> : <div className="ep-review-actions"><button disabled={p.busy} onClick={() => setReview(false)}>Back to question</button><button className="ep-primary" disabled={p.busy} onClick={submit}>{p.busy ? 'Please wait…' : p.preview ? 'Finish preview' : 'Submit exam'}</button></div>}
+            <div className="ep-review-list">
+              {reviewItems.length === 0 && <p className="ep-review-empty">{filter === 'flagged' ? 'No questions are flagged.' : 'Every question has an answer.'}</p>}
+              {reviewItems.map(({ item, i }) => <button key={item.id} disabled={p.busy} onClick={() => void navigate(i)}><span>Question {i + 1}</span><span>{item.flagged && <Flag size={14} />}{statusOf(item)}<ArrowRight size={15} /></span></button>)}
+            </div>
           </article> : <>
             <div className="ep-question-layout">
               {p.passage && <aside ref={passageBox} className={`ep-passage ${passageOpen ? 'is-open' : ''}`} tabIndex={0} aria-label="Reading passage">
@@ -134,8 +151,10 @@ export default function ExamPaper(p: Props) {
               </aside>}
               <article ref={sheet} className="ep-sheet">
                 <div className="ep-question-meta"><span className="ep-eyebrow">Question {p.index + 1} of {p.questions.length}</span><span>{q?.points} {q?.points === 1 ? 'point' : 'points'}</span></div>
+                {p.writtenResponse && longPrompt && <button type="button" className="ep-jump" disabled={p.answerDisabled} onClick={() => sheet.current?.querySelector('textarea')?.focus()}>Go to response</button>}
                 <h2 ref={heading} tabIndex={-1} className={longPrompt ? 'ep-prompt-long' : undefined}>{p.prompt}</h2>
                 {p.imageUrl && <img className="ep-image" src={p.imageUrl} alt="Question illustration" />}
+                {p.writtenResponse && longPrompt && <button type="button" className="ep-jump" onClick={focusPrompt}>Read prompt again</button>}
                 <fieldset className="ep-answer" disabled={p.answerDisabled}><legend className="sr-only">Your answer</legend>{p.children}</fieldset>
                 <div className="ep-question-bottom"><span>{q?.answered ? <><Check size={14} /> Answer entered{p.preview ? ' in preview' : ''}</> : q?.partial ? `Partly answered (${q.partial})` : 'Not answered yet'}</span><button disabled={p.busy || p.answerDisabled} aria-pressed={q?.flagged} onClick={p.onFlag}><Flag size={15} />{q?.flagged ? 'Flagged for review' : 'Flag for review'}</button></div>
               </article>

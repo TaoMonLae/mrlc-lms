@@ -10,6 +10,31 @@ export const VOLUNTEER_ORGANIZATION_NAME = 'Mon Refugee Organization';
 export const VOLUNTEER_SCHOOL_NAME = 'Mon Refugee Learning Centre';
 export const VOLUNTEER_PROGRAM_NAME = 'GED Program';
 
+export const VOLUNTEER_SIGNER_ROLES = ['ADMIN', 'TEACHER', 'STAFF', 'ACCOUNTANT', 'LIBRARIAN', 'CASE_WORKER'] as const;
+export function isVolunteerStaffRole(role: unknown): boolean {
+  return typeof role === 'string' && (VOLUNTEER_SIGNER_ROLES as readonly string[]).includes(role);
+}
+export type VolunteerSignatureSlot = 'SCHOOL' | 'ORGANIZATION';
+export type VolunteerSigningStatus = 'NOT_REQUESTED' | 'PENDING' | 'SIGNED';
+
+export interface VolunteerSignatureSummary {
+  slot: VolunteerSignatureSlot;
+  signerName: string;
+  signerTitle: string;
+  signedAt: string;
+}
+
+export interface VolunteerDocumentSignature extends VolunteerSignatureSummary {
+  id: string;
+  signerUserId: string;
+  imageDataUrl: string;
+  contentHash: string;
+}
+
+export interface VolunteerSigningOptions {
+  signatories: { id: string; name: string; role: string }[];
+}
+
 export function volunteerContributionLimit(type: VolunteerDocumentType): number {
   return type === 'VOLUNTEER_APPRECIATION_CERTIFICATE' ? 500 : 1200;
 }
@@ -25,12 +50,16 @@ export interface VolunteerDocumentInput {
   totalHours?: number | null;
   signatoryName: string;
   signatoryTitle: string;
+  signatoryUserId?: string;
   organizationSignatoryName?: string;
   organizationSignatoryTitle?: string;
+  organizationSignatoryUserId?: string;
+  organizationSignatureImage?: string;
+  organizationSignatureConsent?: boolean;
 }
 
 export interface VolunteerDocumentPayload {
-  version: 1;
+  version: 1 | 2;
   organization: { name: string };
   school: {
     name: string;
@@ -39,6 +68,8 @@ export interface VolunteerDocumentPayload {
     address: string | null;
     contactEmail: string | null;
     contactPhone: string | null;
+    /** Retained only for immutable historical payloads and their content hashes. */
+    chopDataUrl?: string | null;
   };
   volunteer: {
     name: string;
@@ -50,7 +81,7 @@ export interface VolunteerDocumentPayload {
     totalHours: number | null;
   };
   signatory: { name: string; title: string };
-  organizationSignatory: { name: string; title: string } | null;
+  organizationSignatory: { name: string; title: string; uploadedSignature?: { imageDataUrl: string; uploadedAt: string; uploadedById: string } } | null;
 }
 
 export interface VolunteerDocumentRecord {
@@ -70,6 +101,11 @@ export interface VolunteerDocumentRecord {
   updatedAt: string;
   cancelledReason: string | null;
   downloadCount: number;
+  signatoryUserId?: string | null;
+  organizationSignatoryUserId?: string | null;
+  signatures?: VolunteerDocumentSignature[];
+  signingStatus?: VolunteerSigningStatus;
+  contentHash?: string;
 }
 
 export interface VolunteerDocumentVerification {
@@ -83,9 +119,12 @@ export interface VolunteerDocumentVerification {
   toMonth: string;
   issueDate: string;
   organization: { name: string };
-  school: VolunteerDocumentPayload['school'];
+  school: Omit<VolunteerDocumentPayload['school'], 'chopDataUrl'>;
   hoursPerWeek: number | null;
   totalHours: number | null;
+  signingStatus?: VolunteerSigningStatus;
+  signatures?: VolunteerSignatureSummary[];
+  uploadedOrganizationSignature?: { name: string; title: string; uploadedAt: string };
 }
 
 export function isVolunteerDocumentType(value: unknown): value is VolunteerDocumentType {
@@ -133,6 +172,19 @@ export function validateVolunteerDocumentInput(value: unknown, now = new Date())
   if (Boolean(text.organizationSignatoryName) !== Boolean(text.organizationSignatoryTitle)) {
     return { success: false, error: 'Enter both the organization signatory name and title, or leave both blank.' };
   }
+  for (const key of ['signatoryUserId', 'organizationSignatoryUserId']) {
+    if (body[key] != null && (typeof body[key] !== 'string' || (body[key] as string).length > 100 || /[\s\u0000-\u001F\u007F]/.test(body[key] as string))) {
+      return { success: false, error: 'Choose a valid authorized signatory account.' };
+    }
+  }
+  if (body.organizationSignatoryUserId && !text.organizationSignatoryName) return { success: false, error: 'Enter the MRO signatory name and title.' };
+  const externalMro = Boolean(text.organizationSignatoryName && !body.organizationSignatoryUserId);
+  if (externalMro && (body.organizationSignatureConsent !== true || typeof body.organizationSignatureImage !== 'string' || !body.organizationSignatureImage)) {
+    return { success: false, error: 'Upload the MRO signature and confirm permission to use it.' };
+  }
+  if (body.organizationSignatureImage != null && body.organizationSignatureImage !== '' && (!externalMro || typeof body.organizationSignatureImage !== 'string' || body.organizationSignatureImage.length > 2_796_304)) {
+    return { success: false, error: 'Provide a signature image up to 2 MB for a manually entered MRO signatory only.' };
+  }
   const validMonth = (month: unknown): month is string => typeof month === 'string' && /^(19|20|21)\d{2}-(0[1-9]|1[0-2])$/.test(month);
   if (!validMonth(body.fromMonth) || !validMonth(body.toMonth)) return { success: false, error: 'From and To must be valid months in YYYY-MM format.' };
   if (body.fromMonth > body.toMonth) return { success: false, error: 'The To month must be on or after the From month.' };
@@ -151,7 +203,10 @@ export function validateVolunteerDocumentInput(value: unknown, now = new Date())
       fromMonth: body.fromMonth, toMonth: body.toMonth, contributions: text.contributions,
       hoursPerWeek: hours.hoursPerWeek, totalHours: hours.totalHours,
       signatoryName: text.signatoryName, signatoryTitle: text.signatoryTitle,
+      signatoryUserId: (body.signatoryUserId as string | undefined) || undefined,
       organizationSignatoryName: text.organizationSignatoryName, organizationSignatoryTitle: text.organizationSignatoryTitle,
+      organizationSignatoryUserId: (body.organizationSignatoryUserId as string | undefined) || undefined,
+      ...(externalMro ? { organizationSignatureImage: body.organizationSignatureImage as string, organizationSignatureConsent: true } : {}),
     },
   };
 }

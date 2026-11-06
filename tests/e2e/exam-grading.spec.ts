@@ -10,6 +10,7 @@ async function fixture(page: Page, rubric = false) {
   await page.route('**/api/**', async route => {
     const path = new URL(route.request().url()).pathname;
     if (path.endsWith('/stream')) return route.fulfill({ contentType: 'text/event-stream', body: ': fixture\n\n' });
+    if (path === '/api/exams/e1/access') return route.fulfill({ json: { access: 'owner' } });
     if (path === '/api/auth/me') return route.fulfill({ json: { user } });
     if (path === '/api/grading/queue') return route.fulfill(flags.failed ? { status: 503, json: { error: 'Grading temporarily unavailable' } } : { json: flags.missing ? [] : [row] });
     if (path === '/api/grading/a1/q1') { const body = route.request().postDataJSON(); writes.push(body); Object.assign(row, body); return route.fulfill({ json: row }); }

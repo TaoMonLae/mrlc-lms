@@ -1,20 +1,20 @@
-/* Reference lock: the LMS's navy/teal identity, Refero's shadcn surface
+/* Reference lock: the LMS's Blue & Slate identity, Refero's shadcn surface
    discipline, and Typeform's dedicated navigator + focused authoring canvas.
    React Bits informs brief selection feedback, with reduced-motion support. */
 .guided-studio {
-  --gs-ink: #182b38; --gs-muted: #526572; --gs-muted-2: #526572;
-  --gs-border: #dce3e7; --gs-border-2: #e5eaed; --gs-border-3: #c6d1d7;
-  --gs-canvas: #f5f7f9; --gs-panel: #f9fafb; --gs-surface: #fff; --gs-preview: #f5f7f9;
-  --gs-action: #14736d; --gs-purple-text: #126c66;
-  --gs-tint-50: #eef8f6; --gs-tint-100: #dcefeb; --gs-tint-7: #f4faf8; --gs-tint-bar: #f5f7f9;
+  --gs-ink: var(--foreground); --gs-muted: var(--muted-foreground); --gs-muted-2: var(--muted-foreground);
+  --gs-border: var(--border); --gs-border-2: var(--border); --gs-border-3: var(--input);
+  --gs-canvas: var(--background); --gs-panel: var(--muted); --gs-surface: var(--card); --gs-preview: var(--background);
+  --gs-action: #2457bd; --gs-purple-text: var(--link);
+  --gs-tint-50: var(--accent); --gs-tint-100: var(--border); --gs-tint-7: var(--accent); --gs-tint-bar: var(--background);
   --gs-green-text: #167046; --gs-green-bg: #eef9f2; --gs-amber-text: #845400; --gs-amber-bg: #fff5de; --gs-blue-bg: #eef4ff;
   color: var(--gs-ink); padding: 0 !important; min-height: 0 !important; color-scheme: light;
 }
 .dark .guided-studio {
-  --gs-ink: #edf3f7; --gs-muted: #b2c0ca; --gs-muted-2: #b2c0ca;
-  --gs-border: #344651; --gs-border-2: #293b46; --gs-border-3: #4b626e;
-  --gs-canvas: #111e27; --gs-panel: #16252e; --gs-surface: #1b2c36; --gs-preview: #14232d;
-  --gs-purple-text: #91d9cf; --gs-tint-50: #163b35; --gs-tint-100: #244a42; --gs-tint-7: #17332e;
+  --gs-ink: var(--foreground); --gs-muted: var(--muted-foreground); --gs-muted-2: var(--muted-foreground);
+  --gs-border: var(--border); --gs-border-2: var(--border); --gs-border-3: var(--input);
+  --gs-canvas: var(--background); --gs-panel: var(--muted); --gs-surface: var(--card); --gs-preview: var(--background);
+  --gs-purple-text: var(--link); --gs-tint-50: var(--accent); --gs-tint-100: var(--border); --gs-tint-7: var(--accent);
   --gs-green-text: #91d5ac; --gs-green-bg: #17392a; --gs-amber-text: #f2ca7b; --gs-amber-bg: #382c17; --gs-blue-bg: #18334b;
   color-scheme: dark;
 }

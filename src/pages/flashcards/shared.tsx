@@ -100,14 +100,14 @@ export function TallyMarks({
     // Large decks: the same three states as proportional runs of one rule.
     return (
       <div className={`flex h-2.5 w-full overflow-hidden ${className}`} role="img" aria-label={summary}>
-        <span className="h-full bg-academic-teal" style={{ width: `${(known / total) * 100}%` }} />
+        <span className="h-full bg-action-solid" style={{ width: `${(known / total) * 100}%` }} />
         <span className="h-full bg-academic-coral" style={{ width: `${(learning / total) * 100}%` }} />
         <span className="h-full flex-1 bg-border" />
       </div>
     );
   }
   const marks = [
-    ...Array.from({ length: known }, () => 'bg-academic-teal'),
+    ...Array.from({ length: known }, () => 'bg-action-solid'),
     ...Array.from({ length: learning }, () => 'bg-academic-coral'),
     ...Array.from({ length: fresh }, () => 'bg-border'),
   ];
@@ -143,7 +143,7 @@ export function ProgressRule({ value, max, label }: { value: number; max: number
       aria-valuemax={max}
       aria-valuenow={value}
     >
-      <div className="h-full bg-academic-teal transition-[width] duration-200 motion-reduce:transition-none" style={{ width: `${pct}%` }} />
+      <div className="h-full bg-action-solid transition-[width] duration-200 motion-reduce:transition-none" style={{ width: `${pct}%` }} />
     </div>
   );
 }

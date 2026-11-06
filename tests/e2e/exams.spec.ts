@@ -2,7 +2,7 @@ import { CURRENT_RELEASE } from '../../src/data/releases';
 import { expect, test, type Page } from '@playwright/test';
 test.use({ serviceWorkers: 'block' });
 const available = { id: 'exam-a', title: 'Science checkpoint', durationMinutes: 30, openNow: true, requiresAccessCode: true, attemptLimit: 2, attemptsUsed: 0, activeAttemptId: null, availableFrom: null, availableUntil: null };
-async function fixture(page: Page, role = 'STUDENT', seconds = 0) {
+async function fixture(page: Page, role = 'STUDENT', seconds = 0, settings = {}) {
   const user = { id: `exam-${role}`, role, firstName: 'Exam', lastName: 'Tester', isActive: true, cursorEffect: 'NONE' };
   const writes: { path: string; body: any }[] = [];
   const flags = { failSave: false, failState: false, failResult: false, failTeacher: false };
@@ -15,6 +15,7 @@ async function fixture(page: Page, role = 'STUDENT', seconds = 0) {
   await page.route('**/api/**', async route => {
     const path = new URL(route.request().url()).pathname;
     if (path.endsWith('/stream')) return route.fulfill({ contentType: 'text/event-stream', body: ': fixture\n\n' });
+    if (path === '/api/exams/exam-a/access') return route.fulfill({ json: { access: 'owner', ownerName: 'Exam Tester' } });
     if (path === '/api/auth/me') return route.fulfill({ json: { user } });
     if (route.request().method() === 'POST') writes.push({ path, body: route.request().postDataJSON() });
     if (path === '/api/exam2/available') return route.fulfill({ json: [available] });
@@ -24,7 +25,7 @@ async function fixture(page: Page, role = 'STUDENT', seconds = 0) {
     }
     if (path.endsWith('/state')) {
       if (flags.failState) { return route.abort('failed'); }
-      return route.fulfill({ json: { attempt: { state: 'IN_PROGRESS', sessionToken: 'session-a', remainingSeconds: seconds, canPause: true }, exam: { title: 'Science checkpoint', settings: {} }, questions: [{ id: 'q1', text: 'Explain evaporation.', type: 'ESSAY', points: 5 }, { id: 'q2', text: 'Explain condensation.', type: 'ESSAY', points: 5 }], answers: [] } });
+      return route.fulfill({ json: { attempt: { state: 'IN_PROGRESS', sessionToken: 'session-a', remainingSeconds: seconds, canPause: true }, exam: { title: 'Science checkpoint', settings }, questions: [{ id: 'q1', text: 'Explain evaporation.', type: 'ESSAY', points: 5 }, { id: 'q2', text: 'Explain condensation.', type: 'ESSAY', points: 5 }], answers: [] } });
     }
     if (path.endsWith('/save')) {
       if (flags.failSave) { flags.failSave = false; return route.abort('failed'); }
@@ -41,7 +42,7 @@ async function fixture(page: Page, role = 'STUDENT', seconds = 0) {
         { id: 'draft-a', title: 'Draft algebra', status: 'DRAFT' },
         { id: 'exam-a', title: 'Science checkpoint', status: 'NEEDS_GRADING' },
         { id: 'graded-a', title: 'Graded geography', status: 'GRADED' },
-      ].map(e => ({ ...e, class: 'Year 1', date: 'Sep 18', duration: '30m', type: 'Assessment', submissions: 1, total: 5 })) });
+      ].map(e => ({ ...e, access: 'owner', ownerName: 'Exam Tester', class: 'Year 1', date: 'Sep 18', duration: '30m', type: 'Assessment', submissions: 1, total: 5 })) });
     }
     if (path === '/api/student/exams') return route.fulfill({ json: { available: [{ id: 'exam-a', title: 'Science checkpoint', subject: 'Science', duration: '30 mins', questions: 2, deadline: null, type: 'QUIZ', activeAttemptId: 'attempt-a' }], submitted: [{ id: 'exam-a', attemptId: 'older-a', title: 'Science checkpoint', subject: 'Science', status: 'Graded', score: '0/10', submittedAt: 'Sep 17' }, { id: 'exam-a', attemptId: 'older-b', title: 'Science checkpoint', subject: 'Science', status: 'Grading', score: null, submittedAt: 'Sep 18' }] } });
     return route.fulfill({ json: path.includes('settings') ? { lockdownBrowserEnabled: false } : [] });
@@ -59,7 +60,7 @@ test('teacher tabs filter real content and Grade Now reaches the grading queue',
   await expect(page.getByText('Science checkpoint', { exact: true })).toBeVisible();
   await expect(page.getByText('Graded geography', { exact: true })).toHaveCount(0);
   await page.screenshot({ path: info.outputPath('teacher-exams.png') });
-  await page.getByRole('button', { name: 'Grade Now' }).click();
+  await page.getByRole('link', { name: 'Grade now' }).click();
   await expect(page).toHaveURL(/exam2\/grading\?examId=exam-a/);
   await expect(page.getByRole('heading', { name: 'Manual Grading Queue' })).toBeVisible();
 });
@@ -213,8 +214,9 @@ test('restored answers count toward progress and Studio blanks work in the live 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   await page.screenshot({ path: info.outputPath('player-progress-blanks.png'), fullPage: true });
   await page.getByRole('button', { name: 'Review answers', exact: true }).first().click();
-  await expect(page.getByText('3 of 3 answered · 0 flagged for review.')).toBeVisible();
+  await expect(page.getByText('3 of 3 answered · 0 unanswered · 0 flagged for review.')).toBeVisible();
   await page.getByRole('button', { name: 'Submit exam' }).click();
+  await page.getByRole('button', { name: 'Yes, submit exam' }).click();
   await expect(page).toHaveURL(/attempt-a\/result/);
 });
 
@@ -265,7 +267,7 @@ test('idle students keep checking in, receive extra time, and notice invigilator
   paused = true;
   await page.clock.fastForward(8_000);
   await expect(page.getByRole('heading', { name: 'Session locked' })).toBeVisible();
-  await expect(page.getByText('This attempt has been paused. Resume it from My Exams before continuing.')).toBeVisible();
+  await expect(page.getByText('This attempt has been paused. Return to My Exams; an invigilator may need to resume it.')).toBeVisible();
 });
 
 test('invigilator actions match attempt state and explain what reopening clears', async ({ page }, info) => {
@@ -309,6 +311,7 @@ test('completed submission cannot trigger an unload save while the result screen
   await page.getByLabel('Your answer').fill('Final response');
   await page.getByRole('button', { name: 'Review answers', exact: true }).click();
   await page.getByRole('button', { name: 'Submit exam' }).click();
+  await page.getByRole('button', { name: 'Yes, submit exam' }).click();
   await expect.poll(() => writes.filter(w => w.path.endsWith('/submit')).length).toBe(1);
   await expect.poll(() => page.evaluate(() => sessionStorage.getItem('exam_attempt_session_attempt-a'))).toBeNull();
   const savesAfterSubmit = writes.filter(write => write.path.endsWith('/save')).length;
@@ -332,7 +335,7 @@ test('exam review distinguishes unanswered and flagged questions and submits onl
   await expect(page.getByRole('button', { name: 'Question 1, answered, flagged', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Review answers', exact: true }).last().click();
   await expect(page.getByRole('heading', { name: 'Review your answers' })).toBeFocused();
-  await expect(page.getByText('1 of 2 answered · 1 flagged for review.')).toBeVisible();
+  await expect(page.getByText('1 of 2 answered · 1 unanswered · 1 flagged for review.')).toBeVisible();
   expect(writes.filter(w => w.path.endsWith('/submit'))).toHaveLength(0);
   await page.getByRole('button', { name: 'Question 1 Answered', exact: true }).click();
   await expect(page.getByRole('textbox')).toHaveValue('Water becomes vapour.');
@@ -340,6 +343,233 @@ test('exam review distinguishes unanswered and flagged questions and submits onl
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   await page.getByRole('button', { name: /Review answers/ }).first().click();
   await page.getByRole('button', { name: 'Submit exam', exact: true }).click();
+  await expect(page.getByRole('alertdialog', { name: 'Submit your exam now?' })).toContainText('1 unanswered question');
+  expect(writes.filter(w => w.path.endsWith('/submit'))).toHaveLength(0);
+  await page.getByRole('button', { name: 'Go back and answer' }).click();
+  await expect(page.getByRole('heading', { name: 'Explain condensation.' })).toBeFocused();
+  await page.getByRole('button', { name: /Review answers/ }).first().click();
+  await page.getByRole('button', { name: 'Submit exam', exact: true }).click();
+  await page.getByRole('button', { name: 'Yes, submit exam' }).click();
   await expect(page).toHaveURL(/\/result$/);
   expect(writes.find(w => w.path.endsWith('/submit'))?.body.answers[0]).toMatchObject({ answerText: 'Water becomes vapour.', flaggedForReview: true });
+});
+
+test('students can retry an unsaved essay during their break', async ({ page }) => {
+  const { flags, writes } = await fixture(page, 'STUDENT', 3600, { essayMinutes: 45, breakMinutes: 10 });
+  await page.goto('/exam2/attempts/attempt-a/play');
+  await expect(page.getByRole('timer')).toContainText('Extended Response');
+  await page.getByRole('textbox').fill('My evidence from both passages.');
+  flags.failSave = true;
+  await page.getByRole('button', { name: 'Next question' }).click();
+  await expect(page.getByRole('dialog', { name: 'Take a short break' })).toBeVisible();
+  await expect(page.getByRole('alert')).toContainText('Changes could not be saved');
+  await page.getByRole('button', { name: 'Retry save' }).click();
+  await expect(page.getByRole('button', { name: 'Retry save' })).toHaveCount(0);
+  expect(writes.filter(w => w.path.endsWith('/save')).at(-1)?.body.answers[0].answerText).toBe('My evidence from both passages.');
+  await page.getByRole('button', { name: 'Return to the exam' }).click();
+  await expect(page.getByRole('heading', { name: 'Explain condensation.' })).toBeVisible();
+});
+
+test('ordered answers preserve the student’s saved positions when edited', async ({ page }) => {
+  const { writes } = await fixture(page);
+  await page.route('**/api/attempts/attempt-a/state', route => route.fulfill({ json: {
+    attempt: { state: 'IN_PROGRESS', sessionToken: 'session-a', remainingSeconds: 0 },
+    exam: { title: 'Story sequence', settings: {} },
+    questions: [{ id: 'order', type: 'DRAG_DROP', text: 'Put the events in order.', points: 2,
+      dragText: '1st: {{opening}}\n2nd: {{ending}}',
+      dragBank: [{ key: 'a', label: 'The store opens.' }, { key: 'b', label: 'The lights go out.' }],
+    }],
+    answers: [{ questionId: 'order', selectedOptions: { opening: 'a' } }],
+  } }));
+  await page.goto('/exam2/attempts/attempt-a/play');
+  const first = page.getByRole('button', { name: /^1st position/ });
+  const second = page.getByRole('button', { name: /^2nd position/ });
+  await expect(first).toHaveText('The store opens.');
+  await first.click();
+  await page.getByRole('button', { name: 'The lights go out.', exact: true }).click();
+  await first.click();
+  await page.getByRole('button', { name: 'The store opens.', exact: true }).dragTo(second);
+  await expect(second).toHaveText('The store opens.');
+  await page.getByRole('button', { name: 'Save answers' }).click();
+  await expect.poll(() => writes.filter(w => w.path.endsWith('/save')).flatMap(w => w.body.answers).at(-1)?.selectedOptions)
+    .toEqual({ opening: 'b', ending: 'a' });
+});
+
+for (const url of ['/exams', '/teacher/exams']) {
+  test(`exam directory at ${url} shows the owner and routes read-only teachers to preview`, async ({ page }, info) => {
+    await page.emulateMedia({ colorScheme: url === '/teacher/exams' ? 'dark' : 'light' });
+    await fixture(page, 'TEACHER');
+    const rows = [
+      { id: 'mine', access: 'owner', ownerName: 'Exam Tester', title: 'Reasoning through language arts', status: 'DRAFT' },
+      { id: 'other', access: 'viewer', ownerName: 'Lin Aung', title: 'Social studies chapter test', status: 'PUBLISHED' },
+      { id: 'shared', access: 'editor', ownerName: 'Hnin Wai', title: 'Physical science final', status: 'DRAFT' },
+    ];
+    await page.route(`**/api${url}`, route => route.fulfill({ json: rows.map(row => ({
+      ...row, class: url === '/exams' ? { name: 'GED' } : 'GED', subject: { name: 'GED preparation' },
+      type: 'GED preparation', date: 'Nov 05, 2026', duration: '60 min', durationMinutes: 60,
+      submissions: 3, total: 13, totalMarks: 50,
+    })) }));
+    await page.goto(url);
+    const viewerRow = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: rows[1].title }) });
+    await expect(viewerRow.getByText('Read only', { exact: true })).toBeVisible();
+    await expect(viewerRow.getByRole('link', { name: 'View exam', exact: true })).toHaveAttribute('href', '/exams/other/preview');
+    expect(await viewerRow.locator('a').evaluateAll(links => links.every(link => link.getAttribute('href') === '/exams/other/preview'))).toBe(true);
+    await expect(viewerRow.getByRole('button')).toHaveCount(0);
+    await expect(page.getByText('Can edit', { exact: true })).toBeVisible();
+    await expect(page.getByText('Owner', { exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+    await page.screenshot({ path: info.outputPath(url === '/exams' ? 'exam-library.png' : 'teacher-assessments.png'), fullPage: true, animations: 'disabled' });
+    await page.getByRole('searchbox', { name: 'Search exams' }).fill('Lin Aung');
+    await expect(viewerRow).toBeVisible();
+    await expect(page.getByRole('heading', { name: rows[0].title })).toHaveCount(0);
+  });
+}
+
+test('an older save cannot mark newer text as saved or race a final submission', async ({ page }) => {
+  const { writes } = await fixture(page);
+  await page.clock.install();
+  let releaseSave!: () => void;
+  const held = new Promise<void>(resolve => { releaseSave = resolve; });
+  let saveCount = 0;
+  await page.route('**/api/attempts/attempt-a/save', async route => {
+    saveCount++;
+    await held;
+    await route.fulfill({ json: { ok: true, remainingSeconds: 0, lastSavedAt: new Date().toISOString() } });
+  });
+  await page.goto('/exam2/attempts/attempt-a/play');
+  const answer = page.getByRole('textbox');
+  await answer.fill('First version');
+  await page.getByRole('button', { name: 'Save answers' }).click();
+  await expect.poll(() => saveCount).toBe(1);
+  await answer.fill('Newer version');
+  releaseSave();
+  await expect(page.getByRole('status').filter({ hasText: 'Changes pending' })).toBeVisible();
+  await page.getByRole('button', { name: 'Review answers', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit exam', exact: true }).click();
+  await page.getByRole('button', { name: 'Yes, submit exam' }).click();
+  await expect(page).toHaveURL(/\/result$/);
+  expect(writes.find(write => write.path.endsWith('/submit'))?.body.answers[0].answerText).toBe('Newer version');
+});
+
+test('a queued navigation save is cancelled when the student submits', async ({ page }) => {
+  const { writes } = await fixture(page);
+  await page.clock.install();
+  let releaseSave!: () => void;
+  const held = new Promise<void>(resolve => { releaseSave = resolve; });
+  let saveCount = 0;
+  await page.route('**/api/attempts/attempt-a/save', async route => {
+    saveCount++;
+    await held;
+    await route.fulfill({ json: { ok: true, remainingSeconds: 0 } });
+  });
+  await page.goto('/exam2/attempts/attempt-a/play');
+  await page.getByRole('textbox').fill('Final response');
+  await page.getByRole('button', { name: 'Save answers' }).click();
+  await expect.poll(() => saveCount).toBe(1);
+  await page.getByRole('button', { name: 'Next question' }).click();
+  await page.getByRole('button', { name: 'Review answers', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Submit exam', exact: true }).click();
+  await page.getByRole('button', { name: 'Yes, submit exam' }).click();
+  releaseSave();
+  await expect(page).toHaveURL(/\/result$/);
+  expect(saveCount).toBe(1);
+  expect(writes.find(write => write.path.endsWith('/submit'))?.body.answers[0].answerText).toBe('Final response');
+});
+
+test('live student player uses saved theme colors', async ({ page }, info) => {
+  await fixture(page, 'STUDENT', 600, { questionTheme: 'focus' });
+  await page.goto('/exam2/attempts/attempt-a/play');
+  const paper = page.locator('.exam-paper');
+  await expect(paper).toHaveAttribute('data-question-theme', 'focus');
+  await expect(paper).toHaveCSS('background-color', 'rgb(232, 232, 232)');
+  await expect(page.locator('.ep-answer textarea')).toHaveCSS('color', 'rgb(16, 16, 16)');
+  await page.screenshot({ path: info.outputPath('student-focus-light.png') });
+});
+
+function liveSession(state = 'IN_PROGRESS', remainingSeconds: number | null = 120) {
+  return {
+    summary: { notStarted: 0, inProgress: state === 'IN_PROGRESS' ? 1 : 0, paused: state === 'PAUSED' ? 1 : 0, submitted: 0, disconnected: 0 },
+    students: [{ studentId: 's1', name: 'Ada Lee', attemptId: 'a1', state, remainingSeconds, securityWarnings: 0 }],
+  };
+}
+
+test('slow invigilator refreshes do not overlap or overwrite a completed pause', async ({ page }) => {
+  await fixture(page, 'TEACHER');
+  await page.clock.install();
+  let reads = 0;
+  let delayed: any;
+  let delayNext = false;
+  let state = 'IN_PROGRESS';
+  await page.route('**/api/exams/exam-a/invigilator', async route => {
+    reads++;
+    if (delayNext) { delayNext = false; delayed = route; return; }
+    await route.fulfill({ json: liveSession(state) });
+  });
+  await page.route('**/api/attempts/a1/invigilate', async route => {
+    expect(route.request().postDataJSON()).toEqual({ action: 'PAUSE' });
+    state = 'PAUSED';
+    await route.fulfill({ json: { ok: true } });
+  });
+  await page.goto('/exam2/exam-a/invigilator');
+  const actions = page.getByRole('group', { name: 'Actions for Ada Lee' });
+  await expect(actions.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
+  const initialReads = reads;
+  delayNext = true;
+  await page.clock.fastForward(10001);
+  await expect.poll(() => reads).toBe(initialReads + 1);
+  await page.clock.fastForward(10001);
+  expect(reads).toBe(initialReads + 1);
+  await actions.getByRole('button', { name: 'Pause', exact: true }).click();
+  await expect(actions.getByRole('button', { name: 'Resume', exact: true })).toBeVisible();
+  await delayed.fulfill({ json: liveSession('IN_PROGRESS') }).catch(() => {});
+  await expect(actions.getByRole('button', { name: 'Resume', exact: true })).toBeVisible();
+  expect(reads).toBe(initialReads + 2);
+});
+
+test('conflicting invigilator actions reload current state and failed reloads disable controls', async ({ page }) => {
+  await fixture(page, 'TEACHER');
+  let state = 'IN_PROGRESS';
+  let unavailable = false;
+  let commands = 0;
+  await page.route('**/api/exams/exam-a/invigilator', route => route.fulfill(unavailable
+    ? { status: 503, json: { error: 'Unavailable' } } : { json: liveSession(state) }));
+  await page.route('**/api/attempts/a1/invigilate', route => {
+    commands++;
+    state = commands === 1 ? 'PAUSED' : 'IN_PROGRESS';
+    if (commands === 2) unavailable = true;
+    return route.fulfill({ status: 409, json: { error: 'Attempt changed while applying action' } });
+  });
+  await page.goto('/exam2/exam-a/invigilator');
+  const actions = page.getByRole('group', { name: 'Actions for Ada Lee' });
+  await actions.getByRole('button', { name: 'Pause', exact: true }).click();
+  await expect(actions.getByRole('button', { name: 'Resume', exact: true })).toBeVisible();
+  await expect(page.getByText('Attempt changed while applying action', { exact: true })).toBeVisible();
+  await actions.getByRole('button', { name: 'Resume', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Could not refresh the live session');
+  await expect(actions.getByRole('button', { name: 'Resume', exact: true })).toBeDisabled();
+  unavailable = false;
+  await page.getByRole('button', { name: 'Retry', exact: true }).click();
+  await expect(actions.getByRole('button', { name: 'Pause', exact: true })).toBeEnabled();
+});
+
+test('invigilator validates notes and time input and hides extra time for untimed attempts', async ({ page }) => {
+  const { writes } = await fixture(page, 'TEACHER');
+  let remaining: number | null = 120;
+  await page.route('**/api/exams/exam-a/invigilator', route => route.fulfill({ json: liveSession('IN_PROGRESS', remaining) }));
+  await page.goto('/exam2/exam-a/invigilator');
+  const actions = page.getByRole('group', { name: 'Actions for Ada Lee' });
+  page.once('dialog', dialog => dialog.accept('   '));
+  await actions.getByRole('button', { name: 'Note', exact: true }).click();
+  await expect(page.getByText('Enter a note between 1 and 2000 characters.')).toBeVisible();
+  page.once('dialog', dialog => dialog.accept('1.5'));
+  await actions.getByRole('button', { name: '+Time', exact: true }).click();
+  await expect(page.getByText('Enter a whole number of minutes between 1 and 1440.')).toBeVisible();
+  expect(writes.filter(write => write.path.endsWith('/invigilate'))).toHaveLength(0);
+  page.once('dialog', dialog => dialog.accept('  Connection lost at 10:00  '));
+  await actions.getByRole('button', { name: 'Note', exact: true }).click();
+  await expect.poll(() => writes.filter(write => write.path.endsWith('/invigilate'))).toEqual([{ path: '/api/attempts/a1/invigilate', body: { action: 'INCIDENT_NOTE', note: 'Connection lost at 10:00' } }]);
+  remaining = null;
+  await page.reload();
+  await expect(actions.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
+  await expect(actions.getByRole('button', { name: '+Time', exact: true })).toHaveCount(0);
 });

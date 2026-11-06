@@ -105,37 +105,37 @@ export default function LoginPage() {
   };
 
   const brand = (
-    <Link to="/" aria-label={`${schoolName} home`} className="flex min-w-0 items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#168c83] focus-visible:ring-offset-2">
+    <Link to="/" aria-label={`${schoolName} home`} className="flex min-w-0 items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
       {logoUrl ? (
         <img
           src={logoUrl}
           alt=""
           width="44"
           height="44"
-          className="size-11 shrink-0 border border-[#cad4d9] bg-white object-contain p-1"
+          className="size-11 shrink-0 border border-border bg-white object-contain p-1"
           onError={() => setLogoUrl((current) => current && current !== DEFAULT_PUBLIC_LOGO ? DEFAULT_PUBLIC_LOGO : null)}
         />
       ) : (
-        <span className="grid size-11 shrink-0 place-items-center bg-[#112d40] text-base font-black text-white">M</span>
+        <span className="grid size-11 shrink-0 place-items-center bg-action-solid text-base font-black text-white">M</span>
       )}
       <span className="min-w-0 leading-tight">
-        <span className="block truncate text-sm font-bold tracking-[-0.01em] text-[#112d40]">{schoolName}</span>
-        <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-[#116d66]">School management portal</span>
+        <span className="block truncate text-sm font-bold tracking-[-0.01em] text-foreground">{schoolName}</span>
+        <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-primary">School management portal</span>
       </span>
     </Link>
   );
 
   const support = contactEmail ? (
-    <a href={`mailto:${contactEmail}`} className="font-bold text-[#112d40] underline decoration-[#168c83] underline-offset-4">Contact school support</a>
+    <a href={`mailto:${contactEmail}`} className="font-bold text-foreground underline decoration-primary underline-offset-4">Contact school support</a>
   ) : contactPhone ? (
-    <a href={`tel:${contactPhone}`} className="font-bold text-[#112d40] underline decoration-[#168c83] underline-offset-4">Call school support</a>
+    <a href={`tel:${contactPhone}`} className="font-bold text-foreground underline decoration-primary underline-offset-4">Call school support</a>
   ) : (
-    <Link to="/forgot-password" className="font-bold text-[#112d40] underline decoration-[#168c83] underline-offset-4">Account help</Link>
+    <Link to="/forgot-password" className="font-bold text-foreground underline decoration-primary underline-offset-4">Account help</Link>
   );
 
   const footer = (
-    <div className="flex flex-col gap-3 border-t border-[#cad4d9] pt-5 text-xs leading-5 text-[#526875] sm:flex-row sm:items-start sm:justify-between">
-      <p className="max-w-[30ch]"><strong className="text-[#112d40]">Secure MRLC access.</strong> Leave persistent sign-in off on shared classroom devices.</p>
+    <div className="flex flex-col gap-3 border-t border-border pt-5 text-xs leading-5 text-muted-foreground sm:flex-row sm:items-start sm:justify-between">
+      <p className="max-w-[30ch]"><strong className="text-foreground">Secure MRLC access.</strong> Leave persistent sign-in off on shared classroom devices.</p>
       <p>{support}</p>
     </div>
   );
@@ -143,11 +143,11 @@ export default function LoginPage() {
   return (
     <Auth1 brand={brand} footer={footer} heroAlt={`${schoolName} learning community`} heroReady={heroReady} heroSrc={heroUrl} schoolName={schoolName}>
       <div className="mb-8">
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#116d66]">{mfaRequired ? 'One more step' : 'Secure school access'}</p>
-        <h1 className="mt-3 text-balance text-4xl font-black leading-[0.98] tracking-[-0.05em] text-[#112d40] sm:text-5xl">
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">{mfaRequired ? 'One more step' : 'Secure school access'}</p>
+        <h1 className="mt-3 text-balance text-4xl font-black leading-[0.98] tracking-[-0.05em] text-foreground sm:text-5xl">
           {mfaRequired ? 'Check your authenticator.' : 'Sign in to your school day.'}
         </h1>
-        <p className="mt-4 max-w-md text-pretty text-sm leading-6 text-[#526875] sm:text-base">
+        <p className="mt-4 max-w-md text-pretty text-sm leading-6 text-muted-foreground sm:text-base">
           {mfaRequired ? 'Enter the current code from your authenticator app, or use one unused recovery code.' : 'Use your school email or username to open classes, records, the library and learning tools.'}
         </p>
       </div>
@@ -155,7 +155,7 @@ export default function LoginPage() {
       <form id="login-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate aria-busy={isSubmitting}>
         <AnimatePresence initial={false}>
           {showAccountCreated && (
-            <motion.div initial={reduceMotion ? false : { opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0, y: -8 }} className="flex items-start gap-3 border border-[#168c83]/35 bg-[#168c83]/10 px-4 py-3 text-sm font-semibold leading-5 text-[#0d655f]" role="status">
+            <motion.div initial={reduceMotion ? false : { opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0, y: -8 }} className="flex items-start gap-3 border border-primary/35 bg-primary/10 px-4 py-3 text-sm font-semibold leading-5 text-primary" role="status">
               <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden="true" /> Your learner account is ready. Sign in with the details you created.
             </motion.div>
           )}
@@ -167,19 +167,19 @@ export default function LoginPage() {
         </AnimatePresence>
 
         <div className="space-y-2">
-          <label htmlFor="identifier" className="block text-sm font-bold text-[#112d40]">Email or username</label>
-          <Input id="identifier" type="text" autoComplete="username" spellCheck={false} placeholder="Enter your school email or username" aria-invalid={Boolean(errors.identifier)} aria-describedby={errors.identifier ? 'identifier-error' : undefined} className="h-12 rounded-none border-[#aebdc4] bg-white text-[#112d40] placeholder:text-[#526875] dark:bg-white dark:text-[#112d40] px-4 text-base shadow-none focus-visible:border-[#168c83] focus-visible:ring-[#168c83]/25" {...register('identifier', { onChange: clearFeedback })} />
+          <label htmlFor="identifier" className="block text-sm font-bold text-foreground">Email or username</label>
+          <Input id="identifier" type="text" autoComplete="username" spellCheck={false} placeholder="Enter your school email or username" aria-invalid={Boolean(errors.identifier)} aria-describedby={errors.identifier ? 'identifier-error' : undefined} className="h-12 rounded-none border-input bg-card text-foreground placeholder:text-muted-foreground  px-4 text-base shadow-none focus-visible:border-primary focus-visible:ring-primary/25" {...register('identifier', { onChange: clearFeedback })} />
           {errors.identifier && <p id="identifier-error" className="text-xs font-semibold text-red-600" role="alert">{errors.identifier.message}</p>}
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-4">
-            <label htmlFor="password" className="block text-sm font-bold text-[#112d40]">Password</label>
-            <Link to="/forgot-password" className="text-sm font-bold text-[#0d716a] underline-offset-4 hover:underline">Forgot password?</Link>
+            <label htmlFor="password" className="block text-sm font-bold text-foreground">Password</label>
+            <Link to="/forgot-password" className="text-sm font-bold text-primary underline-offset-4 hover:underline">Forgot password?</Link>
           </div>
           <div className="relative">
-            <Input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Enter your password" aria-invalid={Boolean(errors.password)} aria-describedby={errors.password ? 'password-error' : undefined} className="h-12 rounded-none border-[#aebdc4] bg-white text-[#112d40] placeholder:text-[#526875] dark:bg-white dark:text-[#112d40] px-4 pr-12 text-base shadow-none focus-visible:border-[#168c83] focus-visible:ring-[#168c83]/25" {...register('password', { onChange: clearFeedback })} />
-            <button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute right-0 top-1/2 grid size-11 -translate-y-1/2 place-items-center text-[#526875] transition-colors duration-150 hover:text-[#112d40] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#168c83]">
+            <Input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Enter your password" aria-invalid={Boolean(errors.password)} aria-describedby={errors.password ? 'password-error' : undefined} className="h-12 rounded-none border-input bg-card text-foreground placeholder:text-muted-foreground  px-4 pr-12 text-base shadow-none focus-visible:border-primary focus-visible:ring-primary/25" {...register('password', { onChange: clearFeedback })} />
+            <button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute right-0 top-1/2 grid size-11 -translate-y-1/2 place-items-center text-muted-foreground transition-colors duration-150 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary">
               {showPassword ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
             </button>
           </div>
@@ -189,28 +189,28 @@ export default function LoginPage() {
         <AnimatePresence initial={false}>
           {mfaRequired && (
             <motion.div initial={reduceMotion ? false : { opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={reduceMotion ? undefined : { opacity: 0, height: 0 }} className="overflow-hidden">
-              <div className="space-y-2 border-y border-[#cad4d9] bg-[#edf5f4] px-4 py-4">
-                <label htmlFor="mfa-code" className="block text-sm font-bold text-[#112d40]">Authentication code</label>
-                <Input id="mfa-code" value={mfaCode} onChange={(event) => { setMfaCode(event.target.value); setServerError(null); }} placeholder="6-digit or recovery code" autoComplete="one-time-code" autoCapitalize="none" spellCheck={false} inputMode="text" className="h-12 rounded-none border-[#aebdc4] bg-white text-[#112d40] placeholder:text-[#526875] dark:bg-white dark:text-[#112d40] px-4 font-mono tracking-[0.08em] focus-visible:border-[#168c83] focus-visible:ring-[#168c83]/25" />
+              <div className="space-y-2 border-y border-border bg-accent px-4 py-4">
+                <label htmlFor="mfa-code" className="block text-sm font-bold text-foreground">Authentication code</label>
+                <Input id="mfa-code" value={mfaCode} onChange={(event) => { setMfaCode(event.target.value); setServerError(null); }} placeholder="6-digit or recovery code" autoComplete="one-time-code" autoCapitalize="none" spellCheck={false} inputMode="text" className="h-12 rounded-none border-input bg-card text-foreground placeholder:text-muted-foreground  px-4 font-mono tracking-[0.08em] focus-visible:border-primary focus-visible:ring-primary/25" />
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         <div>
-          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-semibold text-[#112d40]">
-            <input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} className="size-5 rounded-none border-[#aebdc4] accent-[#168c83] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#168c83] focus-visible:ring-offset-2" />
+          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-semibold text-foreground">
+            <input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} className="size-5 rounded-none border-input accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" />
             Keep me signed in on this device
           </label>
-          <p className="mt-1 pl-8 text-xs leading-5 text-[#526875]">Leave this off on a shared school or library computer.</p>
+          <p className="mt-1 pl-8 text-xs leading-5 text-muted-foreground">Leave this off on a shared school or library computer.</p>
         </div>
 
-        <button type="submit" id="login-submit-btn" disabled={isSubmitting} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-none bg-[#112d40] px-6 text-sm font-black text-white transition-[background-color,transform] duration-150 hover:bg-[#168c83] active:scale-[0.99] disabled:opacity-60">
+        <button type="submit" id="login-submit-btn" disabled={isSubmitting} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-none bg-action-solid px-6 text-sm font-black text-white transition-[background-color,transform] duration-150 hover:bg-action-solid/90 active:scale-[0.99] disabled:opacity-60">
           {isSubmitting ? <><LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> Signing in…</> : mfaRequired ? 'Verify and sign in' : 'Sign in to MRLC'}
         </button>
 
-        <div className="border-t border-[#cad4d9] pt-5">
-          <p className="text-sm text-[#526875]">Need a public learner account for Language Quest? <Link to="/signup" state={location.state} className="font-black text-[#112d40] underline decoration-[#f4d35e] decoration-2 underline-offset-4">Create learner account</Link></p>
+        <div className="border-t border-border pt-5">
+          <p className="text-sm text-muted-foreground">Need a public learner account for Language Quest? <Link to="/signup" state={location.state} className="font-black text-foreground underline decoration-primary decoration-2 underline-offset-4">Create learner account</Link></p>
         </div>
       </form>
     </Auth1>

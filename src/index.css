@@ -8,6 +8,9 @@
 @source "../index.html";
 
 @theme {
+  --color-action-solid: #2457bd;
+  --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -39,31 +42,31 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
-  /* ─── MRLC School Operations Fieldbook ───────────────────────────── */
+  /* ─── MRLC Blue & Slate ───────────────────────────── */
   /* Existing aubergine utility names remain as compatibility aliases, but
-     resolve to the fieldbook teal used only for links and active controls. */
-  --color-aubergine-50: #eef8f6;
-  --color-aubergine-100: #dcefeb;
-  --color-aubergine-200: #bde0db;
-  --color-aubergine-300: #8fc9c2;
-  --color-aubergine-400: #58aaa3;
-  --color-aubergine-500: #2f918a;
-  --color-aubergine-600: #168c83;
-  --color-aubergine-700: #14736d;
-  --color-aubergine-800: #155c58;
-  --color-aubergine-900: #164c49;
-  --color-aubergine-950: #082e2d;
+     resolve to the Blue & Slate blue used only for links and active controls. */
+  --color-aubergine-50: #eff4ff;
+  --color-aubergine-100: #e7efff;
+  --color-aubergine-200: #cbdcff;
+  --color-aubergine-300: #a7c5ff;
+  --color-aubergine-400: #739eec;
+  --color-aubergine-500: #4778d3;
+  --color-aubergine-600: #2457bd;
+  --color-aubergine-700: #20499a;
+  --color-aubergine-800: #203e7c;
+  --color-aubergine-900: #1b335f;
+  --color-aubergine-950: #102341;
 
-  --color-academic-navy: #19324d;
-  --color-academic-navy-deep: #0c2538;
-  --color-academic-teal: #168c83;
+  --color-academic-navy: #283b55;
+  --color-academic-navy-deep: #162b49;
+  --color-academic-teal: var(--link);
   --color-academic-gold: #f2b84b;
   --color-academic-coral: #e97961;
   --color-academic-sky: #4e91bd;
-  --color-fieldbook-paper: #f0f1ec;
-  --color-fieldbook-sheet: #ffffff;
-  --color-fieldbook-rule: #cfd5d2;
-  --color-fieldbook-ink: #101b27;
+  --color-fieldbook-paper: var(--background);
+  --color-fieldbook-sheet: var(--card);
+  --color-fieldbook-rule: var(--border);
+  --color-fieldbook-ink: var(--foreground);
   --color-fieldbook-priority: #e97961;
 
   /* Pink — second accent (legacy "magenta" names). 500 = #ed52cb */
@@ -83,15 +86,15 @@
   --color-accent-purple: #496a91;
   --color-accent-pink: #e97961;
   --color-accent-blue: #4e91bd;
-  --color-accent-blue-info: #347da7;
+  --color-accent-blue-info: var(--info);
   --color-accent-orange: #d78a35;
-  --color-accent-green: #168c83;
+  --color-accent-green: var(--success);
   --color-accent-yellow: #f2b84b;
 
   /* Link blue */
-  --color-linkblue-500: #347da7;
-  --color-linkblue-600: #286788;
-  --color-linkblue-700: #20536f;
+  --color-linkblue-500: var(--link);
+  --color-linkblue-600: var(--link);
+  --color-linkblue-700: var(--link);
 
   /* Warm / soft surfaces (legacy) */
   --color-cream: #faf8f2;
@@ -133,53 +136,6 @@
   font-weight: 700 900;
   font-style: normal;
   font-display: swap;
-}
-
-@layer base {
-  :root {
-    --background: #f0f1ec;
-    --foreground: #101b27;
-    --card: #ffffff;
-    --card-foreground: #172033;
-    --popover: #ffffff;
-    --popover-foreground: #172033;
-    --primary: #f2b84b;
-    --primary-foreground: #0c2538;
-    --secondary: #e5e8e3;
-    --secondary-foreground: #19324d;
-    --muted: #e5e8e3;
-    --muted-foreground: #5d6a72;
-    --accent: #dcefeb;
-    --accent-foreground: #126a65;
-    --destructive: #d65445;
-    --destructive-foreground: #ffffff;
-    --border: #cfd5d2;
-    --input: #c4cbc8;
-    --ring: #168c83;
-    --radius: 0.25rem;
-  }
-
-  .dark {
-    --background: #101720;
-    --foreground: #f4f7fa;
-    --card: #18232f;
-    --card-foreground: #f4f7fa;
-    --popover: #18232f;
-    --popover-foreground: #f4f7fa;
-    --primary: #55b7ae;
-    --primary-foreground: #071c1b;
-    --secondary: #22313f;
-    --secondary-foreground: #f4f7fa;
-    --muted: #22313f;
-    --muted-foreground: #a9b7c6;
-    --accent: #183b3a;
-    --accent-foreground: #9bd7d1;
-    --destructive: #e56f61;
-    --destructive-foreground: #ffffff;
-    --border: #304252;
-    --input: #344858;
-    --ring: #55b7ae;
-  }
 }
 
 @layer utilities {
@@ -350,41 +306,45 @@
 }
 
 :root {
-    /* Light mode — the Refero-locked school operations fieldbook. */
-    --background: #f0f1ec;
-    --foreground: #101b27;
-    --card: #ffffff;
-    --card-foreground: #172033;
-    --popover: #ffffff;
-    --popover-foreground: #172033;
-    --primary: #f2b84b;
-    --primary-foreground: #0c2538;
-    --secondary: #e5e8e3;
-    --secondary-foreground: #19324d;
-    --muted: #e5e8e3;
-    --muted-foreground: #5d6a72;
-    --accent: #dcefeb;
-    --accent-foreground: #126a65;
-    --destructive: #d65445;
-    --border: #cfd5d2;
-    --input: #c4cbc8;
-    --ring: #168c83;
-    --chart-1: #168c83;
-    --chart-2: #4e91bd;
-    --chart-3: #19324d;
-    --chart-4: #f2b84b;
-    --chart-5: #e97961;
-    --radius: 0.25rem;
-    --sidebar: #0c2538;
-    --sidebar-foreground: #ffffff;
-    --sidebar-primary: #168c83;
-    --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #173a50;
-    --sidebar-accent-foreground: #ffffff;
-    --sidebar-border: rgba(255, 255, 255, 0.12);
-    --sidebar-ring: #f2b84b;
-    --rb-accent: #f2b84b;
-    --rb-accent-fg: #0c2538;
+  --background: #f4f6fa;
+  --foreground: #172438;
+  --card: #ffffff;
+  --card-foreground: #172438;
+  --popover: #ffffff;
+  --popover-foreground: #172438;
+  --primary: #2457bd;
+  --primary-foreground: #ffffff;
+  --secondary: #e8edf4;
+  --secondary-foreground: #283b55;
+  --muted: #e8edf4;
+  --muted-foreground: #526176;
+  --accent: #e7efff;
+  --accent-foreground: #2457bd;
+  --destructive: #b42335;
+  --destructive-foreground: #ffffff;
+  --border: #cbd3df;
+  --input: #8291a6;
+  --ring: #2457bd;
+  --chart-1: #2457bd;
+  --chart-2: #17714d;
+  --chart-3: #7548a3;
+  --chart-4: #a15c00;
+  --chart-5: #b42335;
+  --sidebar: #162b49;
+  --sidebar-foreground: #f1f5fc;
+  --sidebar-primary: #a7c5ff;
+  --sidebar-primary-foreground: #102341;
+  --sidebar-accent: #244675;
+  --sidebar-accent-foreground: #f1f5fc;
+  --sidebar-border: #405775;
+  --sidebar-ring: #a7c5ff;
+  --rb-accent: var(--primary);
+  --rb-accent-fg: var(--primary-foreground);
+  --radius: 0.5rem;
+  --success: #17714d;
+  --warning: #945200;
+  --info: #2457bd;
+  --link: #2457bd;
     --rb-radius: 4px;
     --rb-r-xs: max(0px, calc(var(--rb-radius) - 6px));
     --rb-r-sm: max(0px, calc(var(--rb-radius) - 4px));
@@ -394,43 +354,49 @@
     --rb-r-2xl: calc(var(--rb-radius) + min(4px, var(--rb-radius)));
     --rb-r-3xl: calc(var(--rb-radius) + min(6px, var(--rb-radius)));
     --rb-r-4xl: calc(var(--rb-radius) + min(8px, var(--rb-radius)));
+  color-scheme: light;
 }
-
 .dark {
-    /* Dark mode — layered blue-grey surfaces instead of pure black. */
-    --background: #101720;
-    --foreground: #f4f7fa;
-    --card: #18232f;
-    --card-foreground: #f4f7fa;
-    --popover: #18232f;
-    --popover-foreground: #f4f7fa;
-    --primary: #f4c86e;
-    --primary-foreground: #071c1b;
-    --secondary: #22313f;
-    --secondary-foreground: #f4f7fa;
-    --muted: #22313f;
-    --muted-foreground: #a9b7c6;
-    --accent: #183b3a;
-    --accent-foreground: #9bd7d1;
-    --destructive: #e56f61;
-    --border: #304252;
-    --input: #344858;
-    --ring: #55b7ae;
-    --chart-1: #55b7ae;
-    --chart-2: #71add0;
-    --chart-3: #9db5ca;
-    --chart-4: #f4c86e;
-    --chart-5: #ef9684;
-    --sidebar: #0c2538;
-    --sidebar-foreground: #ffffff;
-    --sidebar-primary: #55b7ae;
-    --sidebar-primary-foreground: #071c1b;
-    --sidebar-accent: #173a50;
-    --sidebar-accent-foreground: #ffffff;
-    --sidebar-border: rgba(255, 255, 255, 0.12);
-    --sidebar-ring: #f4c86e;
-    --rb-accent: #f4c86e;
-    --rb-accent-fg: #071c1b;
+  --background: #101722;
+  --foreground: #edf2fa;
+  --card: #192332;
+  --card-foreground: #edf2fa;
+  --popover: #192332;
+  --popover-foreground: #edf2fa;
+  --primary: #a7c5ff;
+  --primary-foreground: #102341;
+  --secondary: #253348;
+  --secondary-foreground: #edf2fa;
+  --muted: #253348;
+  --muted-foreground: #afbdd0;
+  --accent: #223c60;
+  --accent-foreground: #b9d1ff;
+  --destructive: #ffa4ad;
+  --destructive-foreground: #40101a;
+  --border: #46566d;
+  --input: #71829b;
+  --ring: #a7c5ff;
+  --chart-1: #a7c5ff;
+  --chart-2: #8cdbb0;
+  --chart-3: #ceb1ef;
+  --chart-4: #f2c16b;
+  --chart-5: #ffa4ad;
+  --sidebar: #0d1420;
+  --sidebar-foreground: #f1f5fc;
+  --sidebar-primary: #a7c5ff;
+  --sidebar-primary-foreground: #102341;
+  --sidebar-accent: #244675;
+  --sidebar-accent-foreground: #f1f5fc;
+  --sidebar-border: #405775;
+  --sidebar-ring: #a7c5ff;
+  --rb-accent: var(--primary);
+  --rb-accent-fg: var(--primary-foreground);
+  --radius: 0.5rem;
+  --success: #8cdbb0;
+  --warning: #f2c16b;
+  --info: #a7c5ff;
+  --link: #a7c5ff;
+  color-scheme: dark;
 }
 
 @layer base {
@@ -447,25 +413,7 @@
     }
 }
 
-/* Flat ruled canvas: depth comes from dividers and hierarchy, never blobs. */
-.academic-workspace {
-  background-color: var(--background);
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent 47px,
-    color-mix(in srgb, var(--border) 28%, transparent) 48px
-  );
-}
-
-.dark .academic-workspace {
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent 47px,
-    color-mix(in srgb, var(--border) 22%, transparent) 48px
-  );
-}
+.academic-workspace { background: var(--background); }
 
 /* App-wide surface normalization. Legacy pages inherit the fieldbook's flat,
    ruled geometry while interactive game scenes keep their authored color art. */
@@ -2400,13 +2348,13 @@ a.lq-milestone-row:focus-visible {
    image-first hierarchy. Literal.club owns collection/status navigation.
    Quizlet contributes cobalt only for primary interactive actions. */
 .elibrary-catalog-page {
-  --elib-paper: #ffffff;
-  --elib-canvas: #f0f1ec;
-  --elib-ink: #171816;
-  --elib-muted: #636760;
-  --elib-rule: #d8dbd5;
-  --elib-soft: #e8ebe5;
-  --elib-action: #1947e5;
+  --elib-paper: var(--card);
+  --elib-canvas: var(--background);
+  --elib-ink: var(--foreground);
+  --elib-muted: var(--muted-foreground);
+  --elib-rule: var(--border);
+  --elib-soft: var(--muted);
+  --elib-action: var(--link);
   min-width: 0;
   max-width: 100%;
   padding-bottom: 64px;
@@ -2934,13 +2882,13 @@ a.lq-milestone-row:focus-visible {
 }
 
 .dark .elibrary-catalog-page {
-  --elib-paper: #141a1f;
-  --elib-canvas: #101720;
-  --elib-ink: #f4f6f1;
-  --elib-muted: #aab3b8;
-  --elib-rule: #34434d;
-  --elib-soft: #24313a;
-  --elib-action: #7da0ff;
+  --elib-paper: var(--card);
+  --elib-canvas: var(--background);
+  --elib-ink: var(--foreground);
+  --elib-muted: var(--muted-foreground);
+  --elib-rule: var(--border);
+  --elib-soft: var(--muted);
+  --elib-action: var(--link);
 }
 /* Dark surfaces must not use --elib-ink: it becomes light text in this theme. */
 .dark .elibrary-search-panel,
@@ -3071,3 +3019,7 @@ a.lq-milestone-row:focus-visible {
   .elibrary-masthead__visual:hover .elibrary-cover-stack__book.is-3 { transform: translate(20%, -44%) rotate(10deg); }
   .elibrary-book-card:hover .elibrary-book-card__cover { transform: none; }
 }
+
+/* Browser interaction surfaces follow the active shell theme. */
+.mrlc-app-shell ::selection { background:var(--accent); color:var(--accent-foreground); }
+.mrlc-app-shell :is(input,textarea) { caret-color:var(--link); }

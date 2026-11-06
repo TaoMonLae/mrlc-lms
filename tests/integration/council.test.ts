@@ -1,0 +1,71 @@
+// Run only against a disposable local database with COUNCIL_TEST_DATABASE_URL.
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import express from 'express';
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { registerCouncilRoutes } from '../../councilRoutes';
+import { malaysiaToday, termEnd } from '../../shared/council';
+const url = process.env.COUNCIL_TEST_DATABASE_URL;
+test('council API enforces roles, weekly conflicts, independent ratings, concurrency and moderation', { skip: !url }, async () => {
+    const parsed = new URL(url!);
+    assert.ok(['127.0.0.1', 'localhost'].includes(parsed.hostname));
+    assert.match(parsed.pathname, /council_test/);
+    const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url! }) });
+    const suffix = Date.now().toString();
+    const makeUser = (key: string, role: any, extra = {}) => prisma.user.create({ data: { id: `${key}-${suffix}`, email: `${key}-${suffix}@test.invalid`, firstName: key, lastName: 'Test', role, ...extra } });
+    const staff = await makeUser('staff', 'STAFF'), council = await makeUser('council', 'STUDENT'), pupil = await makeUser('pupil', 'STUDENT'), outsider = await makeUser('external', 'STUDENT', { isExternalLearner: true }), guardian = await makeUser('guardian', 'GUARDIAN');
+    const s1 = await prisma.student.create({ data: { userId: council.id, studentCode: `C-${suffix}`, studentCouncilRole: 'PRESIDENT' } });
+    const s2 = await prisma.student.create({ data: { userId: pupil.id, studentCode: `S-${suffix}` } });
+    const app = express();
+    app.use(express.json());
+    registerCouncilRoutes(app, { prisma, authMiddleware: ((req: any, _res: any, next: any) => { req.user = { userId: req.headers['x-test-user'], role: 'ADMIN' }; next(); }) as any, logger: { error() { } } as any } as any);
+    const server = app.listen(0, '127.0.0.1');
+    await new Promise<void>(resolve => server.once('listening', resolve));
+    const base = `http://127.0.0.1:${(server.address() as any).port}/api/council`;
+    const request = async (user: string, path: string, method = 'GET', body?: unknown) => { const res = await fetch(base + path, { method, headers: { 'x-test-user': user, 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) }); return { status: res.status, data: await res.json() }; };
+    try {
+        assert.equal((await request(outsider.id, '/workspace')).status, 403);
+        assert.equal((await request(guardian.id, '/workspace')).status, 403);
+        assert.equal((await request(council.id, '/workspace')).data.canManage, false, 'legacy role alone cannot grant management');
+        const today = malaysiaToday();
+        assert.equal((await request(pupil.id, '/appointments', 'POST', { studentId: s1.id, role: 'PRESIDENT', startDate: today })).status, 403);
+        assert.equal((await request(staff.id, '/appointments', 'POST', { studentId: s1.id, role: 'PRESIDENT', startDate: today })).status, 200);
+        assert.equal((await request(council.id, '/workspace')).data.canManage, true);
+        assert.equal((await prisma.councilAppointment.findUniqueOrThrow({ where: { studentId: s1.id } })).endDate, termEnd(today));
+        const plan = { name: 'Test rotation', startDate: today, endDate: today, rotationDays: 7, groups: [{ number: 1, name: 'A', studentIds: [s1.id] }, { number: 2, name: 'B', studentIds: [s2.id] }], duties: [{ number: 1, name: 'Meals', type: 'COOKING', instructions: '' }, { number: 2, name: 'Floors', type: 'CLEANING', instructions: '' }] };
+        assert.equal((await request(pupil.id, '/plans', 'POST', plan)).status, 403);
+        const published = await request(council.id, '/plans', 'POST', plan);
+        assert.equal(published.status, 201);
+        assert.equal((await request(council.id, '/plans', 'POST', plan)).status, 409);
+        const entries = (await request(pupil.id, `/entries?from=${today}&to=${today}&planId=${published.data.id}`)).data;
+        const own = entries.find((e: any) => e.groupNumber === 1), other = entries.find((e: any) => e.groupNumber === 2);
+        const review = { version: 0, status: 'COMPLETED', rating: 5, note: 'All tasks checked' };
+        assert.equal((await request(council.id, `/entries/${own.id}`, 'PATCH', review)).status, 403, 'no self-rating');
+        assert.equal((await request(pupil.id, `/entries/${own.id}`, 'PATCH', { ...review, rating: null })).status, 403, 'no other team completion');
+        assert.equal((await request(pupil.id, `/entries/${other.id}`, 'PATCH', { ...review, rating: null })).status, 200);
+        assert.equal((await request(council.id, `/entries/${other.id}`, 'PATCH', review)).status, 409, 'stale version rejected');
+        const race = await Promise.all([request(council.id, `/entries/${other.id}`, 'PATCH', { ...review, version: 1 }), request(staff.id, `/entries/${other.id}`, 'PATCH', { ...review, version: 1 })]);
+        assert.deepEqual(race.map(r => r.status).sort(), [200, 409]);
+        const topic = await request(pupil.id, '/forum', 'POST', { title: `Kitchen supplies ${suffix}`, body: 'Can we restock soap?', category: 'School life' });
+        assert.equal(topic.status, 201);
+        assert.equal((await request(pupil.id, `/forum/${topic.data.id}`, 'PATCH', { locked: true })).status, 403);
+        assert.equal((await request(council.id, `/forum/${topic.data.id}`, 'PATCH', { locked: true })).status, 200);
+        assert.equal((await request(pupil.id, `/forum/${topic.data.id}/replies`, 'POST', { body: 'A reply' })).status, 409);
+        assert.equal((await request(pupil.id, `/forum/${topic.data.id}/reports`, 'POST', { reason: 'Please check this' })).status, 201);
+        assert.equal((await request(council.id, '/reports')).status, 403, 'reports stay staff-only');
+        assert.equal((await request(staff.id, '/reports')).data.filter((r: any) => r.topicId === topic.data.id).length, 1);
+        assert.equal((await request(council.id, `/forum/${topic.data.id}`, 'PATCH', { hidden: true })).status, 200);
+        assert.equal((await request(pupil.id, `/forum/${topic.data.id}`)).status, 404);
+        assert.equal((await request(pupil.id, `/forum?hidden=true&search=${suffix}`)).data.count, 0);
+        assert.equal((await request(council.id, `/forum?hidden=true&search=${suffix}`)).data.count, 1);
+        assert.equal((await request(council.id, `/forum/${topic.data.id}`, 'PATCH', { hidden: false })).status, 200);
+        await prisma.councilAppointment.update({ where: { studentId: s1.id }, data: { endDate: '2000-01-01' } });
+        assert.equal((await request(council.id, '/workspace')).data.canManage, false, 'expired terms revoke authority');
+        assert.ok(await prisma.auditLog.count({ where: { entityType: 'STUDENT_COUNCIL' } }) > 5);
+    }
+    finally {
+        await new Promise<void>(resolve => server.close(() => resolve()));
+        await prisma.$disconnect();
+    }
+});

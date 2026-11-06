@@ -174,7 +174,7 @@ export default function DocumentsPage() {
           <FileBadge className="h-6 w-6 text-aubergine-600" /> Official Documents
         </h1>
         <p className="text-sm text-muted-foreground mt-1">Generate verifiable student cards, report cards, transcripts and certificates.</p>
-        {isAdmin && (
+        {(isAdmin || user?.role === 'TEACHER') && (
           <Link to="/documents/volunteers" className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-primary underline underline-offset-4">
             Volunteer letters & certificates <ExternalLink className="h-3.5 w-3.5" />
           </Link>

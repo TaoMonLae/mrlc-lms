@@ -349,6 +349,7 @@ export default function StudentHomework() {
                 <p className="mt-3 whitespace-pre-wrap text-sm text-muted-foreground">
                   {item.instructions}
                 </p>
+                {item.instructions.includes("/games/evidence-detective") && <Link to="/games/evidence-detective" className="mt-2 inline-flex min-h-11 items-center gap-2 font-semibold text-teal-700 underline underline-offset-4 dark:text-teal-300"><BookOpen size={17} /> Open Evidence Detective</Link>}
               </details>
             )}
             {item.attachmentUrl && (

@@ -21,19 +21,19 @@ export default function Auth1({ brand, children, footer, heroAlt, heroReady, her
   });
 
   return (
-    <div className="min-h-screen bg-white text-[#112d40] lg:grid lg:grid-cols-[minmax(460px,0.82fr)_1.18fr]">
-      <section className="flex min-h-screen flex-col border-r border-[#cad4d9] bg-white">
+    <div className="min-h-screen bg-card text-foreground lg:grid lg:grid-cols-[minmax(460px,0.82fr)_1.18fr]">
+      <section className="flex min-h-screen flex-col border-r border-border bg-card">
         <motion.header {...enter(0.03)} className="flex items-center justify-between gap-5 px-5 py-5 sm:px-8 lg:px-10">
           {brand}
           <Link
             to="/"
-            className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-[#526875] transition-colors duration-150 hover:text-[#112d40] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#168c83] focus-visible:ring-offset-2"
+            className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-muted-foreground transition-colors duration-150 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
             <span aria-hidden="true" className="mr-2">←</span> School home
           </Link>
         </motion.header>
 
-        <div className="mx-5 grid min-h-32 content-end bg-[#f4d35e] p-5 text-[#112d40] sm:mx-8 lg:hidden">
+        <div className="mx-5 grid min-h-32 content-end bg-accent p-5 text-foreground sm:mx-8 lg:hidden">
           <p className="text-[11px] font-bold uppercase tracking-[0.16em]">MRLC school portal</p>
           <p className="mt-2 max-w-[20ch] text-2xl font-black leading-[1.02] tracking-[-0.035em]">Classes, records and learning in one place.</p>
         </div>
@@ -70,15 +70,15 @@ export default function Auth1({ brand, children, footer, heroAlt, heroReady, her
           School portal · secure access
         </div>
 
-        <div className="absolute bottom-0 left-0 w-[84%] max-w-3xl bg-[#f4d35e] p-8 text-[#112d40] xl:p-11">
+        <div className="absolute bottom-0 left-0 w-[84%] max-w-3xl bg-accent p-8 text-foreground xl:p-11">
           <p className="text-[11px] font-bold uppercase tracking-[0.18em]">One connected school day</p>
           <h2 className="mt-4 max-w-[12ch] text-balance text-4xl font-black leading-[0.94] tracking-[-0.055em] xl:text-6xl">
             Every lesson has a next step.
           </h2>
-          <p className="mt-5 max-w-xl text-pretty text-sm leading-6 text-[#112d40]/78 xl:text-base xl:leading-7">
+          <p className="mt-5 max-w-xl text-pretty text-sm leading-6 text-foreground/78 xl:text-base xl:leading-7">
             Open classes, attendance, school records, the library and Learning Quest from the same trusted account.
           </p>
-          <div className="mt-7 flex flex-wrap gap-x-6 gap-y-2 border-y border-[#112d40]/25 py-4 text-xs font-bold uppercase tracking-[0.12em]">
+          <div className="mt-7 flex flex-wrap gap-x-6 gap-y-2 border-y border-border py-4 text-xs font-bold uppercase tracking-[0.12em]">
             <span>Classes</span><span>GED practice</span><span>School records</span><span>Learning Quest</span>
           </div>
         </div>

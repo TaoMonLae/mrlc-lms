@@ -251,3 +251,43 @@ test('submission atomically saves and scores restored answers against the frozen
   assert.equal(finalSnapshot.answers[0].answerText, 'Beta');
   assert.equal(attempt.sessionToken, null);
 });
+
+for (const actorRole of ['TEACHER', 'ADMIN', 'STUDENT', null]) {
+  test(`student start cannot resume a pause recorded by ${actorRole ?? 'an unknown actor'}`, async () => {
+    const h = harness({
+      exam: { findUnique: async () => ({ id: 'e1', classId: 'c1', status: 'PUBLISHED' }) },
+      examAssignment: { findUnique: async () => null, count: async () => 0 },
+      examAttempt: { findFirst: async () => ({ id: 'a1', state: 'PAUSED', pausedAt: new Date(), serverDeadline: new Date(Date.now() + 60000) }) },
+      attemptEvent: { findFirst: async () => actorRole ? { actorRole, createdAt: new Date(0) } : null },
+    });
+    const result = await h.invoke('post', '/api/exam2/:examId/start');
+    assert.equal(result.status, 409);
+    assert.equal(result.data.error, 'ATTEMPT_PAUSED');
+    assert.equal(h.transactions(), 0);
+  });
+}
+
+for (const timed of [true, false]) {
+  test(`students can still resume their own authorized ${timed ? 'timed' : 'untimed'} break`, async () => {
+    const before = Date.now();
+    let attempt: any = { id: 'a1', studentId: 's1', state: 'PAUSED', pausedAt: new Date(before - 60000), serverDeadline: timed ? new Date(before + 60000) : null, sessionToken: 'old', updatedAt: new Date(before - 60000) };
+    const h = harness({
+      exam: { findUnique: async () => ({ id: 'e1', classId: 'c1', status: 'PUBLISHED', questions: [] }) },
+      examAssignment: { findUnique: async () => null, count: async () => 0 },
+      examAttempt: { findFirst: async () => attempt },
+      attemptEvent: { findFirst: async () => ({ actorRole: 'STUDENT', createdAt: attempt.pausedAt }) },
+      examAnswer: { findMany: async () => [] },
+      $transaction: async (fn: Function) => fn({
+        examAttempt: { updateMany: async ({ data }: any) => { attempt = { ...attempt, ...data }; return { count: 1 }; }, findUnique: async () => attempt },
+        attemptEvent: { create: async () => ({}) },
+      }),
+    });
+    const result = await h.invoke('post', '/api/exam2/:examId/start');
+    assert.equal(result.status, 200);
+    assert.equal(attempt.state, 'IN_PROGRESS');
+    assert.equal(attempt.pausedAt, null);
+    assert.notEqual(attempt.sessionToken, 'old');
+    if (timed) assert.ok(attempt.serverDeadline.getTime() >= before + 120000);
+    else assert.equal(attempt.serverDeadline, null);
+  });
+}

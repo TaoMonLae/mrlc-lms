@@ -429,7 +429,7 @@ export default function GradebookPage() {
                   <Input id="grade-item-date" type="date" value={newItem.date} onChange={(event) => setNewItem((current) => ({ ...current, date: event.target.value }))} className="h-10 pl-9" />
                 </div>
               </div>
-              <Button type="submit" size="lg" disabled={creating || !canCreateItem} className="mt-auto h-10 rounded-lg bg-teal-600 px-5 text-white hover:bg-teal-700 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300">
+              <Button type="submit" size="lg" disabled={creating || !canCreateItem} className="mt-auto h-10 rounded-lg bg-primary px-5 text-primary-foreground hover:bg-primary/90 ">
                 {creating ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
                 {creating ? 'Adding…' : 'Add item'}
               </Button>
@@ -454,7 +454,7 @@ export default function GradebookPage() {
               {activeItem && (
                 <div className="flex flex-wrap items-center gap-2">
                   <Button type="button" variant="destructive" onClick={() => void deleteItem(activeItem.id)}><Trash2 className="size-4" />Delete item</Button>
-                  <Button type="button" onClick={() => void saveEntries()} disabled={savingEntry || invalidEntryIds.size > 0 || !data?.rows.length} className="bg-teal-600 text-white hover:bg-teal-700 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300">
+                  <Button type="button" onClick={() => void saveEntries()} disabled={savingEntry || invalidEntryIds.size > 0 || !data?.rows.length} className="bg-primary text-primary-foreground hover:bg-primary/90 ">
                     {savingEntry ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
                     {savingEntry ? 'Saving…' : 'Save all marks'}
                   </Button>
@@ -564,7 +564,7 @@ export default function GradebookPage() {
                 <p className="font-semibold">Total: {weightTotal}%</p>
                 <p className="mt-0.5 text-xs opacity-80">{weightTotal === 100 ? 'Weights are balanced and ready to save.' : 'A 100% total is recommended; other positive totals will be normalized.'}</p>
               </div>
-              <Button onClick={() => void saveWeights()} disabled={savingWeights || !weightsAreValid || !classId} className="bg-teal-600 text-white hover:bg-teal-700 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300">
+              <Button onClick={() => void saveWeights()} disabled={savingWeights || !weightsAreValid || !classId} className="bg-primary text-primary-foreground hover:bg-primary/90 ">
                 {savingWeights ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
                 {savingWeights ? 'Saving…' : 'Save weights'}
               </Button>

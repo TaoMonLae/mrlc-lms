@@ -3,7 +3,6 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { TopBar } from "./TopBar";
 import { Outlet, useLocation, Navigate } from "react-router";
-import { motion, useReducedMotion } from "motion/react";
 import { useAuth } from "../../providers/AuthProvider";
 import ChatWidget from "../chat/ChatWidget";
 import { ChatProvider } from "../../providers/ChatProvider";
@@ -17,7 +16,6 @@ export function AppLayout() {
     if (!location.hash && mainRef.current) mainRef.current.scrollTop = 0;
   }, [location.pathname]);
   const { user } = useAuth();
-  const reduceMotion = useReducedMotion();
   const takingExam = /^\/exam2\/attempts\/[^/]+\/play\/?$/.test(location.pathname);
   const printingExam = /^\/exam2\/[^/]+\/print\/?$/.test(location.pathname);
   const playingWordConnect = /^\/games\/word-connect\/play\/[^/]+\/?$/.test(location.pathname);
@@ -41,7 +39,7 @@ export function AppLayout() {
         {/* Skip navigation link for keyboard users */}
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 rounded-sm bg-academic-gold px-4 py-2 text-sm font-semibold text-academic-navy-deep"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
         >
           Skip to main content
         </a>
@@ -49,15 +47,12 @@ export function AppLayout() {
         <SidebarInset className="flex min-w-0 flex-col overflow-hidden bg-background">
           <TopBar />
           <main ref={mainRef} id="main-content" className="academic-workspace min-w-0 flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar" tabIndex={-1}>
-            <motion.div
+            <div
               key={location.pathname}
-              initial={reduceMotion ? false : { opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: reduceMotion ? 0 : 0.14, ease: "easeOut" }}
               className="mx-auto w-full min-w-0 max-w-[1680px] p-4 sm:p-6 xl:p-8"
             >
               <Outlet />
-            </motion.div>
+            </div>
           </main>
         </SidebarInset>
         {!takingExam && !playingWordConnect && !/^\/exam2\/grade\//.test(location.pathname) && !/^\/exams\/[^/]+\/(studio|edit)\/?$/.test(location.pathname) && <FloatingPanelProvider>

@@ -1,5 +1,5 @@
 import type { Express } from 'express';
-import { getPublicSeoPage, getSeoMetadata, getSiteOrigin, PUBLIC_SEO_PAGES, SITE_NAME } from '../shared/seo';
+import { getPublicSeoPage, getSeoMetadata, getSiteOrigin, normalizeSeoPath, PUBLIC_SEO_PAGES, SITE_NAME } from '../shared/seo';
 
 function escapeMarkup(value: string): string {
   return value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[char]!);
@@ -51,9 +51,14 @@ export function renderSeoHtml(template: string, pathname: string, appUrl: string
   // This short public introduction is delivered to every visitor, including
   // those without JavaScript. React replaces it with the interactive page.
   const content = page ? `<main><h1>${escapeMarkup(page.heading)}</h1><p>${escapeMarkup(page.description)}</p><p>${escapeMarkup(page.summary)}</p><nav aria-label="Public pages"><ul>${PUBLIC_SEO_PAGES.map(item => `<li><a href="${item.path}">${escapeMarkup(item.label)}</a></li>`).join('')}</ul></nav><noscript>Enable JavaScript to use the interactive learning tools.</noscript></main>` : '';
+  // The template declares the LMS manifest. /focus-app must ship its own
+  // manifest in the initial HTML: an external script can lose the race with
+  // the browser's first manifest fetch, and a second link is ignored.
+  const manifestHref = normalizeSeoPath(pathname) === '/focus-app' ? '/focus.webmanifest' : '/manifest.webmanifest';
   return template
     .replace(/<!--seo:head:start-->[\s\S]*?<!--seo:head:end-->/, () => tags.join('\n    '))
-    .replace('<!--seo:content-->', () => content);
+    .replace('<!--seo:content-->', () => content)
+    .replace('<link rel="manifest" href="/manifest.webmanifest" />', `<link rel="manifest" href="${manifestHref}" />`);
 }
 
 export function registerSeoRoutes(app: Express, appUrl: string): void {

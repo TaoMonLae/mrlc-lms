@@ -81,7 +81,7 @@ export function FinanceFlowChart({ data, currency, year }: FinanceFlowChartProps
           <p className="mt-1 text-xs leading-5 text-muted-foreground">Actual collections and bill payments for fiscal year {year}.</p>
         </div>
         <div className="flex gap-4 text-xs text-muted-foreground" aria-hidden="true">
-          <span className="inline-flex items-center gap-2"><span className="h-0.5 w-5 bg-academic-teal" />Receipts</span>
+          <span className="inline-flex items-center gap-2"><span className="h-0.5 w-5 bg-action-solid" />Receipts</span>
           <span className="inline-flex items-center gap-2"><span className="h-0.5 w-5 bg-academic-coral" />Paid out</span>
         </div>
       </header>

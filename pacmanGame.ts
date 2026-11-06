@@ -1,6 +1,8 @@
 import { Router, Response, Request } from "express";
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
+import { randomUUID } from "node:crypto";
+import { TOTAL_LEVELS } from "./src/pages/games/pacman/utils/levels";
 
 // Every role gets one shared, whole-school leaderboard — there's no
 // class/staff split like Chess or Snake use, since Pac-Man is a single-player
@@ -30,6 +32,62 @@ export function registerPacmanGameRoutes({
 }) {
   const router = Router();
   const gameGuard = gameAccessMiddleware ?? ((_req: Request, _res: Response, next: (err?: unknown) => void) => next());
+
+  const progressSchema = z.object({
+    gameMode: z.enum(GAME_MODES),
+    level: z.number().int().min(2).max(TOTAL_LEVELS),
+  });
+
+  router.get("/progress", authMiddleware, gameGuard, async (req: Request, res: Response) => {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: "Authentication required" });
+      return;
+    }
+    try {
+      const [checkpoints, previousRuns] = await Promise.all([
+        prisma.pacmanStageProgress.findMany({ where: { userId }, select: { gameMode: true, highestLevel: true } }),
+        prisma.pacmanGameScore.groupBy({ by: ["gameMode"], where: { userId }, _max: { level: true } }),
+      ]);
+      const levels = new Map<string, number>();
+      for (const run of previousRuns) levels.set(run.gameMode, Math.min(TOTAL_LEVELS, run._max.level ?? 1));
+      for (const checkpoint of checkpoints) {
+        levels.set(checkpoint.gameMode, Math.max(levels.get(checkpoint.gameMode) ?? 1, checkpoint.highestLevel));
+      }
+      res.json({ success: true, progress: [...levels].map(([gameMode, level]) => ({ gameMode, level })) });
+    } catch (error) {
+      console.error("Error loading Pac-Man progress:", error);
+      res.status(500).json({ success: false, error: "Failed to load progress" });
+    }
+  });
+
+  router.post("/progress", authMiddleware, gameGuard, async (req: Request, res: Response) => {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: "Authentication required" });
+      return;
+    }
+    const parsed = progressSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ success: false, error: "Invalid stage progress" });
+      return;
+    }
+    const { gameMode, level } = parsed.data;
+    try {
+      // A late request from another tab can never roll back an unlocked stage.
+      await prisma.$executeRaw`
+        INSERT INTO "PacmanStageProgress" ("id", "userId", "gameMode", "highestLevel", "updatedAt")
+        VALUES (${randomUUID()}, ${userId}, ${gameMode}, ${level}, CURRENT_TIMESTAMP)
+        ON CONFLICT ("userId", "gameMode") DO UPDATE
+        SET "highestLevel" = GREATEST("PacmanStageProgress"."highestLevel", EXCLUDED."highestLevel"),
+            "updatedAt" = CURRENT_TIMESTAMP
+      `;
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error saving Pac-Man progress:", error);
+      res.status(500).json({ success: false, error: "Failed to save progress" });
+    }
+  });
 
   function publicPlayer(u: {
     id: string;

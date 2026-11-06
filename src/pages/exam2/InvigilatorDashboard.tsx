@@ -1,9 +1,8 @@
-import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { apiGet, apiSend } from '../../lib/api';
+import { useInvigilatorSession } from '../../hooks/useInvigilatorSession';
 import { Monitor, Wifi, WifiOff, Clock, ShieldAlert } from 'lucide-react';
 
 const STATE_COLOR: Record<string, string> = {
@@ -16,53 +15,31 @@ const ACTION_CLASS = 'min-h-11 px-3 text-xs sm:min-h-8 sm:px-2';
 
 export default function InvigilatorDashboard() {
   const { examId } = useParams();
-  const [data, setData] = useState<any>(null);
-  const [loadError, setLoadError] = useState('');
-  const [refreshing, setRefreshing] = useState(false);
-  const [busy, setBusy] = useState(false);
-
-  const load = useCallback(async (signal?: AbortSignal) => {
-    setRefreshing(true);
-    try {
-      const next = await apiGet(`/api/exams/${examId}/invigilator`, { signal });
-      if (!signal?.aborted) { setData(next); setLoadError(''); }
-    } catch {
-      if (!signal?.aborted) setLoadError('Could not refresh the live session. Displayed information may be out of date.');
-    } finally { if (!signal?.aborted) setRefreshing(false); }
-  }, [examId]);
-  useEffect(() => {
-    const controller = new AbortController();
-    setData(null); setLoadError('');
-    void load(controller.signal);
-    const t = setInterval(() => void load(controller.signal), 10000);
-    return () => { controller.abort(); clearInterval(t); };
-  }, [load]);
+  const { data, loadError, refreshing, busy, refresh, runAction } = useInvigilatorSession(examId);
 
   const act = async (attemptId: string, action: string) => {
-    let extra: any = {};
-    if (busy) return;
-    if (action === 'EXTRA_TIME') { const m = window.prompt('Extra minutes?', '10'); if (!m) return; extra.minutes = Number(m); if (!Number.isInteger(extra.minutes) || extra.minutes < 1 || extra.minutes > 1440) { toast.error('Enter a whole number of minutes between 1 and 1440.'); return; } }
-    if (action === 'INCIDENT_NOTE') { const note = window.prompt('Incident note'); if (!note) return; extra.note = note; }
+    const extra: Record<string, unknown> = {};
+    if (busy || loadError) return;
+    if (action === 'EXTRA_TIME') { const m = window.prompt('Extra minutes?', '10'); if (!m) return; const minutes = Number(m); extra.minutes = minutes; if (!Number.isInteger(minutes) || minutes < 1 || minutes > 1440) { toast.error('Enter a whole number of minutes between 1 and 1440.'); return; } }
+    if (action === 'INCIDENT_NOTE') { const note = window.prompt('Incident note (up to 2000 characters)'); if (note === null) return; if (!note.trim() || note.trim().length > 2000) { toast.error('Enter a note between 1 and 2000 characters.'); return; } extra.note = note.trim(); }
     const confirmation = action === 'REOPEN'
       ? 'Reopen this attempt for 15 minutes? Existing marks and feedback will be cleared.'
       : action === 'FORCE_SUBMIT'
         ? 'Submit this student’s saved answers? Changes that have not reached the server may not be included.'
         : action === 'INVALIDATE' ? 'Void this attempt? It will be excluded from results.' : null;
     if (confirmation && !confirm(confirmation)) return;
-    setBusy(true);
-    try { await apiSend(`/api/attempts/${attemptId}/invigilate`, 'POST', { action, ...extra }); toast.success(`${action.replaceAll('_', ' ')} applied`); await load(); }
+    try { if (await runAction(attemptId, { action, ...extra })) toast.success(`${action.replaceAll('_', ' ')} applied`); }
     catch (e: any) { toast.error(e.message || 'Action failed'); }
-    finally { setBusy(false); }
   };
 
-  const errorNotice = loadError && <div role="alert" className="space-y-3 rounded-sm border border-destructive/40 bg-card p-4 text-sm"><p>{loadError}</p><Button variant="outline" disabled={refreshing} onClick={() => void load()}>{refreshing ? 'Retrying…' : 'Retry'}</Button></div>;
+  const errorNotice = loadError && <div role="alert" className="space-y-3 rounded-sm border border-destructive/40 bg-card p-4 text-sm"><p>{loadError}</p><Button variant="outline" disabled={refreshing || busy} onClick={() => void refresh()}>{refreshing ? 'Retrying…' : 'Retry'}</Button></div>;
   if (!data) return errorNotice || <div className="py-20 text-center text-muted-foreground">Loading live session…</div>;
   const fmt = (s: number | null) => s == null ? '—' : `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
   return (
     <div className="max-w-6xl mx-auto space-y-5">
       <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><Monitor className="h-6 w-6 text-aubergine-600" /> Invigilator Dashboard</h1>
-      <p className="text-sm text-muted-foreground">Updates every 10 seconds. Review the latest state before changing an attempt.</p>
+      <p className="text-sm text-muted-foreground">Refreshes 10 seconds after each update. Review the latest state before changing an attempt.</p>
       {errorNotice}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[['Not started', data.summary.notStarted], ['In progress', data.summary.inProgress], ['Paused', data.summary.paused], ['Submitted', data.summary.submitted], ['Disconnected', data.summary.disconnected]].map(([l, v]) => (
@@ -79,12 +56,12 @@ export default function InvigilatorDashboard() {
             <tr><th className="text-left px-4 py-3">Student</th><th className="px-3">State</th><th className="px-3">Time left</th><th className="px-3">Last check-in</th><th className="px-3">Connection</th><th className="px-3">Warnings</th><th className="px-3">IP</th><th className="px-3">Actions</th></tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {data.students.map((s: any) => (
+            {data.students.map((s) => (
               <tr key={s.studentId} className="hover:bg-muted/50">
                 <td className="px-4 py-3 font-semibold text-foreground">{s.name}</td>
                 <td className="px-3 text-center"><Badge className={`${STATE_COLOR[s.state] || ''} text-[11px]`}>{s.state.replaceAll('_', ' ')}</Badge></td>
                 <td className="px-3 text-center font-mono"><span className="inline-flex items-center gap-1"><Clock className="h-3 w-3 text-muted-foreground" />{fmt(s.remainingSeconds)}</span></td>
-                <td className="px-3 text-center text-xs text-muted-foreground">{s.lastSavedAt ? new Date(s.lastSavedAt).toLocaleTimeString() : '—'}</td>
+                <td className="px-3 text-center text-xs text-muted-foreground">{(s.lastCheckInAt || s.lastSavedAt) ? new Date((s.lastCheckInAt || s.lastSavedAt)!).toLocaleTimeString() : '—'}</td>
                 <td className="px-3 text-center">{s.state !== 'IN_PROGRESS' ? '—' : s.disconnected ? <WifiOff aria-label="Disconnected" className="h-4 w-4 text-destructive mx-auto" /> : <Wifi aria-label="Connected" className="h-4 w-4 text-academic-teal mx-auto" />}</td>
                 <td className="px-3 text-center">{s.securityWarnings > 0 ? <span className="inline-flex items-center gap-1 text-amber-600 font-bold"><ShieldAlert className="h-3.5 w-3.5" />{s.securityWarnings}</span> : '0'}</td>
                 <td className="px-3 text-center text-[11px] text-muted-foreground font-mono">{s.ipAddress || '—'}</td>
@@ -92,13 +69,13 @@ export default function InvigilatorDashboard() {
                   {s.attemptId ? (
                     <fieldset disabled={busy || !!loadError} aria-label={`Actions for ${s.name}`} className="flex flex-wrap gap-1">
                       {['IN_PROGRESS', 'PAUSED'].includes(s.state) && <>
-                        <Button size="sm" variant="outline" className={ACTION_CLASS} onClick={() => act(s.attemptId, 'EXTRA_TIME')}>+Time</Button>
-                        <Button size="sm" variant="outline" className={ACTION_CLASS} onClick={() => act(s.attemptId, s.state === 'PAUSED' ? 'RESUME' : 'PAUSE')}>{s.state === 'PAUSED' ? 'Resume' : 'Pause'}</Button>
-                        <Button size="sm" variant="outline" className={ACTION_CLASS} onClick={() => act(s.attemptId, 'FORCE_SUBMIT')}>Submit</Button>
+                        {s.remainingSeconds !== null && <Button size="sm" variant="outline" className={ACTION_CLASS} onClick={() => act(s.attemptId!, 'EXTRA_TIME')}>+Time</Button>}
+                        <Button size="sm" variant="outline" className={ACTION_CLASS} onClick={() => act(s.attemptId!, s.state === 'PAUSED' ? 'RESUME' : 'PAUSE')}>{s.state === 'PAUSED' ? 'Resume' : 'Pause'}</Button>
+                        <Button size="sm" variant="outline" className={ACTION_CLASS} onClick={() => act(s.attemptId!, 'FORCE_SUBMIT')}>Submit</Button>
                       </>}
-                      {['SUBMITTED', 'AUTO_SUBMITTED', 'PENDING_GRADING', 'FINALIZED'].includes(s.state) && <Button size="sm" variant="outline" className={ACTION_CLASS} onClick={() => act(s.attemptId, 'REOPEN')}>Reopen</Button>}
-                      {s.state !== 'INVALIDATED' && <Button size="sm" variant="outline" className={`${ACTION_CLASS} text-destructive`} onClick={() => act(s.attemptId, 'INVALIDATE')}>Void</Button>}
-                      <Button size="sm" variant="outline" className={ACTION_CLASS} onClick={() => act(s.attemptId, 'INCIDENT_NOTE')}>Note</Button>
+                      {['SUBMITTED', 'AUTO_SUBMITTED', 'PENDING_GRADING', 'FINALIZED'].includes(s.state) && <Button size="sm" variant="outline" className={ACTION_CLASS} onClick={() => act(s.attemptId!, 'REOPEN')}>Reopen</Button>}
+                      {s.state !== 'INVALIDATED' && <Button size="sm" variant="outline" className={`${ACTION_CLASS} text-destructive`} onClick={() => act(s.attemptId!, 'INVALIDATE')}>Void</Button>}
+                      <Button size="sm" variant="outline" className={ACTION_CLASS} onClick={() => act(s.attemptId!, 'INCIDENT_NOTE')}>Note</Button>
                     </fieldset>
                   ) : <span className="text-xs text-muted-foreground">—</span>}
                 </td>
