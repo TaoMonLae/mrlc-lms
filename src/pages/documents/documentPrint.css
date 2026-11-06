@@ -1,0 +1,33 @@
+/* Official documents (report card, transcript, certificates) print on one A4
+   portrait sheet. The sheet is excluded from src/styles/print.css, so every
+   print rule it needs lives here. */
+
+.official-doc {
+  page: officialDoc;
+  width: 210mm;
+  min-height: 297mm;
+  max-width: 100%;
+  padding: 14mm 15mm 12mm;
+  font-variant-numeric: tabular-nums;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.official-doc .od-num { text-align: right; font-variant-numeric: tabular-nums; }
+.official-doc .od-keep { break-inside: avoid; page-break-inside: avoid; }
+
+@media print {
+  @page officialDoc { size: A4 portrait; margin: 12mm 13mm 11mm; }
+
+  .official-doc {
+    width: auto;
+    /* A4 height minus the @page margins, less a little slack so rounding
+       never pushes an empty second page; keeps the footer at the bottom. */
+    min-height: 272mm;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    font-size: 10.5pt;
+  }
+}
