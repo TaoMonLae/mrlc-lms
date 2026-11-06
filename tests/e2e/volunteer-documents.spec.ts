@@ -157,8 +157,10 @@ async function fixture(page: Page, options: {
 
 async function chooseServiceMonth(page: Page, label: 'From' | 'To', value: string) {
   const [year, month] = value.split('-');
-  await page.getByLabel(`${label} year`, { exact: true }).selectOption(year);
-  await page.getByLabel(`${label} month`, { exact: true }).selectOption(month);
+  // The month control's wrapping label also contains every option, so an exact
+  // label match never resolves. The combobox accessible name is the sr-only text.
+  await page.getByRole('combobox', { name: `${label} year`, exact: true }).selectOption(year);
+  await page.getByRole('combobox', { name: `${label} month`, exact: true }).selectOption(month);
 }
 
 async function completeServiceForm(page: Page) {

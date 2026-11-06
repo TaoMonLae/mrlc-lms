@@ -2890,7 +2890,10 @@ a.lq-milestone-row:focus-visible {
   --elib-soft: var(--muted);
   --elib-action: var(--link);
 }
-/* Dark surfaces must not use --elib-ink: var(--foreground);
+/* Dark surfaces must not use --elib-ink: it becomes light text in this theme. */
+.dark .elibrary-search-panel,
+.dark .elibrary-staff-rail {
+  background: var(--elib-paper);
   color: var(--elib-ink);
   border: 1px solid var(--elib-rule);
 }

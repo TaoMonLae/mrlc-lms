@@ -46,7 +46,6 @@ test('grouped exam navigation preserves every destination and keyboard dismissal
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Toggle theme between light and dark mode' }).click();
   await page.getByRole('menuitem', { name: 'Light', exact: true }).click();
-  await page.getByRole('menuitem', { name: 'Light', exact: true }).click();
   await expect(page.locator('html')).not.toHaveClass(/dark/);
   await nav.getByRole('button', { name: 'Responses' }).click();
   await page.screenshot({ animations: 'disabled', path: info.outputPath('exam-responses-light.png') });

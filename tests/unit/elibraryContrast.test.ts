@@ -12,8 +12,10 @@ function rule(selector: string) {
 function value(block: string, property: string): string {
   const result = block.match(new RegExp(`(?:^|;)\\s*${property}:\\s*([^;]+)`))?.[1].trim();
   assert.ok(result, `Missing ${property}`);
-  const token = result.match(/^var\((--elib-[a-z-]+)\)$/)?.[1];
-  return token ? value(rule('.dark .elibrary-catalog-page'), token) : result;
+  const token = result.match(/^var\((--[a-z0-9-]+)\)$/)?.[1];
+  if (!token) return result;
+  if (token.startsWith('--elib-')) return value(rule('.dark .elibrary-catalog-page'), token);
+  return value(rule('.dark'), token);
 }
 function contrast(a: string, b: string) {
   const luminance = (hex: string) => {
