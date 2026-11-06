@@ -48,6 +48,13 @@ export function registerDocumentRoutes(app: Express, ctx: DocumentRoutesContext)
     return term && term.length <= 100 ? term : null;
   };
 
+  // Official documents print the issuer under the signature line, so store the
+  // staff member's real name rather than their login email.
+  const issuerName = async (jwtUser: JwtPayload) => {
+    const u = await prisma.user.findUnique({ where: { id: jwtUser.userId }, select: { firstName: true, lastName: true } }).catch(() => null);
+    return (u ? fullName(u).trim() : "") || jwtUser.email;
+  };
+
   const attendanceSummary = async (studentId: string) => {
     const att = await prisma.attendance.findMany({ where: { studentId } });
     const total = att.length;
@@ -178,7 +185,7 @@ export function registerDocumentRoutes(app: Express, ctx: DocumentRoutesContext)
           documentNumber, verifyToken, type, status: "ACTIVE",
           studentId, studentName: snapshot.student.name, studentCode: snapshot.student.code,
           className: snapshot.student.className, term: snapshot.term,
-          payload: snapshot, issuedById: jwtUser.userId, issuedByName: jwtUser.email,
+          payload: snapshot, issuedById: jwtUser.userId, issuedByName: await issuerName(jwtUser),
           issueDate: issuedAt,
           expiryDate: type === "STUDENT_ID_CARD" ? new Date(snapshot.validity.expiryDate) : null,
         },
@@ -247,6 +254,7 @@ export function registerDocumentRoutes(app: Express, ctx: DocumentRoutesContext)
       }
       const klass = await prisma.class.findUnique({ where: { id: classId }, select: { name: true } });
       if (!klass) { res.status(404).json({ error: "Class not found" }); return; }
+      const bulkIssuerName = await issuerName(jwtUser);
 
       // Fetch students with class info for accurate term matching
       const students = await prisma.student.findMany({
@@ -297,7 +305,7 @@ export function registerDocumentRoutes(app: Express, ctx: DocumentRoutesContext)
                 documentNumber, verifyToken, type, status: "ACTIVE",
                 studentId: s.id, studentName: snapshot.student.name, studentCode: snapshot.student.code,
                 className: snapshot.student.className, term: snapshot.term,
-                payload: snapshot, issuedById: jwtUser.userId, issuedByName: jwtUser.email,
+                payload: snapshot, issuedById: jwtUser.userId, issuedByName: bulkIssuerName,
                 issueDate: issuedAt,
                 expiryDate: type === "STUDENT_ID_CARD" ? new Date(snapshot.validity.expiryDate) : null,
               },
@@ -590,7 +598,7 @@ export function registerDocumentRoutes(app: Express, ctx: DocumentRoutesContext)
             documentNumber, verifyToken, type: old.type, status: "ACTIVE",
             studentId: old.studentId, studentName: snapshot.student.name, studentCode: snapshot.student.code,
             className: snapshot.student.className, term: snapshot.term, payload: snapshot,
-            issuedById: jwtUser.userId, issuedByName: jwtUser.email, reissuedFromId: old.id,
+            issuedById: jwtUser.userId, issuedByName: await issuerName(jwtUser), reissuedFromId: old.id,
             issueDate: issuedAt,
             expiryDate: old.type === "STUDENT_ID_CARD" ? new Date(snapshot.validity.expiryDate) : null,
           },
