@@ -4,7 +4,7 @@ import QRCode from 'qrcode';
 import { ArrowLeft, Loader2, Printer, RefreshCw } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { apiGet } from '../../lib/api';
-import type { VolunteerDocumentRecord } from '@/shared/volunteerDocuments';
+import { VOLUNTEER_DOCUMENT_TYPE_LABELS, type VolunteerDocumentRecord } from '@/shared/volunteerDocuments';
 import VolunteerDocumentSheet from './VolunteerDocumentSheet';
 
 export default function VolunteerDocumentPrint() {
@@ -34,6 +34,15 @@ export default function VolunteerDocumentPrint() {
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [id, attempt]);
+
+  // Browsers use the page title as the suggested PDF file name.
+  useEffect(() => {
+    if (!document) return;
+    const previous = window.document.title;
+    window.document.title = [document.recipientName, VOLUNTEER_DOCUMENT_TYPE_LABELS[document.type], document.documentNumber]
+      .filter(Boolean).join(' - ').replace(/[\\/:*?"<>|]+/g, '-');
+    return () => { window.document.title = previous; };
+  }, [document]);
 
   const printDocument = async () => {
     if (printing) return;

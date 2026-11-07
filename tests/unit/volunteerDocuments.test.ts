@@ -36,3 +36,19 @@ test('volunteer document validation requires honest service months and bounded f
     assert.equal(normalized.data.organizationSignatoryTitle, 'School Director');
   }
 });
+
+test('certificate designs are validated, default to Classic and never attach to letters', () => {
+  const now = new Date('2026-10-01T00:00:00Z');
+  const certificate = (design?: unknown) => validateVolunteerDocumentInput({ ...input, design }, now);
+  for (const design of ['CLASSIC', 'REGISTRY', 'EDITORIAL', 'WOVEN']) {
+    const result = certificate(design);
+    assert.equal(result.success, true, design);
+    if (result.success) assert.equal(result.data.design, design);
+  }
+  const fallback = certificate(undefined);
+  assert.equal(fallback.success && fallback.data.design, 'CLASSIC');
+  for (const bad of ['classic', 'MODERN', '__proto__', 7]) assert.equal(certificate(bad).success, false, String(bad));
+  const letter = validateVolunteerDocumentInput({ ...input, type: 'VOLUNTEER_APPRECIATION_LETTER', design: 'WOVEN' }, now);
+  assert.equal(letter.success, true);
+  if (letter.success) assert.equal('design' in letter.data, false);
+});
