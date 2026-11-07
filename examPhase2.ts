@@ -1,3 +1,4 @@
+import { ESSAY_TIMER_EVENT, essayTimerConfig, essayTimerState, type EssayClockRecord } from "./shared/examEssayTimer";
 import { invigilationChange } from "./lib/examInvigilation";
 import { ensureEditableExamContent } from "./lib/examContent";
 import { examScheduleUpdate } from "./shared/examSchedule";
@@ -705,6 +706,54 @@ export function registerExamPhase2Routes(deps: Deps): void {
     }
   });
 
+  // Serialize the first opening against saves, pauses and session takeovers.
+  // The durable event also records a blank/zero-second start, so no unload save
+  // or browser storage is needed to keep time while the page is closed.
+  async function startEssayTimer(attempt: any, config: { questionId: string; durationSeconds: number }, legacyUsed = 0) {
+    return prisma.$transaction(async (tx: any) => {
+      const claimed = await tx.examAttempt.updateMany({
+        where: { id: attempt.id, state: "IN_PROGRESS", sessionToken: attempt.sessionToken },
+        data: { lastSavedAt: new Date() },
+      });
+      if (claimed.count !== 1) throw Object.assign(new Error("Attempt changed while starting the essay"), { examTransition: true });
+      const current = await tx.examAttempt.findUnique({ where: { id: attempt.id } });
+      let event = await tx.attemptEvent.findFirst({ where: { attemptId: attempt.id, type: ESSAY_TIMER_EVENT }, orderBy: { createdAt: "asc" } });
+      const now = Date.now();
+      if (!event) {
+        const used = Math.max(0, Math.min(config.durationSeconds, legacyUsed));
+        const payload: EssayClockRecord = {
+          ...config, deadline: new Date(now + (config.durationSeconds - used) * 1000).toISOString(),
+          accumulatedPauseSeconds: current.accumulatedPauseSeconds || 0,
+        };
+        event = await tx.attemptEvent.create({ data: { attemptId: attempt.id, type: ESSAY_TIMER_EVENT, actorRole: "STUDENT", payload } });
+      }
+      return essayTimerState(config, event.payload, current, now);
+    });
+  }
+
+  app.post("/api/attempts/:attemptId/essay/start", authMiddleware, examLimiter, async (req, res) => {
+    try {
+      const student = await studentForReq(req);
+      const attempt = await prisma.examAttempt.findUnique({ where: { id: req.params.attemptId }, include: { exam: { include: { questions: true } } } });
+      if (!attempt) { res.status(404).json({ error: "Attempt not found" }); return; }
+      if (!student || attempt.studentId !== student.id) { res.status(403).json({ error: "Forbidden" }); return; }
+      if (attempt.state !== "IN_PROGRESS") { res.status(409).json({ error: attempt.state === "PAUSED" ? "ATTEMPT_PAUSED" : "Attempt is not active", state: attempt.state }); return; }
+      if (!hasCurrentSession(attempt, req.body?.sessionToken)) { res.status(409).json({ error: "SESSION_CONFLICT" }); return; }
+      if (isExpired(attempt)) { res.status(409).json({ error: "TIME_EXPIRED" }); return; }
+      const questions = Array.isArray(attempt.frozenContent) && attempt.frozenContent.length
+        ? attempt.frozenContent
+        : (attempt.questionOrder || attempt.exam.questions.map((q: any) => q.id)).map((id: string) => attempt.exam.questions.find((q: any) => q.id === id)).filter(Boolean);
+      const config = essayTimerConfig(attempt.exam.settings, questions);
+      if (!config) { res.status(400).json({ error: "This attempt has no timed Extended Response" }); return; }
+      const saved = await prisma.examAnswer.findUnique({ where: { attemptId_questionId: { attemptId: attempt.id, questionId: config.questionId } } });
+      res.json({ essayTimer: await startEssayTimer(attempt, config, saved?.timeSpentSeconds || 0) });
+    } catch (err: any) {
+      if (err?.examTransition) { res.status(409).json({ error: "ATTEMPT_CHANGED", message: "The attempt changed. Reload it from My Exams." }); return; }
+      logger.error("essay timer start failed", err);
+      res.status(500).json({ error: "Could not start the Extended Response clock. Please retry." });
+    }
+  });
+
   // Build the student-facing attempt payload (sanitized questions in frozen order).
   async function attemptPayload(attempt: any, exam: any, studentId: string) {
     let ordered: any[];
@@ -729,6 +778,17 @@ export function registerExamPhase2Routes(deps: Deps): void {
       ordered = order.map((id) => byId[id]).filter(Boolean).map(sanitizeQuestion);
     }
     const answers = await prisma.examAnswer.findMany({ where: { attemptId: attempt.id } });
+    const config = essayTimerConfig(exam.settings, ordered);
+    let essayTimer = null;
+    if (config) {
+      const event = await prisma.attemptEvent.findFirst({ where: { attemptId: attempt.id, type: ESSAY_TIMER_EVENT }, orderBy: { createdAt: "asc" } });
+      const legacyAnswer = answers.find((a: any) => a.questionId === config.questionId && a.timeSpentSeconds != null);
+      // Existing attempts have no reliable historical clock. Preserve their
+      // recorded allowance once, rather than retroactively charging downtime.
+      essayTimer = !event && legacyAnswer && attempt.state === "IN_PROGRESS"
+        ? await startEssayTimer(attempt, config, legacyAnswer.timeSpentSeconds)
+        : essayTimerState(config, event?.payload ?? null, attempt);
+    }
     const accommodation = attempt.accommodationId
       ? await prisma.examAccommodation.findUnique({ where: { id: attempt.accommodationId }, select: { additionalBreaks: true } })
       : null;
@@ -738,6 +798,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
         attemptNumber: attempt.attemptNumber, lastSavedAt: attempt.lastSavedAt,
         sessionToken: attempt.sessionToken, remainingSeconds: remainingSeconds(attempt),
         canPause: !!accommodation?.additionalBreaks,
+        essayTimer,
         serverTime: new Date().toISOString(),
       },
       exam: {
@@ -836,6 +897,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
         return;
       }
       let lastSavedAt = new Date();
+      let essayTimer = null;
       await prisma.$transaction(async (tx: any) => {
         const claimed = await tx.examAttempt.updateMany({
           where: { id: attempt.id, state: "IN_PROGRESS", sessionToken: b.sessionToken },
@@ -848,8 +910,13 @@ export function registerExamPhase2Routes(deps: Deps): void {
           const saved = await persistAnswerPayload(tx, attempt, answers, reason, true, ipOf(req), uaOf(req));
           lastSavedAt = saved.now;
         }
+        const event = await tx.attemptEvent.findFirst({ where: { attemptId: attempt.id, type: ESSAY_TIMER_EVENT }, orderBy: { createdAt: "asc" } });
+        if (event) {
+          const current = await tx.examAttempt.findUnique({ where: { id: attempt.id } });
+          essayTimer = essayTimerState(event.payload, event.payload, current);
+        }
       });
-      res.json({ ok: true, lastSavedAt: lastSavedAt.toISOString(), remainingSeconds: remainingSeconds({ ...attempt }), serverTime: new Date().toISOString() });
+      res.json({ ok: true, lastSavedAt: lastSavedAt.toISOString(), remainingSeconds: remainingSeconds({ ...attempt }), essayTimer, serverTime: new Date().toISOString() });
     } catch (err: any) {
       if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Exam system not migrated yet" }); return; }
       if (err?.examTransition) { res.status(409).json({ error: "ATTEMPT_CHANGED", message: "The attempt changed while answers were being saved. Reload the attempt." }); return; }

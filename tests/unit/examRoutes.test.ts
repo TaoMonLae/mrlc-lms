@@ -40,7 +40,7 @@ test('idle check-ins update liveness without writing duplicate answer snapshots'
   let checkIns = 0;
   const h = harness({
     examAttempt: { findUnique: async () => ({ id: 'a1', studentId: 's1', state: 'IN_PROGRESS', sessionToken: 'token', selectedQuestionIds: ['q1'], serverDeadline: new Date(Date.now() + 60_000) }) },
-    $transaction: async (fn: any) => fn({ examAttempt: { updateMany: async () => { checkIns++; return { count: 1 }; } } }),
+    $transaction: async (fn: any) => fn({ examAttempt: { updateMany: async () => { checkIns++; return { count: 1 }; } }, attemptEvent: { findFirst: async () => null } }),
   });
   const result = await h.invoke('post', '/api/attempts/:attemptId/save', { sessionToken: 'token', reason: 'AUTOSAVE', answers: [] });
   assert.equal(result.status, 200);

@@ -5,7 +5,10 @@ const available = { id: 'exam-a', title: 'Science checkpoint', durationMinutes: 
 async function fixture(page: Page, role = 'STUDENT', seconds = 0, settings = {}) {
   const user = { id: `exam-${role}`, role, firstName: 'Exam', lastName: 'Tester', isActive: true, cursorEffect: 'NONE' };
   const writes: { path: string; body: any }[] = [];
-  const flags = { failSave: false, failState: false, failResult: false, failTeacher: false };
+  const flags = { failSave: false, failState: false, failResult: false, failTeacher: false, failEssayStart: false };
+  let essayDeadline: number | null = null;
+  const essayDuration = Number((settings as any).essayMinutes || 0) * 60;
+  const essayTimer = () => essayDuration ? { questionId: 'q1', durationSeconds: essayDuration, started: essayDeadline !== null, remainingSeconds: essayDeadline === null ? essayDuration : Math.max(0, Math.ceil((essayDeadline - Date.now()) / 1000)), deadline: essayDeadline === null ? null : new Date(essayDeadline).toISOString(), serverTime: new Date().toISOString() } : null;
   await page.addInitScript(({ user, releaseId }) => {
     localStorage.setItem('mrlc-lms-theme', matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     sessionStorage.setItem('auth_token', 'exam-test'); sessionStorage.setItem('auth_user', JSON.stringify(user));
@@ -23,13 +26,18 @@ async function fixture(page: Page, role = 'STUDENT', seconds = 0, settings = {})
       if (route.request().postDataJSON().accessCode !== 'READY') return route.fulfill({ status: 403, json: { error: 'Invalid access code' } });
       return route.fulfill({ json: { attempt: { id: 'attempt-a', sessionToken: 'session-a' } } });
     }
+    if (path.endsWith('/essay/start')) {
+      if (flags.failEssayStart) return route.abort('failed');
+      essayDeadline ??= Date.now() + essayDuration * 1000;
+      return route.fulfill({ json: { essayTimer: essayTimer() } });
+    }
     if (path.endsWith('/state')) {
       if (flags.failState) { return route.abort('failed'); }
-      return route.fulfill({ json: { attempt: { state: 'IN_PROGRESS', sessionToken: 'session-a', remainingSeconds: seconds, canPause: true }, exam: { title: 'Science checkpoint', settings }, questions: [{ id: 'q1', text: 'Explain evaporation.', type: 'ESSAY', points: 5 }, { id: 'q2', text: 'Explain condensation.', type: 'ESSAY', points: 5 }], answers: [] } });
+      return route.fulfill({ json: { attempt: { state: 'IN_PROGRESS', sessionToken: 'session-a', remainingSeconds: seconds, canPause: true, essayTimer: essayTimer() }, exam: { title: 'Science checkpoint', settings }, questions: [{ id: 'q1', text: 'Explain evaporation.', type: 'ESSAY', points: 5 }, { id: 'q2', text: 'Explain condensation.', type: 'ESSAY', points: 5 }], answers: [] } });
     }
     if (path.endsWith('/save')) {
       if (flags.failSave) { flags.failSave = false; return route.abort('failed'); }
-      return route.fulfill({ json: { ok: true, lastSavedAt: new Date().toISOString(), remainingSeconds: seconds } });
+      return route.fulfill({ json: { ok: true, lastSavedAt: new Date().toISOString(), remainingSeconds: seconds, essayTimer: essayTimer() } });
     }
     if (path.endsWith('/submit')) return route.fulfill({ json: { ok: true, state: 'PENDING_GRADING' } });
     if (path.endsWith('/result')) {
@@ -572,4 +580,96 @@ test('invigilator validates notes and time input and hides extra time for untime
   await page.reload();
   await expect(actions.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
   await expect(actions.getByRole('button', { name: '+Time', exact: true })).toHaveCount(0);
+});
+
+// The mock server clock and saved start survive destruction of the entire page.
+// A blank answer (no autosave and no useful unload save) must still consume time.
+test('a blank essay keeps counting across page closure and is locked when reopened after expiry', async ({ page, context }) => {
+  let serverNow = Date.now();
+  let deadline: number | null = null;
+  let starts = 0;
+  const timer = () => ({ questionId: 'q1', durationSeconds: 60, started: deadline !== null, remainingSeconds: deadline === null ? 60 : Math.max(0, Math.ceil((deadline - serverNow) / 1000)), deadline: deadline === null ? null : new Date(deadline).toISOString(), serverTime: new Date(serverNow).toISOString() });
+  const configure = async (target: Page) => {
+    const result = await fixture(target, 'STUDENT', 3600, { essayMinutes: 1 });
+    await target.route('**/api/attempts/attempt-a/state', route => route.fulfill({ json: {
+      attempt: { state: 'IN_PROGRESS', sessionToken: 'session-a', remainingSeconds: 3600, essayTimer: timer() },
+      exam: { title: 'Essay closure regression', settings: { essayMinutes: 1 } },
+      questions: [{ id: 'q1', text: 'Explain evaporation.', type: 'ESSAY', points: 5 }],
+      answers: [{ questionId: 'q1', answerText: '', timeSpentSeconds: 0 }],
+    } }));
+    await target.route('**/api/attempts/attempt-a/essay/start', route => {
+      starts++; deadline ??= serverNow + 60_000;
+      return route.fulfill({ json: { essayTimer: timer() } });
+    });
+    await target.route('**/api/attempts/attempt-a/save', route => route.fulfill({ json: { ok: true, remainingSeconds: 3600, essayTimer: timer() } }));
+    return result;
+  };
+  await configure(page);
+  await page.goto('/exam2/attempts/attempt-a/play');
+  await expect(page.getByLabel('Your answer')).toBeEditable();
+  expect(starts).toBe(1);
+  await page.close();
+  serverNow += 25_000;
+  const reopened = await context.newPage();
+  await configure(reopened);
+  await reopened.goto('/exam2/attempts/attempt-a/play');
+  await expect(reopened.getByRole('timer')).toContainText('00:35');
+  await expect(reopened.getByLabel('Your answer')).toBeEditable();
+  expect(starts).toBe(1);
+  await reopened.close();
+  serverNow += 40_000;
+  const expired = await context.newPage();
+  const { writes } = await configure(expired);
+  await expired.goto('/exam2/attempts/attempt-a/play');
+  await expect(expired.getByRole('timer')).toContainText('Your response is locked');
+  await expect(expired.getByLabel('Your answer')).toHaveAttribute('readonly', '');
+  expect(starts).toBe(1);
+  expect(writes.some(w => w.path.endsWith('/submit'))).toBe(false);
+});
+
+test('a failed or lost essay-start response stays read-only and retry reuses the persisted deadline', async ({ page }) => {
+  await fixture(page, 'STUDENT', 3600, { essayMinutes: 1 });
+  let serverNow = Date.now();
+  let deadline: number | null = null;
+  let fail = true;
+  await page.route('**/api/attempts/attempt-a/essay/start', route => {
+    deadline ??= serverNow + 60_000;
+    if (fail) return route.abort('failed');
+    return route.fulfill({ json: { essayTimer: { questionId: 'q1', durationSeconds: 60, started: true, remainingSeconds: (deadline - serverNow) / 1000, deadline: new Date(deadline).toISOString(), serverTime: new Date(serverNow).toISOString() } } });
+  });
+  await page.goto('/exam2/attempts/attempt-a/play');
+  await expect(page.getByRole('alert')).toContainText('Could not start');
+  await expect(page.getByLabel('Your answer')).toHaveAttribute('readonly', '');
+  serverNow += 20_000;
+  fail = false;
+  await page.getByRole('button', { name: 'Retry essay clock' }).click();
+  await expect(page.getByLabel('Your answer')).toBeEditable();
+  await expect(page.getByRole('timer')).toContainText('00:40');
+});
+
+test('essay heartbeat applies pause compensation and late responses do not restore elapsed time', async ({ page }) => {
+  await page.clock.install();
+  await fixture(page, 'STUDENT', 3600, { essayMinutes: 1 });
+  const now = Date.now();
+  let deadline = now + 60_000;
+  const timer = () => ({ questionId: 'q1', durationSeconds: 60, started: true, remainingSeconds: (deadline - now) / 1000, deadline: new Date(deadline).toISOString(), serverTime: new Date(now).toISOString() });
+  await page.route('**/api/attempts/attempt-a/essay/start', route => route.fulfill({ json: { essayTimer: timer() } }));
+  await page.goto('/exam2/attempts/attempt-a/play');
+  await expect(page.getByLabel('Your answer')).toBeEditable();
+  deadline += 120_000; // A teacher paused and resumed between heartbeat requests.
+  await page.route('**/api/attempts/attempt-a/save', route => route.fulfill({ json: { ok: true, remainingSeconds: 3600, essayTimer: timer() } }));
+  await page.getByRole('button', { name: 'Save answers' }).click();
+  await expect(page.getByRole('timer')).toContainText('03:00');
+  let release: (() => void) | undefined;
+  await page.route('**/api/attempts/attempt-a/save', async route => {
+    const snapshot = timer();
+    await new Promise<void>(resolve => { release = resolve; });
+    return route.fulfill({ json: { ok: true, remainingSeconds: 3600, essayTimer: snapshot } });
+  });
+  await page.getByRole('button', { name: 'Save answers' }).click();
+  await expect.poll(() => !!release).toBe(true);
+  await page.clock.fastForward(200_000);
+  release!();
+  await expect(page.getByRole('timer')).toContainText('Your response is locked');
+  await expect(page.getByLabel('Your answer')).toHaveAttribute('readonly', '');
 });

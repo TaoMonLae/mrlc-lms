@@ -1,3 +1,4 @@
+import { essayDisplayClock, type EssayDisplayClock, type EssayTimer } from "../../../shared/examEssayTimer";
 import { useEffect, useMemo, useRef, useState, useCallback, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
@@ -135,23 +136,33 @@ export default function ExamPlayer() {
   // Text the student copied or cut from their own answer box. Pasting it back
   // is editing their own work, not bringing in outside text.
   const ownClipboard = useRef('');
-  // Extended Response clock. `essayBase` is the time already used (from the
-  // server); `essayStartedAt` is when this page started counting on top of it.
-  const essayBase = useRef(0);
-  const essayStartedAt = useRef<number | null>(null);
+  // The server persists the start before editing is enabled. The browser only
+  // displays the remaining wall-clock allowance, including time spent closed.
+  const [essayTimer, setEssayTimer] = useState<EssayTimer | null>(null);
+  const essayDeadline = useRef<number | null>(null);
+  const essayClockAnchor = useRef<EssayDisplayClock | null>(null);
+  const essayStartInFlight = useRef(false);
+  const [essayStartError, setEssayStartError] = useState('');
   const essayLockAnnounced = useRef(false);
+  const syncEssayTimer = useCallback((timer: EssayTimer | null, requestElapsedMs = 0) => {
+    const now = Date.now();
+    essayClockAnchor.current = timer ? essayDisplayClock(timer, now, requestElapsedMs, essayClockAnchor.current) : null;
+    essayDeadline.current = essayClockAnchor.current?.localDeadline ?? null;
+    if (essayDeadline.current !== null && essayDeadline.current > now) essayLockAnnounced.current = false;
+    setEssayTimer(timer);
+  }, []);
   const breakKey = `mrlc:exam-break:${attemptId}`;
   const [breakState, setBreakState] = useState<BreakState | null>(() => readBreak(`mrlc:exam-break:${attemptId}`));
   const essayMinutes = Math.max(0, Number(examSettings.essayMinutes) || 0);
   const breakMinutes = Math.max(0, Number(examSettings.breakMinutes) || 0);
-  const essayIndex = useMemo(() => essayMinutes > 0 ? questions.findIndex((question) => LONG_ANSWER_TYPES.includes(question.type)) : -1, [questions, essayMinutes]);
+  const essayIndex = useMemo(() => essayTimer ? questions.findIndex((question) => question.id === essayTimer.questionId) : essayMinutes > 0 ? questions.findIndex((question) => LONG_ANSWER_TYPES.includes(question.type)) : -1, [questions, essayMinutes, essayTimer]);
   const essayIdRef = useRef<string | null>(null);
   essayIdRef.current = essayIndex >= 0 ? questions[essayIndex]?.id ?? null : null;
-  const essayLimit = essayMinutes * 60;
+  const essayLimit = essayTimer?.durationSeconds ?? essayMinutes * 60;
   const essayUsedRef = useRef<() => number>(() => 0);
-  essayUsedRef.current = () => Math.min(essayLimit, essayBase.current + (essayStartedAt.current !== null ? (Date.now() - essayStartedAt.current) / 1000 : 0));
-  const essayStarted = essayIndex >= 0 && essayStartedAt.current !== null;
-  const essayRemaining = essayStarted ? Math.max(0, Math.ceil(essayLimit - essayUsedRef.current())) : essayLimit;
+  essayUsedRef.current = () => essayDeadline.current !== null ? Math.min(essayLimit, Math.max(0, essayLimit - (essayDeadline.current - Date.now()) / 1000)) : 0;
+  const essayStarted = essayIndex >= 0 && essayDeadline.current !== null;
+  const essayRemaining = essayStarted ? Math.max(0, Math.ceil((essayDeadline.current! - Date.now()) / 1000)) : essayLimit;
   const essayLocked = essayStarted && essayRemaining <= 0;
   const onBreak = !!breakState && breakState.endsAt > Date.now();
 
@@ -183,6 +194,7 @@ export default function ExamPlayer() {
     try {
     const storedToken = attemptId ? sessionStorage.getItem(`exam_attempt_session_${attemptId}`) || '' : '';
     if (!storedToken) { setBlocked('This exam session has expired. Resume the attempt from My Exams.'); setLoading(false); return; }
+    const requestStarted = performance.now();
     const res = await fetch(`/api/attempts/${attemptId}/state`, { headers: { ...authHeaders(), 'X-Exam-Session': storedToken } });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -208,15 +220,13 @@ export default function ExamPlayer() {
     const map: Record<string, Answer> = {};
     for (const a of data.answers || []) map[a.questionId] = { answerText: a.answerText ?? '', selectedOptions: a.selectedOptions ?? [], flaggedForReview: a.flaggedForReview, timeSpentSeconds: a.timeSpentSeconds ?? null };
     setAnswers(map);
-    // Resume an Extended Response clock that was already running.
-    const essayMinutesSetting = Number(data.exam?.settings?.essayMinutes) || 0;
-    const essayQuestion = essayMinutesSetting > 0 ? (data.questions || []).find((question: Q) => LONG_ANSWER_TYPES.includes(question.type)) : undefined;
-    const used = essayQuestion ? Number(map[essayQuestion.id]?.timeSpentSeconds) || 0 : 0;
-    essayBase.current = used;
-    essayStartedAt.current = used > 0 ? Date.now() : null;
+    essayClockAnchor.current = null;
+    syncEssayTimer(data.attempt?.essayTimer ?? null, performance.now() - requestStarted);
+    essayLockAnnounced.current = false;
+    setEssayStartError('');
     setLoading(false);
     } catch { setLoadError('Could not load your exam. Check your connection and retry.'); setLoading(false); }
-  }, [attemptId, openResult]);
+  }, [attemptId, openResult, syncEssayTimer]);
 
   useEffect(() => { loadState(); }, [loadState]);
 
@@ -234,7 +244,7 @@ export default function ExamPlayer() {
   // clock is, so a stale value can't rewind the Extended Response time.
   const answerPayload = (qid: string) => {
     const { timeSpentSeconds: _stored, ...answer } = answersRef.current[qid] || {};
-    return { questionId: qid, ...answer, ...(qid === essayIdRef.current && essayStartedAt.current !== null ? { timeSpentSeconds: Math.floor(essayUsedRef.current()) } : {}) };
+    return { questionId: qid, ...answer, ...(qid === essayIdRef.current && essayDeadline.current !== null ? { timeSpentSeconds: Math.floor(essayUsedRef.current()) } : {}) };
   };
 
   const save = useCallback(async (reason: string) => {
@@ -249,9 +259,11 @@ export default function ExamPlayer() {
       const savedVersions = Object.fromEntries(toSave.map((qid) => [qid, answerVersions.current[qid] || 0]));
       const payload = toSave.map((qid) => answerPayload(qid));
       setSaving(true);
+      const requestStarted = performance.now();
       const { ok, status, data } = await post(`/api/attempts/${attemptId}/save`, { sessionToken, reason, answers: payload });
       setSaving(false);
       if (ok) {
+        if (data.essayTimer) syncEssayTimer(data.essayTimer, performance.now() - requestStarted);
         setSaveError('');
         for (const questionId of toSave) {
           if ((answerVersions.current[questionId] || 0) === savedVersions[questionId]) dirty.current.delete(questionId);
@@ -275,7 +287,7 @@ export default function ExamPlayer() {
     const pending = performSave();
     saveInFlight.current = pending;
     try { return await pending; } finally { if (saveInFlight.current === pending) saveInFlight.current = null; }
-  }, [attemptId, sessionToken, post, openResult]);
+  }, [attemptId, sessionToken, post, openResult, syncEssayTimer]);
 
   // autosave loop (every 8s)
   useEffect(() => {
@@ -284,7 +296,7 @@ export default function ExamPlayer() {
     // receives time extensions, and notices a teacher pause or submission.
     const t = setInterval(() => {
       if (attemptFinished.current || saveInFlight.current || submitPending.current || (countdownDeadline.current && Date.now() >= countdownDeadline.current)) return;
-      if (essayIdRef.current && essayStartedAt.current !== null && !essayLockAnnounced.current) dirty.current.add(essayIdRef.current);
+      if (essayIdRef.current && essayDeadline.current !== null && !essayLockAnnounced.current) dirty.current.add(essayIdRef.current);
       void save('AUTOSAVE');
     }, 8000);
     return () => clearInterval(t);
@@ -320,8 +332,8 @@ export default function ExamPlayer() {
     // Leaving the Extended Response for a later question starts the break once.
     if (breakMinutes > 0 && essayIndex >= 0 && idx === essayIndex && target > essayIndex && !breakState) startBreak();
     setIdx(target);
-    if (dirty.current.size || essayStartedAt.current !== null) {
-      if (essayIdRef.current && essayStartedAt.current !== null && !essayLockAnnounced.current) dirty.current.add(essayIdRef.current);
+    if (dirty.current.size || essayDeadline.current !== null) {
+      if (essayIdRef.current && essayDeadline.current !== null && !essayLockAnnounced.current) dirty.current.add(essayIdRef.current);
       void save('NAVIGATE');
     }
     return true;
@@ -417,15 +429,30 @@ export default function ExamPlayer() {
     }
   };
 
-  // The Extended Response clock starts the first time the student opens it and
-  // then keeps running, like the separate GED Extended Response clock.
+  const startEssay = useCallback(async () => {
+    if (essayStartInFlight.current || essayDeadline.current !== null) return;
+    essayStartInFlight.current = true;
+    setEssayStartError('');
+    try {
+      const requestStarted = performance.now();
+      const { ok, data } = await post(`/api/attempts/${attemptId}/essay/start`, { sessionToken });
+      if (ok && data.essayTimer?.started) {
+        syncEssayTimer(data.essayTimer, performance.now() - requestStarted);
+        toast.info('Extended Response clock started', { description: 'It keeps running if you move to other questions or close the page.' });
+      } else if (data.error === 'SESSION_CONFLICT' || data.error === 'ATTEMPT_PAUSED' || data.error === 'ATTEMPT_CHANGED') {
+        setBlocked(data.message || 'This attempt changed. Resume it from My Exams.');
+      } else if (data.error === 'TIME_EXPIRED') {
+        void loadState();
+      } else {
+        setEssayStartError('Could not start the Extended Response clock. Check your connection and retry.');
+      }
+    } finally { essayStartInFlight.current = false; }
+  }, [attemptId, sessionToken, post, syncEssayTimer, loadState]);
+
   useEffect(() => {
-    if (loading || essayIndex < 0 || idx !== essayIndex || essayStartedAt.current !== null) return;
-    essayStartedAt.current = Date.now() - essayBase.current * 1000;
-    essayBase.current = 0;
-    if (essayIdRef.current) dirty.current.add(essayIdRef.current);
-    toast.info(`Extended Response clock started: ${essayMinutes} ${essayMinutes === 1 ? 'minute' : 'minutes'}`, { description: 'It keeps running even if you move to other questions.' });
-  }, [idx, essayIndex, loading, essayMinutes]);
+    if (loading || blocked || loadError || onBreak || essayIndex < 0 || idx !== essayIndex || essayStarted || essayStartError) return;
+    void startEssay();
+  }, [idx, essayIndex, loading, blocked, loadError, onBreak, essayStarted, essayStartError, startEssay]);
 
   // When the Extended Response time ends, the response is saved and locked.
   useEffect(() => {
@@ -663,10 +690,11 @@ export default function ExamPlayer() {
       <div>
         {timedEssay && <div className={`ep-essay-clock ${lockedEssay ? 'is-over' : essayRemaining <= 300 ? 'is-low' : ''}`} role="timer">
           <PenLine size={15} aria-hidden="true" />
-          {lockedEssay ? 'Extended Response time is over. Your response is locked.' : <>Extended Response time left: <strong>{clock(essayRemaining)}</strong></>}
+          {lockedEssay ? 'Extended Response time is over. Your response is locked.' : !essayStarted ? 'Starting Extended Response clock…' : <>Extended Response time left: <strong>{clock(essayRemaining)}</strong></>}
         </div>}
+        {timedEssay && essayStartError && <div role="alert"><p>{essayStartError}</p><Button onClick={() => void startEssay()}>Retry essay clock</Button></div>}
         <textarea
-          readOnly={lockedEssay}
+          readOnly={lockedEssay || (timedEssay && !essayStarted)}
           aria-label="Your answer"
           aria-describedby={longAnswer ? `words-${q.id}` : undefined}
           className={`w-full rounded-lg border border-border bg-card p-3 text-sm ${longAnswer ? 'ep-essay' : 'min-h-[140px]'}`}
