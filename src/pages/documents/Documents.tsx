@@ -1,335 +1,458 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { FileBadge, Plus, Loader2, ExternalLink, Link2, Ban, RefreshCw, Eye, Layers, Trash2, Download } from 'lucide-react';
+import {
+  Ban, CheckCircle2, Copy, Download, ExternalLink, FileBadge, MoreHorizontal, Plus, RefreshCw, Search, Trash2, X,
+} from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { apiGet, apiSend, downloadAuthenticatedFile } from '../../lib/api';
 import { usePermissions } from '../../lib/permissions';
 import { officialDocumentViewPath } from '@/shared/officialDocuments';
-
-const TYPE_LABELS: Record<string, string> = {
-  REPORT_CARD: 'Report Card',
-  TRANSCRIPT: 'Transcript',
-  ENROLLMENT_CONFIRMATION: 'Enrollment Confirmation',
-  COMPLETION_CERTIFICATE: 'Completion Certificate',
-  PROGRESS_REPORT: 'Progress Report',
-  STUDENT_ID_CARD: 'Student ID Card',
-};
+import IssueDocumentPanel, { type ClassOption, type StudentOption } from './IssueDocumentPanel';
+import { DOCUMENT_STATUS_LABELS, DOCUMENT_TYPE_LABELS } from './documentLabels';
 
 type Doc = {
   id: string; documentNumber: string; verifyToken: string; type: string; status: string;
-  studentName: string; studentCode: string; term: string | null; issueDate: string; downloadCount: number;
-  issuedById?: string;
+  studentName: string; studentCode: string; className?: string | null; term: string | null;
+  issueDate: string; downloadCount: number; issuedById?: string; issuedByName?: string | null;
 };
+type StatusTab = 'all' | 'ACTIVE' | 'CANCELLED' | 'REISSUED';
+type PendingAction = { kind: 'cancel' | 'reissue' | 'delete'; doc: Doc } | null;
 
-const statusStyle = (s: string) =>
-  s === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : s === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-muted text-muted-foreground';
+const PAGE_SIZE = 25;
+const LIST_LIMIT = 300; // GET /api/documents returns the 300 most recent
+const STATUS_TABS: { value: StatusTab; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'REISSUED', label: 'Reissued' },
+];
+const fmtDate = (d: string) => new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 
 export default function DocumentsPage() {
   const { isAdmin, user } = usePermissions();
-  const [students, setStudents] = useState<{ id: string; name: string }[]>([]);
+  const [students, setStudents] = useState<StudentOption[]>([]);
+  const [classes, setClasses] = useState<ClassOption[]>([]);
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [issueOpen, setIssueOpen] = useState(false);
 
-  const [studentId, setStudentId] = useState('');
-  const [docType, setDocType] = useState('REPORT_CARD');
-  const [term, setTerm] = useState('');
-  const [generating, setGenerating] = useState(false);
+  const [status, setStatus] = useState<StatusTab>('all');
+  const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [termFilter, setTermFilter] = useState('all');
+  const [page, setPage] = useState(0);
+  const [pending, setPending] = useState<PendingAction>(null);
 
-  // Bulk generation for a whole class
-  const [eligibleClasses, setEligibleClasses] = useState<{ id: string; name: string; studentCount: number }[]>([]);
-  const [bulkClassId, setBulkClassId] = useState('');
-  const [bulkType, setBulkType] = useState('REPORT_CARD');
-  const [bulkTerm, setBulkTerm] = useState('');
-  const [bulkGenerating, setBulkGenerating] = useState(false);
-
-  const loadDocs = () => {
-    setLoading(true);
-    const params = typeFilter !== 'all' ? `?type=${typeFilter}` : '';
-    apiGet<Doc[]>(`/api/documents${params}`).then(setDocs).catch(() => toast.error('Failed to load documents')).finally(() => setLoading(false));
+  const loadDocs = (initial = false) => {
+    if (initial) setLoading(true);
+    return apiGet<Doc[]>('/api/documents')
+      .then((d) => { setDocs(d); setLoadError(false); if (initial && d.length === 0) setIssueOpen(true); })
+      .catch(() => { setLoadError(true); toast.error('Could not load issued documents'); })
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
+    loadDocs(true);
     apiGet<any[]>('/api/students')
-      .then((ss) => setStudents(ss.map((s: any) => ({
-        id: s.id, name: `${s.user?.firstName ?? s.firstName ?? ''} ${s.user?.lastName ?? s.lastName ?? ''}`.trim() || s.studentCode,
-      }))))
+      .then((ss) => setStudents(ss
+        .filter((s) => !s.status || s.status === 'ACTIVE')
+        .map((s) => ({
+          id: s.id,
+          name: `${s.user?.firstName ?? s.firstName ?? ''} ${s.user?.lastName ?? s.lastName ?? ''}`.trim() || s.studentCode,
+          code: s.studentCode ?? '',
+          className: s.class?.name ?? null,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name))))
       .catch(() => {});
-  }, []);
-  useEffect(loadDocs, [typeFilter]);
-
-  useEffect(() => {
-    apiGet<{ id: string; name: string; studentCount: number }[]>('/api/documents/eligible-classes')
-      .then(setEligibleClasses)
-      .catch(() => {});
+    apiGet<ClassOption[]>('/api/documents/eligible-classes').then(setClasses).catch(() => {});
   }, []);
 
-  const selectedBulkClass = eligibleClasses.find((c) => c.id === bulkClassId);
+  // Terms already used on issued documents, newest first, so staff reuse the
+  // exact same wording (duplicate detection matches the term string).
+  const terms = useMemo(() => [...new Set(docs.map((d) => d.term).filter((t): t is string => !!t))], [docs]);
+  const usedTypes = useMemo(() => Object.keys(DOCUMENT_TYPE_LABELS).filter((t) => docs.some((d) => d.type === t)), [docs]);
 
-  const generateBulk = async () => {
-    if (!bulkClassId) { toast.error('Select a class'); return; }
-    // Confirmation for large classes to prevent accidental bulk runs
-    const LARGE_CLASS_THRESHOLD = 30;
-    if (selectedBulkClass && selectedBulkClass.studentCount >= LARGE_CLASS_THRESHOLD) {
-      const confirmed = window.confirm(
-        `You are about to generate documents for ${selectedBulkClass.studentCount} students in ${selectedBulkClass.name}. Continue?`
-      );
-      if (!confirmed) return;
-    }
-    setBulkGenerating(true);
+  const preStatus = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return docs.filter((d) =>
+      (typeFilter === 'all' || d.type === typeFilter)
+      && (termFilter === 'all' || d.term === termFilter)
+      && (!q || `${d.studentName} ${d.studentCode} ${d.documentNumber} ${d.term ?? ''} ${d.className ?? ''}`.toLowerCase().includes(q)));
+  }, [docs, query, typeFilter, termFilter]);
+  const counts = useMemo(() => {
+    const c: Record<StatusTab, number> = { all: preStatus.length, ACTIVE: 0, CANCELLED: 0, REISSUED: 0 };
+    preStatus.forEach((d) => { if (d.status in c) c[d.status as StatusTab] += 1; });
+    return c;
+  }, [preStatus]);
+  const filtered = status === 'all' ? preStatus : preStatus.filter((d) => d.status === status);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const visible = filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+  const hasFilters = !!query.trim() || typeFilter !== 'all' || termFilter !== 'all' || status !== 'all';
+
+  useEffect(() => { setPage(0); }, [query, typeFilter, termFilter, status]);
+  useEffect(() => { if (page > pageCount - 1) setPage(pageCount - 1); }, [page, pageCount]);
+
+  const clearFilters = () => { setQuery(''); setTypeFilter('all'); setTermFilter('all'); setStatus('all'); };
+  const canModify = (d: Doc) => isAdmin || (!!user && d.issuedById === user.id);
+
+  const copyVerifyLink = async (d: Doc) => {
     try {
-      const r = await apiSend<{ generated: number; skipped: number; failed: number; total: number; className: string }>(
-        '/api/documents/bulk', 'POST', { type: bulkType, classId: bulkClassId, term: bulkTerm || undefined });
-      if (r.generated > 0) toast.success(
-        `${r.generated} ${TYPE_LABELS[bulkType]}${r.generated === 1 ? '' : 's'} generated for ${r.className}`,
-        bulkType === 'STUDENT_ID_CARD' ? { description: 'The cards are now available on each learner’s profile.' } : undefined,
-      );
-      if (r.skipped > 0) toast.info(`${r.skipped} student(s) skipped (existing document)`);
-      if (r.failed > 0) toast.warning(`${r.failed} student(s) failed`);
-      if (r.generated === 0 && r.skipped === 0 && r.failed === 0) toast.info('No active students in that class');
-      setBulkTerm('');
-      loadDocs();
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to bulk generate');
-    } finally {
-      setBulkGenerating(false);
-    }
-  };
-
-  const generate = async () => {
-    if (!studentId) { toast.error('Select a student'); return; }
-    setGenerating(true);
-    try {
-      const doc = await apiSend<Doc>('/api/documents', 'POST', { type: docType, studentId, term: term || undefined });
-      toast.success(
-        `${TYPE_LABELS[docType]} generated (${doc.documentNumber})`,
-        docType === 'STUDENT_ID_CARD' ? { description: 'The learner can now view and print it from My Profile.' } : undefined,
-      );
-      setTerm('');
-      loadDocs();
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to generate document');
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  const copyVerifyLink = (d: Doc) => {
-    navigator.clipboard.writeText(`${window.location.origin}/verify/${d.verifyToken}`);
-    toast.success('Verification link copied');
+      await navigator.clipboard.writeText(`${window.location.origin}/verify/${d.verifyToken}`);
+      toast.success('Verification link copied');
+    } catch { toast.error('Could not copy the link'); }
   };
 
   const downloadCardPdf = async (d: Doc) => {
     try {
-      await downloadAuthenticatedFile(`/api/documents/${d.id}/student-card.pdf`, `Student-Card-${d.studentCode}.pdf`);
-      toast.success('Student card PDF downloaded');
+      await downloadAuthenticatedFile(`/api/documents/${d.id}/student-card.pdf`, `${d.studentName} - Student ID Card.pdf`);
       loadDocs();
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to download student card PDF');
-    }
+    } catch (e: any) { toast.error(e.message || 'Could not download the card PDF'); }
   };
 
-  const cancelDoc = async (d: Doc) => {
-    const reason = prompt('Reason for cancellation (optional):') ?? undefined;
-    try {
-      await apiSend(`/api/documents/${d.id}/cancel`, 'POST', { reason });
-      toast.success('Document cancelled');
-      loadDocs();
-    } catch (e: any) { toast.error(e.message || 'Failed to cancel'); }
-  };
-
-  const reissue = async (d: Doc) => {
-    if (!confirm('Reissue this document with fresh data? The current one will be marked as reissued.')) return;
-    try {
-      const fresh = await apiSend<Doc>(`/api/documents/${d.id}/reissue`, 'POST');
-      toast.success(`Reissued as ${fresh.documentNumber}`);
-      loadDocs();
-    } catch (e: any) { toast.error(e.message || 'Failed to reissue'); }
-  };
-
-  const deleteDoc = async (d: Doc) => {
-    if (!confirm(`Permanently delete ${d.documentNumber}? This cannot be undone (use Cancel instead if you just want to invalidate it while keeping a record).`)) return;
-    try {
-      await apiSend(`/api/documents/${d.id}`, 'DELETE');
-      toast.success('Document deleted');
-      setDocs((prev) => prev.filter((doc) => doc.id !== d.id));
-    } catch (e: any) { toast.error(e.message || 'Failed to delete document'); }
-  };
-
-  // Cancel/Delete: allowed for admins, or the teacher who issued the
-  // document themselves (mirrors the backend's ownership check).
-  const canModify = (d: Doc) => isAdmin || (!!user && d.issuedById === user.id);
+  const rowMenu = (d: Doc) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={<Button variant="ghost" size="icon-sm" aria-label={`More actions for ${d.documentNumber}`}><MoreHorizontal /></Button>}
+        nativeButton={true}
+      />
+      <DropdownMenuContent align="end" className="min-w-52">
+        {d.type === 'STUDENT_ID_CARD' && (
+          <DropdownMenuItem onClick={() => downloadCardPdf(d)}><Download className="mr-2 size-4" /> Download card PDF</DropdownMenuItem>
+        )}
+        <DropdownMenuItem onClick={() => copyVerifyLink(d)}><Copy className="mr-2 size-4" /> Copy verification link</DropdownMenuItem>
+        <DropdownMenuItem render={<a href={`/verify/${d.verifyToken}`} target="_blank" rel="noreferrer" className="flex w-full" />} nativeButton={false}>
+          <ExternalLink className="mr-2 size-4" /> Open public verification page
+        </DropdownMenuItem>
+        {canModify(d) && (
+          <>
+            <DropdownMenuSeparator />
+            {isAdmin && d.status === 'ACTIVE' && (
+              <DropdownMenuItem onClick={() => setPending({ kind: 'reissue', doc: d })}><RefreshCw className="mr-2 size-4" /> Reissue with current data</DropdownMenuItem>
+            )}
+            {d.status === 'ACTIVE' && (
+              <DropdownMenuItem variant="destructive" onClick={() => setPending({ kind: 'cancel', doc: d })}><Ban className="mr-2 size-4" /> Cancel document</DropdownMenuItem>
+            )}
+            <DropdownMenuItem variant="destructive" onClick={() => setPending({ kind: 'delete', doc: d })}><Trash2 className="mr-2 size-4" /> Delete permanently</DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   return (
-    <div className="space-y-6 max-w-[1500px] mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-          <FileBadge className="h-6 w-6 text-aubergine-600" /> Official Documents
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">Generate verifiable student cards, report cards, transcripts and certificates.</p>
-        {(isAdmin || user?.role === 'TEACHER') && (
-          <Link to="/documents/volunteers" className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-primary underline underline-offset-4">
-            Volunteer letters & certificates <ExternalLink className="h-3.5 w-3.5" />
-          </Link>
-        )}
-      </div>
-
-      {/* Generate */}
-      <div className="bg-card border border-border rounded-sm shadow-sm p-5">
-        <h3 className="font-semibold text-foreground mb-3 text-sm">Generate a Document</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-          <div className="space-y-1.5">
-            <Label>Student</Label>
-            <Select value={studentId} onValueChange={setStudentId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select student">
-                  {students.find((s) => s.id === studentId)?.name || 'Select student'}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {students.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Document Type</Label>
-            <Select value={docType} onValueChange={setDocType}>
-              <SelectTrigger><SelectValue>{TYPE_LABELS[docType]}</SelectValue></SelectTrigger>
-              <SelectContent>
-                {Object.entries(TYPE_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Term / Period (optional)</Label>
-            <input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="e.g. Term 1 2026" className="h-9 w-full rounded-md border border-border bg-card px-3 text-sm" />
-          </div>
-          <Button onClick={generate} disabled={generating} className="bg-primary text-primary-foreground">
-            {generating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />} Generate
+    <div className="mx-auto max-w-[1500px] space-y-6">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground">
+            <FileBadge className="size-6 text-primary" aria-hidden /> Official documents
+          </h1>
+          <p className="mt-1 max-w-[65ch] text-sm text-muted-foreground">
+            Report cards, transcripts, certificates and student ID cards. Each one carries a QR code anyone can scan to confirm it is genuine.
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {(isAdmin || user?.role === 'TEACHER') && (
+            <Button variant="outline" render={<Link to="/documents/volunteers" />} nativeButton={false}>
+              Volunteer letters
+            </Button>
+          )}
+          <Button onClick={() => setIssueOpen((o) => !o)} aria-expanded={issueOpen} aria-controls="issue-panel">
+            <Plus /> Issue document
           </Button>
         </div>
-      </div>
+      </header>
 
-      {/* Bulk generate for a class */}
-      <div className="bg-card border border-border rounded-sm shadow-sm p-5">
-        <div className="flex items-center gap-2 mb-1">
-          <Layers className="h-4 w-4 text-aubergine-600" />
-          <h3 className="font-semibold text-foreground text-sm">Bulk generate for a class</h3>
+      {issueOpen && (
+        <div id="issue-panel">
+          <IssueDocumentPanel
+            students={students}
+            classes={classes}
+            termSuggestions={terms}
+            isAdmin={isAdmin}
+            onIssued={() => { loadDocs(); setStatus('all'); }}
+            onClose={() => setIssueOpen(false)}
+          />
         </div>
-        <p className="text-xs text-muted-foreground mb-3">
-          Issue one document type for every active student in a class at once{isAdmin ? '' : ' — you can only pick classes you teach'}.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-          <div className="space-y-1.5">
-            <Label>Class</Label>
-            <Select value={bulkClassId} onValueChange={setBulkClassId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select class">
-                  {selectedBulkClass ? `${selectedBulkClass.name} (${selectedBulkClass.studentCount})` : 'Select class'}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {eligibleClasses.length === 0 && <div className="px-3 py-2 text-xs text-muted-foreground">No classes available</div>}
-                {eligibleClasses.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name} · {c.studentCount} student{c.studentCount === 1 ? '' : 's'}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Document Type</Label>
-            <Select value={bulkType} onValueChange={setBulkType}>
-              <SelectTrigger><SelectValue>{TYPE_LABELS[bulkType]}</SelectValue></SelectTrigger>
-              <SelectContent>
-                {Object.entries(TYPE_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Term / Period (optional)</Label>
-            <input value={bulkTerm} onChange={(e) => setBulkTerm(e.target.value)} placeholder="e.g. Term 1 2026" className="h-9 w-full rounded-md border border-border bg-card px-3 text-sm" />
-          </div>
-          <Button onClick={generateBulk} disabled={bulkGenerating || !bulkClassId} className="bg-primary text-primary-foreground">
-            {bulkGenerating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Layers className="h-4 w-4 mr-1" />}
-            Generate {selectedBulkClass ? `× ${selectedBulkClass.studentCount}` : 'for class'}
-          </Button>
-        </div>
-      </div>
+      )}
 
-      {/* List */}
-      <div className="bg-card border border-border rounded-sm shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <h3 className="font-semibold text-foreground text-sm">Issued Documents</h3>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[200px] h-9"><SelectValue>{typeFilter === 'all' ? 'All Types' : TYPE_LABELS[typeFilter]}</SelectValue></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              {Object.entries(TYPE_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
-            </SelectContent>
-          </Select>
+      <section aria-labelledby="register-heading" className="rounded-sm border border-border bg-card">
+        <div className="space-y-3 border-b border-border px-4 pt-4 pb-3 sm:px-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 id="register-heading" className="text-base font-semibold text-foreground">Issued documents</h2>
+            <div role="tablist" aria-label="Filter by status" className="-mx-1 flex max-w-full gap-1 overflow-x-auto px-1">
+              {STATUS_TABS.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={status === t.value}
+                  onClick={() => setStatus(t.value)}
+                  className={`inline-flex h-8 items-center gap-1.5 rounded-sm px-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${status === t.value ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+                >
+                  {t.label}
+                  <span className="tabular-nums text-xs opacity-80">{counts[t.value]}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 md:flex-row md:items-center">
+            <label className="relative min-w-0 flex-1">
+              <span className="sr-only">Search documents</span>
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search student, student ID, class or document number"
+                className="h-9 w-full rounded-sm border border-input bg-card pr-3 pl-9 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/35"
+              />
+            </label>
+            <div className="flex gap-2">
+              <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v ?? 'all')}>
+                <SelectTrigger className="h-9 w-full md:w-[190px]" aria-label="Document type">
+                  <SelectValue>{typeFilter === 'all' ? 'All documents' : DOCUMENT_TYPE_LABELS[typeFilter]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All documents</SelectItem>
+                  {usedTypes.map((t) => <SelectItem key={t} value={t}>{DOCUMENT_TYPE_LABELS[t]}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={termFilter} onValueChange={(v) => setTermFilter(v ?? 'all')}>
+                <SelectTrigger className="h-9 w-full md:w-[170px]" aria-label="Term">
+                  <SelectValue>{termFilter === 'all' ? 'All terms' : termFilter}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All terms</SelectItem>
+                  {terms.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
+
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-muted/50 text-muted-foreground uppercase tracking-wider font-semibold text-[11px]">
+          <table className="hidden w-full text-left text-sm sm:table">
+            <caption className="sr-only">Issued official documents</caption>
+            <thead className="border-b border-border text-xs font-semibold text-muted-foreground">
               <tr>
-                <th className="px-6 py-3">Document No.</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Student</th>
-                <th className="px-4 py-3">Issued</th>
-                <th className="px-4 py-3 text-center">Status</th>
-                <th className="px-4 py-3 text-center">Downloads</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                <th scope="col" className="px-4 py-2.5 sm:px-5">Student</th>
+                <th scope="col" className="px-3 py-2.5">Document</th>
+                <th scope="col" className="hidden px-3 py-2.5 lg:table-cell">Document no.</th>
+                <th scope="col" className="hidden px-3 py-2.5 md:table-cell">Issued</th>
+                <th scope="col" className="px-3 py-2.5">Status</th>
+                <th scope="col" className="hidden px-3 py-2.5 text-right xl:table-cell">Downloads</th>
+                <th scope="col" className="px-4 py-2.5 sm:px-5"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {loading && <tr><td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">Loading…</td></tr>}
-              {!loading && docs.length === 0 && <tr><td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">No documents generated yet.</td></tr>}
-              {!loading && docs.map((d) => (
-                <tr key={d.id} className="hover:bg-muted/50">
-                  <td className="px-6 py-3 font-mono text-xs font-semibold text-foreground">{d.documentNumber}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{TYPE_LABELS[d.type] || d.type}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{d.studentName} <span className="text-xs text-muted-foreground font-mono">{d.studentCode}</span></td>
-                  <td className="px-4 py-3 text-muted-foreground">{new Date(d.issueDate).toLocaleDateString()}</td>
-                  <td className="px-4 py-3 text-center"><Badge className={`${statusStyle(d.status)} border-0`}>{d.status}</Badge></td>
-                  <td className="px-4 py-3 text-center text-muted-foreground">{d.downloadCount}</td>
-                  <td className="px-4 py-3 text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="h-8">Actions</Button>} nativeButton={true} />
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem render={<Link to={officialDocumentViewPath(d)} className="flex w-full" />} nativeButton={false}><Eye className="h-4 w-4 mr-2" /> {d.type === 'STUDENT_ID_CARD' ? 'View / Print card' : 'Open / Print'}</DropdownMenuItem>
-                        {d.type === 'STUDENT_ID_CARD' && (
-                          <DropdownMenuItem onClick={() => downloadCardPdf(d)}><Download className="h-4 w-4 mr-2" /> Download card PDF</DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem onClick={() => copyVerifyLink(d)}><Link2 className="h-4 w-4 mr-2" /> Copy verify link</DropdownMenuItem>
-                        <DropdownMenuItem render={<a href={`/verify/${d.verifyToken}`} target="_blank" rel="noreferrer" className="flex w-full" />} nativeButton={false}><ExternalLink className="h-4 w-4 mr-2" /> Public verify page</DropdownMenuItem>
-                        {canModify(d) && (
-                          <>
-                            <DropdownMenuSeparator />
-                            {isAdmin && d.status === 'ACTIVE' && (
-                              <DropdownMenuItem onClick={() => reissue(d)}><RefreshCw className="h-4 w-4 mr-2" /> Reissue</DropdownMenuItem>
-                            )}
-                            {d.status === 'ACTIVE' && (
-                              <DropdownMenuItem className="text-red-600" onClick={() => cancelDoc(d)}><Ban className="h-4 w-4 mr-2" /> Cancel</DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem className="text-red-600" onClick={() => deleteDoc(d)}><Trash2 className="h-4 w-4 mr-2" /> Delete</DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+              {loading && Array.from({ length: 6 }).map((_, i) => (
+                <tr key={i} aria-hidden>
+                  <td className="px-4 py-3 sm:px-5" colSpan={7}><div className="h-9 animate-pulse rounded-sm bg-muted motion-reduce:animate-none" /></td>
+                </tr>
+              ))}
+              {!loading && visible.map((d) => (
+                <tr key={d.id} className="hover:bg-muted/40">
+                  <td className="px-4 py-2.5 sm:px-5">
+                    <div className="font-medium text-foreground">{d.studentName}</div>
+                    <div className="text-xs text-muted-foreground">{d.studentCode}{d.className ? ` · ${d.className}` : ''}</div>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <div className="text-foreground">{DOCUMENT_TYPE_LABELS[d.type] || d.type}</div>
+                    <div className="text-xs text-muted-foreground">{d.term || 'No term'}</div>
+                  </td>
+                  <td className="hidden px-3 py-2.5 font-mono text-xs text-muted-foreground lg:table-cell">{d.documentNumber}</td>
+                  <td className="hidden px-3 py-2.5 whitespace-nowrap text-muted-foreground tabular-nums md:table-cell">{fmtDate(d.issueDate)}</td>
+                  <td className="px-3 py-2.5"><StatusPill status={d.status} /></td>
+                  <td className="hidden px-3 py-2.5 text-right text-muted-foreground tabular-nums xl:table-cell">{d.downloadCount}</td>
+                  <td className="px-4 py-2.5 sm:px-5">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="sm" render={<Link to={officialDocumentViewPath(d)} />} nativeButton={false}>
+                        {d.type === 'STUDENT_ID_CARD' ? 'View card' : 'Open'}
+                      </Button>
+                      {rowMenu(d)}
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+
+          {/* Phones: one stacked row per document instead of a squeezed table. */}
+          <ul className="divide-y divide-border sm:hidden" aria-label="Issued documents">
+            {loading && Array.from({ length: 4 }).map((_, i) => (
+              <li key={i} aria-hidden className="px-4 py-3"><div className="h-12 animate-pulse rounded-sm bg-muted motion-reduce:animate-none" /></li>
+            ))}
+            {!loading && visible.map((d) => (
+              <li key={d.id} className="flex items-start gap-3 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="truncate font-medium text-foreground">{d.studentName}</p>
+                    <StatusPill status={d.status} />
+                  </div>
+                  <p className="text-sm text-foreground">{DOCUMENT_TYPE_LABELS[d.type] || d.type}{d.term ? <span className="text-muted-foreground"> · {d.term}</span> : null}</p>
+                  <p className="text-xs text-muted-foreground tabular-nums">{d.studentCode} · {fmtDate(d.issueDate)}</p>
+                </div>
+                <div className="flex shrink-0 items-center">
+                  <Button variant="ghost" size="sm" render={<Link to={officialDocumentViewPath(d)} />} nativeButton={false}>Open</Button>
+                  {rowMenu(d)}
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          {!loading && filtered.length === 0 && (
+            <div className="px-5 py-14 text-center">
+              {loadError ? (
+                <>
+                  <p className="font-medium text-foreground">Issued documents could not be loaded.</p>
+                  <Button variant="outline" className="mt-4" onClick={() => loadDocs(true)}>Try again</Button>
+                </>
+              ) : docs.length === 0 ? (
+                <>
+                  <p className="font-medium text-foreground">No documents issued yet</p>
+                  <p className="mx-auto mt-1 max-w-[52ch] text-sm text-muted-foreground">Issue a report card or ID card for one student, or for a whole class at once. Everything you issue is listed here.</p>
+                  {!issueOpen && <Button className="mt-4" onClick={() => setIssueOpen(true)}><Plus /> Issue document</Button>}
+                </>
+              ) : (
+                <>
+                  <p className="font-medium text-foreground">No documents match these filters</p>
+                  <Button variant="outline" className="mt-4" onClick={clearFilters}><X /> Clear filters</Button>
+                </>
+              )}
+            </div>
+          )}
         </div>
-      </div>
+
+        {!loading && filtered.length > 0 && (
+          <div className="flex flex-col gap-2 border-t border-border px-4 py-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-5">
+            <p className="tabular-nums">
+              {filtered.length <= PAGE_SIZE
+                ? `${filtered.length} document${filtered.length === 1 ? '' : 's'}`
+                : `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, filtered.length)} of ${filtered.length}`}
+              {hasFilters && <> · <button type="button" onClick={clearFilters} className="font-medium text-primary underline-offset-4 hover:underline">Clear filters</button></>}
+              {docs.length >= LIST_LIMIT && <> · showing the {LIST_LIMIT} most recent</>}
+            </p>
+            {pageCount > 1 && (
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Previous</Button>
+                <span className="tabular-nums">Page {page + 1} of {pageCount}</span>
+                <Button variant="outline" size="sm" disabled={page >= pageCount - 1} onClick={() => setPage((p) => p + 1)}>Next</Button>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      <DocumentActionDialog
+        pending={pending}
+        onClose={() => setPending(null)}
+        onDone={(kind, doc) => {
+          if (kind === 'delete') setDocs((prev) => prev.filter((x) => x.id !== doc.id));
+          loadDocs();
+        }}
+      />
     </div>
+  );
+}
+
+function StatusPill({ status }: { status: string }) {
+  const tone = status === 'ACTIVE'
+    ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+    : status === 'CANCELLED'
+      ? 'bg-red-50 text-red-800 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900'
+      : 'bg-muted text-muted-foreground border-border';
+  const Icon = status === 'ACTIVE' ? CheckCircle2 : status === 'CANCELLED' ? Ban : RefreshCw;
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-xs font-medium whitespace-nowrap ${tone}`}>
+      <Icon className="size-3" aria-hidden /> {DOCUMENT_STATUS_LABELS[status] || status}
+    </span>
+  );
+}
+
+/** Confirmation for reissue, cancel and delete, explaining what each one does. */
+function DocumentActionDialog({ pending, onClose, onDone }: {
+  pending: PendingAction;
+  onClose: () => void;
+  onDone: (kind: 'cancel' | 'reissue' | 'delete', doc: Doc) => void;
+}) {
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { setReason(''); }, [pending]);
+  if (!pending) return null;
+  const { kind, doc } = pending;
+  const label = `${DOCUMENT_TYPE_LABELS[doc.type] || 'document'} for ${doc.studentName}`;
+
+  const copy = {
+    reissue: {
+      title: 'Reissue with current data?',
+      body: <>A new {label} is created from today’s grades and attendance. <span className="font-mono text-xs">{doc.documentNumber}</span> is marked Reissued and its QR code will show it was replaced.</>,
+      confirm: 'Reissue',
+    },
+    cancel: {
+      title: 'Cancel this document?',
+      body: <>The {label} stays on record, but its QR code will report it as cancelled. Use this when a printed copy should no longer be trusted.</>,
+      confirm: 'Cancel document',
+    },
+    delete: {
+      title: 'Delete permanently?',
+      body: <>The {label} (<span className="font-mono text-xs">{doc.documentNumber}</span>) is removed and its QR code stops verifying. This cannot be undone. To keep a record, cancel it instead.</>,
+      confirm: 'Delete permanently',
+    },
+  }[kind];
+
+  const run = async () => {
+    setBusy(true);
+    try {
+      if (kind === 'reissue') {
+        const fresh = await apiSend<Doc>(`/api/documents/${doc.id}/reissue`, 'POST');
+        toast.success(`Reissued as ${fresh.documentNumber}`);
+      } else if (kind === 'cancel') {
+        await apiSend(`/api/documents/${doc.id}/cancel`, 'POST', { reason: reason.trim() || undefined });
+        toast.success('Document cancelled');
+      } else {
+        await apiSend(`/api/documents/${doc.id}`, 'DELETE');
+        toast.success('Document deleted');
+      }
+      onDone(kind, doc);
+      onClose();
+    } catch (e: any) {
+      toast.error(e.message || 'Something went wrong. Try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open && !busy) onClose(); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{copy.title}</DialogTitle>
+          <DialogDescription>{copy.body}</DialogDescription>
+        </DialogHeader>
+        {kind === 'cancel' && (
+          <label className="block space-y-1.5">
+            <span className="text-sm font-medium text-foreground">Reason <span className="font-normal text-muted-foreground">(optional, kept in the audit log)</span></span>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={2}
+              maxLength={300}
+              className="w-full rounded-sm border border-input bg-card px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/35"
+            />
+          </label>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={busy}>Keep it</Button>
+          <Button variant={kind === 'reissue' ? 'default' : 'destructive'} onClick={run} disabled={busy}>{copy.confirm}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
