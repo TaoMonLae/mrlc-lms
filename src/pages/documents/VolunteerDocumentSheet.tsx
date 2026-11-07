@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import {
   formatVolunteerMonth,
+  volunteerCertificateDesign,
   VOLUNTEER_DOCUMENT_TYPE_LABELS,
   type VolunteerDocumentPayload,
   type VolunteerDocumentRecord,
@@ -44,6 +45,44 @@ export default function VolunteerDocumentSheet({
   const schoolSignature = signatures.find(signature => signature.slot === 'SCHOOL');
   const organizationSignature = signatures.find(signature => signature.slot === 'ORGANIZATION');
   const contentRef = useRef<HTMLDivElement>(null);
+  const design = certificate ? volunteerCertificateDesign(payload) : 'CLASSIC';
+  const hasHours = volunteer.hoursPerWeek != null || volunteer.totalHours != null;
+  const signatureRow = (
+    <div className={`volunteer-signatures ${payload.organizationSignatory ? '' : 'volunteer-signatures-single'}`}>
+      <Signature name={payload.signatory.name} title={payload.signatory.title} organization={payload.school.name} signature={schoolSignature} draft={draft} signingRequested={payload.version === 2} />
+      {payload.organizationSignatory && <Signature name={payload.organizationSignatory.name} title={payload.organizationSignatory.title} organization={payload.organization.name} signature={organizationSignature} uploadedSignature={payload.organizationSignatory.uploadedSignature} draft={draft} signingRequested={payload.version === 2} />}
+    </div>
+  );
+  const record = (
+    <div className="volunteer-footer-record">
+      <p><strong>{documentNumber || 'Document number assigned on issue'}</strong></p>
+      <p>Issued: {formatVolunteerIssueDate(issueDate)}</p>
+      {invalid && <p className="volunteer-invalid-status">{status === 'CANCELLED' ? 'Cancelled · no longer valid' : 'Reissued · superseded by a newer record'}</p>}
+      {pending && <p className="volunteer-invalid-status">Awaiting signatures · not yet valid</p>}
+      {!certificate && <p>{[payload.school.contactEmail, payload.school.contactPhone].filter(Boolean).join(' · ')}</p>}
+    </div>
+  );
+  const verification = (
+    <div className="volunteer-verification-block">
+      {draft ? <div className="volunteer-qr-placeholder" aria-hidden="true">QR</div> : qrDataUrl ? <img className="volunteer-qr" src={qrDataUrl} alt="Scan to verify this document" /> : null}
+      <div><p className="volunteer-verification-title">{draft ? 'Verification available after issue' : 'Verify this document'}</p>
+        <p>{draft ? 'A unique QR code and document number will be added.' : 'Scan the QR code to check the current record.'}</p>
+        {!draft && verifyUrl && <a className="volunteer-verify-url" href={verifyUrl}>{verifyUrl}</a>}
+      </div>
+    </div>
+  );
+  const issuers = (
+    <>
+      {payload.school.logoUrl && <img className="volunteer-school-logo" src={payload.school.logoUrl} alt="School logo" />}
+      <div className="volunteer-issuers">
+        <p className="volunteer-organization">{payload.organization.name}</p>
+        <p className="volunteer-school">{payload.school.name}</p>
+        <p className="volunteer-program">{payload.school.program}</p>
+      </div>
+    </>
+  );
+  const recognition = <>In recognition of your dedicated volunteer service as <strong>{role}</strong> supporting {payload.school.name} ({payload.school.program}) with {payload.organization.name}.</>;
+  const thanks = 'Thank you for sharing your time, skills and care with our learning community.';
 
   useEffect(() => {
     const content = contentRef.current;
@@ -75,19 +114,59 @@ export default function VolunteerDocumentSheet({
 
   return (
     <div className={`volunteer-document-frame ${certificate ? 'volunteer-landscape' : 'volunteer-portrait'}`}>
-      <article className={`volunteer-sheet report-print ${certificate ? 'volunteer-certificate' : 'volunteer-letter'} ${dense ? 'volunteer-dense' : ''} ${name.length > 100 ? 'volunteer-long-name' : ''} ${!certificate && volunteer.contributions.length > 800 ? 'volunteer-dense-letter' : ''}`} aria-label={`${draft ? 'Draft ' : ''}${VOLUNTEER_DOCUMENT_TYPE_LABELS[type]}`}>
+      <article className={`volunteer-sheet report-print ${certificate ? `volunteer-certificate volunteer-design-${design.toLowerCase()}` : 'volunteer-letter'} ${dense ? 'volunteer-dense' : ''} ${name.length > 100 ? 'volunteer-long-name' : ''} ${!certificate && volunteer.contributions.length > 800 ? 'volunteer-dense-letter' : ''}`} aria-label={`${draft ? 'Draft ' : ''}${VOLUNTEER_DOCUMENT_TYPE_LABELS[type]}`}>
         {invalid && <div className="volunteer-watermark" aria-hidden="true">{status}</div>}
         {pending && <div className="volunteer-watermark volunteer-pending-watermark" aria-hidden="true">AWAITING SIGNATURES</div>}
         {draft && <div className="volunteer-draft-label">DRAFT · NOT ISSUED</div>}
+        {design === 'WOVEN' && <><div className="volunteer-woven-band volunteer-woven-top" aria-hidden="true" /><div className="volunteer-woven-band volunteer-woven-bottom" aria-hidden="true" /></>}
         <div className="volunteer-sheet-content" ref={contentRef}>
-        <header className="volunteer-sheet-header">
-          {payload.school.logoUrl && <img className="volunteer-school-logo" src={payload.school.logoUrl} alt="School logo" />}
-          <div className="volunteer-issuers">
-            <p className="volunteer-organization">{payload.organization.name}</p>
-            <p className="volunteer-school">{payload.school.name}</p>
-            <p className="volunteer-program">{payload.school.program}</p>
+        {design === 'REGISTRY' ? (
+          <div className="volunteer-registry">
+            <div className="volunteer-registry-head">
+              <div className="volunteer-registry-issuers">{issuers}</div>
+              <div className="volunteer-registry-title"><h1 className="volunteer-certificate-title">Certificate of Appreciation</h1><p>Issued {formatVolunteerIssueDate(issueDate)}</p></div>
+            </div>
+            <div className="volunteer-registry-row"><p className="volunteer-registry-label">Awarded to</p><div className="volunteer-registry-cell"><h2 className="volunteer-recipient">{name}</h2></div></div>
+            <div className="volunteer-registry-row volunteer-registry-grow"><p className="volunteer-registry-label">In recognition</p><div className="volunteer-registry-cell">
+              <p className="volunteer-certificate-copy">{recognition}</p>
+              {volunteer.contributions && <p className="volunteer-contributions">{volunteer.contributions}</p>}
+              <p className="volunteer-thanks">{thanks}</p>
+            </div></div>
+            <div className="volunteer-registry-row"><p className="volunteer-registry-label">Service</p><dl className="volunteer-registry-facts">
+              <div><dt>From</dt><dd>{from}</dd></div>
+              <div><dt>To</dt><dd>{to}</dd></div>
+              {volunteer.hoursPerWeek != null && <div><dt>Hours per week</dt><dd>{volunteer.hoursPerWeek}</dd></div>}
+              {volunteer.totalHours != null && <div><dt>Total hours</dt><dd>{volunteer.totalHours}</dd></div>}
+            </dl></div>
+            <div className="volunteer-registry-foot">
+              {signatureRow}
+              <div className="volunteer-registry-verify">{verification}{record}</div>
+            </div>
           </div>
-        </header>
+        ) : design === 'EDITORIAL' ? (
+          <div className="volunteer-editorial">
+            <aside className="volunteer-editorial-band">
+              <div className="volunteer-editorial-issuers">{issuers}</div>
+              <p className="volunteer-editorial-mark">Volunteer<br />service</p>
+            </aside>
+            <div className="volunteer-editorial-main">
+              <h1 className="volunteer-certificate-title">Certificate of Appreciation</h1>
+              <p className="volunteer-presented">Presented with gratitude to</p>
+              <h2 className="volunteer-recipient">{name}</h2>
+              <p className="volunteer-certificate-copy">{recognition}</p>
+              {volunteer.contributions && <p className="volunteer-contributions">{volunteer.contributions}</p>}
+              <dl className="volunteer-editorial-facts">
+                <div><dt>From</dt><dd>{from}</dd></div>
+                <div><dt>To</dt><dd>{to}</dd></div>
+                {hasHours && <div><dt>Hours</dt><dd>{[volunteer.hoursPerWeek != null ? `${volunteer.hoursPerWeek} / week` : null, volunteer.totalHours != null ? `${volunteer.totalHours} total` : null].filter(Boolean).join(' · ')}</dd></div>}
+              </dl>
+              <p className="volunteer-thanks">{thanks}</p>
+              {signatureRow}
+              <footer className="volunteer-sheet-footer">{record}{verification}</footer>
+            </div>
+          </div>
+        ) : <>
+        <header className="volunteer-sheet-header">{issuers}</header>
 
         {certificate ? (
           <div className="volunteer-certificate-body">
@@ -100,7 +179,7 @@ export default function VolunteerDocumentSheet({
             <ServicePeriod from={from} to={to} />
             {volunteer.contributions && <p className="volunteer-contributions">{volunteer.contributions}</p>}
             <ServiceHours hoursPerWeek={volunteer.hoursPerWeek} totalHours={volunteer.totalHours} />
-            <p className="volunteer-thanks">Thank you for sharing your time, skills and care with our learning community.</p>
+            <p className="volunteer-thanks">{thanks}</p>
           </div>
         ) : (
           <div className="volunteer-letter-body">
@@ -130,27 +209,10 @@ export default function VolunteerDocumentSheet({
           </div>
         )}
 
-        <div className="volunteer-signatures">
-          <Signature name={payload.signatory.name} title={payload.signatory.title} organization={payload.school.name} signature={schoolSignature} draft={draft} signingRequested={payload.version === 2} />
-          {payload.organizationSignatory && <Signature name={payload.organizationSignatory.name} title={payload.organizationSignatory.title} organization={payload.organization.name} signature={organizationSignature} uploadedSignature={payload.organizationSignatory.uploadedSignature} draft={draft} signingRequested={payload.version === 2} />}
-        </div>
+        {signatureRow}
 
-        <footer className="volunteer-sheet-footer">
-          <div className="volunteer-footer-record">
-            <p><strong>{documentNumber || 'Document number assigned on issue'}</strong></p>
-            <p>Issued: {formatVolunteerIssueDate(issueDate)}</p>
-            {invalid && <p className="volunteer-invalid-status">{status === 'CANCELLED' ? 'Cancelled · no longer valid' : 'Reissued · superseded by a newer record'}</p>}
-            {pending && <p className="volunteer-invalid-status">Awaiting signatures · not yet valid</p>}
-            {!certificate && <p>{[payload.school.contactEmail, payload.school.contactPhone].filter(Boolean).join(' · ')}</p>}
-          </div>
-          <div className="volunteer-verification-block">
-            {draft ? <div className="volunteer-qr-placeholder" aria-hidden="true">QR</div> : qrDataUrl ? <img className="volunteer-qr" src={qrDataUrl} alt="Scan to verify this document" /> : null}
-            <div><p className="volunteer-verification-title">{draft ? 'Verification available after issue' : 'Verify this document'}</p>
-              <p>{draft ? 'A unique QR code and document number will be added.' : 'Scan the QR code to check the current record.'}</p>
-              {!draft && verifyUrl && <a className="volunteer-verify-url" href={verifyUrl}>{verifyUrl}</a>}
-            </div>
-          </div>
-        </footer>
+        <footer className="volunteer-sheet-footer">{record}{verification}</footer>
+        </>}
         </div>
       </article>
     </div>

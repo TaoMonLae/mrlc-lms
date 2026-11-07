@@ -1,5 +1,12 @@
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+/** The last 40 years cover any realistic service period; an older saved value stays selectable. */
+function yearOptions(latestYear: number, current: string): string[] {
+  const years = Array.from({ length: 40 }, (_, index) => String(latestYear - index));
+  if (/^\d{4}$/.test(current) && !years.includes(current)) years.push(current);
+  return years;
+}
+
 /** Explicit controls avoid the locale-dependent display of native month inputs. */
 export default function VolunteerMonthField({ id, label, value, max, onChange }: {
   id: string;
@@ -29,7 +36,7 @@ export default function VolunteerMonthField({ id, label, value, max, onChange }:
           onChange(`${selectedYear}-${selectedYear && month && `${selectedYear}-${month}` > max ? '' : month}`);
         }} required>
           <option value="">Year</option>
-          {Array.from({ length: Math.max(0, latestYear - 1900 + 1) }, (_, index) => String(latestYear - index)).map(year => <option key={year} value={year}>{year}</option>)}
+          {yearOptions(latestYear, year).map(option => <option key={option} value={option}>{option}</option>)}
         </select>
       </label>
     </div>

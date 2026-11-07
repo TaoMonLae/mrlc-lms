@@ -6,6 +6,25 @@ export const VOLUNTEER_DOCUMENT_TYPE_LABELS = {
 
 export type VolunteerDocumentType = keyof typeof VOLUNTEER_DOCUMENT_TYPE_LABELS;
 
+/**
+ * Certificate designs. The choice is stored in the issued payload, so it is
+ * covered by the signing content hash and a signed certificate cannot change
+ * appearance afterwards. Documents without a design use CLASSIC.
+ */
+export const VOLUNTEER_CERTIFICATE_DESIGNS = {
+  CLASSIC: { label: 'Classic', description: 'Centred serif lettering in a navy and gold frame.' },
+  REGISTRY: { label: 'Registry', description: 'A ruled record with labelled cells and the QR code built in.' },
+  EDITORIAL: { label: 'Editorial', description: 'A school-blue band with a large, left-aligned name.' },
+  WOVEN: { label: 'Woven', description: 'Warm paper with woven bands in the school’s red, gold and blue.' },
+} as const;
+export type VolunteerCertificateDesign = keyof typeof VOLUNTEER_CERTIFICATE_DESIGNS;
+export function isVolunteerCertificateDesign(value: unknown): value is VolunteerCertificateDesign {
+  return typeof value === 'string' && Object.hasOwn(VOLUNTEER_CERTIFICATE_DESIGNS, value);
+}
+export function volunteerCertificateDesign(payload: { design?: unknown }): VolunteerCertificateDesign {
+  return isVolunteerCertificateDesign(payload.design) ? payload.design : 'CLASSIC';
+}
+
 export const VOLUNTEER_ORGANIZATION_NAME = 'Mon Refugee Organization';
 export const VOLUNTEER_SCHOOL_NAME = 'Mon Refugee Learning Centre';
 export const VOLUNTEER_PROGRAM_NAME = 'GED Program';
@@ -56,10 +75,14 @@ export interface VolunteerDocumentInput {
   organizationSignatoryUserId?: string;
   organizationSignatureImage?: string;
   organizationSignatureConsent?: boolean;
+  /** Certificates only. */
+  design?: VolunteerCertificateDesign;
 }
 
 export interface VolunteerDocumentPayload {
   version: 1 | 2;
+  /** Certificates only; absent on older documents (rendered as CLASSIC). */
+  design?: VolunteerCertificateDesign;
   organization: { name: string };
   school: {
     name: string;
@@ -189,6 +212,8 @@ export function validateVolunteerDocumentInput(value: unknown, now = new Date())
   if (!validMonth(body.fromMonth) || !validMonth(body.toMonth)) return { success: false, error: 'From and To must be valid months in YYYY-MM format.' };
   if (body.fromMonth > body.toMonth) return { success: false, error: 'The To month must be on or after the From month.' };
   if (body.toMonth > currentVolunteerMonth(now)) return { success: false, error: 'Volunteer service cannot be certified for a future month.' };
+  if (body.design != null && !isVolunteerCertificateDesign(body.design)) return { success: false, error: 'Choose a valid certificate design.' };
+  const design = body.type === 'VOLUNTEER_APPRECIATION_CERTIFICATE' ? (body.design as VolunteerCertificateDesign | undefined) || 'CLASSIC' : undefined;
   const hours: Record<string, number | null> = {};
   for (const [key, max] of Object.entries({ hoursPerWeek: 168, totalHours: 1_000_000 })) {
     const raw = body[key];
@@ -206,6 +231,7 @@ export function validateVolunteerDocumentInput(value: unknown, now = new Date())
       signatoryUserId: (body.signatoryUserId as string | undefined) || undefined,
       organizationSignatoryName: text.organizationSignatoryName, organizationSignatoryTitle: text.organizationSignatoryTitle,
       organizationSignatoryUserId: (body.organizationSignatoryUserId as string | undefined) || undefined,
+      ...(design ? { design } : {}),
       ...(externalMro ? { organizationSignatureImage: body.organizationSignatureImage as string, organizationSignatureConsent: true } : {}),
     },
   };

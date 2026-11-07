@@ -107,6 +107,132 @@
 .volunteer-dense-letter .volunteer-service-period { margin-block: 2cqw; }
 .volunteer-dense-letter .volunteer-signatures { padding-top: .8cqw; }
 .volunteer-dense-letter .volunteer-sheet-footer { margin-top: 2.8cqw; }
+/* ── Certificate designs ─────────────────────────────────────────────────
+   Classic is the original layout. The others restyle or restructure only the
+   certificate; letters keep their single portrait layout. */
+
+/* Classic + Woven: balance short text vertically instead of leaving a gap
+   above the signatures, and centre a lone signatory under the centred text. */
+.volunteer-design-classic .volunteer-certificate-body,
+.volunteer-design-woven .volunteer-certificate-body { display: flex; flex-direction: column; justify-content: center; padding-top: 1.6cqw; }
+.volunteer-design-classic .volunteer-signatures-single,
+.volunteer-design-woven .volunteer-signatures-single { justify-content: center; }
+.volunteer-design-classic .volunteer-signatures-single .volunteer-signature,
+.volunteer-design-woven .volunteer-signatures-single .volunteer-signature { text-align: center; }
+.volunteer-design-classic .volunteer-signatures-single .volunteer-signature-image,
+.volunteer-design-woven .volunteer-signatures-single .volunteer-signature-image { object-position: center bottom; }
+.volunteer-design-classic .volunteer-signatures-single .volunteer-signature-marks,
+.volunteer-design-woven .volunteer-signatures-single .volunteer-signature-marks { justify-content: center; }
+
+/* Registry: a ruled record. Labels run vertically down the left edge. */
+.volunteer-design-registry { padding: 3cqw 3.4cqw; border: 0; outline: 0; }
+.volunteer-registry { flex: 1 0 auto; display: flex; flex-direction: column; border: .14cqw solid var(--volunteer-navy); }
+.volunteer-registry > * + * { border-top: .08cqw solid var(--volunteer-navy); }
+.volunteer-registry-head { display: grid; grid-template-columns: 1fr 1fr; }
+.volunteer-registry-issuers { display: flex; align-items: center; gap: 1.4cqw; padding: 1.5cqw 2.2cqw; }
+.volunteer-registry-issuers .volunteer-school-logo { width: 5.2cqw; height: 5.2cqw; }
+.volunteer-registry-issuers .volunteer-organization { font-size: .95cqw; }
+.volunteer-registry-issuers .volunteer-school { font-size: 1.55cqw; line-height: 1.25; }
+.volunteer-registry-issuers .volunteer-program { font-size: .9cqw; }
+.volunteer-registry-title { display: flex; flex-direction: column; justify-content: center; padding: 1.5cqw 2.2cqw; border-left: .08cqw solid var(--volunteer-navy); }
+.volunteer-sheet .volunteer-registry-title .volunteer-certificate-title { font: 600 2.5cqw/1.15 'IBM Plex Sans Variable', Arial, sans-serif; letter-spacing: -.01em; }
+.volunteer-registry-title p { margin-top: .35cqw; font-size: 1cqw; color: #5d6a72; }
+.volunteer-registry-row { display: grid; grid-template-columns: 3.6cqw 1fr; }
+.volunteer-sheet .volunteer-registry-label { writing-mode: vertical-rl; transform: rotate(180deg); display: flex; align-items: center; justify-content: center; padding: 1cqw 0; border-left: .08cqw solid var(--volunteer-navy); font-size: .74cqw; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: #5d6a72; white-space: nowrap; }
+.volunteer-registry-cell { padding: 1.3cqw 2.2cqw; min-width: 0; }
+.volunteer-registry-grow { flex: 1 0 auto; }
+.volunteer-registry-grow .volunteer-registry-cell { display: flex; flex-direction: column; justify-content: center; gap: .7cqw; }
+.volunteer-sheet .volunteer-registry .volunteer-recipient { margin: 0; max-width: none; text-align: left; font: 600 3.4cqw/1.1 'IBM Plex Sans Variable', Arial, sans-serif; letter-spacing: -.02em; }
+.volunteer-registry .volunteer-certificate-copy { font-size: 1.22cqw; line-height: 1.6; max-width: 80ch; }
+.volunteer-sheet .volunteer-registry .volunteer-contributions { margin: 0; font-size: 1.1cqw; line-height: 1.5; color: #33424d; max-width: 90ch; }
+.volunteer-registry .volunteer-thanks { font-size: 1.05cqw; margin: 0; }
+.volunteer-sheet .volunteer-registry-facts { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
+.volunteer-registry-facts > div { padding: 1cqw 2.2cqw; min-width: 0; }
+.volunteer-registry-facts > div + div { border-left: .08cqw solid var(--volunteer-navy); }
+.volunteer-registry-facts dt { font-size: .78cqw; letter-spacing: .12em; text-transform: uppercase; color: #5d6a72; }
+.volunteer-registry-facts dd { font-size: 1.35cqw; font-weight: 600; font-variant-numeric: tabular-nums; }
+.volunteer-registry-foot { display: grid; grid-template-columns: 1.5fr 1fr; }
+.volunteer-registry-foot .volunteer-signatures { margin: 0; padding: 1cqw 2.2cqw 1.2cqw; gap: 3cqw; justify-content: flex-start; }
+.volunteer-registry-foot .volunteer-signature { width: 46%; }
+.volunteer-registry-verify { display: flex; flex-direction: column; justify-content: center; gap: .9cqw; padding: 1.2cqw 2cqw; border-left: .08cqw solid var(--volunteer-navy); font-size: .82cqw; line-height: 1.45; }
+.volunteer-registry-verify .volunteer-verification-block, .volunteer-registry-verify .volunteer-footer-record { max-width: none; }
+.volunteer-registry-verify .volunteer-footer-record strong { font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-weight: 600; }
+.volunteer-design-registry.volunteer-long-name .volunteer-recipient { font-size: 2.5cqw; }
+
+/* Editorial: a school-blue band carries the issuers; the name leads. */
+.volunteer-design-editorial { padding: 0; border: 0; outline: 0; --volunteer-blue: #1d3f78; }
+.volunteer-editorial { flex: 1 0 auto; display: grid; grid-template-columns: 24% 1fr; }
+.volunteer-editorial-band { display: flex; flex-direction: column; justify-content: space-between; padding: 3.6cqw 2.4cqw 3cqw; background: var(--volunteer-blue); color: #fff; }
+.volunteer-editorial-issuers { display: flex; flex-direction: column; gap: 1.2cqw; }
+.volunteer-editorial-band .volunteer-school-logo { width: 7cqw; height: 7cqw; padding: .45cqw; border-radius: 50%; background: #fff; }
+.volunteer-editorial-band .volunteer-organization { font-size: .9cqw; letter-spacing: .12em; color: #d7e2f4; }
+.volunteer-editorial-band .volunteer-school { font-size: 1.75cqw; line-height: 1.2; }
+.volunteer-editorial-band .volunteer-program { margin-top: .3cqw; font-size: .9cqw; color: #d7e2f4; }
+.volunteer-sheet .volunteer-editorial-mark { font: italic 400 2.9cqw/1.05 Georgia, 'Times New Roman', serif; color: #f0c76a; }
+.volunteer-editorial-main { display: flex; flex-direction: column; min-width: 0; padding: 4.4cqw 4.6cqw 2.4cqw; }
+.volunteer-sheet .volunteer-editorial-main .volunteer-certificate-title { font: 600 2.1cqw/1.2 'IBM Plex Sans Variable', Arial, sans-serif; color: var(--volunteer-blue); }
+.volunteer-sheet .volunteer-editorial-main .volunteer-presented { margin-top: 2.6cqw; }
+.volunteer-sheet .volunteer-editorial-main .volunteer-recipient { margin: .4cqw 0 1.4cqw; max-width: none; text-align: left; font: 700 4.9cqw/1.02 'IBM Plex Sans Variable', Arial, sans-serif; letter-spacing: -.03em; text-wrap: balance; }
+.volunteer-editorial-main .volunteer-certificate-copy { max-width: 62ch; font-size: 1.25cqw; line-height: 1.6; }
+.volunteer-sheet .volunteer-editorial-main .volunteer-contributions { max-width: 70ch; margin: .8cqw 0 0; font-size: 1.1cqw; line-height: 1.5; color: #33424d; }
+.volunteer-sheet .volunteer-editorial-facts { display: flex; flex-wrap: wrap; gap: 1.2cqw 2.6cqw; margin-top: 1.8cqw; }
+.volunteer-editorial-facts > div { min-width: 11cqw; max-width: 26cqw; padding-top: .55cqw; border-top: .22cqw solid var(--volunteer-blue); }
+.volunteer-editorial-facts dt { font-size: .78cqw; letter-spacing: .12em; text-transform: uppercase; color: #5d6a72; }
+.volunteer-editorial-facts dd { font-size: 1.2cqw; font-weight: 600; font-variant-numeric: tabular-nums; }
+.volunteer-editorial-main .volunteer-thanks { margin-top: 1.4cqw; }
+.volunteer-editorial-main > .volunteer-certificate-title { margin-top: auto; }
+.volunteer-editorial-main .volunteer-signatures { margin-top: 2.6cqw; padding-top: 0; justify-content: flex-start; gap: 4cqw; }
+.volunteer-editorial-main .volunteer-signature { width: 40%; }
+.volunteer-editorial-main .volunteer-sheet-footer { margin-top: auto; padding-top: 1.1cqw; }
+.volunteer-design-editorial.volunteer-long-name .volunteer-recipient,
+.volunteer-design-editorial.volunteer-dense .volunteer-recipient { font-size: 3.4cqw; }
+.volunteer-design-editorial .volunteer-draft-label { right: 3cqw; }
+
+/* Woven: warm paper between woven bands in the logo's red, gold and blue. */
+.volunteer-design-woven { --volunteer-red: #8f1f26; background: #fbf6ec; border: 0; outline: 0; padding: 5.6cqw 6cqw 4.4cqw; }
+.volunteer-design-woven::after { content: ''; position: absolute; inset: 3.7cqw 2.6cqw; border: .08cqw solid #c9a45c; pointer-events: none; }
+.volunteer-woven-band { position: absolute; left: 0; right: 0; height: 2.4cqw; z-index: 0; pointer-events: none;
+  background:
+    linear-gradient(#1d3f78, #1d3f78) top / 100% .3cqw no-repeat,
+    linear-gradient(#1d3f78, #1d3f78) bottom / 100% .3cqw no-repeat,
+    repeating-linear-gradient(45deg, #d6a540 0 .28cqw, transparent .28cqw 1.5cqw),
+    repeating-linear-gradient(-45deg, #d6a540 0 .28cqw, transparent .28cqw 1.5cqw),
+    var(--volunteer-red); }
+.volunteer-woven-top { top: 0; }
+.volunteer-woven-bottom { bottom: 0; }
+.volunteer-design-woven .volunteer-sheet-content { position: relative; z-index: 1; background: #fbf6ec; }
+.volunteer-sheet.volunteer-design-woven .volunteer-certificate-title { color: var(--volunteer-red); font-size: 3.4cqw; }
+.volunteer-design-woven .volunteer-presented, .volunteer-design-woven .volunteer-program { color: #7a5a2a; }
+.volunteer-design-woven .volunteer-service-period > div { border-color: #c9a45c; }
+.volunteer-design-woven .volunteer-sheet-footer { border-top-color: #e2d3b3; }
+.volunteer-design-woven .volunteer-school-logo { mix-blend-mode: multiply; }
+.volunteer-design-woven .volunteer-draft-label { top: 4.1cqw; right: 3.4cqw; z-index: 2; }
+
+/* Design picker miniatures (screen only). */
+.volunteer-design-thumb { position: relative; flex: none; width: 64px; height: 45px; overflow: hidden; border-radius: 2px; background: #fff; box-shadow: 0 0 0 1px #cbd3df; }
+.volunteer-design-thumb i { position: absolute; left: 50%; height: 3px; border-radius: 1px; background: #0c2538; transform: translateX(-50%); }
+.volunteer-design-thumb i:nth-child(1) { top: 12px; width: 26px; }
+.volunteer-design-thumb i:nth-child(2) { top: 20px; width: 34px; height: 5px; }
+.volunteer-design-thumb i:nth-child(3) { top: 31px; width: 20px; opacity: .45; }
+.volunteer-thumb-classic { box-shadow: inset 0 0 0 1.5px #0c2538, inset 0 0 0 4px #fff, inset 0 0 0 5px #c28b28; }
+.volunteer-thumb-registry { background: linear-gradient(#0c2538, #0c2538) 0 14px / 100% 1px no-repeat, linear-gradient(#0c2538, #0c2538) 0 30px / 100% 1px no-repeat, linear-gradient(#0c2538, #0c2538) 7px 14px / 1px 31px no-repeat, #fff; box-shadow: inset 0 0 0 1.5px #0c2538; }
+.volunteer-thumb-registry i { left: 12px; transform: none; }
+.volunteer-thumb-registry i:nth-child(1) { top: 5px; width: 30px; }
+.volunteer-thumb-registry i:nth-child(2) { top: 19px; }
+.volunteer-thumb-registry i:nth-child(3) { top: 35px; }
+.volunteer-thumb-editorial { background: linear-gradient(#1d3f78, #1d3f78) 0 0 / 16px 100% no-repeat, #fff; }
+.volunteer-thumb-editorial i { left: 22px; transform: none; }
+.volunteer-thumb-editorial i:nth-child(2) { height: 6px; width: 32px; }
+.volunteer-thumb-woven { background:
+  repeating-linear-gradient(45deg, #d6a540 0 1px, transparent 1px 4px) 0 0 / 100% 6px no-repeat,
+  repeating-linear-gradient(-45deg, #d6a540 0 1px, transparent 1px 4px) 0 0 / 100% 6px no-repeat,
+  linear-gradient(#8f1f26, #8f1f26) 0 0 / 100% 6px no-repeat,
+  repeating-linear-gradient(45deg, #d6a540 0 1px, transparent 1px 4px) 0 100% / 100% 6px no-repeat,
+  repeating-linear-gradient(-45deg, #d6a540 0 1px, transparent 1px 4px) 0 100% / 100% 6px no-repeat,
+  linear-gradient(#8f1f26, #8f1f26) 0 100% / 100% 6px no-repeat,
+  #fbf6ec; }
+.volunteer-thumb-woven i:nth-child(1) { background: #8f1f26; }
+
 .volunteer-print-page { min-height: 100vh; background: #e9ecef; padding: 24px 16px 48px; }
 .volunteer-print-toolbar { max-width: 1123px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .volunteer-print-notice { max-width: 1123px; margin: 0 auto 16px; padding: 12px 16px; font-size: 14px; background: #fff4dc; color: #6d4512; border: 1px solid #e4c78e; }
