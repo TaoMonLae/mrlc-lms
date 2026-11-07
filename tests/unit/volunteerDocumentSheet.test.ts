@@ -156,3 +156,20 @@ test('manual MRO signatures print on every template with upload provenance and n
     assertNoChop(html);
   }
 });
+
+test('each certificate design renders its layout and older payloads fall back to Classic', () => {
+  const certificate = (design?: string) => renderToStaticMarkup(createElement(VolunteerDocumentSheet, {
+    type: 'VOLUNTEER_APPRECIATION_CERTIFICATE', payload: { ...payload, ...(design ? { design } : {}) } as VolunteerDocumentPayload,
+    documentNumber: 'MRLC-VAC-1', issueDate: '2026-01-01T00:00:00Z', verifyUrl: 'https://example.test/v', qrDataUrl: 'data:image/png;base64,eA==',
+  }));
+  assert.match(certificate(), /volunteer-design-classic/);
+  assert.match(certificate('NOT_A_DESIGN'), /volunteer-design-classic/);
+  assert.match(certificate('REGISTRY'), /volunteer-registry-head/);
+  assert.match(certificate('EDITORIAL'), /volunteer-editorial-band/);
+  assert.match(certificate('WOVEN'), /volunteer-woven-top/);
+  for (const design of ['CLASSIC', 'REGISTRY', 'EDITORIAL', 'WOVEN']) {
+    const html = certificate(design);
+    assert.match(html, /MRLC-VAC-1/, design);
+    assert.match(html, /Scan to verify this document/, design);
+  }
+});

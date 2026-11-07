@@ -12,8 +12,8 @@ import { apiGet, apiSend } from '../../lib/api';
 import { usePermissions } from '../../lib/permissions';
 import {
   currentVolunteerMonth, formatVolunteerMonth, isVolunteerStaffRole, validateVolunteerDocumentInput, volunteerContributionLimit,
-  VOLUNTEER_DOCUMENT_TYPE_LABELS, VOLUNTEER_ORGANIZATION_NAME, VOLUNTEER_PROGRAM_NAME, VOLUNTEER_SCHOOL_NAME,
-  type VolunteerDocumentInput, type VolunteerDocumentPayload, type VolunteerDocumentRecord, type VolunteerSigningOptions, type VolunteerSignatureSlot,
+  VOLUNTEER_CERTIFICATE_DESIGNS, VOLUNTEER_DOCUMENT_TYPE_LABELS, VOLUNTEER_ORGANIZATION_NAME, VOLUNTEER_PROGRAM_NAME, VOLUNTEER_SCHOOL_NAME,
+  type VolunteerCertificateDesign, type VolunteerDocumentInput, type VolunteerDocumentPayload, type VolunteerDocumentRecord, type VolunteerSigningOptions, type VolunteerSignatureSlot,
 } from '@/shared/volunteerDocuments';
 import { formatVolunteerIssueDate, formatVolunteerSignedAt } from '@/shared/volunteerDocumentDates';
 import VolunteerDocumentSheet from './VolunteerDocumentSheet';
@@ -31,6 +31,7 @@ type Branding = Partial<VolunteerDocumentPayload['school']>;
 const EMPTY_FORM: FormState = {
   type: 'VOLUNTEER_APPRECIATION_CERTIFICATE', recipientName: '', role: '', fromMonth: '', toMonth: '', contributions: '',
   hoursPerWeek: '', totalHours: '', signatoryName: '', signatoryTitle: '', signatoryUserId: '', organizationSignatoryName: '', organizationSignatoryTitle: '', organizationSignatoryUserId: '',
+  design: 'CLASSIC',
 };
 const linkStyle = 'inline-flex min-h-10 items-center justify-center gap-2 rounded-sm border border-border bg-card px-3 text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring';
 const selectStyle = 'h-10 rounded-sm border border-input bg-card px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-ring';
@@ -144,6 +145,7 @@ export default function VolunteerDocuments() {
 
   const payload: VolunteerDocumentPayload = useMemo(() => ({
     version: 2,
+    ...(form.type === 'VOLUNTEER_APPRECIATION_CERTIFICATE' ? { design: form.design || 'CLASSIC' } : {}),
     organization: { name: VOLUNTEER_ORGANIZATION_NAME },
     school: {
       name: VOLUNTEER_SCHOOL_NAME, program: VOLUNTEER_PROGRAM_NAME,
@@ -273,8 +275,7 @@ export default function VolunteerDocuments() {
     <div className="mx-auto max-w-[1600px] space-y-6">
       <header>
         <Link to={isAdmin || user?.role === 'TEACHER' ? '/documents' : '/dashboard'} className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" />{isAdmin || user?.role === 'TEACHER' ? 'Official Documents' : 'Dashboard'}</Link>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-academic-teal">MRO · MRLC · GED Program</p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">Volunteer documents</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Volunteer documents</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{isAdmin ? `Recognize service and provide a verifiable record of volunteering with ${VOLUNTEER_ORGANIZATION_NAME} and ${VOLUNTEER_SCHOOL_NAME}.` : 'Review and digitally sign the volunteer documents assigned to your account.'}</p>
       </header>
 
@@ -296,6 +297,23 @@ export default function VolunteerDocuments() {
             );
           })}
         </div>
+        {form.type === 'VOLUNTEER_APPRECIATION_CERTIFICATE' && (
+          <div className="mt-4">
+            <p id="certificate-design-label" className="mb-2 text-sm font-semibold text-foreground">Certificate design</p>
+            <div role="radiogroup" aria-labelledby="certificate-design-label" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {(Object.entries(VOLUNTEER_CERTIFICATE_DESIGNS) as [VolunteerCertificateDesign, { label: string; description: string }][]).map(([key, info]) => {
+                const selected = (form.design || 'CLASSIC') === key;
+                return (
+                  <label key={key} className={`flex cursor-pointer items-center gap-3 rounded-sm border p-3 transition-colors focus-within:ring-2 focus-within:ring-ring ${selected ? 'border-academic-teal bg-academic-teal/10' : 'border-border bg-card hover:border-foreground/40'}`}>
+                    <input type="radio" name="certificate-design" value={key} checked={selected} onChange={() => setField('design', key)} className="sr-only" />
+                    <span className={`volunteer-design-thumb volunteer-thumb-${key.toLowerCase()}`} aria-hidden="true"><i /><i /><i /></span>
+                    <span className="min-w-0"><span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">{info.label}{selected && <Check className="size-3.5 text-academic-teal" aria-hidden="true" />}</span><span className="mt-0.5 block text-xs leading-5 text-muted-foreground">{info.description}</span></span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </fieldset>
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(340px,0.8fr)_minmax(0,1.2fr)]">
@@ -338,7 +356,7 @@ export default function VolunteerDocuments() {
 
         <aside className="min-w-0 space-y-4 xl:sticky xl:top-6" aria-label="Document preview">
           {issued && <div role="status" className="rounded-sm border border-academic-teal/40 bg-academic-teal/10 p-4"><div className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 size-5 shrink-0 text-academic-teal" /><div><p className="font-semibold">{statusLabel(issued)}</p><p className="mt-1 text-sm text-muted-foreground">{issued.documentNumber} · {issued.recipientName}</p></div></div><div className="mt-3 flex flex-wrap gap-2"><Link className={linkStyle} to={printPath(issued.id)}><ExternalLink className="size-4" />Open / print PDF</Link><Button type="button" variant="outline" onClick={() => void copyVerifyLink(issued)}><Link2 className="size-4" />Copy verification link</Button></div></div>}
-          <div className="flex flex-wrap items-center justify-between gap-3"><div><div className="flex items-center gap-2"><h2 className="text-sm font-semibold">Live preview</h2><Badge variant="outline">Draft</Badge></div><p className="mt-1 text-xs text-muted-foreground">{TEMPLATES.find(template => template.type === form.type)?.format} · Updates as you type</p></div><Button type="button" variant="outline" size="sm" onClick={() => setFullPreviewOpen(true)}><Maximize2 className="size-4" />Open full-size preview</Button></div>
+          <div className="flex flex-wrap items-center justify-between gap-3"><div><div className="flex items-center gap-2"><h2 className="text-sm font-semibold">Live preview</h2><Badge variant="outline">Draft</Badge></div><p className="mt-1 text-xs text-muted-foreground">{TEMPLATES.find(template => template.type === form.type)?.format}{form.type === 'VOLUNTEER_APPRECIATION_CERTIFICATE' ? ` · ${VOLUNTEER_CERTIFICATE_DESIGNS[form.design || 'CLASSIC'].label} design` : ''} · Updates as you type</p></div><Button type="button" variant="outline" size="sm" onClick={() => setFullPreviewOpen(true)}><Maximize2 className="size-4" />Open full-size preview</Button></div>
           <div className="min-w-0 border border-border bg-muted/40 p-3 sm:p-5"><VolunteerDocumentSheet type={form.type} payload={payload} draft /></div>
           <p className="flex items-start gap-2 text-xs leading-5 text-muted-foreground"><ShieldCheck className="mt-0.5 size-4 shrink-0" />A document number and verification QR code are created immediately. Verification becomes valid after the required signatures are complete.</p>
         </aside>

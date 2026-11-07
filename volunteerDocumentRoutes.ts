@@ -88,10 +88,13 @@ export function registerVolunteerDocumentRoutes(app: Express, ctx: VolunteerDocu
     if (!input.signatoryUserId) { res.status(400).json({ error: 'Choose the school account authorized to sign this document.' }); return; }
     try {
       const ids = [input.signatoryUserId, input.organizationSignatoryUserId].filter((id): id is string => Boolean(id));
-      const [profile, staff] = await Promise.all([
+      const [profile, staff, issuer] = await Promise.all([
         prisma.schoolProfile.findFirst(),
         prisma.user.findMany({ where: { id: { in: ids }, isActive: true, isExternalLearner: false, role: { in: [...VOLUNTEER_SIGNER_ROLES] } }, select: { id: true, firstName: true, lastName: true } }),
+        prisma.user.findUnique({ where: { id: user.userId }, select: { firstName: true, lastName: true } }),
       ]);
+      // Record who issued it by name; the login email is not a display name.
+      const issuedByName = `${issuer?.firstName ?? ''} ${issuer?.lastName ?? ''}`.trim().replace(/\s+/g, ' ') || user.email;
       const selected = (id: string) => {
         const person = staff.find(candidate => candidate.id === id);
         if (!person) throw new VolunteerSigningError('A selected signatory is no longer an active school staff account. Choose another account.');
@@ -105,6 +108,7 @@ export function registerVolunteerDocumentRoutes(app: Express, ctx: VolunteerDocu
       } : undefined;
       const payload: VolunteerDocumentPayload = {
         version: 2,
+        ...(input.design ? { design: input.design } : {}),
         organization: { name: VOLUNTEER_ORGANIZATION_NAME },
         school: {
           name: VOLUNTEER_SCHOOL_NAME, program: VOLUNTEER_PROGRAM_NAME,
@@ -131,7 +135,7 @@ export function registerVolunteerDocumentRoutes(app: Express, ctx: VolunteerDocu
           verifyToken: crypto.randomBytes(24).toString('hex'),
           type: input.type, recipientName: input.recipientName, role: input.role,
           fromMonth: input.fromMonth, toMonth: input.toMonth,
-          payload: JSON.parse(JSON.stringify(payload)), issuedById: user.userId, issuedByName: user.email,
+          payload: JSON.parse(JSON.stringify(payload)), issuedById: user.userId, issuedByName,
           issueDate: issuedAt, signatoryUserId: input.signatoryUserId,
           organizationSignatoryUserId: input.organizationSignatoryUserId || null,
         }, include: signatureInclude,
