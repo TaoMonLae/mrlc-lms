@@ -1451,9 +1451,13 @@ test("normalizeChallenge redacts example sentences that give away the answer", (
 test("lazy official catalogue preserves every course and retirement code", async () => {
   const seen: string[] = [];
   let retired: string[] = [];
+  const seededUnits = new Map(k12MathCourses.map(course => [course.code, course.units]));
   await ensureOfficialCourses({ languageQuestCourse: {
     findUnique: async ({ where }: any) => { seen.push(where.code); return { id: where.code, published: false }; },
     findMany: async ({ where }: any) => { retired = where.code.in; return []; },
+  }, languageQuestUnit: {
+    // Every appendable unit is already present, so nothing is re-seeded.
+    findMany: async ({ where }: any) => (seededUnits.get(where.courseId) ?? []).map((unit, order) => ({ title: unit.title, order })),
   } });
   const expected = [importedSpanishCourse, mandarinFoundationsCourse, completeMandarinCourse,
     chineseConversationStarterCourse, ...englishWordCourses, ...advancedEnglishCourses,
@@ -1464,4 +1468,39 @@ test("lazy official catalogue preserves every course and retirement code", async
   for (const course of [importedSpanishCourse, malaySpeakingCourse, malayGuideModernCourse, teachYourselfMalayCourse]) {
     assert.ok(retired.includes(course.code));
   }
+});
+
+
+test("official courses append newly flagged units without touching seeded rows", async () => {
+  const created: Record<string, any[]> = {};
+  const record = (name: string) => ({ createMany: async ({ data }: any) => { (created[name] ??= []).push(...data); } });
+  const tx = {
+    languageQuestUnit: record("units"), languageQuestLesson: record("lessons"),
+    languageQuestChallenge: record("challenges"), languageQuestOption: record("options"),
+  };
+  const course = {
+    ...importedSpanishCourse,
+    retired: false,
+    units: [
+      { ...importedSpanishCourse.units[0] },
+      { title: "Practice Unit", description: "New practice", appendToExisting: true, lessons: importedSpanishCourse.units[0].lessons.slice(0, 1) },
+    ],
+  };
+  const existing = { id: "course-1", published: true };
+  const prisma = {
+    languageQuestCourse: { findUnique: async () => existing },
+    languageQuestUnit: { findMany: async () => [{ title: course.units[0].title, order: 0 }, { title: "Teacher unit", order: 3 }] },
+    $transaction: async (fn: any) => fn(tx),
+  };
+  assert.equal(await ensureOfficialCourse(prisma, course), existing);
+  assert.equal(created.units.length, 1);
+  assert.deepEqual({ ...created.units[0], id: undefined }, { id: undefined, courseId: "course-1", title: "Practice Unit", description: "New practice", order: 4 });
+  assert.equal(created.lessons.length, 1);
+  assert.equal(created.challenges.length, course.units[1].lessons[0].challenges.length);
+
+  // A second run finds the unit by title and creates nothing.
+  for (const key of Object.keys(created)) delete created[key];
+  prisma.languageQuestUnit.findMany = async () => [{ title: course.units[0].title, order: 0 }, { title: "Practice Unit", order: 4 }];
+  await ensureOfficialCourse(prisma, course);
+  assert.deepEqual(created, {});
 });

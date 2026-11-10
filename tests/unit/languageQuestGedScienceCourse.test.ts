@@ -10,13 +10,15 @@ const VISUAL_TYPES = new Set(['process', 'table', 'formula', 'bar', 'line', 'lay
 test('GED Science V2 is a complete subject course without lesson emojis', () => {
   assert.equal(gedScienceCourse.code, 'MRLC-GED-SCIENCE-V2');
   assert.equal(gedScienceCourse.imageEmoji, '');
-  assert.equal(gedScienceCourse.units.length, 3);
+  assert.equal(gedScienceCourse.units.length, 4);
+  assert.equal(gedScienceCourse.units[3].appendToExisting, true);
+  assert.equal(gedScienceCourse.units[3].lessons.length, 4);
   assert.equal(languageQuestCourseUsesStudyCards(gedScienceCourse.language), false);
 
   const lessons = gedScienceCourse.units.flatMap((unit) => unit.lessons);
   const challenges = lessons.flatMap((lesson) => lesson.challenges);
-  assert.equal(lessons.length, 38);
-  assert.equal(challenges.length, 114);
+  assert.equal(lessons.length, 42);
+  assert.equal(challenges.length, 134);
   assert.equal(new Set(lessons.map((lesson) => lesson.title)).size, lessons.length);
   assert.equal(new Set(challenges.map((challenge) => challenge.question)).size, challenges.length);
 

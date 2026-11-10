@@ -14,18 +14,19 @@ test('GED Mathematical Reasoning matches the official reporting-category weights
   assert.equal(gedMathCourse.imageEmoji, '');
   assert.equal(languageQuestCourseMode(gedMathCourse.language), 'mathematics');
   assert.equal(languageQuestCourseUsesStudyCards(gedMathCourse.language), false);
-  assert.deepEqual(gedMathCourse.units.map((unit) => unit.lessons.length), [10, 8, 12, 10]);
+  assert.deepEqual(gedMathCourse.units.map((unit) => unit.lessons.length), [10, 8, 12, 10, 4]);
+  assert.equal(gedMathCourse.units[4].appendToExisting, true);
 
   const lessons = gedMathCourse.units.flatMap((unit) => unit.lessons);
   const challenges = lessons.flatMap((lesson) => lesson.challenges);
-  assert.equal(lessons.length, 40);
-  assert.equal(challenges.length, 120);
-  assert.equal(gedMathCourse.units[0].lessons.length / lessons.length, 0.25);
-  assert.equal(gedMathCourse.units[1].lessons.length / lessons.length, 0.20);
-  assert.equal(gedMathCourse.units[2].lessons.length / lessons.length, 0.30);
-  assert.equal(gedMathCourse.units[3].lessons.length / lessons.length, 0.25);
-  assert.equal((gedMathCourse.units[0].lessons.length + gedMathCourse.units[1].lessons.length) / lessons.length, 0.45);
-  assert.equal((gedMathCourse.units[2].lessons.length + gedMathCourse.units[3].lessons.length) / lessons.length, 0.55);
+  assert.equal(lessons.length, 44);
+  assert.equal(challenges.length, 140);
+  // The taught units keep the official GED blueprint balance; Unit 5 is mixed practice.
+  const taught = gedMathCourse.units.slice(0, 4).reduce((count, unit) => count + unit.lessons.length, 0);
+  assert.equal(gedMathCourse.units[0].lessons.length / taught, 0.25);
+  assert.equal(gedMathCourse.units[1].lessons.length / taught, 0.20);
+  assert.equal(gedMathCourse.units[2].lessons.length / taught, 0.30);
+  assert.equal(gedMathCourse.units[3].lessons.length / taught, 0.25);
   assert.equal(new Set(lessons.map((lesson) => lesson.title)).size, lessons.length);
   assert.equal(new Set(challenges.map((challenge) => challenge.question)).size, challenges.length);
 });
@@ -51,7 +52,7 @@ test('GED Mathematics content is typeset, accessible, and assessment-ready', () 
     assert.ok(Array.isArray(concept.objectives) && concept.objectives.length === 3);
     assert.ok(concept.gedStrategy.trim());
 
-    assert.equal(lesson.challenges.length, 3);
+    assert.equal(lesson.challenges.length, lesson.title.startsWith('Practice Set:') ? 5 : 3);
     for (const challenge of lesson.challenges) {
       if (LANGUAGE_QUEST_FINAL_EXAM_TYPES.has(challenge.type)) finalExamQuestionCount += 1;
       if (/\$[^$]+\$/.test(challenge.question)) mathPromptCount += 1;
@@ -70,6 +71,6 @@ test('GED Mathematics content is typeset, accessible, and assessment-ready', () 
     }
   }
 
-  assert.ok(mathPromptCount >= 110, 'nearly every question should expose its mathematical notation to the shared renderer');
+  assert.ok(mathPromptCount >= 128, 'nearly every question should expose its mathematical notation to the shared renderer');
   assert.ok(finalExamQuestionCount >= LANGUAGE_QUEST_FINAL_EXAM_MIN_QUESTIONS);
 });

@@ -13,12 +13,13 @@ test('GED RLA is comprehensive, source-balanced, and assessment-ready', () => {
   assert.equal(gedRlaCourse.imageEmoji, '');
   assert.equal(gedRlaCourse.published, true);
   assert.equal(languageQuestCourseUsesStudyCards(gedRlaCourse.language), false);
-  assert.deepEqual(gedRlaCourse.units.map((unit) => unit.lessons.length), [10, 8, 6, 8]);
+  assert.deepEqual(gedRlaCourse.units.map((unit) => unit.lessons.length), [10, 8, 6, 8, 4]);
+  assert.equal(gedRlaCourse.units[4].appendToExisting, true);
 
   const lessons = gedRlaCourse.units.flatMap((unit) => unit.lessons);
   const challenges = lessons.flatMap((lesson) => lesson.challenges);
-  assert.equal(lessons.length, 32);
-  assert.equal(challenges.length, 96);
+  assert.equal(lessons.length, 36);
+  assert.equal(challenges.length, 116);
   assert.equal(new Set(lessons.map((lesson) => lesson.title)).size, lessons.length);
   assert.equal(new Set(challenges.map((challenge) => challenge.question)).size, challenges.length);
 
@@ -43,7 +44,7 @@ test('GED RLA is comprehensive, source-balanced, and assessment-ready', () => {
     assert.equal(parseScienceConcept(lesson.conceptIntro!)?.subject, 'rla');
     sourceTypes.set(concept.sourceType, (sourceTypes.get(concept.sourceType) || 0) + 1);
 
-    assert.equal(lesson.challenges.length, 3);
+    assert.equal(lesson.challenges.length, lesson.title.startsWith('Practice Set:') ? 5 : 3);
     for (const challenge of lesson.challenges) {
       if (LANGUAGE_QUEST_FINAL_EXAM_TYPES.has(challenge.type)) finalExamQuestionCount += 1;
       assert.equal(challenge.type, 'SELECT');
@@ -57,7 +58,7 @@ test('GED RLA is comprehensive, source-balanced, and assessment-ready', () => {
     }
   }
 
-  assert.deepEqual(Object.fromEntries(sourceTypes), { informational: 10, literary: 8, argument: 6, editing: 8 });
+  assert.deepEqual(Object.fromEntries(sourceTypes), { informational: 11, literary: 9, argument: 6, editing: 10 });
   assert.equal(sourceTypes.get('literary'), lessons.length * 0.25);
   assert.ok(finalExamQuestionCount >= LANGUAGE_QUEST_FINAL_EXAM_MIN_QUESTIONS);
 });

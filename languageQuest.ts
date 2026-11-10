@@ -48,6 +48,7 @@ import {
   canJoinLanguageQuestClassroom,
   normalizeLanguageQuestClassroomCode,
 } from "./shared/languageQuestClassrooms";
+import { groupLanguageQuestExamDeckBySource, languageQuestConceptStimulus, languageQuestGedExamProfile, LANGUAGE_QUEST_GED_EXAM_MAX_QUESTIONS } from "./shared/languageQuestGedExam";
 import { languageQuestAnswerMatches, languageQuestPinyin } from "./shared/languageQuestPinyin";
 import { languageQuestGlobalLeaderboardWhere } from "./shared/externalLearnerAccess";
 import {
@@ -433,10 +434,92 @@ export function normalizeCourseDraft(raw: any): { value?: CourseDraft; error?: s
   return { value: { title, description, language, category, imageEmoji, accentColor, published, units } };
 }
 
+function officialCourseRows(courseId: string, units: OfficialLanguageQuestCourse["units"], firstUnitOrder = 0) {
+  const unitRows: any[] = [];
+  const lessons: any[] = [];
+  const challenges: any[] = [];
+  const options: any[] = [];
+
+  units.forEach((unit, unitIndex) => {
+    const unitId = randomUUID();
+    unitRows.push({ id: unitId, courseId, title: unit.title, description: unit.description, order: firstUnitOrder + unitIndex });
+    unit.lessons.forEach((lesson, lessonOrder) => {
+      const lessonId = randomUUID();
+      lessons.push({ id: lessonId, unitId, title: lesson.title, description: lesson.description, conceptIntro: lesson.conceptIntro ?? null, order: lessonOrder });
+      lesson.challenges.forEach((challenge, challengeOrder) => {
+        const challengeId = randomUUID();
+        challenges.push({
+          id: challengeId,
+          lessonId,
+          type: challenge.type,
+          question: challenge.question,
+          explanation: challenge.explanation ?? null,
+          hint: challenge.hint ?? null,
+          order: challengeOrder,
+        });
+        challenge.options.forEach((option, optionOrder) => {
+          options.push({ id: randomUUID(), challengeId, ...option, order: optionOrder });
+        });
+      });
+    });
+  });
+  return { units: unitRows, lessons, challenges, options };
+}
+
+async function insertOfficialCourseRows(tx: any, rows: ReturnType<typeof officialCourseRows>): Promise<void> {
+  if (rows.units.length) await tx.languageQuestUnit.createMany({ data: rows.units });
+  if (rows.lessons.length) await tx.languageQuestLesson.createMany({ data: rows.lessons });
+  if (rows.challenges.length) await tx.languageQuestChallenge.createMany({ data: rows.challenges });
+  if (rows.options.length) await tx.languageQuestOption.createMany({ data: rows.options });
+}
+
+// Appends units an official curriculum marks `appendToExisting` to a course
+// seeded before they were written. Existing units, lessons, and challenges are
+// never touched, so learner progress keeps pointing at the same rows.
+async function appendMissingOfficialUnits(prisma: any, existing: any, course: OfficialLanguageQuestCourse): Promise<void> {
+  const appendable = course.units.filter((unit) => unit.appendToExisting);
+  if (!appendable.length) return;
+  const current = await prisma.languageQuestUnit.findMany({
+    where: { courseId: existing.id },
+    select: { title: true, order: true },
+  });
+  const titles = new Set(current.map((unit: any) => unit.title));
+  const missing = appendable.filter((unit) => !titles.has(unit.title));
+  if (!missing.length) return;
+  const nextOrder = current.reduce((max: number, unit: any) => Math.max(max, unit.order + 1), 0);
+  await prisma.$transaction(async (tx: any) => {
+    await insertOfficialCourseRows(tx, officialCourseRows(existing.id, missing, nextOrder));
+  }, { maxWait: 10_000, timeout: 120_000 });
+}
+
+// GED Preparation courses take a full-pacing GED-style practice test; every
+// other course keeps the standard certificate exam. A smaller GED question
+// pool keeps the real per-question pace rather than the full time limit.
+function finalExamSettings(course: { category?: string | null; language: string }, eligibleCount: number) {
+  const ged = languageQuestGedExamProfile(course);
+  if (!ged) {
+    return {
+      format: null,
+      questionCount: Math.min(LANGUAGE_QUEST_FINAL_EXAM_MAX_QUESTIONS, eligibleCount),
+      attemptMinutes: LANGUAGE_QUEST_FINAL_EXAM_ATTEMPT_MINUTES,
+    };
+  }
+  const questionCount = Math.min(ged.questionCount, eligibleCount);
+  return {
+    format: ged,
+    questionCount,
+    attemptMinutes: Math.max(1, Math.ceil((ged.minutes * questionCount) / ged.questionCount)),
+  };
+}
+
 export async function ensureOfficialCourse(prisma: any, course: OfficialLanguageQuestCourse): Promise<any> {
   const existing = await prisma.languageQuestCourse.findUnique({ where: { code: course.code } });
   if (existing) {
-    if (!course.retired || !existing.published) return existing;
+    if (!course.retired) {
+      await appendMissingOfficialUnits(prisma, existing, course);
+      return existing;
+    }
+    if (!existing.published) return existing;
     return prisma.$transaction(async (tx: any) => {
       const retired = await tx.languageQuestCourse.update({
         where: { id: existing.id },
@@ -463,39 +546,7 @@ export async function ensureOfficialCourse(prisma: any, course: OfficialLanguage
           published: course.published,
         },
       });
-      const units: any[] = [];
-      const lessons: any[] = [];
-      const challenges: any[] = [];
-      const options: any[] = [];
-
-      course.units.forEach((unit, unitOrder) => {
-        const unitId = randomUUID();
-        units.push({ id: unitId, courseId: created.id, title: unit.title, description: unit.description, order: unitOrder });
-        unit.lessons.forEach((lesson, lessonOrder) => {
-          const lessonId = randomUUID();
-          lessons.push({ id: lessonId, unitId, title: lesson.title, description: lesson.description, conceptIntro: lesson.conceptIntro ?? null, order: lessonOrder });
-          lesson.challenges.forEach((challenge, challengeOrder) => {
-            const challengeId = randomUUID();
-            challenges.push({
-              id: challengeId,
-              lessonId,
-              type: challenge.type,
-              question: challenge.question,
-              explanation: challenge.explanation ?? null,
-              hint: challenge.hint ?? null,
-              order: challengeOrder,
-            });
-            challenge.options.forEach((option, optionOrder) => {
-              options.push({ id: randomUUID(), challengeId, ...option, order: optionOrder });
-            });
-          });
-        });
-      });
-
-      if (units.length) await tx.languageQuestUnit.createMany({ data: units });
-      if (lessons.length) await tx.languageQuestLesson.createMany({ data: lessons });
-      if (challenges.length) await tx.languageQuestChallenge.createMany({ data: challenges });
-      if (options.length) await tx.languageQuestOption.createMany({ data: options });
+      await insertOfficialCourseRows(tx, officialCourseRows(created.id, course.units));
       return created;
     }, { maxWait: 10_000, timeout: 120_000 });
   } catch (error: any) {
@@ -1277,7 +1328,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
               available: examEligibleChallenges.length >= LANGUAGE_QUEST_FINAL_EXAM_MIN_QUESTIONS,
               eligibleQuestionCount: examEligibleChallenges.length,
               minQuestions: LANGUAGE_QUEST_FINAL_EXAM_MIN_QUESTIONS,
-              questionCount: Math.min(LANGUAGE_QUEST_FINAL_EXAM_MAX_QUESTIONS, examEligibleChallenges.length),
+              ...finalExamSettings(course, examEligibleChallenges.length),
               passPercent: Math.round(LANGUAGE_QUEST_FINAL_EXAM_PASS_RATIO * 100),
               passed: Boolean(passedExam),
               bestScorePercent,
@@ -1724,9 +1775,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           unlocked: courseCompleted,
           eligibleQuestionCount: examEligibleChallenges.length,
           minQuestions: LANGUAGE_QUEST_FINAL_EXAM_MIN_QUESTIONS,
-          questionCount: Math.min(LANGUAGE_QUEST_FINAL_EXAM_MAX_QUESTIONS, examEligibleChallenges.length),
+          ...finalExamSettings(course, examEligibleChallenges.length),
           passPercent: Math.round(LANGUAGE_QUEST_FINAL_EXAM_PASS_RATIO * 100),
-          attemptMinutes: LANGUAGE_QUEST_FINAL_EXAM_ATTEMPT_MINUTES,
           passed: Boolean(passedExam),
           certificateEligible: courseCompleted && Boolean(passedExam),
           passedAt: passedExam?.submittedAt ?? null,
@@ -1834,7 +1884,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         res.status(409).json({ error: `This course needs at least ${LANGUAGE_QUEST_FINAL_EXAM_MIN_QUESTIONS} compatible scored questions before a final exam can be generated.` });
         return;
       }
-      const deckSize = Math.min(eligible.length, LANGUAGE_QUEST_FINAL_EXAM_MAX_QUESTIONS);
+      const examSettings = finalExamSettings(course, eligible.length);
+      const deckSize = examSettings.questionCount;
       const spellingQuestions = shuffle(eligible.filter((challenge: any) => challenge.type === "DICTATION"));
       const choiceQuestions = shuffle(eligible.filter((challenge: any) => challenge.type !== "DICTATION"));
       // When a course teaches spelling, reserve roughly 20% of the exam for it
@@ -1845,12 +1896,19 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       const selectedSpelling = spellingQuestions.slice(0, spellingSlots);
       const selectedChoice = choiceQuestions.slice(0, deckSize - selectedSpelling.length);
       const remainingSlots = deckSize - selectedSpelling.length - selectedChoice.length;
-      const deck = shuffle([
+      const shuffledDeck = shuffle([
         ...selectedSpelling,
         ...selectedChoice,
         ...spellingQuestions.slice(spellingSlots, spellingSlots + remainingSlots),
       ]);
-      const expiresAt = new Date(now.getTime() + LANGUAGE_QUEST_FINAL_EXAM_ATTEMPT_MINUTES * 60_000);
+      // GED questions about one passage, table, or graph are answered together.
+      // Mathematical Reasoning items stand alone, so they stay fully mixed.
+      const lessonById = new Map(course.units.flatMap((unit: any) => unit.lessons.map((lesson: any) => [lesson.id, lesson])));
+      const groupsBySource = Boolean(examSettings.format && examSettings.format.subject !== "mathematics");
+      const deck = groupsBySource
+        ? groupLanguageQuestExamDeckBySource(shuffledDeck, (challenge: any) => challenge.lessonId, (challenge: any) => challenge.order)
+        : shuffledDeck;
+      const expiresAt = new Date(now.getTime() + examSettings.attemptMinutes * 60_000);
       const attempt = await prisma.languageQuestFinalExamAttempt.create({
         data: {
           userId: jwtUser.userId,
@@ -1869,10 +1927,14 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         expiresAt,
         passPercent: Math.round(LANGUAGE_QUEST_FINAL_EXAM_PASS_RATIO * 100),
         course: { id: course.id, title: course.title, language: course.language, accentColor: course.accentColor },
+        format: examSettings.format,
         cards: deck.map((challenge: any) => {
           const secureAudio = challenge.type === "DICTATION";
+          const lesson: any = lessonById.get(challenge.lessonId);
           return {
             challengeId: challenge.id,
+            sourceId: groupsBySource ? challenge.lessonId : null,
+            stimulus: examSettings.format ? languageQuestConceptStimulus(lesson?.conceptIntro) : null,
             type: challenge.type,
             question: languageQuestAssessmentPrompt(
               challenge.question,
@@ -1959,7 +2021,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         optionId: typeof entry.optionId === "string" ? entry.optionId : null,
         typedAnswer: text(entry.typedAnswer, 300) || null,
       }));
-    if (!attemptId || answers.length === 0 || answers.length > LANGUAGE_QUEST_FINAL_EXAM_MAX_QUESTIONS) {
+    if (!attemptId || answers.length === 0 || answers.length > Math.max(LANGUAGE_QUEST_FINAL_EXAM_MAX_QUESTIONS, LANGUAGE_QUEST_GED_EXAM_MAX_QUESTIONS)) {
       res.status(400).json({ error: "Submit every final exam answer" });
       return;
     }

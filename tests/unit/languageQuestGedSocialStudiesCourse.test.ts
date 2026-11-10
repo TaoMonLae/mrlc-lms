@@ -14,12 +14,13 @@ test('GED Social Studies is complete, weighted, and assessment-ready', () => {
   assert.equal(gedSocialStudiesCourse.imageEmoji, '');
   assert.equal(gedSocialStudiesCourse.published, true);
   assert.equal(languageQuestCourseUsesStudyCards(gedSocialStudiesCourse.language), false);
-  assert.deepEqual(gedSocialStudiesCourse.units.map((unit) => unit.lessons.length), [20, 8, 6, 6]);
+  assert.deepEqual(gedSocialStudiesCourse.units.map((unit) => unit.lessons.length), [20, 8, 6, 6, 4]);
+  assert.equal(gedSocialStudiesCourse.units[4].appendToExisting, true);
 
   const lessons = gedSocialStudiesCourse.units.flatMap((unit) => unit.lessons);
   const challenges = lessons.flatMap((lesson) => lesson.challenges);
-  assert.equal(lessons.length, 40);
-  assert.equal(challenges.length, 120);
+  assert.equal(lessons.length, 44);
+  assert.equal(challenges.length, 140);
   assert.equal(new Set(lessons.map((lesson) => lesson.title)).size, lessons.length);
   assert.equal(new Set(challenges.map((challenge) => challenge.question)).size, challenges.length);
 
@@ -40,7 +41,7 @@ test('GED Social Studies is complete, weighted, and assessment-ready', () => {
     assert.ok(concept.checkpoint.trim());
     assert.equal(parseScienceConcept(lesson.conceptIntro!)?.subject, 'social-studies');
 
-    assert.equal(lesson.challenges.length, 3);
+    assert.equal(lesson.challenges.length, lesson.title.startsWith('Practice Set:') ? 5 : 3);
     for (const challenge of lesson.challenges) {
       if (LANGUAGE_QUEST_FINAL_EXAM_TYPES.has(challenge.type)) finalExamQuestionCount += 1;
       assert.equal(challenge.type, 'SELECT');
