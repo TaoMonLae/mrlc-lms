@@ -28,7 +28,8 @@ import { LanguageQuestReorderTiles } from '@/src/components/games/LanguageQuestR
 import { LanguageQuestMatchingBoard } from '@/src/components/games/LanguageQuestMatchingBoard';
 import { LanguageQuestCompanion } from '@/src/components/games/LanguageQuestCompanion';
 import { LanguageQuestRewardReveal } from '@/src/components/games/LanguageQuestRewards';
-import { LanguageQuestScienceConcept } from '@/src/components/games/LanguageQuestScienceConcept';
+import { LanguageQuestScienceConcept, LanguageQuestStimulus, type ScienceVisual } from '@/src/components/games/LanguageQuestScienceConcept';
+import { languageQuestConceptStimulus } from '@/shared/languageQuestGedExam';
 import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
 import { playLanguageQuestSuccessSound } from '@/src/lib/languageQuestAudio';
 import {
@@ -287,6 +288,14 @@ export default function LanguageQuestLesson() {
   const courseMode = lesson ? languageQuestCourseMode(lesson.course.language) : 'language';
   const isMathematics = courseMode === 'mathematics';
   const isEvidenceCourse = courseMode === 'science' || courseMode === 'social-studies' || courseMode === 'rla';
+  // Science and Social Studies questions refer to the lesson's table, graph,
+  // or timeline. As on the GED, that source stays on screen while answering.
+  const questionStimulus = useMemo(
+    () => (courseMode === 'science' || courseMode === 'social-studies')
+      ? languageQuestConceptStimulus(lesson?.conceptIntro) as ScienceVisual | null
+      : null,
+    [courseMode, lesson?.conceptIntro],
+  );
   const isSubjectCourse = courseMode !== 'language';
   const guidanceMode = isMathematics ? 'math' : isEvidenceCourse ? 'science' : 'language';
   const challengeGuidance = isMathematics ? MATH_CHALLENGE_GUIDANCE : CHALLENGE_GUIDANCE;
@@ -1338,6 +1347,18 @@ export default function LanguageQuestLesson() {
             </div>
             <Button type="button" size="sm" variant="outline" className="shrink-0 border-sky-300 bg-white/70" onClick={dismissGuidance}>Got it</Button>
           </aside>
+        )}
+        {questionStimulus && (
+          <details open className="group mt-4 rounded-2xl border border-slate-200 bg-white/70 dark:border-slate-700 dark:bg-slate-900/40">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 text-xs font-black uppercase tracking-[0.14em] text-slate-600 outline-none focus-visible:ring-4 focus-visible:ring-sky-200 dark:text-slate-300">
+              <span className="flex items-center gap-2"><BookOpen className="h-4 w-4" /> Source</span>
+              <span className="font-semibold normal-case tracking-normal text-slate-400 group-open:hidden">Show</span>
+              <span className="hidden font-semibold normal-case tracking-normal text-slate-400 group-open:inline">Hide</span>
+            </summary>
+            <div className="max-h-[min(40vh,22rem)] overflow-y-auto px-3 pb-3 sm:px-4 sm:pb-4">
+              <LanguageQuestStimulus visual={questionStimulus} />
+            </div>
+          </details>
         )}
         <div className="mt-3 flex items-start justify-between gap-4">
           <LanguageQuestQuestionText language={lesson.course.language} text={challenge.question} className="min-w-0 flex-1" />

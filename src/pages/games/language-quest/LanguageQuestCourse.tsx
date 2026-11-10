@@ -16,6 +16,7 @@ import { QuestReveal } from '@/src/components/games/LanguageQuestMotion';
 import { languageQuestCategoryForLanguage } from '@/shared/languageQuestCourseCategories';
 import { languageQuestStoriesForCategory } from '@/shared/languageQuestStory';
 import { languageQuestCourseMode, languageQuestCourseUsesStudyCards } from '@/shared/languageQuest';
+import type { GedExamProfile } from '@/shared/languageQuestGedExam';
 
 interface CourseLesson {
   id: string;
@@ -47,6 +48,7 @@ interface CoursePayload {
   finalExam: {
     available: boolean; unlocked: boolean; eligibleQuestionCount: number; minQuestions: number;
     questionCount: number; passPercent: number; attemptMinutes: number; passed: boolean;
+    format?: GedExamProfile | null;
     certificateEligible: boolean; passedAt: string | null; bestScorePercent: number | null;
     latestAttempt: { status: string; scorePercent: number | null; submittedAt: string | null; violationReason: string | null } | null;
     retryAt: string | null;
@@ -287,12 +289,12 @@ export default function LanguageQuestCourse() {
               </div>
               <div className="divide-y-2 divide-slate-100 border-y-2 border-slate-100 dark:divide-slate-800 dark:border-slate-800">
                 <Milestone
-                  tone="exam" icon={course.finalExam.passed ? <Award className="h-7 w-7" /> : <FileCheck2 className="h-7 w-7" />} eyebrow="Certificate requirement" title="Monitored Final Exam"
+                  tone="exam" icon={course.finalExam.passed ? <Award className="h-7 w-7" /> : <FileCheck2 className="h-7 w-7" />} eyebrow="Certificate requirement" title={course.finalExam.format ? `GED-style ${course.finalExam.format.testName} test` : 'Monitored Final Exam'}
                   description={course.finalExam.passed
                     ? `Passed${course.finalExam.bestScorePercent !== null ? ` with a best score of ${course.finalExam.bestScorePercent}%` : ''}. Your verified certificate is unlocked.`
                     : !course.finalExam.available
                       ? `A teacher needs to add ${Math.max(0, course.finalExam.minQuestions - course.finalExam.eligibleQuestionCount)} more compatible scored questions.`
-                      : course.finalExam.unlocked ? `${course.finalExam.questionCount} questions · ${course.finalExam.passPercent}% to pass · ${course.finalExam.attemptMinutes} minutes.` : 'Complete every lesson to unlock the certificate exam.'}
+                      : course.finalExam.unlocked ? `${course.finalExam.questionCount} questions · ${course.finalExam.attemptMinutes} minutes${course.finalExam.format ? ' at real test pacing' : ''} · ${course.finalExam.passPercent}% to pass.` : 'Complete every lesson to unlock the certificate exam.'}
                   href={course.finalExam.available && course.finalExam.unlocked ? `/games/language-quest/courses/${course.id}/final-exam` : undefined}
                   action={course.finalExam.passed ? 'View' : course.finalExam.unlocked && course.finalExam.available ? 'Begin' : 'Locked'} disabled={!course.finalExam.available || !course.finalExam.unlocked}
                 />

@@ -20,7 +20,7 @@ interface LessonSeed {
   keyTerms: Array<{ marker: string; text: string }>;
   gedStrategy: string;
   checkpoint: string;
-  questions: [Question, Question, Question];
+  questions: [Question, ...Question[]];
 }
 
 const PREFIX = 'SOCIAL_STUDIES_V1::';
@@ -673,10 +673,85 @@ const geography: LessonSeed[] = [
   },
 ];
 
+// Mixed practice sets modeled on GED Social Studies item styles: questions
+// built on a table, timeline, chart, or short founding-document excerpt.
+// Scenarios, data, and answer choices are original MRLC content; quoted
+// founding documents are public-domain texts.
+const practiceSets: LessonSeed[] = [
+  {
+    title: 'Practice Set: Civics and Government',
+    summary: 'Apply constitutional principles—checks and balances, the First Amendment, federalism, and judicial review—to new situations.',
+    objectives: ['Use a table of branch powers to trace a check', 'Apply a constitutional excerpt to a realistic case', 'Separate civic facts from opinions'],
+    explanation: ['GED civics questions often give a short excerpt or table and then describe a situation the source never mentions. Your job is to match the situation to the principle in the source.', 'Fact questions can be checked against a record, such as an amendment or a law. Opinion questions contain judgment words such as “best,” “fairest,” or “should.”'],
+    visual: { type: 'table', title: 'Selected constitutional powers and checks', headers: ['Branch', 'Main power', 'Example check'], rows: [['Legislative (Congress)', 'Makes laws', 'Can override a veto with a two-thirds vote in each house'], ['Executive (President)', 'Carries out laws', 'Can veto bills passed by Congress'], ['Judicial (courts)', 'Interprets laws', 'Can declare laws unconstitutional']] },
+    keyTerms: [{ marker: 'concurrent power', text: 'a power shared by the national and state governments' }, { marker: 'judicial review', text: 'the power of courts to strike down laws that violate the Constitution' }, { marker: 'veto', text: 'the President’s rejection of a bill passed by Congress' }],
+    gedStrategy: 'Restate the principle in your own words first, then ask which answer choice is an example of that principle in action.',
+    checkpoint: 'Which branch can respond if the President vetoes a bill?',
+    questions: [
+      ['Congress passes a bill, and the President vetoes it. According to the table, what can Congress do next?', 'Override the veto with a two-thirds vote in each house', ['Ask the Supreme Court to sign the bill into law', 'Pass the bill again by a simple majority in one house', 'Cancel the veto by calling a special national election'], 'The table lists a two-thirds vote in each house as Congress’s check on a presidential veto.'],
+      ['“Congress shall make no law … abridging the freedom of speech, or of the press …” —First Amendment. Which situation most directly raises a First Amendment question?', 'A state fines a newspaper for criticizing the governor', ['A city raises its sales tax to pay for road repairs', 'A suspect asks for a lawyer before being questioned', 'A state raises the minimum age for a driver’s license'], 'Punishing a newspaper for its criticism limits freedom of the press. The other situations involve taxes, the right to counsel, and licensing.'],
+      ['Under federalism, which power is shared by the national and state governments?', 'Collecting taxes', ['Declaring war', 'Printing money', 'Making treaties'], 'Taxation is a concurrent power. Declaring war, coining money, and making treaties belong to the national government.'],
+      ['Which statement about voting is an opinion rather than a fact?', 'Mail-in voting is the fairest way to run an election.', ['The Twenty-Sixth Amendment set the voting age at 18.', 'Each state elects two members of the U.S. Senate.', 'Presidential elections are held every four years.'], '“Fairest” is a judgment that cannot be proven. The other statements can be checked in the Constitution.'],
+      ['The Supreme Court’s power of judicial review was established in which case?', 'Marbury v. Madison (1803)', ['Brown v. Board of Education (1954)', 'Plessy v. Ferguson (1896)', 'Miranda v. Arizona (1966)'], 'In Marbury v. Madison, the Court first struck down a federal law as unconstitutional, establishing judicial review.'],
+    ],
+  },
+  {
+    title: 'Practice Set: U.S. History',
+    summary: 'Use a timeline and founding-document excerpts to answer sequence, cause-and-effect, and main-idea questions about U.S. history.',
+    objectives: ['Read a timeline to establish sequence', 'Connect causes to later events', 'Identify the central idea of a founding document'],
+    explanation: ['A timeline shows order, not cause. To claim that one event caused another, you need evidence that links them, such as colonists protesting a tax.', 'An answer can be eliminated if it puts events in an impossible order, such as a later document causing an earlier one.'],
+    visual: { type: 'process', title: 'Selected events, 1763–1791', steps: ['1763: Proclamation limits colonial settlement west of the Appalachians', '1765: Stamp Act taxes printed materials in the colonies', '1776: Declaration of Independence adopted', '1781: Articles of Confederation take effect', '1787: Constitution drafted in Philadelphia', '1791: Bill of Rights ratified'], caption: 'Order matters: an event cannot be caused by something that happened later.' },
+    keyTerms: [{ marker: 'Articles of Confederation', text: 'the first U.S. plan of government, which created a weak national government' }, { marker: 'unalienable rights', text: 'rights that cannot be given up or taken away' }, { marker: 'home front', text: 'civilian life inside a country during a war' }],
+    gedStrategy: 'Check dates before choosing a cause. Any choice that happened after the effect cannot be its cause.',
+    checkpoint: 'Could the Bill of Rights have caused the Constitutional Convention?',
+    questions: [
+      ['Which event most directly reflects colonists’ objections to “taxation without representation”?', 'Protests against the Stamp Act of 1765', ['Ratification of the Bill of Rights in 1791', 'Drafting of the Constitution in 1787', 'Adoption of the Articles of Confederation'], 'The Stamp Act was a tax passed by a Parliament in which colonists had no representatives.'],
+      ['Why did delegates meet in 1787 to draft a new constitution?', 'The Articles created a national government that was too weak.', ['The Bill of Rights had given the states too little power.', 'Britain demanded a new colonial charter after the war.', 'The Declaration of Independence needed to be repealed.'], 'Under the Articles, Congress could not tax or regulate trade effectively. The Bill of Rights came later, in 1791.'],
+      ['“We hold these truths to be self-evident, that all men are created equal, that they are endowed by their Creator with certain unalienable Rights …” —Declaration of Independence. Which idea does the excerpt express?', 'People have natural rights that government cannot take away', ['Monarchs receive their authority to rule directly from God', 'States should hold more power than the national government', 'Only property owners should take part in their government'], '“Unalienable Rights” are natural rights that belong to people regardless of government.'],
+      ['Which amendment abolished slavery in the United States?', 'The Thirteenth Amendment', ['The Fourteenth Amendment', 'The Fifteenth Amendment', 'The Nineteenth Amendment'], 'The Thirteenth Amendment (1865) abolished slavery. The Fourteenth guaranteed citizenship and equal protection, the Fifteenth protected voting regardless of race, and the Nineteenth extended voting to women.'],
+      ['During World War II, millions of men joined the armed forces. Which home-front effect followed most directly?', 'Many women took jobs in factories and shipyards', ['Factories closed because demand for goods fell', 'Congress ended the draft for the rest of the war', 'Most farms stopped producing food for export'], 'War production rose while many male workers served overseas, so many women filled industrial jobs.'],
+    ],
+  },
+  {
+    title: 'Practice Set: Economics and Data',
+    summary: 'Read an economic data table to find surpluses, deficits, and averages, then apply inflation and supply-and-demand reasoning.',
+    objectives: ['Compare two columns of economic data', 'Calculate a difference, mean, and percent change', 'Predict a price change from a shift in supply'],
+    explanation: ['A trade surplus means exports are greater than imports; a trade deficit means imports are greater. Subtract within the same year and keep the table’s units.', 'When supply falls and demand stays the same, buyers compete for fewer goods and the price rises. Percent change always divides by the original value.'],
+    visual: { type: 'table', title: 'Illustrative trade data for Country X (billions of dollars)', headers: ['Year', 'Exports', 'Imports'], rows: [['2019', '410', '460'], ['2020', '380', '450'], ['2021', '430', '470'], ['2022', '470', '465']], caption: 'Illustrative data for practice only.' },
+    keyTerms: [{ marker: 'trade surplus', text: 'exports greater than imports' }, { marker: 'trade deficit', text: 'imports greater than exports' }, { marker: 'inflation rate', text: 'the percent increase in the general price level over a period' }],
+    gedStrategy: 'Write the column labels beside each number you use. Most data errors come from mixing exports and imports or using the wrong year.',
+    checkpoint: 'In the table, which column must be larger for a year to show a trade surplus?',
+    questions: [
+      ['A trade surplus occurs when exports exceed imports. In which year did Country X have a trade surplus?', '2022', ['2019', '2020', '2021'], 'Only in 2022 were exports (470) greater than imports (465).'],
+      ['What was Country X’s trade deficit in 2020?', '70 billion dollars', ['30 billion dollars', '40 billion dollars', '830 billion dollars'], 'Imports minus exports in 2020: 450 − 380 = 70 billion dollars.'],
+      ['What were Country X’s mean annual exports from 2019 to 2022?', '422.5 billion dollars', ['430 billion dollars', '440 billion dollars', '461.25 billion dollars'], 'Exports total 410 + 380 + 430 + 470 = 1,690, and 1,690 ÷ 4 = 422.5. The value 461.25 is the mean of imports.'],
+      ['A basket of goods cost 200 dollars one year and 210 dollars the next. What was the inflation rate for the basket?', '5 percent', ['10 percent', '2 percent', '4.8 percent'], 'The increase is 10 dollars, and 10 ÷ 200 = 0.05, or 5 percent. Divide by the original price.'],
+      ['A frost destroys much of a region’s orange crop while demand stays the same. What will most likely happen?', 'The price of oranges will rise.', ['The price of oranges will fall.', 'The demand for oranges will double.', 'The supply of oranges will increase.'], 'The frost reduces supply. With unchanged demand, lower supply pushes the price up.'],
+    ],
+  },
+  {
+    title: 'Practice Set: Geography and Graphs',
+    summary: 'Interpret a bar graph and a map scale, then apply migration and human–environment concepts to new situations.',
+    objectives: ['Compare values on a bar graph', 'Convert map distance using a scale', 'Classify migration factors and environmental effects'],
+    explanation: ['Read the axis label and units before comparing bars; values shown in thousands must be multiplied by 1,000. A map scale is a ratio, so multiply map distance by the real distance per unit.', 'Push factors drive people away from a place; pull factors draw them toward a new one. Human changes to land, such as paving, can alter how water moves through a region.'],
+    visual: { type: 'bar', title: 'Illustrative population by city (thousands)', items: [{ label: 'Riverton', value: 820 }, { label: 'Lakeview', value: 540 }, { label: 'Hill City', value: 310 }, { label: 'Port Ann', value: 130 }], caption: 'Illustrative data for practice only. Values are in thousands of people.' },
+    keyTerms: [{ marker: 'map scale', text: 'the ratio between a distance on a map and the real distance' }, { marker: 'pull factor', text: 'a condition that attracts people to a new place' }, { marker: 'push factor', text: 'a condition that drives people away from a place' }],
+    gedStrategy: 'Before calculating with a graph, write the units next to each number so thousands are not mistaken for ones.',
+    checkpoint: 'If a bar reads 310 on this graph, how many people does it represent?',
+    questions: [
+      ['How many more people live in Riverton than in Hill City?', '510,000', ['1,130,000', '280,000', '690,000'], 'Subtract the values: 820 − 310 = 510 thousand, or 510,000 people.'],
+      ['Riverton’s population is about how many times the population of Port Ann?', 'About 6 times', ['About 2 times', 'About 4 times', 'About 8 times'], '820 ÷ 130 is about 6.3, so Riverton is about 6 times as large.'],
+      ['A map scale shows 1 inch = 50 miles. Two towns are 3.5 inches apart on the map. How far apart are they?', '175 miles', ['53.5 miles', '14.3 miles', '350 miles'], 'Multiply the map distance by the scale: 3.5 × 50 = 175 miles.'],
+      ['Which is a pull factor that draws migrants to a new region?', 'Job openings in growing industries', ['Drought that ruins local farmland', 'Armed conflict near one’s home', 'Rising unemployment at home'], 'Job opportunities attract people to a destination. The other choices push people away from where they live.'],
+      ['Which human action is most likely to increase flooding downstream?', 'Paving large areas of former wetland', ['Planting trees along a riverbank', 'Restoring wetlands near the river', 'Building rain gardens in parking lots'], 'Pavement stops water from soaking into the ground, so more runoff reaches the river quickly. The other actions slow or absorb runoff.'],
+    ],
+  },
+];
+
 export const gedSocialStudiesCourse: OfficialLanguageQuestCourse = {
   code: 'MRLC-GED-SOCIAL-STUDIES-V1',
   title: 'GED Social Studies Preparation & Practice',
-  description: 'A comprehensive, evidence-first GED Social Studies course with 40 guided lessons and 120 original practice questions aligned to the official civics, U.S. history, economics, geography, source-analysis, and quantitative-reasoning targets.',
+  description: 'A comprehensive, evidence-first GED Social Studies course with 44 guided lessons and 140 original practice questions aligned to the official civics, U.S. history, economics, geography, source-analysis, and quantitative-reasoning targets.',
   language: 'GED Social Studies',
   category: 'GED Preparation',
   imageEmoji: '',
@@ -687,5 +762,6 @@ export const gedSocialStudiesCourse: OfficialLanguageQuestCourse = {
     { title: 'Unit 2: United States History', description: 'Founding documents, national development, civil rights, global conflict, and historical-source reasoning.', lessons: history.map(lesson) },
     { title: 'Unit 3: Economics', description: 'Choice, markets, production, macroeconomic indicators, public policy, credit, and quantitative reasoning.', lessons: economics.map(lesson) },
     { title: 'Unit 4: Geography and the World', description: 'Maps, environment, regions, migration, population, urbanization, and integrated data analysis.', lessons: geography.map(lesson) },
+    { title: 'Unit 5: GED Practice Sets', description: 'Mixed, test-style practice built on tables, timelines, graphs, and founding-document excerpts across civics, history, economics, and geography.', appendToExisting: true, lessons: practiceSets.map(lesson) },
   ],
 };

@@ -64,6 +64,12 @@ export interface OfficialLanguageQuestCourse {
   units: Array<{
     title: string;
     description: string;
+    /**
+     * Official courses are created once and never rewritten, so learner
+     * progress stays attached to stable rows. A unit flagged here is appended
+     * (matched by title) to an already-seeded course when it is missing.
+     */
+    appendToExisting?: boolean;
     lessons: Array<{
       title: string;
       description: string;

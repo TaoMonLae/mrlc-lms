@@ -238,6 +238,14 @@ function ScienceVisualBlock({ visual }: { visual: ScienceVisual }) {
   return <EvidenceVisual visual={visual} />;
 }
 
+/**
+ * Renders one lesson source (table, graph, timeline, diagram) on its own so a
+ * GED-style question can keep its stimulus on screen while it is answered.
+ */
+export function LanguageQuestStimulus({ visual }: { visual: ScienceVisual }) {
+  return <ScienceVisualBlock visual={visual} />;
+}
+
 export function LanguageQuestScienceConcept({ source }: { source: string }) {
   const document = parseScienceConcept(source);
   if (!document) return <PlainConcept source={source} />;

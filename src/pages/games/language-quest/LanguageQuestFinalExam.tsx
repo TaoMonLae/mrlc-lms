@@ -12,6 +12,9 @@ import { LanguageQuestQuestionText } from '@/src/components/games/LanguageQuestQ
 import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
 import { playLanguageQuestProtectedVoice, speakLanguageQuestVoice } from '@/src/lib/languageQuestVoice';
 import { languageQuestCourseMode, languageQuestCourseUsesStudyCards } from '@/shared/languageQuest';
+import { languageQuestGedReadiness, type GedExamProfile } from '@/shared/languageQuestGedExam';
+import { GedPracticeTestScreen } from '@/src/components/games/GedPracticeTestScreen';
+import type { ScienceVisual } from '@/src/components/games/LanguageQuestScienceConcept';
 
 interface FinalExamStatus {
   available: boolean;
@@ -21,6 +24,8 @@ interface FinalExamStatus {
   questionCount: number;
   passPercent: number;
   attemptMinutes: number;
+  /** Present for GED Preparation courses, which take a GED-style practice test. */
+  format?: GedExamProfile | null;
   passed: boolean;
   certificateEligible: boolean;
   passedAt: string | null;
@@ -43,6 +48,8 @@ interface ExamCard {
   question: string;
   secureAudio: boolean;
   speechText: string | null;
+  sourceId?: string | null;
+  stimulus?: ScienceVisual | null;
   options: LanguageQuestOption[];
 }
 
@@ -56,6 +63,7 @@ interface ExamPayload {
   expiresAt: string;
   passPercent: number;
   course: { id: string; title: string; language: string; accentColor: string };
+  format?: GedExamProfile | null;
   cards: ExamCard[];
 }
 
@@ -301,6 +309,22 @@ export default function LanguageQuestFinalExam() {
 
   const isMathematics = languageQuestCourseMode(course.language) === 'mathematics';
   const isSubjectCourse = !languageQuestCourseUsesStudyCards(course.language);
+  const gedFormat = course.finalExam.format ?? null;
+
+  if (payload && !result && !terminatedReason && payload.format) {
+    return (
+      <GedPracticeTestScreen
+        format={payload.format}
+        courseLanguage={payload.course.language}
+        cards={payload.cards}
+        answers={Object.fromEntries(Object.entries(answers).flatMap(([challengeId, answer]) => (answer.optionId ? [[challengeId, answer.optionId]] : [])))}
+        onAnswer={(challengeId, optionId) => setAnswers((current) => ({ ...current, [challengeId]: { optionId, typedAnswer: null } }))}
+        secondsLeft={secondsLeft}
+        submitting={submitting}
+        onSubmit={() => void submitExam(answers)}
+      />
+    );
+  }
 
   if (payload && !result && !terminatedReason) {
     const card = payload.cards[index];
@@ -423,6 +447,22 @@ export default function LanguageQuestFinalExam() {
           <h1 className="mt-2 text-3xl font-black text-slate-950 dark:text-white">{result.passed ? 'Certificate unlocked!' : 'Keep preparing'}</h1>
           <p className="mt-3 text-5xl font-black text-slate-950 dark:text-white">{result.scorePercent}%</p>
           <p className="mt-2 text-sm font-semibold text-slate-600 dark:text-slate-300">{result.correctCount}/{result.total} correct • {result.requiredCorrect} required to pass</p>
+          {gedFormat && (() => {
+            const readiness = languageQuestGedReadiness(result.scorePercent);
+            const copy = readiness === 'on-track'
+              ? { label: 'On track for test day', detail: `You answered at the level this course expects before the real ${gedFormat.testName} test.` }
+              : readiness === 'close'
+                ? { label: 'Getting close', detail: 'Review the topics you missed in the question report, then take this practice test again.' }
+                : { label: 'Keep building', detail: 'Revisit the course lessons for the topics you missed before scheduling the real test.' };
+            return (
+              <div className="mx-auto mt-5 max-w-xl rounded-2xl border border-slate-200 bg-white/80 p-4 text-left dark:border-slate-700 dark:bg-slate-900/60">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">GED readiness</p>
+                <p className="mt-1 text-lg font-black text-slate-950 dark:text-white">{copy.label}</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">{copy.detail}</p>
+                <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">This is an MRLC practice estimate, not an official score. The real GED reports a scaled score from 100 to 200, and 145 passes each subject.</p>
+              </div>
+            );
+          })()}
           <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-300">
             {result.passed
               ? 'Your monitored pass is saved. The new final-exam-verified certificate is now available in Achievements.'
@@ -459,9 +499,9 @@ export default function LanguageQuestFinalExam() {
           <div className="flex items-start gap-4">
             <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white/12"><FileCheck2 className="h-7 w-7" /></span>
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-300">Certificate final exam</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-300">{gedFormat ? `GED-style practice test · ${gedFormat.testName}` : 'Certificate final exam'}</p>
               <h1 className="mt-1 text-2xl font-black sm:text-3xl">{course.title}</h1>
-              <p className="mt-2 text-sm text-white/75">Pass this monitored assessment to unlock the course certificate.</p>
+              <p className="mt-2 text-sm text-white/75">{gedFormat ? 'Built like the computer-based GED test, with real test-day pacing. Pass it to unlock the course certificate.' : 'Pass this monitored assessment to unlock the course certificate.'}</p>
             </div>
           </div>
         </div>
@@ -479,17 +519,31 @@ export default function LanguageQuestFinalExam() {
             </div>
           )}
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900"><p className="text-2xl font-black text-slate-950 dark:text-white">{course.finalExam.questionCount}</p><p className="text-xs font-bold text-slate-500">{isMathematics ? 'randomized maths questions' : isSubjectCourse ? 'randomized subject questions' : 'choice + spelling questions'}</p></div>
+            <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900"><p className="text-2xl font-black text-slate-950 dark:text-white">{course.finalExam.questionCount}</p><p className="text-xs font-bold text-slate-500">{gedFormat ? 'GED-style questions' : isMathematics ? 'randomized maths questions' : isSubjectCourse ? 'randomized subject questions' : 'choice + spelling questions'}</p></div>
             <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900"><p className="text-2xl font-black text-slate-950 dark:text-white">{course.finalExam.passPercent}%</p><p className="text-xs font-bold text-slate-500">required to pass</p></div>
-            <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900"><p className="text-2xl font-black text-slate-950 dark:text-white">{course.finalExam.attemptMinutes} min</p><p className="text-xs font-bold text-slate-500">hard time limit</p></div>
+            <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900"><p className="text-2xl font-black text-slate-950 dark:text-white">{course.finalExam.attemptMinutes} min</p><p className="text-xs font-bold text-slate-500">{gedFormat ? 'real test pacing' : 'hard time limit'}</p></div>
           </div>
+          {gedFormat && (
+            <div className="rounded-2xl border border-sky-200 bg-sky-50 p-5 dark:border-sky-500/25 dark:bg-sky-950/20">
+              <h2 className="font-black text-sky-950 dark:text-sky-100">How this matches the real test</h2>
+              <p className="mt-1 text-sm leading-6 text-sky-900 dark:text-sky-100/90">{gedFormat.testDayFormat}</p>
+              <ul className="mt-3 space-y-2 text-sm font-semibold leading-6 text-sky-900 dark:text-sky-100/90">
+                <li>• Move back and forth with Previous and Next, change answers, and use Flag for Review.</li>
+                <li>• The Review Screen shows answered, unanswered, and flagged questions before you submit.</li>
+                {gedFormat.subject !== 'mathematics' && <li>• Passages, tables, and graphs stay beside the questions that use them.</li>}
+                {gedFormat.noCalculatorQuestions > 0 && <li>• Part 1 has {gedFormat.noCalculatorQuestions} questions with no calculator. Once you move to Part 2 you cannot go back.</li>}
+                {(gedFormat.calculator || gedFormat.formulaSheet) && <li>• On-screen tools: {[gedFormat.calculator && 'calculator', gedFormat.formulaSheet && 'formula sheet'].filter(Boolean).join(' and ')}.</li>}
+                <li>• Unanswered questions are scored as incorrect, so answer every question.</li>
+              </ul>
+            </div>
+          )}
           <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-5 dark:border-amber-500/30 dark:bg-amber-950/20">
             <h2 className="flex items-center gap-2 font-black text-amber-950 dark:text-amber-100"><AlertTriangle className="h-5 w-5" /> Read before starting</h2>
             <ul className="mt-3 space-y-2 text-sm font-semibold leading-6 text-amber-900 dark:text-amber-100/90">
               <li>• The exam enters secure full-screen mode when your browser supports it.</li>
               <li>• Do not switch tabs, swap apps/screens, swipe away, close, reload, or leave full screen.</li>
               <li>• Hiding or leaving the exam terminates the attempt and records the integrity reason.</li>
-              <li>• Answers lock as you continue. Correct answers are not revealed after a failed attempt.</li>
+              <li>{gedFormat ? '• Correct answers are not revealed after a failed attempt.' : '• Answers lock as you continue. Correct answers are not revealed after a failed attempt.'}</li>
               {!isSubjectCourse && <li>• Courses with dictation include listen-and-type spelling questions.</li>}
               <li>• Failed or terminated attempts require a 15-minute review break.</li>
             </ul>
@@ -500,7 +554,7 @@ export default function LanguageQuestFinalExam() {
           </label>
           {waiting && retryAt && <p className="rounded-xl bg-rose-50 p-3 text-sm font-bold text-rose-700 dark:bg-rose-950/20 dark:text-rose-200">Next attempt available after {retryAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.</p>}
           <Button className="w-full bg-violet-700 hover:bg-violet-800" size="lg" disabled={!acknowledged || !course.finalExam.unlocked || !course.finalExam.available || waiting || starting} onClick={startExam}>
-            {starting ? 'Starting secure exam…' : <><Expand className="mr-2 h-4 w-4" /> Start final exam</>}
+            {starting ? 'Starting secure exam…' : <><Expand className="mr-2 h-4 w-4" /> {gedFormat ? 'Start practice test' : 'Start final exam'}</>}
           </Button>
         </div>
       </section>

@@ -11,7 +11,7 @@ interface LessonSeed {
   explanation: string;
   terms: [[string, string], [string, string]];
   strategy: string;
-  questions: [Question, Question, Question];
+  questions: [Question, ...Question[]];
 }
 
 const PREFIX = 'MATH_V1::';
@@ -633,10 +633,80 @@ const graphsAndFunctions: LessonSeed[] = [
   },
 ];
 
+// Mixed practice sets modeled on the item styles of full-length GED practice
+// tests: multi-step word problems, formula-sheet geometry, and data questions.
+// Every scenario, number, and answer choice is original MRLC content.
+const practiceSets: LessonSeed[] = [
+  {
+    title: 'Practice Set: Money, Percents, and Interest',
+    summary: 'Solve multi-step consumer-math problems involving simple interest, discounts, tax, percent change, unit price, and overtime pay.',
+    formula: '$I=Prt$ and $\\text{percent change}=\\frac{\\text{new}-\\text{original}}{\\text{original}}$',
+    example: '$600$ dollars at $4\\%$ for $2$ years: $I=600(0.04)(2)=48$ dollars',
+    explanation: 'Many GED money questions take two steps: find a part (interest, discount, tax, or overtime), then combine it with the original amount. Time in an interest formula must be measured in years.',
+    terms: [['principal', 'the original amount borrowed or invested'], ['percent change', 'the change divided by the original amount']],
+    strategy: 'Ask whether the question wants only the part (interest, discount) or the new total, and check that units of time match the rate.',
+    questions: [
+      ['Lena borrows $900$ dollars for $8$ months at a simple annual interest rate of $6\\%$. Including principal and interest, how much will she repay?', '$936$ dollars', ['$954$ dollars', '$36$ dollars', '$1,332$ dollars'], 'Eight months is $\\frac{8}{12}$ of a year, so $I=900(0.06)(\\frac{8}{12})=36$ dollars and the total is $900+36=936$ dollars.'],
+      ['A jacket priced at $80$ dollars is marked $25\\%$ off. A $6\\%$ sales tax is then added to the sale price. What is the total cost?', '$63.60$ dollars', ['$64.80$ dollars', '$84.80$ dollars', '$56.40$ dollars'], 'The sale price is $80(0.75)=60$ dollars, and adding tax gives $60(1.06)=63.60$ dollars.'],
+      ['Monthly rent rises from $750$ dollars to $810$ dollars. What is the percent increase?', '$8\\%$', ['$7.4\\%$', '$6\\%$', '$60\\%$'], 'The change is $60$ dollars, and $\\frac{60}{750}=0.08=8\\%$. Divide by the original amount, not the new one.'],
+      ['A $12$-ounce box of cereal costs $3.36$ dollars, and a $20$-ounce box costs $5.20$ dollars. Which box has the lower unit price?', 'The $20$-ounce box, at $0.26$ dollars per ounce', ['The $12$-ounce box, at $0.28$ dollars per ounce', 'The $12$-ounce box, at $0.26$ dollars per ounce', 'The $20$-ounce box, at $0.28$ dollars per ounce'], 'Unit prices are $3.36\\div12=0.28$ and $5.20\\div20=0.26$ dollars per ounce, so the larger box is cheaper per ounce.'],
+      ['Sam earns $15.50$ dollars per hour for the first $40$ hours each week and time and a half for every extra hour. What does he earn for a $46$-hour week?', '$759.50$ dollars', ['$713.00$ dollars', '$1,069.50$ dollars', '$736.25$ dollars'], 'Regular pay is $40(15.50)=620$ dollars. Overtime pay is $6(15.50)(1.5)=139.50$ dollars, for a total of $759.50$ dollars.'],
+    ],
+  },
+  {
+    title: 'Practice Set: Averages and Data',
+    summary: 'Find missing values from a known mean, compare mean and median, combine group averages, and compute compound probability.',
+    formula: '$\\text{mean}=\\frac{\\text{sum of values}}{\\text{number of values}}$',
+    example: 'Scores $70,80,90$: mean $=\\frac{240}{3}=80$',
+    explanation: 'When a mean is known, multiply it by the number of values to recover the total sum; a missing value is the total minus the known values. Outliers pull the mean but barely move the median.',
+    terms: [['median', 'the middle value of an ordered data set'], ['outlier', 'a value far from the rest of the data']],
+    strategy: 'Turn a given average into a total first. For medians, always reorder the data before finding the middle.',
+    questions: [
+      ['After $5$ tests, Ana’s mean score is $84$. Her first four scores were $80$, $88$, $79$, and $85$. What was her fifth score?', '$88$', ['$84$', '$83$', '$90$'], 'The total must be $5(84)=420$. The first four scores sum to $332$, so the fifth is $420-332=88$.'],
+      ['What is the median of $14,9,21,9,17,12$?', '$13$', ['$15$', '$9$', '$14$'], 'In order the data are $9,9,12,14,17,21$. The two middle values are $12$ and $14$, so the median is $\\frac{12+14}{2}=13$.'],
+      ['A class of $12$ students has a mean score of $75$, and a class of $18$ students has a mean of $85$. What is the mean for all $30$ students?', '$81$', ['$80$', '$82$', '$78$'], 'Total points are $12(75)+18(85)=900+1530=2430$, and $\\frac{2430}{30}=81$. The larger class pulls the mean above $80$.'],
+      ['A bag holds $5$ red, $3$ blue, and $2$ green marbles. One marble is drawn, replaced, and a second is drawn. What is the probability both are blue?', '$\\frac{9}{100}$', ['$\\frac{3}{10}$', '$\\frac{1}{15}$', '$\\frac{3}{5}$'], 'With replacement the draws are independent: $\\frac{3}{10}\\cdot\\frac{3}{10}=\\frac{9}{100}$.'],
+      ['Daily deliveries were $42,45,47,44,46,$ and $90$. Which measure best describes a typical day?', 'The median, because $90$ is an outlier', ['The mean, because it uses every value', 'The range, because it shows the spread', 'The mode, because $44$ appears twice'], 'The value $90$ pulls the mean up to about $52$, while the median, $45.5$, stays near the typical values. No value repeats, so there is no mode.'],
+    ],
+  },
+  {
+    title: 'Practice Set: Algebra Word Problems',
+    summary: 'Translate everyday situations into expressions, equations, inequalities, and systems, then solve and check in context.',
+    formula: '$d=rt$ and $\\text{total}=\\text{fixed fee}+(\\text{rate})(\\text{quantity})$',
+    example: 'Fee $25$ dollars plus $8$ dollars per hour: $C=25+8h$',
+    explanation: 'Name the unknown, write one equation for each fact, and solve. For average speed over a round trip, divide total distance by total time instead of averaging the two speeds.',
+    terms: [['fixed fee', 'a charge that does not depend on quantity'], ['system of equations', 'two or more equations that share unknowns']],
+    strategy: 'Substitute your answer back into the original situation; a correct value must satisfy every condition in the problem.',
+    questions: [
+      ['What is the value of $2(3x-y)+(x+1)^2$ when $x=3$ and $y=4$?', '$26$', ['$18$', '$30$', '$46$'], 'First $2(9-4)=10$, then $(3+1)^2=16$, and $10+16=26$.'],
+      ['A plumber charges a $65$-dollar visit fee plus $48$ dollars per hour. A bill totals $257$ dollars. How many hours did the plumber work?', '$4$', ['$3$', '$5$', '$6$'], 'Solve $65+48h=257$: $48h=192$, so $h=4$.'],
+      ['Rosa drives $120$ miles to a town in $3$ hours and returns by the same road in $2$ hours. What is her average speed for the whole trip?', '$48$ mph', ['$50$ mph', '$40$ mph', '$60$ mph'], 'Average speed is total distance over total time: $\\frac{240}{5}=48$ mph. Averaging $40$ and $60$ ignores that she drove longer at the slower speed.'],
+      ['A phone plan costs $30$ dollars per month plus $0.10$ dollars per text. To keep the bill at most $45$ dollars, what is the greatest number of texts?', '$150$', ['$450$', '$300$', '$15$'], 'Solve $30+0.10t\\le45$: $0.10t\\le15$, so $t\\le150$.'],
+      ['A theater sold $50$ tickets for $500$ dollars. Adult tickets cost $12$ dollars and child tickets cost $7$ dollars. How many adult tickets were sold?', '$30$', ['$20$', '$25$', '$35$'], 'From $a+c=50$ and $12a+7c=500$, substitute $c=50-a$: $5a+350=500$, so $a=30$. Check: $12(30)+7(20)=500$.'],
+    ],
+  },
+  {
+    title: 'Practice Set: Geometry with the Formula Sheet',
+    summary: 'Choose and apply formula-sheet relationships for trapezoids, cylinders, right triangles, circles, and unit conversions.',
+    formula: '$A=\\frac{1}{2}h(b_1+b_2)$, $V=\\pi r^2h$, $a^2+b^2=c^2$',
+    example: 'Trapezoid with $h=4$, $b_1=6$, $b_2=10$: $A=\\frac{1}{2}(4)(16)=32$',
+    explanation: 'The GED supplies a formula sheet, so the skill being tested is choosing the right formula, matching each measurement to its variable, and keeping units consistent.',
+    terms: [['formula sheet', 'the reference page of area, volume, and algebra formulas provided on the test'], ['hypotenuse', 'the side opposite the right angle in a right triangle']],
+    strategy: 'Sketch and label the figure, convert all measurements to one unit, then substitute into the formula.',
+    questions: [
+      ['A garden is a trapezoid with parallel sides of $14$ ft and $22$ ft and a height of $9$ ft. What is its area?', '$162$ ft$^2$', ['$324$ ft$^2$', '$198$ ft$^2$', '$126$ ft$^2$'], '$A=\\frac{1}{2}(9)(14+22)=\\frac{1}{2}(9)(36)=162$ square feet.'],
+      ['A cylindrical tank has radius $3$ ft and height $10$ ft. Using $\\pi\\approx3.14$, what is its volume to the nearest cubic foot?', '$283$ ft$^3$', ['$94$ ft$^3$', '$188$ ft$^3$', '$1,130$ ft$^3$'], '$V=\\pi r^2h\\approx3.14(9)(10)=282.6$, which rounds to $283$ cubic feet.'],
+      ['A $13$-foot ladder leans against a wall with its base $5$ feet from the wall. How high up the wall does it reach?', '$12$ ft', ['$8$ ft', '$14$ ft', '$18$ ft'], 'The ladder is the hypotenuse: $5^2+h^2=13^2$, so $h^2=144$ and $h=12$.'],
+      ['A fence section $18$ feet long will be covered with boards $4.5$ inches wide placed side by side. How many boards are needed?', '$48$', ['$4$', '$36$', '$81$'], 'Convert feet to inches: $18(12)=216$ inches, and $216\\div4.5=48$ boards.'],
+      ['Trim will go around the edge of a round table with a diameter of $4$ ft. Using $\\pi\\approx3.14$, how much trim is needed?', '$12.56$ ft', ['$25.12$ ft', '$50.24$ ft', '$6.28$ ft'], 'The edge is the circumference: $C=\\pi d\\approx3.14(4)=12.56$ feet.'],
+    ],
+  },
+];
+
 export const gedMathCourse: OfficialLanguageQuestCourse = {
   code: 'MRLC-GED-MATH-V1',
   title: 'GED Mathematical Reasoning Preparation & Practice',
-  description: 'A comprehensive 40-lesson GED Mathematical Reasoning course with 120 original, fully typeset practice questions covering rational numbers, measurement, geometry, data, probability, algebra, graphs, and functions.',
+  description: 'A comprehensive 44-lesson GED Mathematical Reasoning course with 140 original, fully typeset practice questions covering rational numbers, measurement, geometry, data, probability, algebra, graphs, functions, and mixed test-style practice sets.',
   language: 'GED Mathematical Reasoning',
   category: 'GED Preparation',
   imageEmoji: '',
@@ -662,6 +732,12 @@ export const gedMathCourse: OfficialLanguageQuestCourse = {
       title: 'Unit 4: Graphs and Functions',
       description: 'Coordinates, slope, linear equations, function notation, graph features, comparisons, and strategic tool use.',
       lessons: graphsAndFunctions.map(lesson),
+    },
+    {
+      title: 'Unit 5: GED Practice Sets',
+      description: 'Mixed, test-style practice: multi-step money and percent problems, averages and probability, algebra word problems, and formula-sheet geometry.',
+      appendToExisting: true,
+      lessons: practiceSets.map(lesson),
     },
   ],
 };

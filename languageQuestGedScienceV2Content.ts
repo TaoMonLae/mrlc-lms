@@ -530,6 +530,84 @@ const earthSpace: GedScienceV2LessonSeed[] = [
   },
 ];
 
+// Mixed practice sets modeled on GED Science item styles: experiment tables,
+// missing-mean calculations, Punnett squares, formulas, and half-life data.
+// Every scenario, data set, and answer choice is original MRLC content.
+const practiceSets: GedScienceV2LessonSeed[] = [
+  {
+    title: "Practice Set: Experimental Design",
+    description: "Analyze a controlled plant experiment: variables, controls, a missing mean, and supported conclusions.",
+    summary: "GED science-practice questions describe an experiment and ask you to identify its variables, explain its controls, calculate from its data, and judge which conclusions it supports.",
+    objectives: ["Identify independent and dependent variables", "Explain why conditions are held constant", "Draw conclusions that do not overreach the data"],
+    explanation: ["The independent variable is what the scientist changes on purpose; the dependent variable is what is measured in response. Everything else is held constant so the independent variable is the only explanation for differences.", "A supported conclusion stays within the tested conditions. Results from one plant species under four light colors cannot prove a rule about every species."],
+    visual: { type: "table", title: "Mean plant height after 4 weeks under different light colors", headers: ["Light color", "Mean height (cm)"], rows: [["Red", "14"], ["Blue", "18"], ["Green", "9"], ["White (control)", "16"]], caption: "Each group had 3 plants of the same species with the same soil, water, and pot size." },
+    keyTerms: [{ marker: "independent variable", text: "the factor the experimenter deliberately changes" }, { marker: "dependent variable", text: "the factor measured to see the effect" }, { marker: "control group", text: "a comparison group under normal or standard conditions" }],
+    gedStrategy: "Ask “What did the scientist change?” and “What did the scientist measure?” before reading the answer choices.",
+    checkpoint: "In this experiment, which factor did the student change on purpose?",
+    questions: [
+      q("What is the independent variable in this experiment?", "Light color", ["Plant height", "Amount of water", "Type of soil"], "The student deliberately changed the color of light each group received."),
+      q("What is the dependent variable in this experiment?", "Plant height after four weeks", ["Color of light used", "Size of each pot", "Number of trials"], "Height was measured to see how light color affected growth."),
+      q("Why did the student keep soil, water, and pot size the same for every group?", "So that only light color could explain height differences", ["So that every plant would grow to the same height", "So that the experiment could finish more quickly", "So that the control group would need no light"], "Holding other conditions constant rules them out as causes of the differences."),
+      q("Two blue-light plants grew 17 cm and 20 cm. The third height was not recorded. If the group mean was 18 cm, what was the third height?", "17 cm", ["18 cm", "19 cm", "20 cm"], "The total must be 3 × 18 = 54 cm, and 54 − 17 − 20 = 17 cm.", "Turn the mean into a total first."),
+      q("Which conclusion is best supported by the data?", "These plants grew tallest under blue light.", ["Green light kills these plants in four weeks.", "All plant species grow best under blue light.", "Red light produced the tallest plants overall."], "Blue light produced the greatest mean height. The data do not show plants dying or test any other species."),
+    ],
+  },
+  {
+    title: "Practice Set: Life Science",
+    description: "Practice heredity with a Punnett square, energy flow in a food chain, natural selection, and cell energy.",
+    summary: "Life science questions combine models—Punnett squares, food chains, and energy pyramids—with reasoning about how populations and cells work.",
+    objectives: ["Predict offspring ratios from a Punnett square", "Calculate energy transfer through trophic levels", "Explain a population change with natural selection"],
+    explanation: ["Each box of a Punnett square is one equally likely combination. Count boxes to find fractions: one box out of four is 1/4.", "Only about 10 percent of energy passes from one level of a food chain to the next. In natural selection, individuals with helpful traits survive and reproduce more, so those traits become more common."],
+    visual: { type: "table", title: "Punnett square: Tt × Tt (T = tall, dominant; t = short, recessive)", headers: ["", "T", "t"], rows: [["T", "TT", "Tt"], ["t", "Tt", "tt"]], caption: "Each of the four boxes is an equally likely offspring genotype." },
+    keyTerms: [{ marker: "heterozygous", text: "having two different alleles for a trait, such as Tt" }, { marker: "recessive", text: "a trait that appears only when two recessive alleles are present" }, { marker: "trophic level", text: "a feeding position in a food chain" }],
+    gedStrategy: "Count Punnett-square boxes rather than guessing a ratio, and write each energy level down as you divide by 10.",
+    checkpoint: "How many of the four boxes in the Punnett square show a short plant?",
+    questions: [
+      q("Based on the Punnett square, what fraction of offspring are expected to be short?", "1/4", ["1/2", "3/4", "0"], "Only the tt box shows the recessive short trait: 1 of 4 boxes."),
+      q("Based on the Punnett square, what fraction of offspring are expected to be heterozygous?", "1/2", ["1/4", "3/4", "1"], "Two of the four boxes are Tt, which is 2/4 = 1/2."),
+      q("In the food chain grass → grasshopper → frog → hawk, about 10% of energy passes to each level. If the grass holds 10,000 kcal, about how much reaches the frog?", "100 kcal", ["1,000 kcal", "10 kcal", "3,000 kcal"], "Grass 10,000 → grasshopper 1,000 → frog 100 kcal."),
+      q("A moth population has light and dark individuals. After soot darkens tree bark, dark moths become more common. What best explains this?", "Dark moths were harder for predators to see, so more survived.", ["Light moths chose to change their color to match the bark.", "Soot caused the wings of light moths to turn dark.", "Predators preferred eating dark moths over light moths."], "Dark moths were camouflaged on dark bark, so they survived and reproduced more. Individuals cannot choose to change inherited traits."),
+      q("Which cell structure releases energy from glucose during cellular respiration?", "Mitochondrion", ["Chloroplast", "Ribosome", "Cell wall"], "Mitochondria carry out cellular respiration. Chloroplasts capture light energy during photosynthesis."),
+    ],
+  },
+  {
+    title: "Practice Set: Physical Science",
+    description: "Apply speed and density formulas, predict floating, explain motion with Newton’s laws, and balance an equation.",
+    summary: "Physical science questions usually supply the formula; the skill is substituting the right values with the right units and interpreting the result.",
+    objectives: ["Calculate speed and density with units", "Use density to predict floating or sinking", "Apply Newton’s third law and conservation of mass"],
+    explanation: ["Density is mass divided by volume. An object less dense than water (1 g/cm³) floats; a denser object sinks.", "Newton’s third law says forces come in equal and opposite pairs. A balanced chemical equation has the same number of each kind of atom on both sides, because mass is conserved."],
+    visual: { type: "formula", title: "Density", formula: "density = mass ÷ volume", variables: [{ marker: "mass", text: "amount of matter, in grams (g)" }, { marker: "volume", text: "space occupied, in cubic centimeters (cm³)" }], example: "A 60 g block with a volume of 20 cm³ has a density of 60 ÷ 20 = 3 g/cm³." },
+    keyTerms: [{ marker: "density", text: "mass per unit of volume" }, { marker: "coefficient", text: "the number placed before a formula to balance an equation" }, { marker: "reaction force", text: "the equal and opposite force described by Newton’s third law" }],
+    gedStrategy: "Write the formula, substitute numbers with their units, and check that the answer’s units match what the question asks for.",
+    checkpoint: "Would an object with a density of 0.8 g/cm³ float or sink in water?",
+    questions: [
+      q("A cyclist travels 36 km in 1.5 hours. What is her average speed?", "24 km/h", ["54 km/h", "37.5 km/h", "18 km/h"], "speed = distance ÷ time = 36 ÷ 1.5 = 24 km/h."),
+      q("A stone has a mass of 84 g and a volume of 12 cm³. What is its density?", "7 g/cm³", ["1,008 g/cm³", "72 g/cm³", "0.14 g/cm³"], "density = 84 ÷ 12 = 7 g/cm³."),
+      q("Water has a density of 1 g/cm³. Which object would float in water?", "A block with a density of 0.6 g/cm³", ["A block with a density of 1.4 g/cm³", "A block with a density of 2.7 g/cm³", "A block with a density of 7.9 g/cm³"], "Only an object less dense than water floats."),
+      q("A swimmer pushes water backward and moves forward. Which law best explains this?", "Newton’s third law: forces come in equal and opposite pairs", ["Newton’s first law: objects at rest tend to stay at rest", "Newton’s second law: force equals mass times acceleration", "The law of conservation of mass in chemical reactions"], "The water pushes the swimmer forward with a force equal and opposite to the swimmer’s push."),
+      q("What coefficient belongs in the blank to balance __H₂ + O₂ → 2H₂O?", "2", ["1", "3", "4"], "The right side has 4 hydrogen atoms (2 × H₂O), so 2H₂ is needed on the left. Oxygen is already balanced at 2 atoms per side."),
+    ],
+  },
+  {
+    title: "Practice Set: Earth and Space",
+    description: "Use half-life data and explain seasons, the rock cycle, tides, and human effects on the carbon cycle.",
+    summary: "Earth and space questions test whether you can read data such as half-life tables and explain large-scale processes with the correct cause.",
+    objectives: ["Calculate remaining mass after several half-lives", "Identify the true causes of seasons and tides", "Connect human activity to the carbon cycle"],
+    explanation: ["After each half-life, half of the remaining radioactive material is left. Count the number of half-lives first, then halve that many times.", "Many Earth-science questions include a popular but wrong cause. Seasons come from the tilt of Earth’s axis, not its distance from the Sun; tides come mainly from the Moon’s gravity."],
+    visual: { type: "table", title: "Radioactive decay of an 80 g sample", headers: ["Half-lives passed", "Fraction remaining", "Mass remaining"], rows: [["0", "1", "80 g"], ["1", "1/2", "40 g"], ["2", "1/4", "20 g"], ["3", "1/8", "10 g"]], caption: "Each half-life leaves half of the material that was present before it." },
+    keyTerms: [{ marker: "half-life", text: "the time for half of a radioactive sample to decay" }, { marker: "axial tilt", text: "the angle of Earth’s axis relative to its orbit" }, { marker: "igneous rock", text: "rock formed when magma or lava cools and hardens" }],
+    gedStrategy: "Eliminate choices that name a familiar but incorrect cause, then confirm the remaining choice with the evidence given.",
+    checkpoint: "How many half-lives have passed after 15,000 years if one half-life is 5,000 years?",
+    questions: [
+      q("An isotope has a half-life of 5,000 years. How much of an 80 g sample remains after 15,000 years?", "10 g", ["20 g", "40 g", "26.7 g"], "15,000 years is 3 half-lives: 80 → 40 → 20 → 10 g."),
+      q("What is the main cause of Earth’s seasons?", "The tilt of Earth’s axis as it orbits the Sun", ["Changes in Earth’s distance from the Sun", "The Moon blocking sunlight for part of the year", "Changes in the Sun’s energy output each year"], "The tilt changes how directly sunlight strikes each hemisphere during the year."),
+      q("Which process turns magma into igneous rock?", "Cooling and crystallization", ["Weathering and erosion", "Compaction and cementation", "Heat and pressure without melting"], "Igneous rock forms when molten rock cools and crystallizes. Compaction forms sedimentary rock, and heat and pressure form metamorphic rock."),
+      q("What mainly causes ocean tides on Earth?", "The Moon’s gravitational pull on the oceans", ["Wind blowing across the ocean surface", "Earth’s magnetic field acting on seawater", "Heat from the Sun warming the oceans"], "The Moon’s gravity pulls on Earth’s oceans, creating bulges of water that we observe as high tides."),
+      q("Which human activity adds the most carbon dioxide to the atmosphere?", "Burning fossil fuels for energy", ["Planting forests on cleared land", "Generating power with wind turbines", "Growing crops without fertilizer"], "Burning coal, oil, and gas releases carbon that was stored underground for millions of years."),
+    ],
+  },
+];
+
 export const gedScienceV2Course: OfficialLanguageQuestCourse = {
   code: "MRLC-GED-SCIENCE-V2",
   title: "GED Science V2",
@@ -543,5 +621,6 @@ export const gedScienceV2Course: OfficialLanguageQuestCourse = {
     { title: "Unit 1: Life Science", description: "Biological systems, evidence, visuals, and scientific reasoning.", lessons: lifeScience.map(lesson) },
     { title: "Unit 2: Physical Science", description: "Matter, motion, energy, equations, models, and experimental reasoning.", lessons: physicalScience.map(lesson) },
     { title: "Unit 3: Earth & Space Science", description: "Earth systems, astronomy, environmental science, and scientific argument.", lessons: earthSpace.map(lesson) },
+    { title: "Unit 4: GED Practice Sets", description: "Mixed, test-style practice: experimental design, life science, physical science, and Earth and space science.", appendToExisting: true, lessons: practiceSets.map(lesson) },
   ],
 };

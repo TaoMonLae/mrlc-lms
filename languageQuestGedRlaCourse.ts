@@ -12,7 +12,7 @@ interface LessonSeed {
   instruction: string;
   terms: [[string, string], [string, string]];
   strategy: string;
-  questions: [Question, Question, Question];
+  questions: [Question, ...Question[]];
 }
 
 const PREFIX = 'RLA_V1::';
@@ -487,10 +487,76 @@ const languageAndEditing: LessonSeed[] = [
   },
 ];
 
+// Mixed practice sets modeled on GED RLA item styles: numbered-sentence
+// editing passages, paragraph organization, application of ideas, and
+// literary inference. Every passage and answer choice is original MRLC content.
+const practiceSets: LessonSeed[] = [
+  {
+    title: 'Practice Set: Paragraph Organization', kind: 'editing',
+    summary: 'Improve a multi-paragraph article by removing irrelevant sentences, adding topic sentences, placing details logically, and choosing clear connections.',
+    passage: 'Starting a Tool Library\n(A) (1) Many people own tools they use only once or twice a year. (2) A tool library lets neighbors borrow drills, ladders, and garden equipment instead of buying them. (3) Members pay a small yearly fee. (4) Volunteers check items in and out and repair anything that breaks.\n(B) (5) To start one, first find a free or low-cost space, such as a community center. (6) Next, ask residents to donate tools they no longer need. (7) My cousin once borrowed a pressure washer from a neighbor. (8) Finally, create a simple online catalog so members can reserve items.\n(C) (9) Tool libraries save households money. (10) They also reduce waste, because fewer barely used tools end up in landfills.',
+    instruction: 'Each paragraph should develop one main idea. Remove sentences that do not support that idea, and place new details next to the sentences they explain.',
+    terms: [['topic sentence', 'a sentence that states the main idea of a paragraph'], ['relevance', 'how directly a detail supports the paragraph’s purpose']],
+    strategy: 'Name the job of each paragraph in two or three words (what it is, how to start one, why it helps) before judging any revision.',
+    questions: [
+      ['Which sentence should be removed because it does not support the purpose of its paragraph?', 'Sentence 7', ['Sentence 5', 'Sentence 6', 'Sentence 8'], 'Paragraph B gives steps for starting a library. A personal story about a cousin is not one of the steps.'],
+      ['Which sentence would be most effective if inserted at the beginning of paragraph C?', 'The benefits of a tool library reach well beyond convenience.', ['Ladders are the most frequently borrowed item at most libraries.', 'Some community centers charge rent for evening meetings.', 'Volunteers should be thanked publicly at least once a year.'], 'Paragraph C explains benefits (savings and less waste), so a sentence introducing benefits works as its topic sentence.'],
+      ['Which revision best combines sentences 9 and 10 while keeping their relationship clear?', 'Tool libraries save households money, and they also reduce waste.', ['Tool libraries save households money; however, they reduce waste.', 'Although tool libraries save households money, they reduce waste.', 'Tool libraries save households money, so they reduce waste.'], 'Sentence 10 adds a second benefit. “And … also” shows addition; “however” and “although” signal contrast, and “so” falsely claims cause.'],
+      ['The writer wants to add “Volunteers also show members how to use each tool safely.” Where should it go?', 'After sentence 4, in paragraph A', ['Before sentence 1, in paragraph A', 'After sentence 6, in paragraph B', 'After sentence 10, in paragraph C'], 'Sentence 4 introduces what volunteers do, so the new detail about volunteers belongs directly after it.'],
+      ['Which organizational pattern does paragraph B use?', 'A sequence of steps', ['Cause and effect', 'Problem and solution', 'Comparison and contrast'], 'The words “first,” “next,” and “finally” mark an ordered series of steps.'],
+    ],
+  },
+  {
+    title: 'Practice Set: Grammar and Mechanics', kind: 'editing',
+    summary: 'Correct a workplace memo for capitalization, subject–verb agreement, verb tense, homonyms, and comma splices.',
+    passage: 'MEMO: Parking Lot Repairs\n(1) Starting next monday, the parking lot behind the warehouse will be repaved. (2) Each of the employees who park there need to use the north lot instead. (3) Last year, a similar repaving project takes only four days. (4) Please move you’re car before 7:00 a.m. so the crew can begin on time. (5) The maintenance team and I will post updates on the break room board. (6) Thank you for your patience, if you have questions, call extension 214.',
+    instruction: 'Test each sentence for one error at a time: capital letters, agreement, tense, word choice, and sentence boundaries. A correct revision fixes the error without changing the meaning.',
+    terms: [['comma splice', 'two complete sentences joined only by a comma'], ['homonym', 'a word that sounds like another word but has a different meaning or spelling']],
+    strategy: 'For agreement, cross out phrases that come between the subject and the verb, such as “of the employees who park there.”',
+    questions: [
+      ['Which correction should be made to sentence 1?', 'Change monday to Monday', ['Change parking lot to Parking Lot', 'Insert a comma after lot', 'Change will be to was'], 'Days of the week are proper nouns and are always capitalized. “Parking lot” is a common noun.'],
+      ['Which correction should be made to sentence 2?', 'Change need to needs', ['Change park to parks', 'Change instead to instead of', 'Change who to whom'], 'The subject is “Each,” which is singular, so the verb must be “needs.” The phrase “of the employees who park there” does not change the subject.'],
+      ['Which correction should be made to sentence 3?', 'Change takes to took', ['Change takes to will take', 'Change takes to is taking', 'Change takes to has taken'], '“Last year” places the action in the past, so the simple past tense “took” is required.'],
+      ['Which correction should be made to sentence 4?', 'Change you’re to your', ['Change you’re to youre', 'Change before to after', 'Change so to because'], '“You’re” means “you are.” The sentence needs the possessive “your car.”'],
+      ['Which revision of sentence 6 is correct?', 'Thank you for your patience. If you have questions, call extension 214.', ['Thank you for your patience, if you have questions call extension 214.', 'Thank you for your patience if you have questions, call extension 214.', 'Thank you, for your patience, if you have questions, call extension 214.'], 'Sentence 6 contains two complete thoughts joined only by a comma. A period separates them correctly.'],
+    ],
+  },
+  {
+    title: 'Practice Set: Informational Text and Application', kind: 'informational',
+    summary: 'Read a science-based informational passage, then identify its main idea, apply its ideas to a new situation, and trace cause and effect.',
+    passage: 'Heat pumps do not create heat by burning fuel. Instead, they move heat from one place to another, much like a refrigerator moves heat out of its interior. In winter, a heat pump pulls warmth from outdoor air—even cold air holds some heat—and releases it indoors. In summer, the process reverses, and the system works as an air conditioner. Because moving heat takes less energy than producing it, a heat pump can deliver two to four units of heat for every unit of electricity it uses. However, efficiency drops as outdoor temperatures fall, so homes in very cold regions sometimes keep a backup heating system.',
+    instruction: 'Application questions ask you to use the passage’s ideas in a situation the passage never mentions. First state the rule the passage gives, then test each choice against that rule.',
+    terms: [['application', 'using an idea from a text in a new situation'], ['cause and effect', 'a relationship in which one event or condition produces another']],
+    strategy: 'Look for signal words such as “because,” “so,” and “however”; they mark the causes, effects, and limits that questions often target.',
+    questions: [
+      ['Which statement best expresses the main idea of the passage?', 'Heat pumps heat and cool efficiently by moving heat, though cold weather limits them.', ['Heat pumps burn less fuel than furnaces because they rely only on outdoor air.', 'Refrigerators and heat pumps are the same machine placed in different rooms.', 'Homes in cold regions cannot use heat pumps during any part of the year.'], 'The passage explains how heat pumps work, why they are efficient, and the limit cold weather places on them.'],
+      ['Based on the passage, which household would most likely keep a backup heating system with its heat pump?', 'A family in a region with long, frigid winters', ['A family in a region with mild winters and hot summers', 'A family that wants its system to cool the house in summer', 'A family that already owns an efficient refrigerator'], 'The passage says efficiency drops as temperatures fall, so very cold regions sometimes need backup heat.'],
+      ['According to the passage, why can a heat pump deliver more heat than the electricity it uses?', 'Moving heat takes less energy than producing it.', ['Outdoor air is warmer than indoor air in winter.', 'The system burns a small amount of backup fuel.', 'A refrigerator supplies extra heat to the system.'], 'The sentence beginning with “Because” states this cause directly.'],
+      ['The writer compares a heat pump to a refrigerator mainly to', 'explain an unfamiliar process using a familiar one', ['argue that refrigerators waste household energy', 'show that heat pumps are cheaper to purchase', 'suggest that kitchens need separate cooling'], 'Most readers know a refrigerator moves heat out of its interior, so the comparison clarifies how a heat pump works.'],
+      ['Which detail best supports the idea that heat pumps have limitations?', 'Its efficiency drops as outdoor temperatures fall.', ['In summer, the process reverses and the system cools the home.', 'Even cold outdoor air holds some heat that can be moved.', 'They move heat from one place to another instead of burning fuel.'], 'Falling efficiency in cold weather is the limitation the passage names; the other details describe how the system works.'],
+    ],
+  },
+  {
+    title: 'Practice Set: Literary Passage', kind: 'literary',
+    summary: 'Read a short fiction excerpt and answer inference, figurative-language, character, and theme questions with text evidence.',
+    passage: 'Mara had practiced the speech forty times, once for every chair in the empty community hall. Now the chairs were full, and the paper in her hand trembled like a leaf in a storm. She found her grandmother in the third row, hands folded, wearing the same calm smile she had worn the day the shop flooded and every bolt of fabric had to be thrown away. Mara folded the paper and set it on the podium. “I want to tell you how my family started over,” she said, and her voice, to her surprise, did not shake.',
+    instruction: 'Fiction rarely states feelings directly. Combine actions, comparisons, and details from the past to infer what a character feels and why the story includes those details.',
+    terms: [['simile', 'a comparison using “like” or “as”'], ['inference', 'a logical conclusion based on details in the text']],
+    strategy: 'When a story mentions a past event, ask how it explains a character’s present feelings or actions.',
+    questions: [
+      ['Based on the passage, how did Mara prepare for the speech?', 'She rehearsed it many times before the event.', ['She wrote it on the morning of the event.', 'She asked her grandmother to write it for her.', 'She memorized a speech someone else had given.'], 'She “practiced the speech forty times” in the empty hall.'],
+      ['The phrase “trembled like a leaf in a storm” suggests that Mara', 'felt nervous as the event began', ['was standing outside in bad weather', 'was angry at the crowded audience', 'had dropped her notes on the floor'], 'The simile compares her shaking paper to a leaf in a storm, showing her nervousness when she sees the full room.'],
+      ['What earlier event does the passage reveal about Mara’s family?', 'Their fabric shop was damaged by a flood.', ['Their community hall was closed for repairs.', 'Their grandmother had given many speeches.', 'Their shop had sold every bolt of fabric.'], 'The narrator recalls “the day the shop flooded and every bolt of fabric had to be thrown away.”'],
+      ['Why does the narrator mention the grandmother’s smile from the day of the flood?', 'To show that she stays calm and steady in hardship', ['To show that she did not understand the flood’s cost', 'To suggest that she wanted Mara to cancel the speech', 'To reveal that she secretly wrote Mara’s speech'], 'Linking the smile to the flood shows the grandmother’s steady strength, which seems to calm Mara.'],
+      ['Which theme is best supported by the passage?', 'Support from loved ones can give a person courage.', ['Careful practice is useless without a written script.', 'Natural disasters always destroy family businesses.', 'Young people should avoid speaking in public.'], 'After seeing her grandmother, Mara sets aside her paper and speaks without her voice shaking.'],
+    ],
+  },
+];
+
 export const gedRlaCourse: OfficialLanguageQuestCourse = {
   code: 'MRLC-GED-RLA-V1',
   title: 'GED Reasoning Through Language Arts Preparation & Practice',
-  description: 'A comprehensive, source-based GED RLA course with 32 guided lessons and 96 original questions covering informational and literary reading, argument analysis, extended response, and editing.',
+  description: 'A comprehensive, source-based GED RLA course with 36 guided lessons and 116 original questions covering informational and literary reading, argument analysis, extended response, editing, and mixed test-style practice sets.',
   language: 'GED RLA',
   category: 'GED Preparation',
   imageEmoji: '',
@@ -501,5 +567,6 @@ export const gedRlaCourse: OfficialLanguageQuestCourse = {
     { title: 'Unit 2: Literary Reading', description: 'Sequence, character, conflict, setting, theme, figurative language, narrator, structure, and paired literary texts.', lessons: literaryReading.map(lesson) },
     { title: 'Unit 3: Argument and Extended Response', description: 'Claims, evidence, reasoning, assumptions, counterclaims, source comparison, planning, organization, and revision.', lessons: argumentAndResponse.map(lesson) },
     { title: 'Unit 4: Language and Editing', description: 'Usage, agreement, pronouns, modifiers, parallelism, clause relationships, concision, transitions, and punctuation.', lessons: languageAndEditing.map(lesson) },
+    { title: 'Unit 5: GED Practice Sets', description: 'Mixed, test-style practice: paragraph organization, grammar and mechanics editing, informational application, and literary inference.', appendToExisting: true, lessons: practiceSets.map(lesson) },
   ],
 };
