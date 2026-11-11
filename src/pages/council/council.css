@@ -117,7 +117,7 @@
   padding:14px 0;
   white-space:nowrap;
   border-bottom:3px solid transparent}
-.council-tabs button[aria-current] {
+.council-tabs button[aria-selected=true] {
   border-bottom-color:var(--primary);
   color:var(--primary)}
 .council-toolbar {
@@ -426,3 +426,60 @@
 
 .council-tabs button,.council-forum-layout aside nav button {
   flex-shrink:0}
+/* Forum list: replies + last activity column, after Apollo GraphQL and Revolut community topic lists (Refero 910e1127, 1bd7e91e). */
+.council-topic-meta {
+  margin:0!important;
+  font-size:13px}
+.council-topic-stats {
+  display:flex;
+  gap:24px;
+  margin:0;
+  font-size:14px;
+  flex-shrink:0;
+  text-align:right}
+.council-topic-stats dt {
+  color:var(--muted-foreground);
+  font-size:12px}
+.council-topic-stats dd {
+  margin:0;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap}
+.council-empty button {
+  margin-top:8px}
+/* Report forms open beneath the reported post (Mobbin: Contra and Unity "Reporting a comment"). */
+.council-report {
+  margin:12px 0 0}
+[aria-busy=true]>.council-register,[aria-busy=true]>.council-topic-row {
+  opacity:.6;
+  transition:opacity .15s ease-out}
+@media(max-width:700px) {
+.council-topic-stats {
+  text-align:left}
+}
+/* Own-post actions and inline delete confirmation (Mobbin: Unity Q&A "Reply · Delete · Edit"). */
+.council-page button.danger {
+  background:var(--destructive);
+  border-color:var(--destructive);
+  color:var(--destructive-foreground)}
+.council-confirm {
+  flex-basis:100%;
+  padding:14px 16px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:var(--muted)}
+.council-confirm p {
+  margin:0 0 10px}
+.council-badge {
+  display:inline-block;
+  margin-left:8px;
+  padding:1px 7px;
+  border-radius:4px;
+  background:var(--muted);
+  color:var(--foreground);
+  font-size:12px;
+  font-weight:600;
+  vertical-align:1px}
+.council-hint {
+  font-size:14px}
+.council-panel:focus-visible {
+  outline-offset:6px}

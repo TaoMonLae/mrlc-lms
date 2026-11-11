@@ -115,6 +115,9 @@ export function registerCouncilRoutes(app: Express, ctx: DutyRoutesContext) {
             throw new CouncilError(403, 'This duty belongs to another team');
         if (!res.locals.council.canManage && (input.status !== 'COMPLETED' || input.rating !== null || entry.rating !== null))
             throw new CouncilError(403, 'Team members may mark their work done; council or staff must review it');
+        // A council or staff "Not completed" decision stands until a reviewer changes it.
+        if (!res.locals.council.canManage && entry.status === 'SKIPPED')
+            throw new CouncilError(403, 'A reviewer marked this duty not completed. Ask them to review it again');
         if (member && !res.locals.council.staff && (input.rating !== null || entry.rating !== null))
             throw new CouncilError(403, 'Ask another council member or staff to rate your team');
         if (entry.date > malaysiaToday())
@@ -127,14 +130,34 @@ export function registerCouncilRoutes(app: Express, ctx: DutyRoutesContext) {
         });
         res.json({ ok: true });
     }));
+    // Staff and teacher posts can only be moderated by staff; council students moderate student posts.
+    const STAFF_ROLES = ['ADMIN', 'STAFF', 'TEACHER'];
+    const staffAuthors = async (authorIds: string[]) => {
+        if (!authorIds.length)
+            return new Set<string>();
+        const users = await prisma.user.findMany({ where: { id: { in: [...new Set(authorIds)] }, role: { in: STAFF_ROLES as any } }, select: { id: true } });
+        return new Set(users.map(u => u.id));
+    };
+    const assertCanModerate = async (res: Response, authorId: string) => {
+        manage(res);
+        if (!res.locals.council.staff && (await staffAuthors([authorId])).has(authorId))
+            throw new CouncilError(403, 'Only staff can moderate posts written by staff or teachers');
+    };
+    // Responses never carry user IDs; the client receives only what it may do with each post.
+    const publicReply = (r: { id: string; authorId: string; authorName: string; body: string; hidden: boolean; editedAt: Date | null; createdAt: Date }, res: Response, staffIds: Set<string>, open: boolean) => {
+        const { authorId, ...rest } = r;
+        const mine = authorId === res.locals.council.userId;
+        return { ...rest, mine, staffAuthor: staffIds.has(authorId), canModerate: res.locals.council.staff || (res.locals.council.canManage && !staffIds.has(authorId)), canEdit: mine && open && !r.hidden, canDelete: mine };
+    };
+    const forumContentInput = forumTopicInput;
     router.get('/forum', wrap(async (req, res) => {
         const category = typeof req.query.category === 'string' ? req.query.category : '';
         const search = typeof req.query.search === 'string' ? req.query.search.slice(0, 160) : '';
         const page = Math.max(0, Math.min(1000, Number(req.query.page) || 0));
         const hidden = req.query.hidden === 'true' && res.locals.council.canManage;
-        const where = { hidden, ...(category ? { category } : {}), ...(search ? { title: { contains: search, mode: 'insensitive' as const } } : {}) };
+        const where = { hidden, deletedAt: null, ...(category ? { category } : {}), ...(search ? { title: { contains: search, mode: 'insensitive' as const } } : {}) };
         const [topics, count] = await Promise.all([
-            prisma.councilForumTopic.findMany({ where, orderBy: [{ pinned: 'desc' }, { updatedAt: 'desc' }, { id: 'asc' }], take: 30, skip: Math.floor(page) * 30, select: { id: true, title: true, category: true, authorName: true, createdAt: true, updatedAt: true, locked: true, pinned: true, _count: { select: { replies: { where: { hidden: false } } } } } }),
+            prisma.councilForumTopic.findMany({ where, orderBy: [{ pinned: 'desc' }, { updatedAt: 'desc' }, { id: 'asc' }], take: 30, skip: Math.floor(page) * 30, select: { id: true, title: true, category: true, authorName: true, createdAt: true, updatedAt: true, editedAt: true, locked: true, pinned: true, _count: { select: { replies: { where: { hidden: false, deletedAt: null } } } } } }),
             prisma.councilForumTopic.count({ where }),
         ]);
         res.json({ topics, count });
@@ -142,30 +165,89 @@ export function registerCouncilRoutes(app: Express, ctx: DutyRoutesContext) {
     router.post('/forum', forumLimit, wrap(async (req, res) => {
         const input = forumTopicInput.parse(req.body);
         const topic = await prisma.councilForumTopic.create({ data: { ...input, authorId: res.locals.council.userId, authorName: res.locals.council.name } });
-        res.status(201).json(topic);
+        res.status(201).json({ id: topic.id });
     }));
     router.get('/forum/:id', wrap(async (req, res) => {
         const page = Math.max(0, Math.min(10000, Math.floor(Number(req.query.page) || 0)));
-        const topic = await prisma.councilForumTopic.findUnique({ where: { id: String(req.params.id) }, include: { _count: { select: { replies: { where: res.locals.council.canManage ? {} : { hidden: false } } } }, replies: { where: res.locals.council.canManage ? {} : { hidden: false }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }], skip: page * 50, take: 50 } } });
-        if (!topic || (topic.hidden && !res.locals.council.canManage))
+        const replyWhere = { deletedAt: null, ...(res.locals.council.canManage ? {} : { hidden: false }) };
+        const topic = await prisma.councilForumTopic.findUnique({ where: { id: String(req.params.id) }, include: { _count: { select: { replies: { where: replyWhere } } }, replies: { where: replyWhere, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }], skip: page * 50, take: 50 } } });
+        if (!topic || topic.deletedAt || (topic.hidden && !res.locals.council.canManage))
             throw new CouncilError(404, 'Discussion not available');
-        res.json(topic);
+        const staffIds = await staffAuthors([topic.authorId, ...topic.replies.map(r => r.authorId)]);
+        const open = !topic.locked && !topic.hidden;
+        const { authorId, replies, deletedAt: _deleted, ...rest } = topic;
+        const mine = authorId === res.locals.council.userId;
+        const othersReplied = mine ? await prisma.councilForumReply.count({ where: { topicId: topic.id, deletedAt: null, authorId: { not: authorId } } }) > 0 : true;
+        res.json({ ...rest, mine, staffAuthor: staffIds.has(authorId), canModerate: res.locals.council.staff || (res.locals.council.canManage && !staffIds.has(authorId)), canEdit: mine && open, canDelete: mine && !othersReplied, replies: replies.map(({ deletedAt: _d, topicId: _t, ...r }) => publicReply(r, res, staffIds, open)) });
     }));
     router.post('/forum/:id/replies', forumLimit, wrap(async (req, res) => {
         const input = forumReplyInput.parse(req.body);
         const reply = await prisma.$transaction(async (tx) => {
-            const update = await tx.councilForumTopic.updateMany({ where: { id: String(req.params.id), hidden: false, locked: false }, data: { updatedAt: new Date() } });
+            const update = await tx.councilForumTopic.updateMany({ where: { id: String(req.params.id), hidden: false, locked: false, deletedAt: null }, data: { updatedAt: new Date() } });
             if (!update.count)
                 throw new CouncilError(409, 'Discussion is closed or unavailable');
             return tx.councilForumReply.create({ data: { ...input, topicId: String(req.params.id), authorId: res.locals.council.userId, authorName: res.locals.council.name } });
         });
-        res.status(201).json(reply);
+        res.status(201).json({ id: reply.id });
+    }));
+    // Authors edit their own open, visible posts. Edits are marked but are not new discussion activity.
+    router.patch('/forum/:id/content', forumLimit, wrap(async (req, res) => {
+        const input = forumContentInput.parse(req.body);
+        await prisma.$transaction(async (tx) => {
+            const where = { id: String(req.params.id), authorId: res.locals.council.userId, hidden: false, locked: false, deletedAt: null };
+            const topic = await tx.councilForumTopic.findFirst({ where, select: { updatedAt: true } });
+            if (!topic)
+                throw new CouncilError(409, 'You can edit only your own discussions while they are open');
+            await tx.councilForumTopic.updateMany({ where, data: { ...input, editedAt: new Date(), updatedAt: topic.updatedAt } });
+            await audit(tx, res, 'EDIT', String(req.params.id), 'Author edited forum discussion');
+        });
+        res.json({ ok: true });
+    }));
+    router.delete('/forum/:id', wrap(async (req, res) => {
+        await prisma.$transaction(async (tx) => {
+            const topic = await tx.councilForumTopic.findFirst({ where: { id: String(req.params.id), authorId: res.locals.council.userId, deletedAt: null }, select: { id: true, updatedAt: true } });
+            if (!topic)
+                throw new CouncilError(404, 'Discussion not found');
+            if (await tx.councilForumReply.count({ where: { topicId: topic.id, deletedAt: null, authorId: { not: res.locals.council.userId } } }))
+                throw new CouncilError(409, 'Others have replied. Ask a council member to close the discussion instead');
+            await tx.councilForumTopic.update({ where: { id: topic.id }, data: { deletedAt: new Date(), updatedAt: topic.updatedAt } });
+            await audit(tx, res, 'DELETE', topic.id, 'Author removed forum discussion');
+        }, { isolationLevel: 'Serializable' });
+        res.json({ ok: true });
+    }));
+    router.patch('/forum/:id/replies/:replyId/content', forumLimit, wrap(async (req, res) => {
+        const input = forumReplyInput.parse(req.body);
+        await prisma.$transaction(async (tx) => {
+            const updated = await tx.councilForumReply.updateMany({ where: { id: String(req.params.replyId), authorId: res.locals.council.userId, hidden: false, deletedAt: null, topic: { id: String(req.params.id), hidden: false, locked: false, deletedAt: null } }, data: { ...input, editedAt: new Date() } });
+            if (!updated.count)
+                throw new CouncilError(409, 'You can edit only your own replies while the discussion is open');
+            await audit(tx, res, 'EDIT', String(req.params.replyId), 'Author edited forum reply');
+        });
+        res.json({ ok: true });
+    }));
+    router.delete('/forum/:id/replies/:replyId', wrap(async (req, res) => {
+        await prisma.$transaction(async (tx) => {
+            const updated = await tx.councilForumReply.updateMany({ where: { id: String(req.params.replyId), topicId: String(req.params.id), authorId: res.locals.council.userId, deletedAt: null }, data: { deletedAt: new Date() } });
+            if (!updated.count)
+                throw new CouncilError(404, 'Reply not found');
+            await audit(tx, res, 'DELETE', String(req.params.replyId), 'Author removed forum reply');
+        });
+        res.json({ ok: true });
     }));
     router.patch('/forum/:id', wrap(async (req, res) => {
         manage(res);
-        const input = z.object({ pinned: z.boolean().optional(), locked: z.boolean().optional(), hidden: z.boolean().optional() }).strict().parse(req.body);
+        const input = z.object({ pinned: z.boolean().optional(), locked: z.boolean().optional(), hidden: z.boolean().optional() }).strict()
+            .refine(v => Object.keys(v).length > 0, 'Choose a moderation action').parse(req.body);
+        const target = await prisma.councilForumTopic.findFirst({ where: { id: String(req.params.id), deletedAt: null }, select: { authorId: true } });
+        if (!target)
+            throw new CouncilError(404, 'Discussion not found');
+        await assertCanModerate(res, target.authorId);
         await prisma.$transaction(async (tx) => {
-            await tx.councilForumTopic.update({ where: { id: String(req.params.id) }, data: input });
+            const topic = await tx.councilForumTopic.findUnique({ where: { id: String(req.params.id) }, select: { updatedAt: true } });
+            if (!topic)
+                throw new CouncilError(404, 'Discussion not found');
+            // Moderation is not discussion activity: keep the "last activity" order unchanged.
+            await tx.councilForumTopic.update({ where: { id: String(req.params.id) }, data: { ...input, updatedAt: topic.updatedAt } });
             await audit(tx, res, 'MODERATE', String(req.params.id), JSON.stringify(input));
         });
         res.json({ ok: true });
@@ -173,6 +255,10 @@ export function registerCouncilRoutes(app: Express, ctx: DutyRoutesContext) {
     router.patch('/forum/:id/replies/:replyId', wrap(async (req, res) => {
         manage(res);
         const input = z.object({ hidden: z.boolean() }).strict().parse(req.body);
+        const target = await prisma.councilForumReply.findFirst({ where: { id: String(req.params.replyId), topicId: String(req.params.id), deletedAt: null }, select: { authorId: true } });
+        if (!target)
+            throw new CouncilError(404, 'Reply not found');
+        await assertCanModerate(res, target.authorId);
         await prisma.$transaction(async (tx) => {
             const result = await tx.councilForumReply.updateMany({ where: { id: String(req.params.replyId), topicId: String(req.params.id) }, data: input });
             if (!result.count)
@@ -183,21 +269,29 @@ export function registerCouncilRoutes(app: Express, ctx: DutyRoutesContext) {
     }));
     router.post('/forum/:id/reports', forumLimit, wrap(async (req, res) => {
         const input = forumReportInput.parse(req.body);
-        const topic = await prisma.councilForumTopic.findFirst({ where: { id: String(req.params.id), hidden: false } });
+        const topic = await prisma.councilForumTopic.findFirst({ where: { id: String(req.params.id), hidden: false, deletedAt: null } });
         if (!topic)
             throw new CouncilError(404, 'Discussion not available');
-        if (input.replyId && !await prisma.councilForumReply.findFirst({ where: { id: input.replyId, topicId: topic.id, hidden: false } }))
+        if (input.replyId && !await prisma.councilForumReply.findFirst({ where: { id: input.replyId, topicId: topic.id, hidden: false, deletedAt: null } }))
             throw new CouncilError(404, 'Reply not found');
+        // One open report per person and post keeps the staff queue readable.
+        const existing = await prisma.councilForumReport.findFirst({ where: { topicId: topic.id, replyId: input.replyId ?? null, reporterId: res.locals.council.userId, resolved: false }, select: { id: true } });
+        if (existing)
+            return res.status(200).json({ id: existing.id, duplicate: true });
         const report = await prisma.councilForumReport.create({ data: { ...input, topicId: topic.id, reporterId: res.locals.council.userId } });
         res.status(201).json({ id: report.id });
     }));
-    // Reports can involve council members; identities and reasons remain staff-only.
+    // Reports can involve council members; reasons remain staff-only. Content removed by its author stays reviewable.
     router.get('/reports', wrap(async (_req, res) => {
         if (!res.locals.council.staff)
             throw new CouncilError(403, 'Staff access required');
         const reports = await prisma.councilForumReport.findMany({ where: { resolved: false }, orderBy: { createdAt: 'asc' }, take: 100, include: { topic: true } });
         const replies = await prisma.councilForumReply.findMany({ where: { id: { in: reports.flatMap(r => r.replyId ? [r.replyId] : []) } } });
-        res.json(reports.map(r => ({ ...r, reply: replies.find(reply => reply.id === r.replyId) || null })));
+        const strip = <T extends { authorId: string }>({ authorId: _a, ...rest }: T) => rest;
+        res.json(reports.map(({ reporterId: _r, topic, ...r }) => {
+            const reply = replies.find(x => x.id === r.replyId);
+            return { ...r, topic: strip(topic), reply: reply ? strip(reply) : null };
+        }));
     }));
     router.patch('/reports/:id', wrap(async (req, res) => {
         if (!res.locals.council.staff)

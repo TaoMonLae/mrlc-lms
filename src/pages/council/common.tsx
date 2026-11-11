@@ -36,23 +36,28 @@ export const studentName = (s: Student) => s.preferredName || `${s.user?.firstNa
 export function useCouncilData<T>(path: string) {
     const [data, setData] = useState<T>();
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(true);
     const [revision, setRevision] = useState(0);
     const reload = useCallback(() => setRevision(n => n + 1), []);
     useEffect(() => {
         const controller = new AbortController();
-        setData(undefined);
+        // Keep the last good result on screen while refreshing so forms and filters keep their state.
+        setLoading(true);
         setError('');
-        apiGet<T>(path, { signal: controller.signal, timeoutMs: 15000 }).then(setData).catch(e => { if (!controller.signal.aborted)
-            setError(e.message); });
+        apiGet<T>(path, { signal: controller.signal, timeoutMs: 15000 }).then(next => { setData(next); setLoading(false); }).catch(e => { if (!controller.signal.aborted) {
+            setData(undefined);
+            setError(e.message);
+            setLoading(false);
+        } });
         return () => controller.abort();
     }, [path, revision]);
-    return { data, error, reload };
+    return { data, error, loading, reload };
 }
 export function LoadState({ error, retry }: {
     error: string;
     retry: () => void;
 }) {
-    return error ? <div role="alert" className="council-notice">{error} <button onClick={retry}>Try again</button></div> : <p role="status">Loading school records…</p>;
+    return error ? <div role="alert" className="council-notice">{error} <button type="button" onClick={retry}>Try again</button></div> : <p role="status">Loading school records…</p>;
 }
 export function CouncilHeader({ forum = false }: {
     forum?: boolean;
@@ -60,3 +65,8 @@ export function CouncilHeader({ forum = false }: {
     return <header className="council-header"><div><h1>{forum ? 'Student forum' : 'Student Council'}</h1><p>{forum ? 'Questions, ideas and everyday school life.' : 'Shared duties. A fair turn for every team.'}</p></div><Link className="council-link" to={forum ? '/council' : '/student-forum'}>{forum ? 'Council & duties' : 'Open student forum'} →</Link></header>;
 }
 export const shiftDate = (date: string, days: number) => new Date(Date.parse(date) + days * 86400000).toISOString().slice(0, 10);
+export function useDebounced<T>(value: T, delay = 300) {
+    const [debounced, setDebounced] = useState(value);
+    useEffect(() => { const timer = setTimeout(() => setDebounced(value), delay); return () => clearTimeout(timer); }, [value, delay]);
+    return debounced;
+}
