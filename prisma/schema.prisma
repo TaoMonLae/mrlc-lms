@@ -238,6 +238,7 @@ enum DutyRosterStatus {
 model User {
   ownedExams Exam[] @relation("ExamOwner")
   id                    String    @id @default(uuid())
+  ownedCourses          Course[]
   email                 String    @unique
   username              String?   @unique
   passwordHash          String?
@@ -373,6 +374,7 @@ model SchoolProfile {
 
 model Student {
   id                           String    @id @default(uuid())
+  courseEnrollments            CourseEnrollment[]
   userId                       String?   @unique
   user                         User?     @relation(fields: [userId], references: [id])
   studentCode                  String    @unique
@@ -547,6 +549,7 @@ model Teacher {
 
 model Class {
   id           String  @id @default(uuid())
+  courseEnrollments CourseEnrollment[]
   name         String
   level        String // e.g., "GED", "Pre-GED"
   academicYear String
@@ -4743,6 +4746,84 @@ model EvidenceCaseProgress {
 
   @@unique([userId, caseId])
   @@index([userId, solved])
+}
+
+// Drafts are editable; a published syllabus is an immutable version snapshot.
+// Enrollments retain their assigned version when a teacher revises the course.
+model Course {
+  id         String @id @default(uuid())
+  ownerId    String
+  owner      User @relation(fields: [ownerId], references: [id])
+  draft      Json
+  status     String @default("DRAFT")
+  revision   Int @default(1)
+  reviewNote String?
+  reviewedById String?
+  reviewedAt DateTime?
+  versions   CourseVersion[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([ownerId, updatedAt])
+  @@index([status])
+}
+
+model CourseVersion {
+  id          String @id @default(uuid())
+  courseId    String
+  course      Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  number      Int
+  syllabus    Json
+  publishedById String
+  publishedAt DateTime @default(now())
+  enrollments CourseEnrollment[]
+
+  @@unique([courseId, number])
+}
+
+model CourseEnrollment {
+  id           String @id @default(uuid())
+  versionId    String
+  version      CourseVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classId      String
+  class        Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  assignedById String
+  assignedAt   DateTime @default(now())
+  progress     CourseItemProgress[]
+  quizAttempts CourseQuizAttempt[]
+
+  @@unique([versionId, studentId])
+  @@index([studentId, classId])
+  @@index([classId])
+}
+
+model CourseQuizAttempt {
+  id            String   @id @default(uuid())
+  enrollmentId  String
+  enrollment    CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  itemId        String
+  attemptNumber Int
+  startedAt     DateTime @default(now())
+  submittedAt   DateTime?
+  answers       Json?
+  score         Int?
+  total         Int
+  passed        Boolean?
+
+  @@unique([enrollmentId, itemId, attemptNumber])
+  @@index([enrollmentId, itemId, submittedAt])
+}
+
+model CourseItemProgress {
+  id           String @id @default(uuid())
+  enrollmentId String
+  enrollment   CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  itemId       String
+  completedAt  DateTime @default(now())
+
+  @@unique([enrollmentId, itemId])
 }
 
 // Council rosters preserve group membership and task wording at publication.

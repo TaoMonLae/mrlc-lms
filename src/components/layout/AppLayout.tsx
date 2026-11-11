@@ -8,6 +8,7 @@ import ChatWidget from "../chat/ChatWidget";
 import { ChatProvider } from "../../providers/ChatProvider";
 import { SocialProvider } from "../../providers/SocialProvider";
 import { FloatingPanelProvider } from "../../providers/FloatingPanelProvider";
+import CourseReturnNav from "../courses/CourseReturnNav";
 
 export function AppLayout() {
   const location = useLocation();
@@ -51,6 +52,7 @@ export function AppLayout() {
               key={location.pathname}
               className="mx-auto w-full min-w-0 max-w-[1680px] p-4 sm:p-6 xl:p-8"
             >
+              <CourseReturnNav />
               <Outlet />
             </div>
           </main>

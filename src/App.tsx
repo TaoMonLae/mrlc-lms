@@ -1,4 +1,3 @@
-import ExamManagementGate from "./components/exams/ExamManagementGate";
 import { Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { lazyWithRetry as lazy } from "./lib/lazyWithRetry";
@@ -8,6 +7,7 @@ const FinanceWorkspace = lazy(() => import("./components/financial/FinanceWorksp
 const AppLayout = lazy(() => import("./components/layout/AppLayout").then((module) => ({ default: module.AppLayout })));
 import { ExternalLearnerBoundary, ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { StudentFocusMonitor } from "./components/focus/StudentFocusMonitor";
+import ExamManagementGate from "./components/exams/ExamManagementGate";
 import { GameAccessGate } from "./components/games/GameAccessGate";
 const LoginPage = lazy(() => import("./pages/Login"));
 const SignupPage = lazy(() => import("./pages/Signup"));
@@ -63,6 +63,10 @@ const ClassesList = lazy(() => import("./pages/classes/ClassesList"));
 const ClassNew = lazy(() => import("./pages/classes/ClassNew"));
 const ClassProfile = lazy(() => import("./pages/classes/ClassProfile"));
 const Classwork = lazy(() => import("./pages/classwork/Classwork"));
+const Courses = lazy(() => import("./pages/courses/Courses"));
+const CourseEditor = lazy(() => import("./pages/courses/CourseEditor"));
+const CourseImport = lazy(() => import("./pages/courses/CourseImport"));
+const CourseLearn = lazy(() => import("./pages/courses/CourseLearn"));
 const ClassEdit = lazy(() => import("./pages/classes/ClassEdit"));
 
 const SubjectsList = lazy(() => import("./pages/subjects/SubjectsList"));
@@ -396,6 +400,16 @@ export default function App() {
                 <Route path="/updates" element={<ReleaseUpdates />} />
                 <Route element={<ProtectedRoute allowedRoles={['TEACHER', 'STUDENT', 'ADMIN']} />}>
                   <Route path="/classwork" element={<Classwork />} />
+                  <Route path="/courses" element={<Courses />} />
+                </Route>
+                <Route element={<ProtectedRoute strictRoles={['ADMIN', 'TEACHER']} />}>
+                  <Route path="/courses/new" element={<CourseEditor />} />
+                  <Route path="/courses/import" element={<CourseImport />} />
+                  <Route path="/courses/:id/edit" element={<CourseEditor />} />
+                  <Route path="/courses/:id/preview" element={<CourseLearn />} />
+                </Route>
+                <Route element={<ProtectedRoute strictRoles={['STUDENT']} />}>
+                  <Route path="/courses/learn/:enrollmentId" element={<CourseLearn />} />
                 </Route>
 
                 <Route element={<ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']} />}>

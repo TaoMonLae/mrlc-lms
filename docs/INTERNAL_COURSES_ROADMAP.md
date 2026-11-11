@@ -2,6 +2,8 @@
 
 Research and code review: 23 October 2026. This is a proposed implementation sequence, not a claim that the course module is built.
 
+Implementation update, 31 October 2026: the first internal course layer now has teacher authoring, four editable GED outlines, administrator review, immutable published versions, class assignment, a student learning view, trusted activity completion and a teacher progress report. See [research, design and deployment notes](courses-research-and-design.md) for the delivered scope and remaining limits. The wider curriculum pilot and expansion plan below still require teaching content and school review.
+
 ## Current foundation and gap
 
 - Learning Quest already has authored units, lessons, practice, mastery, progress, teacher review, and four independently written GED subject courses. Keep it as the practice engine.
