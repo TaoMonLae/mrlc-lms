@@ -6,7 +6,7 @@ async function fixture(page: Page, theme = 'light') {
     await page.addInitScript(({ user, release, theme }) => { sessionStorage.setItem('auth_token', 'fixture'); sessionStorage.setItem('auth_user', JSON.stringify(user)); localStorage.setItem(`mrlc:release-seen:${user.id}`, release); localStorage.setItem('mrlc-lms-theme', theme); }, { user, release: CURRENT_RELEASE.id, theme });
     const students = [{ id: 's1', studentCode: 'GED01', preferredName: 'Mi Su', boardingType: 'BOARDING' }, { id: 's2', studentCode: 'GED02', preferredName: 'Nai Min', boardingType: 'BOARDING' }];
     let entry = { id: 'e1', date: '2026-11-05', dutyNumber: 1, dutyName: 'Kitchen and meals', dutyType: 'COOKING', instructions: 'Breakfast 8 AM. Wash utensils after use.', groupNumber: 1, groupName: 'Morning team', members: [{ id: 's1', name: 'Mi Su' }], status: 'PENDING', rating: null, note: '', version: 0 };
-    let topic: any = { id: 't1', title: 'Kitchen supplies', body: 'Can we restock soap?', category: 'School life', authorName: 'Mi Su', createdAt: '2026-11-05T00:00:00Z', locked: false, pinned: false, hidden: false, _count: { replies: 0 }, replies: [] };
+    let topic: any = { id: 't1', title: 'Kitchen supplies', body: 'Can we restock soap?', category: 'School life', authorName: 'Mi Su', createdAt: '2026-11-05T00:00:00Z', locked: false, pinned: false, hidden: false, canModerate: true, _count: { replies: 0 }, replies: [] };
     const writes: any[] = [];
     await page.route('**/api/**', async (route) => {
         const req = route.request(), url = new URL(req.url()), path = url.pathname;
@@ -61,7 +61,7 @@ test('weekly roster can be divided, previewed and published; check-ins keep feed
     await page.getByLabel('Duty feedback').fill('Kitchen cleaned after breakfast.');
     await page.getByRole('button', { name: 'Save check-in' }).click();
     await expect(page.getByText('4 / 5 points')).toBeVisible();
-    await page.getByRole('button', { name: 'Teams & rotation' }).click();
+    await page.getByRole('tab', { name: 'Teams & rotation' }).click();
     await page.getByRole('button', { name: 'Select shown' }).click();
     await page.getByLabel('Number of teams').fill('2');
     await page.getByRole('button', { name: 'Divide 2 students evenly' }).click();
@@ -107,7 +107,7 @@ test('council register and forum stay readable, accessible and recover from load
     const { default: AxeBuilder } = await import('@axe-core/playwright');
     const audit = await new AxeBuilder({ page }).include('.council-page').withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
     expect(audit.violations).toEqual([]);
-    await page.getByRole('button', { name: 'Council & handbook' }).click();
+    await page.getByRole('tab', { name: 'Council & handbook' }).click();
     await expect(page.getByText('MRLC GED Preparation Program · 2025–2026 edition')).toBeVisible();
     await fits(page);
     await page.goto('/student-forum');
@@ -122,4 +122,76 @@ test('council register and forum stay readable, accessible and recover from load
     await page.getByRole('button', { name: 'Study together', exact: true }).click();
     await expect(page.getByRole('alert')).toContainText('Discussion service temporarily unavailable');
     await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+});
+test('report forms stay attached to the reported post and searches explain empty results', async ({ page }) => {
+    const writes = await fixture(page);
+    await page.goto('/student-forum/t1');
+    await page.getByLabel('Add your reply').fill('First reply');
+    await page.getByRole('button', { name: 'Post reply', exact: true }).click();
+    await expect(page.getByRole('heading', { name: '1 reply', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Report discussion' }).click();
+    await page.getByLabel('What should staff review?').fill('Off-topic discussion.');
+    await page.getByRole('button', { name: 'Send report' }).click();
+    await expect(page.getByRole('button', { name: 'Reported' })).toBeDisabled();
+    await page.getByRole('button', { name: 'Report reply' }).click();
+    const replyReport = page.locator('.council-reply').getByRole('textbox', { name: 'What should staff review?' });
+    await expect(replyReport).toBeVisible();
+    await replyReport.fill('Unkind reply.');
+    await page.getByRole('button', { name: 'Send report' }).click();
+    expect(writes.filter(w => w.path === '/api/council/forum/t1/reports').map(w => w.body.replyId)).toEqual([undefined, 'r1']);
+    await page.route('**/api/council/forum?*', route => route.fulfill({ json: { topics: [], count: 0 } }));
+    await page.goto('/student-forum');
+    await page.getByRole('searchbox', { name: 'Find a discussion' }).fill('zebra');
+    await expect(page.getByRole('heading', { name: 'No discussions match “zebra”' })).toBeVisible();
+    await page.getByRole('button', { name: 'Show all discussions' }).click();
+    await expect(page.getByRole('searchbox', { name: 'Find a discussion' })).toHaveValue('');
+});
+test('council tabs follow the ARIA tabs pattern and keep the open tab in the URL', async ({ page }) => {
+    await fixture(page);
+    await page.goto('/council');
+    const tablist = page.getByRole('tablist', { name: 'Council workspace' });
+    await expect(tablist.getByRole('tab')).toHaveCount(3);
+    const register = page.getByRole('tab', { name: 'Duty register' });
+    await expect(register).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tabpanel', { name: 'Duty register' })).toBeVisible();
+    await register.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('tab', { name: 'Teams & rotation' })).toBeFocused();
+    await expect(page.getByRole('tab', { name: 'Teams & rotation' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page).toHaveURL(/tab=rotation/);
+    await page.keyboard.press('End');
+    await expect(page.getByRole('tab', { name: 'Council & handbook' })).toBeFocused();
+    await expect(page.getByRole('tabpanel', { name: 'Council & handbook' })).toContainText('The current council');
+    await page.reload();
+    await expect(page.getByRole('tab', { name: 'Council & handbook' })).toHaveAttribute('aria-selected', 'true');
+    await page.getByRole('tab', { name: 'Council & handbook' }).focus();
+    await page.keyboard.press('Home');
+    await expect(page.getByRole('tab', { name: 'Duty register' })).toHaveAttribute('aria-selected', 'true');
+    for (const tab of await page.getByRole('tab').all())
+        expect(await tab.getAttribute('tabindex')).toBe((await tab.getAttribute('aria-selected')) === 'true' ? '0' : '-1');
+});
+test('authors edit and delete their own posts; staff posts show no council moderation', async ({ page }) => {
+    const writes = await fixture(page);
+    await page.route(url => url.pathname.startsWith('/api/council/forum/t2'), async route => {
+        const req = route.request();
+        if (req.method() !== 'GET') {
+            writes.push({ path: new URL(req.url()).pathname, method: req.method(), body: req.postData() ? req.postDataJSON() : null });
+            return route.fulfill({ json: { ok: true } });
+        }
+        return route.fulfill({ json: { id: 't2', title: 'My study plan', body: 'Draft text', category: 'Study together', authorName: 'Mi Su', createdAt: '2026-11-05T00:00:00Z', locked: false, pinned: false, hidden: false, mine: true, canEdit: true, canDelete: true, canModerate: false, _count: { replies: 1 }, replies: [{ id: 'r9', body: 'Teacher note', authorName: 'Daw Hla', createdAt: '2026-11-05T02:00:00Z', hidden: false, staffAuthor: true, canModerate: false }] } });
+    });
+    await page.goto('/student-forum/t2');
+    await expect(page.getByText('Staff', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Hide reply' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Hide discussion' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Report discussion' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Edit', exact: true }).click();
+    await page.getByLabel('Your message').fill('Updated plan');
+    await page.getByRole('button', { name: 'Save changes' }).click();
+    await page.getByRole('button', { name: 'Delete', exact: true }).click();
+    await expect(page.getByRole('group', { name: 'Delete your discussion' })).toBeVisible();
+    await fits(page);
+    await page.getByRole('button', { name: 'Delete discussion' }).click();
+    await expect(page).toHaveURL(/\/student-forum$/);
+    expect(writes.filter(w => w.path.startsWith('/api/council/forum/t2')).map(w => [w.method, w.path, w.body?.body])).toEqual([['PATCH', '/api/council/forum/t2/content', 'Updated plan'], ['DELETE', '/api/council/forum/t2', undefined]]);
 });
