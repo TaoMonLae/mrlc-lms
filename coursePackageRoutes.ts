@@ -101,27 +101,27 @@ export function registerCoursePackageRoutes({ app, prisma, authMiddleware, canMa
       const manifest: CoursePackage = { format: COURSE_PACKAGE_FORMAT, version: 1, course: structuredClone(draft), lessonFiles: {}, resources: [], notes: [] };
       const media = new Map<string, Buffer>(), aliases = new Map<string, string>(); let mediaBytes = 0;
       for (const item of manifest.course.modules.flatMap(m => m.items)) {
-        if (['TEXT', 'LINK'].includes(item.kind)) { item.resourceId = ''; continue; }
+        if (!['VIDEO', 'EBOOK', 'PRACTICE', 'HOMEWORK', 'EXAM'].includes(item.kind)) { item.resourceId = ''; continue; }
         if (!item.resourceId) continue;
         const originalId = item.resourceId, signature = `${item.kind}:${originalId}`;
         const previous = aliases.get(signature);
         if (previous) { item.resourceId = previous; continue; }
         const key = `resource-${manifest.resources.length + 1}`; aliases.set(signature, key); item.resourceId = key;
-        const resource: CoursePackageResource = { key, kind: item.kind as CoursePackageResource['kind'], title: item.title };
+        const resource: CoursePackageResource = { key, kind: item.kind as CoursePackageResource['kind'], title: item.title.slice(0, 160) };
         let bytes: Buffer | null = null, extension = '';
         if (item.kind === 'VIDEO') {
           const row = await prisma.videoLesson.findUnique({ where: { id: originalId } });
           const visible = !!row && (actor.role === 'ADMIN' || row.uploadedById === actor.userId || row.status === 'PUBLISHED' && (!row.classId || await canManageExamClass(actor, row.classId)));
           if (visible) {
-            resource.title = row.title;
+            resource.title = row.title.trim().slice(0, 160) || resource.title;
             const name = row.videoUrl.match(/^\/uploads\/videos\/([^/]+\.(mp4|webm))$/i)?.[1];
             if (includeMedia && name) { extension = path.extname(name).toLowerCase(); bytes = await managedFile(videoDir, name, COURSE_PACKAGE_MAX_MEDIA_BYTES - mediaBytes); }
           }
         } else if (item.kind === 'EBOOK') {
           const row = await prisma.ebook.findUnique({ where: { id: originalId } });
-          const visible = !!row && (actor.role === 'ADMIN' || row.uploadedById === actor.userId || row.visibility === 'ALL');
+          const visible = !!row && (actor.role === 'ADMIN' || row.uploadedById === actor.userId || ['ALL', 'STUDENTS'].includes(row.visibility));
           if (visible) {
-            resource.title = row.title; if (row.author) resource.author = row.author.slice(0, 200);
+            resource.title = row.title.trim().slice(0, 160) || resource.title; if (row.author) resource.author = row.author.slice(0, 200);
             if (includeMedia && row.format === 'PDF' && (actor.role === 'ADMIN' || row.uploadedById === actor.userId || row.downloadAllowed)) { extension = '.pdf'; bytes = await managedFile(ebookDir, row.fileName, COURSE_PACKAGE_MAX_MEDIA_BYTES - mediaBytes); }
           }
         }

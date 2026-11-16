@@ -76,12 +76,22 @@ test('a forged or cross-course private resource is never eligible for approval',
   assert.equal(isStagedCourseVideo({ videoUrl: '/uploads/videos/course-c1-video.mp4', uploadedById: 'other', status: 'DRAFT', visibility: 'TEACHERS_ONLY' }, course), false);
   assert.equal(isStagedCourseVideo({ videoUrl: '/uploads/videos/course-c1-video.mp4', uploadedById: 'teacher', status: 'ARCHIVED', visibility: 'TEACHERS_ONLY' }, course), false);
 });
-test('ordinary media edits retain the review requirement until a course version exists', async () => {
+test('imported media keeps its review requirement until an approved version includes it', async () => {
   let checks = 0;
-  const prisma: any = { course: { findFirst: async ({ where }: any) => { checks++; assert.deepEqual(where.versions, { none: {} }); return { id: where.id }; } } };
+  const approved = { ...draft(), modules: [{ ...draft().modules[0], items: [{ ...draft().modules[0].items[0], id: 'lesson-2', kind: 'EBOOK' as const, resourceId: 'book-approved' }] }] };
+  let versions: { syllabus: unknown }[] = [];
+  let course: any = { versions };
+  const prisma: any = {
+    course: { findUnique: async () => { checks++; return course; } },
+    ebook: { findFirst: async ({ where }: any) => where.id.in.includes('book-approved') && where.fileName.endsWith('book.pdf') ? { id: 'book-approved' } : null },
+    videoLesson: { findFirst: async () => null },
+  };
   assert.equal(await importedMediaNeedsCourseReview(prisma, 'ordinary-upload.mp4'), false); assert.equal(checks, 0);
   assert.equal(await importedMediaNeedsCourseReview(prisma, 'course-11111111-1111-4111-a111-111111111111-video.mp4'), true);
   assert.equal(checks, 1);
-  prisma.course.findFirst = async () => null;
+  versions = [{ syllabus: approved }]; course = { versions };
   assert.equal(await importedMediaNeedsCourseReview(prisma, 'course-11111111-1111-4111-a111-111111111111-book.pdf'), false);
+  assert.equal(await importedMediaNeedsCourseReview(prisma, 'course-11111111-1111-4111-a111-111111111111-video.mp4'), true);
+  course = null;
+  assert.equal(await importedMediaNeedsCourseReview(prisma, 'course-11111111-1111-4111-a111-111111111111-book.pdf'), true);
 });
