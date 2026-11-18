@@ -180,6 +180,9 @@ const ChatModeration = lazy(() => import("./pages/chat/ChatModeration"));
 const ChatStickers = lazy(() => import("./pages/chat/ChatStickers"));
 const AdmissionsList = lazy(() => import("./pages/admissions/AdmissionsList"));
 const AdmissionDetail = lazy(() => import("./pages/admissions/AdmissionDetail"));
+const PlacementResults = lazy(() => import("./pages/admissions/PlacementResults"));
+const PlacementResultDetail = lazy(() => import("./pages/admissions/PlacementResultDetail"));
+const PlacementTest = lazy(() => import("./pages/PlacementTest"));
 
 const RolesPermissions = lazy(() => import("./pages/settings/RolesPermissions"));
 const SettingsLayout = lazy(() => import("./pages/settings/SettingsLayout"));
@@ -339,6 +342,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/kiosk-downloads" element={<KioskDownloads />} />
+            <Route path="/placement-test" element={<PlacementTest />} />
             <Route path="/focus-app" element={<FocusApp />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
@@ -635,6 +639,11 @@ export default function App() {
                 <Route element={<ProtectedRoute requiredPermission="view_admissions" />}>
                   <Route path="/admissions" element={<AdmissionsList />} />
                   <Route path="/admissions/:id" element={<AdmissionDetail />} />
+                </Route>
+
+                <Route element={<ProtectedRoute strictRoles={['ADMIN', 'STAFF', 'TEACHER']} />}>
+                  <Route path="/placement-results" element={<PlacementResults />} />
+                  <Route path="/placement-results/:id" element={<PlacementResultDetail />} />
                 </Route>
 
                 <Route path="/library" element={<LibraryList />} />

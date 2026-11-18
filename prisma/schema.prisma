@@ -4907,3 +4907,47 @@ model CouncilAppointment {
   startDate String
   endDate   String
 }
+
+model PlacementTestSubmission {
+  id                     String    @id @default(uuid())
+  referenceNo            String    @unique
+  attemptNonce           String?   @unique
+  formId                 String
+  fullName               String
+  contactNumber          String
+  contactKey             String
+  email                  String
+  age                    Int?
+  highestGrade           String?
+  answers                Json
+  writingSample          String?
+  sectionScores          Json
+  totalCorrect           Int
+  totalQuestions         Int
+  recommendedLevel       String
+  flags                  String[]  @default([])
+  startedAt              DateTime?
+  durationSeconds        Int?
+  testVersion            String
+  status                 String    @default("NEW")
+  finalLevel             String?
+  writingRating          String    @default("NOT_RATED")
+  reviewNotes            String?
+  reviewedById           String?
+  reviewedByName         String?
+  reviewedAt             DateTime?
+  receiptEmailOutboxId   String?
+  decisionEmailOutboxId  String?
+  decisionEmailedAt      DateTime?
+  decisionEmailedByName  String?
+  decisionEmailedLevel   String?
+  admissionApplicationId String?
+  submittedAt            DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  @@index([status])
+  @@index([recommendedLevel])
+  @@index([submittedAt])
+  @@index([contactKey])
+  @@index([email])
+}

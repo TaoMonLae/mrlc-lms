@@ -153,3 +153,49 @@ export function buildPasswordResetEmail(input: { recipientName?: string; appUrl:
     guidance: 'Keep this link private and do not forward this email. School staff will never need your password or recovery code to assist you. Contact your school administrator if you are concerned about access to your account.',
   });
 }
+
+export function buildPlacementReceiptEmail(input: { recipientName: string; referenceNo: string; appUrl: string }) {
+  return renderEmail({
+    subject: `We received your MRLC placement test (${input.referenceNo})`,
+    heading: 'Your placement test was received',
+    recipientName: input.recipientName,
+    paragraphs: [
+      `Thank you for taking the ${SCHOOL} placement test. Your reference number is ${input.referenceNo}. Please keep this number.`,
+      'A teacher will read your answers and your writing. We will email you at this address with your result and your class placement. This usually takes a few school days.',
+    ],
+    actionLabel: 'Visit the MRLC website',
+    actionUrl: schoolEmailLink(input.appUrl, '/'),
+    guidance: 'You do not need to take the test again. If your phone number or email changes, tell the school office and give them your reference number.',
+  });
+}
+
+export function buildPlacementDecisionEmail(input: {
+  recipientName: string;
+  referenceNo: string;
+  className: string;
+  classDescription: string;
+  subjects?: { title: string; correct: number; total: number; level: string }[];
+  message?: string | null;
+  appUrl: string;
+}) {
+  const paragraphs = [
+    `Thank you for taking the ${SCHOOL} placement test (reference ${input.referenceNo}). Our teachers have reviewed your answers and your writing.`,
+    `Your class placement is: ${input.className}.`,
+    input.classDescription,
+  ];
+  if (input.message?.trim()) paragraphs.push(`Message from your teacher:\n${input.message.trim()}`);
+  return renderEmail({
+    subject: `Your MRLC placement result: ${input.className}`,
+    heading: 'Your placement test result',
+    recipientName: input.recipientName,
+    paragraphs,
+    sections: input.subjects?.length ? [{
+      title: 'Your results by subject',
+      description: 'Each subject has easy, middle and harder questions. The level shows the highest level you reached in that subject.',
+      details: input.subjects.map(subject => `${subject.title}: ${subject.correct} of ${subject.total} correct · ${subject.level}`),
+    }] : undefined,
+    actionLabel: 'Visit the MRLC website',
+    actionUrl: schoolEmailLink(input.appUrl, '/'),
+    guidance: 'The school office will contact you about the start date, documents and fees. If you have questions, contact the school office and give your reference number.',
+  });
+}

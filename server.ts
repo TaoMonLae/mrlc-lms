@@ -65,6 +65,7 @@ import { registerHrRoutes } from "./hrRoutes";
 import { registerFinancialReportRoutes } from "./financialReportRoutes";
 import { registerDutyRoutes } from "./dutyRoutes";
 import { registerCouncilRoutes } from "./councilRoutes";
+import { registerPlacementRoutes } from "./placementRoutes";
 import { registerFamilyRoutes } from "./familyRoutes";
 import { isGuardianApiRequestAllowed } from "./shared/familyAccess";
 import { composeQuestionSet, registerExamBankRoutes } from "./examBank";
@@ -6056,6 +6057,8 @@ async function startServer() {
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
+
+  registerPlacementRoutes({ app, prisma, authMiddleware, logger, createAuditLog, queueEmail, emailConfigured: () => Boolean(smtpTransport), appUrl: APP_URL, attemptSecret: JWT_SECRET as string, admissions: { nextAdmissionNo, addTimeline: addAdmissionTimeline, requiredDocuments: requiredAdmissionDocuments } });
 
   app.get("/api/library", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
