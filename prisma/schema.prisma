@@ -263,6 +263,7 @@ model User {
   studentProfile         Student?
   guardianLinks          GuardianStudentLink[]
   familyMessages         FamilyMessage[]
+  familyAbsenceNotices   FamilyAbsenceNotice[]
   teacherProfile         Teacher?
   employeeProfile        Employee?
   recordedAttendances    Attendance[]            @relation("RecordedBy")
@@ -424,6 +425,7 @@ model Student {
   homeworkSubmissions HomeworkSubmission[]
   guardianLinks       GuardianStudentLink[]
   familyMessages      FamilyMessage[]
+  familyAbsenceNotices FamilyAbsenceNotice[]
   badges              StudentBadge[]
   dutyAssignments     DutyAssignment[]
   dutyExpenses        Expense[]              @relation("StudentDutyExpenses")
@@ -483,6 +485,10 @@ model GuardianStudentLink {
   guardian       User     @relation(fields: [guardianUserId], references: [id], onDelete: Cascade)
   studentId      String
   student        Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  learnerConsentScopes String[] @default([])
+  learnerConsentAt     DateTime?
+  learnerConsentByName String?
+  learnerConsentNote   String?
   createdAt      DateTime @default(now())
 
   @@unique([guardianUserId, studentId])
@@ -501,10 +507,32 @@ model FamilyMessage {
   status         String   @default("OPEN") // OPEN | ANSWERED
   repliedByName  String?
   repliedAt      DateTime?
+  guardianReadAt DateTime?
   createdAt      DateTime @default(now())
 
   @@index([guardianUserId, studentId, createdAt])
   @@index([status, createdAt])
+}
+
+model FamilyAbsenceNotice {
+  id                 String    @id @default(uuid())
+  guardianUserId     String
+  guardian           User      @relation(fields: [guardianUserId], references: [id], onDelete: Cascade)
+  studentId          String
+  student            Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  type               String
+  startDate          DateTime
+  endDate            DateTime
+  reason             String
+  status             String    @default("SUBMITTED")
+  staffNote          String?
+  acknowledgedByName String?
+  acknowledgedAt     DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([guardianUserId, studentId, startDate])
+  @@index([status, startDate])
 }
 
 model Teacher {

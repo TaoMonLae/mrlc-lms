@@ -120,6 +120,26 @@ const notificationCopy: Record<string, { introduction: string; action: string; g
     action: 'Read What’s New',
     guidance: 'Please sign in and review What’s New to familiarise yourself with the changes. You can choose which school updates you receive from Notification settings. If you need assistance with a feature, contact your school administrator.',
   },
+  FAMILY_REPLY: {
+    introduction: 'The MRLC office has replied to your message in the Family Portal.',
+    action: 'Read the reply',
+    guidance: 'Sign in to the Family Portal to read the full reply. You can turn these emails off in the Family Portal under Messages.',
+  },
+  FAMILY_ABSENCE_RECORDED: {
+    introduction: 'Your learner was marked absent at MRLC today.',
+    action: 'Open the Family Portal',
+    guidance: 'If you know the reason, please tell the school with Report an absence in the Family Portal. If you believe this is a mistake, send the office a message. You can turn these emails off in the Family Portal under Messages.',
+  },
+  FAMILY_NOTICE_ACK: {
+    introduction: 'The MRLC office has received your absence notice.',
+    action: 'View your notice',
+    guidance: 'Sign in to the Family Portal to read any note from the office. You can turn these emails off in the Family Portal under Messages.',
+  },
+  CLASS_FAMILY_NOTICE: {
+    introduction: 'A family has told the school about an upcoming or recent absence for a learner in your class.',
+    action: 'Open attendance',
+    guidance: 'The notice appears next to the learner when you take attendance. The office will acknowledge it with the family.',
+  },
 };
 
 export function buildNotificationEmail(input: {
@@ -137,7 +157,7 @@ export function buildNotificationEmail(input: {
     paragraphs: [copy.introduction, ...(release ? [`Release: ${release.version}`] : []), input.message],
     sections: release?.highlights.map(({ title, description, details }) => ({ title, description, details })),
     actionLabel: copy.action, actionUrl: schoolEmailLink(input.appUrl, input.href || '/'),
-    guidance: copy.guidance, preferencesUrl: schoolEmailLink(input.appUrl, '/notifications/settings'),
+    guidance: copy.guidance, preferencesUrl: schoolEmailLink(input.appUrl, input.type.startsWith('FAMILY_') ? '/family?view=messages' : '/notifications/settings'),
   });
 }
 
