@@ -66,7 +66,7 @@ import { registerFinancialReportRoutes } from "./financialReportRoutes";
 import { registerDutyRoutes } from "./dutyRoutes";
 import { registerCouncilRoutes } from "./councilRoutes";
 import { registerPlacementRoutes } from "./placementRoutes";
-import { registerFamilyRoutes } from "./familyRoutes";
+import { registerFamilyRoutes, notifyFamiliesOfAbsences } from "./familyRoutes";
 import { isGuardianApiRequestAllowed } from "./shared/familyAccess";
 import { composeQuestionSet, registerExamBankRoutes } from "./examBank";
 import { registerNewsRoutes } from "./news";
@@ -4810,6 +4810,7 @@ async function startServer() {
           );
         }
 
+        notifyFamiliesOfAbsences(prisma, records, String(date).slice(0, 10)).catch((err) => logger.error("Family absence alerts failed:", err));
         res.json({ success: true, count: results.length, type: "session", timetableEntryId });
         return;
       } catch (err) {
@@ -4889,6 +4890,7 @@ async function startServer() {
         );
       }
 
+      notifyFamiliesOfAbsences(prisma, records, String(date).slice(0, 10)).catch((err) => logger.error("Family absence alerts failed:", err));
       res.json({ success: true, count: results.length, type: "class" });
     } catch (err) {
       logger.error("Error saving attendance:", err);
@@ -5089,6 +5091,7 @@ async function startServer() {
 
       const successCount = results.filter(r => r.success).length;
       const totalCount = results.reduce((sum, r) => sum + r.count, 0);
+      notifyFamiliesOfAbsences(prisma, sessionRecords.flatMap((entry) => entry.records), String(date).slice(0, 10)).catch((err) => logger.error("Family absence alerts failed:", err));
 
       res.json({
         success: true,
@@ -11779,13 +11782,21 @@ async function startServer() {
       const students = await prisma.student.findMany({ where: { classId }, include: { user: true }, orderBy: { studentCode: "asc" } });
       const records = await prisma.gedReadiness.findMany({ where: { studentId: { in: students.map((s: any) => s.id) } } });
       const byStudent: Record<string, Record<string, string>> = {};
-      for (const r of records) (byStudent[r.studentId] ||= {})[r.subject] = r.status;
+      const reviewed: Record<string, Record<string, string>> = {};
+      const notes: Record<string, Record<string, string>> = {};
+      for (const r of records) {
+        (byStudent[r.studentId] ||= {})[r.subject] = r.status;
+        (reviewed[r.studentId] ||= {})[r.subject] = r.updatedAt.toISOString();
+        if (r.note) (notes[r.studentId] ||= {})[r.subject] = r.note;
+      }
       res.json({
         subjects: GED_SUBJECTS,
         statuses: GED_STATUSES,
         rows: students.map((s: any) => ({
           studentId: s.id, name: fullName(s.user), code: s.studentCode,
           readiness: Object.fromEntries(GED_SUBJECTS.map((sub) => [sub, byStudent[s.id]?.[sub] || "NOT_READY"])),
+          reviewedAt: Object.fromEntries(GED_SUBJECTS.map((sub) => [sub, reviewed[s.id]?.[sub] || null])),
+          notes: Object.fromEntries(GED_SUBJECTS.map((sub) => [sub, notes[s.id]?.[sub] || ""])),
         })),
       });
     } catch (err: any) {
@@ -11808,8 +11819,8 @@ async function startServer() {
       const existing = await prisma.gedReadiness.findUnique({ where: { studentId_subject: { studentId, subject } } });
       const record = await prisma.gedReadiness.upsert({
         where: { studentId_subject: { studentId, subject } },
-        update: { status, note: note ?? undefined, updatedById: jwtUser.userId },
-        create: { studentId, subject, status, note: note || null, updatedById: jwtUser.userId },
+        update: { status, note: typeof note === "string" ? (note.trim().slice(0, 500) || null) : undefined, updatedById: jwtUser.userId },
+        create: { studentId, subject, status, note: typeof note === "string" ? (note.trim().slice(0, 500) || null) : null, updatedById: jwtUser.userId },
       });
       await createAuditLog(jwtUser.userId, jwtUser.email, "STATUS_CHANGE", "GED_READINESS", `${studentId}:${subject}`,
         `GED ${subject} readiness: ${existing?.status || "NOT_READY"} → ${status}`,

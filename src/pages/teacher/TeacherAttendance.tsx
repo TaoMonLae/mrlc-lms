@@ -45,6 +45,8 @@ interface TimetableSession {
 }
 
 type AttendanceMode = 'daily' | 'session';
+type FamilyNotice = { id: string; studentId: string; type: string; startDate: string; endDate: string; status: string };
+const NOTICE_LABELS: Record<string, string> = { ILLNESS: 'Illness', MEDICAL: 'Medical appointment', FAMILY: 'Family matter', TRAVEL: 'Travel', HOME_VISIT: 'Home visit', OTHER: 'Other reason' };
 
 /** Today's date in the user's local timezone as YYYY-MM-DD (toISOString would give the UTC day). */
 const localToday = () => {
@@ -69,6 +71,7 @@ export default function TeacherAttendance() {
   const [sessionError, setSessionError] = useState('');
   const [classError, setClassError] = useState('');
   const [retry, setRetry] = useState(0);
+  const [notices, setNotices] = useState<Record<string, FamilyNotice>>({});
 
   // Session attendance state
   const [sessions, setSessions] = useState<TimetableSession[]>([]);
@@ -133,6 +136,26 @@ export default function TeacherAttendance() {
     return () => controller.abort();
   }, [rosterClassId, mode, selectedSession, sessionDate, retry]);
 
+  const attendanceDate = mode === 'session' ? sessionDate : localToday();
+  useEffect(() => {
+    setNotices({});
+    if (!rosterClassId || !students.length) return;
+    const controller = new AbortController();
+    apiGet<FamilyNotice[]>(`/api/family/absences/for-class?classId=${encodeURIComponent(rosterClassId)}&date=${attendanceDate}`, { signal: controller.signal })
+      .then((rows) => {
+        if (controller.signal.aborted) return;
+        const byStudent = Object.fromEntries(rows.map((row) => [row.studentId, row]));
+        setNotices(byStudent);
+        setAttendance((prev) => {
+          const next = { ...prev };
+          rows.forEach((row) => { if (!next[row.studentId]) next[row.studentId] = 'excused'; });
+          return next;
+        });
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [rosterClassId, students, attendanceDate]);
+
   const handleStatusChange = (studentId: string, status: 'present' | 'late' | 'absent' | 'excused') => {
     setAttendance(prev => ({ ...prev, [studentId]: status }));
   };
@@ -161,7 +184,7 @@ export default function TeacherAttendance() {
       const records = students.map((s) => ({
         studentId: s.id,
         status: attendance[s.id].toUpperCase(),
-        remarks: null,
+        remarks: notices[s.id] && attendance[s.id] === 'excused' ? `Family notice: ${(NOTICE_LABELS[notices[s.id].type] || 'absence').toLowerCase()}` : null,
       }));
 
       const payload: any = {
@@ -194,11 +217,11 @@ export default function TeacherAttendance() {
   };
 
   const markAllPresent = () => {
-    const newAttendance: Record<string, 'present'> = {};
+    const merged: Record<string, 'present' | 'late' | 'absent' | 'excused'> = {};
     students.forEach(s => {
-      newAttendance[s.id] = 'present';
+      merged[s.id] = notices[s.id] ? 'excused' : 'present';
     });
-    setAttendance(newAttendance);
+    setAttendance(merged);
   };
 
   const filteredStudents = students.filter(s =>
@@ -357,6 +380,7 @@ export default function TeacherAttendance() {
                   <div>
                     <h4 className="text-sm font-bold text-foreground uppercase tracking-tight">{student.name}</h4>
                     <p className="text-[11px] font-bold text-muted-foreground tracking-widest uppercase">{student.studentId}</p>
+                    {notices[student.id] && <p className="mt-1 text-xs font-medium text-primary">Family notice · {NOTICE_LABELS[notices[student.id].type] || 'Absence'}{notices[student.id].startDate.slice(0, 10) !== notices[student.id].endDate.slice(0, 10) ? ` · until ${new Intl.DateTimeFormat('en-MY', { timeZone: 'UTC', day: 'numeric', month: 'short' }).format(new Date(notices[student.id].endDate))}` : ''}</p>}
                   </div>
                 </div>
 

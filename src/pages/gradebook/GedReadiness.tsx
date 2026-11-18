@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Target } from 'lucide-react';
+import React, { Fragment, useEffect, useState } from 'react';
+import { Check, MessageSquareText, Target } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
@@ -31,7 +31,17 @@ export const STATUS_STYLES: Record<string, string> = {
   PASSED: 'bg-emerald-600 text-white',
 };
 
-type Row = { studentId: string; name: string; code: string; readiness: Record<string, string> };
+type Row = { studentId: string; name: string; code: string; readiness: Record<string, string>; reviewedAt?: Record<string, string | null>; notes?: Record<string, string> };
+
+const STALE_DAYS = 60;
+const daysSince = (value: string | null | undefined) => value ? Math.floor((Date.now() - new Date(value).getTime()) / 86_400_000) : null;
+const isStale = (value: string | null | undefined) => { const days = daysSince(value); return days == null || days > STALE_DAYS; };
+const reviewLabel = (value: string | null | undefined) => {
+  const days = daysSince(value);
+  if (days == null) return 'Never reviewed';
+  if (days === 0) return 'Reviewed today';
+  return `Reviewed ${new Intl.DateTimeFormat('en-MY', { day: 'numeric', month: 'short' }).format(new Date(value!))}`;
+};
 type Matrix = { subjects: string[]; statuses: string[]; rows: Row[] };
 
 export default function GedReadinessPage() {
@@ -43,6 +53,8 @@ export default function GedReadinessPage() {
   const [matrix, setMatrix] = useState<Matrix | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState('');
+  const [openNotes, setOpenNotes] = useState('');
+  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
 
   useEffect(() => {
     apiGet<any[]>('/api/classes').then((cs) => {
@@ -61,21 +73,31 @@ export default function GedReadinessPage() {
       .finally(() => setLoading(false));
   }, [classId]);
 
-  const updateStatus = async (studentId: string, subject: string, status: string) => {
+  const updateStatus = async (studentId: string, subject: string, status: string, note?: string) => {
+    const now = new Date().toISOString();
     setMatrix((prev) => prev && {
       ...prev,
-      rows: prev.rows.map((r) => r.studentId === studentId ? { ...r, readiness: { ...r.readiness, [subject]: status } } : r),
+      rows: prev.rows.map((r) => r.studentId === studentId ? {
+        ...r,
+        readiness: { ...r.readiness, [subject]: status },
+        reviewedAt: { ...(r.reviewedAt || {}), [subject]: now },
+        notes: note === undefined ? r.notes : { ...(r.notes || {}), [subject]: note },
+      } : r),
     });
     const key = `${studentId}:${subject}`;
     setSaving(key);
     try {
-      await apiSend('/api/ged-readiness', 'PUT', { studentId, subject, status });
+      await apiSend('/api/ged-readiness', 'PUT', note === undefined ? { studentId, subject, status } : { studentId, subject, status, note });
+      if (note !== undefined) toast.success('Note saved. Families see it in the Family Portal.');
     } catch (e: any) {
       toast.error(e.message || 'Failed to save');
     } finally {
       setSaving('');
     }
   };
+
+  const staleCount = matrix?.rows.reduce((sum, r) => sum + matrix.subjects.filter((sub) => isStale(r.reviewedAt?.[sub])).length, 0) ?? 0;
+  const totalCells = (matrix?.rows.length ?? 0) * (matrix?.subjects.length ?? 0);
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
@@ -94,6 +116,12 @@ export default function GedReadinessPage() {
         </Select>
       </div>
 
+      {canManage && totalCells > 0 && staleCount > 0 && (
+        <div role="status" className="rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-foreground">
+          <span className="font-semibold">{staleCount} of {totalCells} ratings</span> have not been reviewed in the last {STALE_DAYS} days. Families see the review date in the Family Portal, so please confirm or update them. Choosing "Still accurate" records today's review without changing the rating.
+        </div>
+      )}
+
       <div className="bg-card border border-border rounded-sm shadow-sm overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead className="bg-muted/50 text-muted-foreground uppercase tracking-wider font-semibold text-[11px]">
@@ -108,9 +136,17 @@ export default function GedReadinessPage() {
             {loading && <tr><td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">Loading…</td></tr>}
             {!loading && (matrix?.rows.length ?? 0) === 0 && <tr><td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">No students in this class.</td></tr>}
             {!loading && matrix?.rows.map((r) => (
-              <tr key={r.studentId} className="hover:bg-muted/50">
-                <td className="px-6 py-3 font-medium text-foreground">{r.name} <span className="text-xs text-muted-foreground font-mono ml-1">{r.code}</span></td>
-                {matrix.subjects.map((sub) => (
+              <Fragment key={r.studentId}>
+              <tr className="hover:bg-muted/50 align-top">
+                <td className="px-6 py-3 font-medium text-foreground">
+                  {r.name} <span className="text-xs text-muted-foreground font-mono ml-1">{r.code}</span>
+                  {canManage && <button type="button" onClick={() => setOpenNotes(openNotes === r.studentId ? '' : r.studentId)} aria-expanded={openNotes === r.studentId} className="mt-1 flex min-h-8 items-center gap-1.5 text-xs font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    <MessageSquareText className="h-3.5 w-3.5" aria-hidden="true" />Notes for family{Object.values(r.notes || {}).filter(Boolean).length ? ` (${Object.values(r.notes || {}).filter(Boolean).length})` : ''}
+                  </button>}
+                </td>
+                {matrix.subjects.map((sub) => {
+                  const stale = isStale(r.reviewedAt?.[sub]);
+                  return (
                   <td key={sub} className="px-4 py-3">
                     {canManage ? (
                       <Select value={r.readiness[sub]} onValueChange={(v) => updateStatus(r.studentId, sub, v)}>
@@ -126,9 +162,35 @@ export default function GedReadinessPage() {
                         {STATUS_LABELS[r.readiness[sub]] || r.readiness[sub]}
                       </span>
                     )}
+                    <div className="mt-1 flex flex-wrap items-center gap-x-2 text-[11px]">
+                      <span className={stale ? 'font-semibold text-warning' : 'text-muted-foreground'}>{reviewLabel(r.reviewedAt?.[sub])}</span>
+                      {canManage && stale && <button type="button" disabled={saving === `${r.studentId}:${sub}`} onClick={() => updateStatus(r.studentId, sub, r.readiness[sub])} className="inline-flex min-h-7 items-center gap-1 font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"><Check className="h-3 w-3" aria-hidden="true" />Still accurate</button>}
+                    </div>
                   </td>
-                ))}
+                  );
+                })}
               </tr>
+              {canManage && openNotes === r.studentId && (
+                <tr className="bg-muted/40">
+                  <td colSpan={matrix.subjects.length + 1} className="px-6 py-4">
+                    <p className="text-xs text-muted-foreground">Families read these notes in the Family Portal. Keep them short, kind and practical. Many families read in Burmese or Mon.</p>
+                    <div className="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                      {matrix.subjects.map((sub) => {
+                        const key = `${r.studentId}:${sub}`;
+                        const draft = noteDrafts[key] ?? r.notes?.[sub] ?? '';
+                        return (
+                          <div key={sub}>
+                            <Label htmlFor={`note-${key}`} className="text-xs font-semibold">{SUBJECT_LABELS[sub] || sub}</Label>
+                            <textarea id={`note-${key}`} value={draft} maxLength={500} rows={3} onChange={(e) => setNoteDrafts((prev) => ({ ...prev, [key]: e.target.value }))} className="mt-1 block w-full resize-y rounded-md border border-input bg-card p-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40" placeholder="For example: Practise fractions 15 minutes each evening." />
+                            <button type="button" disabled={saving === key || draft === (r.notes?.[sub] ?? '')} onClick={() => updateStatus(r.studentId, sub, r.readiness[sub], draft)} className="mt-2 inline-flex min-h-9 items-center rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">Save note</button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </td>
+                </tr>
+              )}
+              </Fragment>
             ))}
           </tbody>
         </table>
