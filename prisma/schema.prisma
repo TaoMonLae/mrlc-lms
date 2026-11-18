@@ -4913,6 +4913,7 @@ model PlacementTestSubmission {
   referenceNo            String    @unique
   attemptNonce           String?   @unique
   formId                 String
+  formVersionId          String?
   fullName               String
   contactNumber          String
   contactKey             String
@@ -4950,4 +4951,71 @@ model PlacementTestSubmission {
   @@index([submittedAt])
   @@index([contactKey])
   @@index([email])
+}
+
+model PlacementForm {
+  id        String   @id
+  name      String
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PlacementBankPassage {
+  id        String   @id @default(uuid())
+  formId    String
+  title     String
+  body      Json
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([formId])
+}
+
+model PlacementBankQuestion {
+  id        String   @id @default(uuid())
+  formId    String
+  section   String
+  band      String
+  skill     String
+  passageId String?
+  prompt    String
+  options   Json
+  answer    Int
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([formId, section])
+}
+
+model PlacementFormVersion {
+  id              String   @id @default(uuid())
+  formId          String
+  version         Int
+  snapshot        Json
+  contentHash     String
+  questionCount   Int
+  publishedAt     DateTime @default(now())
+  publishedById   String?
+  publishedByName String?
+
+  @@unique([formId, version])
+  @@index([formId])
+}
+
+model PlacementSettings {
+  id                String   @id @default("default")
+  isOpen            Boolean  @default(true)
+  closedMessage     String?
+  timeLimitMinutes  Int      @default(90)
+  foundationMastery Int      @default(60)
+  preGedMastery     Int      @default(60)
+  gedMastery        Int      @default(60)
+  retakeWaitDays    Int      @default(30)
+  updatedAt         DateTime @updatedAt
+  updatedByName     String?
 }

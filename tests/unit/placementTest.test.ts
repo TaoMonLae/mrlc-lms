@@ -8,6 +8,9 @@ import {
   PLACEMENT_SECTIONS,
   PLACEMENT_TIME_LIMIT_SECONDS,
   chooseForm,
+  defaultSnapshot,
+  validateBank,
+  blueprintOf,
   displayOrder,
   formQuestions,
   placementReview,
@@ -18,6 +21,7 @@ import {
   type PlacementForm,
 } from '../../shared/placementTest';
 import { attemptTiming, contactKey, createAttemptToken, readAttemptToken } from '../../lib/placementAttempt';
+import { contentHash, rowsToSnapshotParts } from '../../lib/placementBank';
 import { buildPlacementDecisionEmail, buildPlacementReceiptEmail } from '../../lib/emailTemplates';
 
 const answerUpTo = (form: PlacementForm, bands: PlacementBand[], sections?: string[]) => Object.fromEntries(
@@ -85,11 +89,11 @@ test('math answer keys match worked answers', () => {
 
 test('public form never exposes answer keys or bands', () => {
   for (const form of PLACEMENT_FORMS) {
-    const json = JSON.stringify(publicPlacementForm(form));
+    const json = JSON.stringify(publicPlacementForm(defaultSnapshot(form)));
     assert.ok(!json.includes('"answer"'));
     assert.ok(!json.includes('"band"'));
     assert.ok(!json.includes('FOUNDATION'));
-    assert.equal(publicPlacementForm(form).timeLimitSeconds, PLACEMENT_TIME_LIMIT_SECONDS);
+    assert.equal(publicPlacementForm(defaultSnapshot(form)).timeLimitSeconds, PLACEMENT_TIME_LIMIT_SECONDS);
   }
 });
 
@@ -105,17 +109,17 @@ test('always choosing the same displayed position never reaches Pre-GED', () => 
   for (const form of PLACEMENT_FORMS) {
     for (let position = 0; position < 4; position += 1) {
       const answers = Object.fromEntries(formQuestions(form).map(q => [q.id, displayOrder(q)[position]]));
-      assert.equal(scorePlacement(answers, { form, writingSample: writing }).recommendedLevel, 'BELOW_PRE_GED', `${form} position ${position}`);
+      assert.equal(scorePlacement(answers, { snapshot: defaultSnapshot(form), writingSample: writing }).recommendedLevel, 'BELOW_PRE_GED', `${form} position ${position}`);
     }
   }
 });
 
 test('band placement works the same on every form', () => {
   for (const form of PLACEMENT_FORMS) {
-    assert.equal(scorePlacement({}, { form }).recommendedLevel, 'BELOW_PRE_GED');
-    assert.equal(scorePlacement(answerUpTo(form, ['FOUNDATION']), { form, writingSample: writing }).recommendedLevel, 'PRE_GED');
-    assert.equal(scorePlacement(answerUpTo(form, ['FOUNDATION', 'PRE_GED']), { form, writingSample: writing }).recommendedLevel, 'PRE_GED');
-    const full = scorePlacement(answerUpTo(form, ['FOUNDATION', 'PRE_GED', 'GED']), { form, writingSample: writing, durationSeconds: 3600 });
+    assert.equal(scorePlacement({}, { snapshot: defaultSnapshot(form) }).recommendedLevel, 'BELOW_PRE_GED');
+    assert.equal(scorePlacement(answerUpTo(form, ['FOUNDATION']), { snapshot: defaultSnapshot(form), writingSample: writing }).recommendedLevel, 'PRE_GED');
+    assert.equal(scorePlacement(answerUpTo(form, ['FOUNDATION', 'PRE_GED']), { snapshot: defaultSnapshot(form), writingSample: writing }).recommendedLevel, 'PRE_GED');
+    const full = scorePlacement(answerUpTo(form, ['FOUNDATION', 'PRE_GED', 'GED']), { snapshot: defaultSnapshot(form), writingSample: writing, durationSeconds: 3600 });
     assert.equal(full.recommendedLevel, 'GED');
     assert.equal(full.totalCorrect, 50);
     assert.deepEqual(full.flags, []);
@@ -128,30 +132,30 @@ test('GED level needs at least 60 percent of the hardest questions', () => {
   const gedMath = formQuestions(form).filter(q => q.section === 'MATH' && q.band === 'GED');
   const gedRla = formQuestions(form).filter(q => q.section === 'RLA' && q.band === 'GED');
   for (const q of [...gedMath.slice(0, 2), ...gedRla.slice(0, 2)]) answers[q.id] = q.answer;
-  assert.equal(scorePlacement(answers, { form, writingSample: writing }).recommendedLevel, 'PRE_GED');
+  assert.equal(scorePlacement(answers, { snapshot: defaultSnapshot(form), writingSample: writing }).recommendedLevel, 'PRE_GED');
   for (const q of [gedMath[2], gedRla[2]]) answers[q.id] = q.answer;
   for (const q of formQuestions(form).filter(item => item.band === 'GED' && (item.section === 'SCIENCE' || item.section === 'SOCIAL_STUDIES'))) answers[q.id] = q.answer;
-  assert.equal(scorePlacement(answers, { form, writingSample: writing }).recommendedLevel, 'GED');
+  assert.equal(scorePlacement(answers, { snapshot: defaultSnapshot(form), writingSample: writing }).recommendedLevel, 'GED');
 });
 
 test('weak math holds the overall placement down', () => {
-  const result = scorePlacement(answerUpTo('B', ['FOUNDATION', 'PRE_GED', 'GED'], ['RLA', 'SCIENCE', 'SOCIAL_STUDIES']), { form: 'B', writingSample: writing });
+  const result = scorePlacement(answerUpTo('B', ['FOUNDATION', 'PRE_GED', 'GED'], ['RLA', 'SCIENCE', 'SOCIAL_STUDIES']), { snapshot: defaultSnapshot('B'), writingSample: writing });
   assert.equal(result.recommendedLevel, 'BELOW_PRE_GED');
   assert.ok(result.flags.includes('UNEVEN_CORE'));
 });
 
 test('answers from another form are ignored', () => {
-  assert.deepEqual(sanitizePlacementAnswers({ 'a-rla-f1': 1, 'b-rla-f1': 1 }, 'B'), { 'b-rla-f1': 1 });
-  assert.equal(scorePlacement(answerUpTo('A', ['FOUNDATION', 'PRE_GED', 'GED']), { form: 'C' }).totalCorrect, 0);
+  assert.deepEqual(sanitizePlacementAnswers({ 'a-rla-f1': 1, 'b-rla-f1': 1 }, formQuestions('B')), { 'b-rla-f1': 1 });
+  assert.equal(scorePlacement(answerUpTo('A', ['FOUNDATION', 'PRE_GED', 'GED']), { snapshot: defaultSnapshot('C') }).totalCorrect, 0);
 });
 
 test('flags cover timing, retakes and blank answers', () => {
-  const result = scorePlacement({}, { form: 'C', durationSeconds: 300, overTime: true, repeatAttempt: true, highestGrade: 'GRADE_11_PLUS' });
+  const result = scorePlacement({}, { snapshot: defaultSnapshot('C'), durationSeconds: 300, overTime: true, repeatAttempt: true, highestGrade: 'GRADE_11_PLUS' });
   for (const flag of ['MANY_UNANSWERED', 'VERY_FAST', 'OVER_TIME', 'SHORT_WRITING', 'SCHOOLING_MISMATCH', 'REPEAT_ATTEMPT']) assert.ok(result.flags.includes(flag), flag);
 });
 
 test('form rotation never repeats a form until all three are used', () => {
-  assert.ok(PLACEMENT_FORMS.includes(chooseForm([])));
+  assert.ok((PLACEMENT_FORMS as readonly string[]).includes(chooseForm([])));
   assert.equal(chooseForm(['A', 'B']), 'C');
   assert.notEqual(chooseForm(['C']), 'C');
   assert.equal(chooseForm(['B', 'C', 'A']), 'B');
@@ -159,7 +163,7 @@ test('form rotation never repeats a form until all three are used', () => {
 });
 
 test('review marks chosen and correct options for the right form', () => {
-  const review = placementReview({ 'c-rla-f1': 1, 'c-rla-f2': 3 }, 'C');
+  const review = placementReview({ 'c-rla-f1': 1, 'c-rla-f2': 3 }, defaultSnapshot('C'));
   assert.equal(review.length, 50);
   assert.equal(review.find(r => r.id === 'c-rla-f1')!.correct, true);
   assert.equal(review.find(r => r.id === 'c-rla-f2')!.correct, false);
@@ -169,7 +173,7 @@ test('review marks chosen and correct options for the right form', () => {
 test('attempt tokens are signed, bound to a phone and timed', () => {
   const secret = 'test-secret-value-1234';
   const start = Date.UTC(2026, 10, 18, 2, 0, 0);
-  const { token } = createAttemptToken({ form: 'B', contactNumber: '+60 12-345 6789', now: start }, secret);
+  const { token } = createAttemptToken({ form: 'B', versionId: 'v1', contactNumber: '+60 12-345 6789', limitSeconds: PLACEMENT_TIME_LIMIT_SECONDS, now: start }, secret);
   const attempt = readAttemptToken(token, secret)!;
   assert.equal(attempt.form, 'B');
   assert.equal(attempt.contact, contactKey('012-345 6789'));
@@ -194,4 +198,48 @@ test('placement emails escape names and include the reference and class', () => 
   assert.ok(decision.subject.includes('Pre-GED class'));
   assert.ok(decision.textBody.includes('Mathematics: 9 of 15 correct'));
   assert.ok(decision.textBody.includes('See you on Monday.'));
+});
+
+test('form rotation uses only the forms in rotation', () => {
+  assert.equal(chooseForm([], ['D']), 'D');
+  assert.equal(chooseForm(['A'], ['A', 'D']), 'D');
+  assert.throws(() => chooseForm([], []));
+});
+
+test('cut-offs change the level', () => {
+  const snapshot = defaultSnapshot('A');
+  const answers: Record<string, number> = answerUpTo('A', ['FOUNDATION', 'PRE_GED']);
+  for (const q of formQuestions('A').filter(item => item.band === 'GED')) {
+    const sameBand = formQuestions('A').filter(item => item.band === 'GED' && item.section === q.section);
+    if (sameBand.indexOf(q) < 2) answers[q.id] = q.answer;
+  }
+  assert.equal(scorePlacement(answers, { snapshot, writingSample: writing }).recommendedLevel, 'PRE_GED');
+  assert.equal(scorePlacement(answers, { snapshot, writingSample: writing, thresholds: { FOUNDATION: 60, PRE_GED: 60, GED: 40 } }).recommendedLevel, 'GED');
+});
+
+test('bank validation blocks unpublishable forms and warns on thin bands', () => {
+  const snapshot = defaultSnapshot('A');
+  assert.deepEqual(validateBank(snapshot.questions, snapshot.passages).errors, []);
+  const noGedMath = snapshot.questions.filter(q => !(q.section === 'MATH' && q.band === 'GED'));
+  assert.ok(validateBank(noGedMath, snapshot.passages).errors.some(e => e.includes('Mathematics has no GED')));
+  const broken = snapshot.questions.map((q, i) => i === 0 ? { ...q, options: ['Same', 'Same'], answer: 3 } : q);
+  const errors = validateBank(broken, snapshot.passages).errors;
+  assert.ok(errors.some(e => e.includes('identical')));
+  assert.ok(errors.some(e => e.includes('no correct answer')));
+  const thin = snapshot.questions.filter(q => !(q.section === 'SCIENCE' && q.band === 'FOUNDATION')).concat(snapshot.questions.filter(q => q.section === 'SCIENCE' && q.band === 'FOUNDATION').slice(0, 1));
+  assert.ok(validateBank(thin, snapshot.passages, blueprintOf(snapshot.questions)).warnings.some(w => w.includes('only 1')));
+});
+
+test('draft rows become an ordered snapshot and a stable hash', () => {
+  const rows = [
+    { id: 'q2', formId: 'D', section: 'MATH', band: 'GED', skill: 's', passageId: null, prompt: 'Two', options: ['a', 'b'], answer: 0, sortOrder: 0, active: true },
+    { id: 'q1', formId: 'D', section: 'RLA', band: 'FOUNDATION', skill: 's', passageId: 'p1', prompt: 'One', options: ['a', 'b'], answer: 1, sortOrder: 5, active: true },
+    { id: 'q3', formId: 'D', section: 'RLA', band: 'FOUNDATION', skill: 's', passageId: null, prompt: 'Retired', options: ['a', 'b'], answer: 1, sortOrder: 1, active: false },
+  ];
+  const passages = [{ id: 'p1', formId: 'D', title: 'T', body: ['x'], sortOrder: 0 }];
+  const parts = rowsToSnapshotParts(rows, passages);
+  assert.deepEqual(parts.questions.map(q => q.id), ['q1', 'q2']);
+  assert.equal(contentHash(parts), contentHash(rowsToSnapshotParts([...rows].reverse(), passages)));
+  const edited = rowsToSnapshotParts(rows.map(r => r.id === 'q2' ? { ...r, answer: 1 } : r), passages);
+  assert.notEqual(contentHash(parts), contentHash(edited));
 });

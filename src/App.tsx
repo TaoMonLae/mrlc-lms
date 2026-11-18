@@ -182,6 +182,8 @@ const AdmissionsList = lazy(() => import("./pages/admissions/AdmissionsList"));
 const AdmissionDetail = lazy(() => import("./pages/admissions/AdmissionDetail"));
 const PlacementResults = lazy(() => import("./pages/admissions/PlacementResults"));
 const PlacementResultDetail = lazy(() => import("./pages/admissions/PlacementResultDetail"));
+const PlacementBank = lazy(() => import("./pages/admissions/PlacementBank"));
+const PlacementSettings = lazy(() => import("./pages/admissions/PlacementSettings"));
 const PlacementTest = lazy(() => import("./pages/PlacementTest"));
 
 const RolesPermissions = lazy(() => import("./pages/settings/RolesPermissions"));
@@ -643,6 +645,8 @@ export default function App() {
 
                 <Route element={<ProtectedRoute strictRoles={['ADMIN', 'STAFF', 'TEACHER']} />}>
                   <Route path="/placement-results" element={<PlacementResults />} />
+                  <Route path="/placement-results/questions" element={<PlacementBank />} />
+                  <Route path="/placement-results/settings" element={<PlacementSettings />} />
                   <Route path="/placement-results/:id" element={<PlacementResultDetail />} />
                 </Route>
 

@@ -159,3 +159,4 @@
 
 .pt-part{display:block;margin-top:10px;color:var(--lm);font-size:15px;font-weight:600;letter-spacing:0}
 .placement-test :is(p,li,dd,label){text-wrap:pretty}
+.pt-closed-icon{color:var(--lm)}

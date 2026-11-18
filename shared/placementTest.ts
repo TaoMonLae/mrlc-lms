@@ -61,7 +61,7 @@ export interface PlacementPassage {
 
 export interface PlacementQuestion {
   id: string;
-  form: PlacementForm;
+  form: string;
   section: PlacementSectionId;
   band: PlacementBand;
   skill: string;
@@ -363,12 +363,16 @@ const FORM_C: PlacementQuestion[] = [
 
 export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [...FORM_A, ...FORM_B, ...FORM_C];
 
-export function formQuestions(form: PlacementForm) {
+export function formQuestions(form: string) {
   return PLACEMENT_QUESTIONS.filter(q => q.form === form);
 }
 
 export function isPlacementForm(value: unknown): value is PlacementForm {
   return typeof value === 'string' && (PLACEMENT_FORMS as readonly string[]).includes(value);
+}
+
+export function isFormId(value: unknown): value is string {
+  return typeof value === 'string' && /^[A-Z]$/.test(value);
 }
 
 export const PLACEMENT_WRITING_PROMPT = {
@@ -378,7 +382,23 @@ export const PLACEMENT_WRITING_PROMPT = {
   maxLength: 3000,
 };
 
-const BAND_MASTERY: Record<PlacementBand, number> = { FOUNDATION: 0.6, PRE_GED: 0.6, GED: 0.6 };
+export interface PlacementThresholds { FOUNDATION: number; PRE_GED: number; GED: number }
+
+export const DEFAULT_THRESHOLDS: PlacementThresholds = { FOUNDATION: 60, PRE_GED: 60, GED: 60 };
+
+export interface PlacementSnapshot {
+  versionId: string;
+  form: string;
+  version: number;
+  questions: PlacementQuestion[];
+  passages: PlacementPassage[];
+}
+
+export function defaultSnapshot(form: PlacementForm): PlacementSnapshot {
+  const questions = formQuestions(form);
+  const ids = new Set(questions.map(q => q.passageId).filter(Boolean));
+  return { versionId: `default-${form}`, form, version: 0, questions, passages: PLACEMENT_PASSAGES.filter(p => ids.has(p.id)) };
+}
 
 const LEVEL_RANK: Record<PlacementLevel, number> = { BELOW_PRE_GED: 0, PRE_GED: 1, GED: 2 };
 
@@ -395,7 +415,7 @@ export interface SectionScore {
 
 export interface PlacementResult {
   version: string;
-  form: PlacementForm;
+  form: string;
   totalCorrect: number;
   totalQuestions: number;
   answered: number;
@@ -405,9 +425,9 @@ export interface PlacementResult {
 }
 
 export const PLACEMENT_FLAG_LABELS: Record<string, string> = {
-  MANY_UNANSWERED: 'Eight or more questions were left blank',
+  MANY_UNANSWERED: 'Many questions were left blank',
   VERY_FAST: 'Finished in under 20 minutes',
-  OVER_TIME: 'Sent after the 90-minute limit',
+  OVER_TIME: 'Sent after the time limit',
   SHORT_WRITING: 'Writing sample is under 30 words',
   UNEVEN_CORE: 'Reading and Math levels are two steps apart',
   HARD_WITHOUT_EASY: 'Higher-level answers are stronger than foundation answers in a section',
@@ -433,54 +453,45 @@ function seededOrder(seedText: string, length: number) {
   return order;
 }
 
-export function displayOrder(question: PlacementQuestion) {
-  return seededOrder(`${PLACEMENT_TEST_VERSION}:${question.id}`, question.options.length);
+export function displayOrder(question: Pick<PlacementQuestion, 'id' | 'options'>, seed = PLACEMENT_TEST_VERSION) {
+  return seededOrder(`${seed}:${question.id}`, question.options.length);
 }
 
-export function placementOverview() {
-  const sample = formQuestions('A');
+export function publicPlacementForm(snapshot: PlacementSnapshot, timeLimitSeconds = PLACEMENT_TIME_LIMIT_SECONDS) {
+  const passageIds = new Set(snapshot.questions.map(q => q.passageId).filter(Boolean));
+  const seed = snapshot.versionId.startsWith('default-') ? PLACEMENT_TEST_VERSION : snapshot.versionId;
   return {
     version: PLACEMENT_TEST_VERSION,
-    timeLimitMinutes: PLACEMENT_TIME_LIMIT_SECONDS / 60,
-    questionCount: sample.length,
-    sections: PLACEMENT_SECTIONS.map(section => ({ ...section, questionCount: sample.filter(q => q.section === section.id).length })),
-    highestGradeOptions: HIGHEST_GRADE_OPTIONS,
-  };
-}
-
-export function publicPlacementForm(form: PlacementForm) {
-  const questions = formQuestions(form);
-  const passageIds = new Set(questions.map(q => q.passageId).filter(Boolean));
-  return {
-    version: PLACEMENT_TEST_VERSION,
-    form,
-    timeLimitSeconds: PLACEMENT_TIME_LIMIT_SECONDS,
+    form: snapshot.form,
+    formVersion: snapshot.version,
+    timeLimitSeconds,
     sections: PLACEMENT_SECTIONS.map(section => ({
       ...section,
-      questions: questions.filter(q => q.section === section.id).map(question => ({
+      questions: snapshot.questions.filter(q => q.section === section.id).map(question => ({
         id: question.id,
         passageId: question.passageId,
         prompt: question.prompt,
-        options: displayOrder(question).map(value => ({ value, label: question.options[value] })),
+        options: displayOrder(question, seed).map(value => ({ value, label: question.options[value] })),
       })),
-    })),
-    passages: PLACEMENT_PASSAGES.filter(p => passageIds.has(p.id)),
+    })).filter(section => section.questions.length > 0),
+    passages: snapshot.passages.filter(p => passageIds.has(p.id)),
     writing: PLACEMENT_WRITING_PROMPT,
   };
 }
 
-export function chooseForm(previous: string[], random: () => number = Math.random): PlacementForm {
-  const used = previous.filter(isPlacementForm);
-  const unused = PLACEMENT_FORMS.filter(form => !used.includes(form));
+export function chooseForm(previous: string[], available: readonly string[] = PLACEMENT_FORMS, random: () => number = Math.random): string {
+  if (!available.length) throw new Error('No placement forms are available');
+  const used = previous.filter(form => available.includes(form));
+  const unused = available.filter(form => !used.includes(form));
   if (unused.length) return unused[Math.floor(random() * unused.length)];
-  const lastSeen = (form: PlacementForm) => used.lastIndexOf(form);
-  return [...PLACEMENT_FORMS].sort((a, b) => lastSeen(a) - lastSeen(b))[0];
+  const lastSeen = (form: string) => used.lastIndexOf(form);
+  return [...available].sort((a, b) => lastSeen(a) - lastSeen(b))[0];
 }
 
-export function sanitizePlacementAnswers(input: unknown, form: PlacementForm): Record<string, number> {
+export function sanitizePlacementAnswers(input: unknown, questions: Pick<PlacementQuestion, 'id' | 'options'>[]): Record<string, number> {
   const output: Record<string, number> = {};
   if (!input || typeof input !== 'object') return output;
-  for (const question of formQuestions(form)) {
+  for (const question of questions) {
     const value = (input as Record<string, unknown>)[question.id];
     if (typeof value === 'number' && Number.isInteger(value) && value >= 0 && value < question.options.length) output[question.id] = value;
   }
@@ -500,15 +511,26 @@ function sectionLevel(bands: BandScore[]): PlacementLevel {
 
 const minLevel = (...levels: PlacementLevel[]) => levels.reduce((low, level) => LEVEL_RANK[level] < LEVEL_RANK[low] ? level : low);
 
-export function scorePlacement(rawAnswers: unknown, context: { form: PlacementForm; writingSample?: string | null; durationSeconds?: number | null; highestGrade?: string | null; overTime?: boolean; repeatAttempt?: boolean }): PlacementResult {
-  const questionsForForm = formQuestions(context.form);
-  const answers = sanitizePlacementAnswers(rawAnswers, context.form);
+export interface ScoreContext {
+  snapshot: PlacementSnapshot;
+  thresholds?: PlacementThresholds;
+  writingSample?: string | null;
+  durationSeconds?: number | null;
+  highestGrade?: string | null;
+  overTime?: boolean;
+  repeatAttempt?: boolean;
+}
+
+export function scorePlacement(rawAnswers: unknown, context: ScoreContext): PlacementResult {
+  const thresholds = context.thresholds ?? DEFAULT_THRESHOLDS;
+  const questionsForForm = context.snapshot.questions;
+  const answers = sanitizePlacementAnswers(rawAnswers, questionsForForm);
   const sections: SectionScore[] = PLACEMENT_SECTIONS.map(section => {
     const questions = questionsForForm.filter(q => q.section === section.id);
     const bands = PLACEMENT_BANDS.map(band => {
       const inBand = questions.filter(q => q.band === band);
       const correct = inBand.filter(q => answers[q.id] === q.answer).length;
-      return { band, correct, total: inBand.length, mastered: inBand.length > 0 && correct >= Math.ceil(inBand.length * BAND_MASTERY[band]) };
+      return { band, correct, total: inBand.length, mastered: inBand.length > 0 && correct >= Math.ceil(inBand.length * thresholds[band] / 100) };
     });
     return {
       section: section.id,
@@ -525,7 +547,7 @@ export function scorePlacement(rawAnswers: unknown, context: { form: PlacementFo
 
   const answered = Object.keys(answers).length;
   const flags: string[] = [];
-  if (questionsForForm.length - answered >= 8) flags.push('MANY_UNANSWERED');
+  if (questionsForForm.length - answered >= Math.max(4, Math.round(questionsForForm.length * 0.16))) flags.push('MANY_UNANSWERED');
   if (typeof context.durationSeconds === 'number' && context.durationSeconds > 0 && context.durationSeconds < 20 * 60) flags.push('VERY_FAST');
   if (context.overTime) flags.push('OVER_TIME');
   if (countWords(context.writingSample) < 30) flags.push('SHORT_WRITING');
@@ -537,7 +559,7 @@ export function scorePlacement(rawAnswers: unknown, context: { form: PlacementFo
 
   return {
     version: PLACEMENT_TEST_VERSION,
-    form: context.form,
+    form: context.snapshot.form,
     totalCorrect: sections.reduce((sum, s) => sum + s.correct, 0),
     totalQuestions: questionsForForm.length,
     answered,
@@ -547,18 +569,60 @@ export function scorePlacement(rawAnswers: unknown, context: { form: PlacementFo
   };
 }
 
-export function placementReview(rawAnswers: unknown, form: PlacementForm) {
-  const answers = sanitizePlacementAnswers(rawAnswers, form);
-  return formQuestions(form).map(q => ({
+export function placementReview(rawAnswers: unknown, snapshot: PlacementSnapshot) {
+  const answers = sanitizePlacementAnswers(rawAnswers, snapshot.questions);
+  return snapshot.questions.map(q => ({
     id: q.id,
     section: q.section,
     band: q.band,
     skill: q.skill,
-    passageTitle: q.passageId ? PLACEMENT_PASSAGES.find(p => p.id === q.passageId)?.title ?? null : null,
+    passageTitle: q.passageId ? snapshot.passages.find(p => p.id === q.passageId)?.title ?? null : null,
     prompt: q.prompt,
     options: q.options,
     correctIndex: q.answer,
     chosenIndex: answers[q.id] ?? null,
     correct: answers[q.id] === q.answer,
   }));
+}
+
+export type Blueprint = Record<PlacementSectionId, Record<PlacementBand, number>>;
+
+export function blueprintOf(questions: Pick<PlacementQuestion, 'section' | 'band'>[]): Blueprint {
+  const out = Object.fromEntries(PLACEMENT_SECTION_IDS.map(s => [s, Object.fromEntries(PLACEMENT_BANDS.map(b => [b, 0]))])) as Blueprint;
+  for (const q of questions) out[q.section][q.band] += 1;
+  return out;
+}
+
+export interface BankValidation { errors: string[]; warnings: string[]; blueprint: Blueprint; questionCount: number }
+
+export function validateBank(questions: Pick<PlacementQuestion, 'id' | 'section' | 'band' | 'prompt' | 'options' | 'answer' | 'passageId'>[], passages: Pick<PlacementPassage, 'id' | 'title' | 'body'>[], compareWith?: Blueprint): BankValidation {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const blueprint = blueprintOf(questions);
+  const sectionTitle = (id: string) => PLACEMENT_SECTIONS.find(s => s.id === id)?.title ?? id;
+  const passageIds = new Set(passages.map(p => p.id));
+  questions.forEach((q, index) => {
+    const label = `${sectionTitle(q.section)} question ${index + 1}`;
+    const options = q.options.map(o => o.trim());
+    if (!q.prompt.trim()) errors.push(`${label} has no question text.`);
+    if (options.length < 2 || options.length > 6) errors.push(`${label} needs between 2 and 6 answer choices.`);
+    if (options.some(o => !o)) errors.push(`${label} has an empty answer choice.`);
+    if (new Set(options).size !== options.length) errors.push(`${label} has two identical answer choices.`);
+    if (!Number.isInteger(q.answer) || q.answer < 0 || q.answer >= options.length) errors.push(`${label} has no correct answer marked.`);
+    if (q.passageId && !passageIds.has(q.passageId)) errors.push(`${label} uses a passage that no longer exists.`);
+  });
+  for (const section of PLACEMENT_SECTION_IDS) {
+    for (const band of PLACEMENT_BANDS) {
+      const count = blueprint[section][band];
+      if (count === 0) errors.push(`${sectionTitle(section)} has no ${PLACEMENT_BAND_LABELS[band]} questions. Every subject needs all three levels.`);
+      else if (count < 3) warnings.push(`${sectionTitle(section)} has only ${count} ${PLACEMENT_BAND_LABELS[band]} question${count === 1 ? '' : 's'}. One lucky or careless answer will change the level.`);
+      if (compareWith && compareWith[section][band] !== count) warnings.push(`${sectionTitle(section)} ${PLACEMENT_BAND_LABELS[band]}: ${count} here, ${compareWith[section][band]} in the other forms. Forms are fairer when they match.`);
+    }
+  }
+  const used = new Set(questions.map(q => q.passageId).filter(Boolean));
+  for (const passage of passages) {
+    if (!passage.title.trim() || !passage.body.some(p => p.trim())) errors.push(`Passage “${passage.title || 'Untitled'}” needs a title and text.`);
+    if (!used.has(passage.id)) warnings.push(`Passage “${passage.title || 'Untitled'}” is not used by any question.`);
+  }
+  return { errors, warnings, blueprint, questionCount: questions.length };
 }

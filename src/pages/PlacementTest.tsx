@@ -21,6 +21,8 @@ interface PublicForm {
 }
 interface Overview {
   version: string;
+  isOpen: boolean;
+  closedMessage: string | null;
   timeLimitMinutes: number;
   questionCount: number;
   sections: { id: string; title: string; questionCount: number }[];
@@ -337,7 +339,16 @@ export default function PlacementTest() {
       {!overview && !loadError && step === 'intro' && <div className="pt-status" role="status"><Loader2 className="pt-spin" aria-hidden="true" /> Loading the placement test…</div>}
       {loadError && step === 'intro' && <div className="pt-status pt-status-error" role="alert"><AlertTriangle aria-hidden="true" /><p>{loadError}</p><button type="button" className="pt-button pt-button-secondary" onClick={() => void loadOverview()}>Try again</button></div>}
 
-      {overview && step === 'intro' && <div className="pt-intro">
+      {overview && step === 'intro' && !overview.isOpen && !inProgress && <div className="pt-section pt-done">
+        <div className="pt-card pt-done-card">
+          <TimerOff className="pt-done-icon pt-closed-icon" aria-hidden="true" />
+          <h1 ref={headingRef} tabIndex={-1}>The placement test is closed</h1>
+          <p>{overview.closedMessage || 'New students cannot start the test right now. Please contact the school office.'}</p>
+          <Link to="/" className="pt-button pt-button-secondary">Back to school home<ArrowRight size={18} aria-hidden="true" /></Link>
+        </div>
+      </div>}
+
+      {overview && step === 'intro' && (overview.isOpen || inProgress) && <div className="pt-intro">
         <section className="pt-intro-copy" aria-labelledby="pt-title">
           <h1 id="pt-title" ref={headingRef} tabIndex={-1}>Placement test for new students</h1>
           <p className="pt-lead">This test helps our teachers choose the right class for you: the GED class, the Pre-GED class, or a foundation class. It is not a pass or fail exam.</p>
