@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { AlertTriangle, ArrowLeft, Check, Loader2, Mail, Phone, Save, Send, UserPlus, X } from 'lucide-react';
+import { AlertTriangle, Archive, ArchiveRestore, ArrowLeft, Check, Loader2, Mail, Phone, Save, Send, UserPlus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -33,6 +33,7 @@ interface PlacementDetail {
   contactNumber: string;
   email: string;
   formId: string;
+  formVersion: number | null;
   age: number | null;
   highestGrade: string | null;
   writingSample: string | null;
@@ -86,6 +87,7 @@ const formatDuration = (seconds: number | null) => {
 
 export default function PlacementResultDetail() {
   const { id } = useParams();
+  const [archiving, setArchiving] = useState(false);
   const [data, setData] = useState<PlacementDetail | null>(null);
   const [error, setError] = useState('');
   const [finalLevel, setFinalLevel] = useState<PlacementLevel | ''>('');
@@ -144,6 +146,21 @@ export default function PlacementResultDetail() {
     }
   };
 
+  const toggleArchive = async () => {
+    if (!data) return;
+    const archived = data.status !== 'ARCHIVED';
+    setArchiving(true);
+    try {
+      await apiSend(`/api/placement-tests/${data.id}/archive`, 'POST', { archived });
+      toast.success(archived ? 'Test archived. Find it under Archived on the results page.' : 'Test restored');
+      apply(await apiGet<PlacementDetail>(`/api/placement-tests/${data.id}`));
+    } catch (err: any) {
+      toast.error(err.message || 'That did not work');
+    } finally {
+      setArchiving(false);
+    }
+  };
+
   const createAdmission = async () => {
     if (!data) return;
     setCreating(true);
@@ -176,7 +193,7 @@ export default function PlacementResultDetail() {
         <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
           <a href={`tel:${data.contactNumber.replace(/[^+\d]/g, '')}`} className="inline-flex items-center gap-1.5 hover:text-foreground"><Phone className="h-4 w-4" aria-hidden="true" />{data.contactNumber}</a>
           {<a href={`mailto:${data.email}`} className="inline-flex items-center gap-1.5 hover:text-foreground"><Mail className="h-4 w-4" aria-hidden="true" />{data.email}</a>}
-          <span>Form {data.formId}</span>
+          <span>Form {data.formId}{data.formVersion ? ` v${data.formVersion}` : ''}</span>
           <span>Age {data.age ?? 'not given'}</span>
           <span>Last grade: {grade ?? 'not given'}</span>
           <span>Time taken: {formatDuration(data.durationSeconds)}</span>
@@ -258,7 +275,7 @@ export default function PlacementResultDetail() {
         </section>
       </div>
 
-      <aside className="space-y-4 xl:sticky xl:top-4 xl:self-start">
+      <aside className="space-y-4">
         <section className="rounded-sm border border-border bg-card p-5 shadow-sm" aria-labelledby="decision-title">
           <h2 id="decision-title" className="text-lg font-semibold">Teacher placement</h2>
           <p className="mt-1 text-sm text-muted-foreground">Confirm or change the recommendation after reading the scores, the writing and, where possible, a short conversation.</p>
@@ -338,6 +355,11 @@ export default function PlacementResultDetail() {
               </>
               : <p className="mt-1 text-sm text-muted-foreground">Admissions staff create the application after the teacher confirms a class.</p>}
         </section>
+
+        <div className="flex items-center justify-between gap-3 px-1 text-sm">
+          <span className="text-muted-foreground">{data.status === 'ARCHIVED' ? 'This test is archived.' : 'Hide this test from the open list.'}</span>
+          <Button type="button" variant="outline" onClick={() => void toggleArchive()} disabled={archiving}>{archiving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : data.status === 'ARCHIVED' ? <ArchiveRestore className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{data.status === 'ARCHIVED' ? 'Restore' : 'Archive'}</Button>
+        </div>
       </aside>
     </div>
   </div>;
