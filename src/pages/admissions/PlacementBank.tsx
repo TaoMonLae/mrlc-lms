@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
-import { AlertTriangle, ArrowDown, BarChart3, ArrowUp, Check, CheckCircle2, Copy, FileText, History, Loader2, Lock, Pencil, Plus, RotateCcw, Trash2, Upload, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation, useSearchParams } from 'react-router';
+import { AlertTriangle, ArrowDown, BarChart3, ArrowUp, Check, CheckCircle2, Copy, Eye, EyeOff, FileText, History, MonitorPlay, Loader2, Lock, Pencil, Plus, RotateCcw, Trash2, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { buttonVariants } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
 import { apiGet, apiSend } from '../../lib/api';
 import { PLACEMENT_BANDS, PLACEMENT_BAND_GRADES, PLACEMENT_BAND_LABELS, PLACEMENT_SECTIONS, type PlacementBand, type PlacementSectionId } from '../../../shared/placementTest';
 import { PlacementHeader } from './placementShared';
+import { StudentQuestionPreview } from './placementEditing';
 
 interface FormSummary {
   id: string;
@@ -47,25 +47,23 @@ function statsTone(stat: QuestionStats) {
   return '';
 }
 
-interface QuestionDraft { id?: string; section: PlacementSectionId; band: PlacementBand; skill: string; passageId: string; prompt: string; options: string[]; answer: number; active: boolean }
-interface PassageDraft { id?: string; title: string; text: string }
-
-const emptyQuestion = (section: PlacementSectionId = 'RLA', band: PlacementBand = 'FOUNDATION'): QuestionDraft => ({ section, band, skill: '', passageId: '', prompt: '', options: ['', '', '', ''], answer: 0, active: true });
-const letter = (i: number) => String.fromCharCode(65 + i);
 const when = (value: string) => new Date(value).toLocaleString('en-MY', { dateStyle: 'medium', timeStyle: 'short' });
 
 export default function PlacementBank() {
   const [forms, setForms] = useState<FormSummary[]>([]);
   const [canEdit, setCanEdit] = useState(false);
-  const [formId, setFormId] = useState('');
+  const [params, setParams] = useSearchParams();
+  const location = useLocation();
+  const formId = params.get('form') ?? '';
+  const setParamsRef = useRef(setParams);
+  setParamsRef.current = setParams;
+  const setFormId = useCallback((id: string) => setParamsRef.current(prev => { const next = new URLSearchParams(prev); next.set('form', id); return next; }, { replace: true }), []);
   const [detail, setDetail] = useState<FormDetail | null>(null);
   const [stats, setStats] = useState<Record<string, QuestionStats>>({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
-  const [question, setQuestion] = useState<QuestionDraft | null>(null);
-  const [passage, setPassage] = useState<PassageDraft | null>(null);
-  const [fieldError, setFieldError] = useState('');
+  const [previewing, setPreviewing] = useState<Set<string>>(new Set());
   const [showRetired, setShowRetired] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
@@ -73,8 +71,10 @@ export default function PlacementBank() {
     const data = await apiGet<{ forms: FormSummary[]; canEdit: boolean }>('/api/placement-bank');
     setForms(data.forms);
     setCanEdit(data.canEdit);
-    setFormId(current => select ?? (current && data.forms.some(f => f.id === current) ? current : data.forms[0]?.id ?? ''));
-  }, []);
+    const current = new URLSearchParams(window.location.search).get('form');
+    const next = select ?? (current && data.forms.some(f => f.id === current) ? current : data.forms[0]?.id ?? '');
+    if (next && next !== current) setFormId(next);
+  }, [setFormId]);
 
   const loadDetail = useCallback(async (id: string) => {
     if (!id) return;
@@ -111,46 +111,26 @@ export default function PlacementBank() {
   };
 
   const passageTitle = useMemo(() => new Map((detail?.passages ?? []).map(p => [p.id, p.title])), [detail]);
+  useEffect(() => {
+    if (!detail || !location.hash.startsWith('#q-')) return;
+    const id = location.hash.slice(1);
+    requestAnimationFrame(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.scrollIntoView({ block: 'center' });
+      el.classList.add('bg-primary/5');
+      window.setTimeout(() => el.classList.remove('bg-primary/5'), 2400);
+    });
+  }, [detail, location.hash]);
+
+  const togglePreview = (id: string) => setPreviewing(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+  const editBase = `/placement-results/questions/${formId}`;
+
   const passageUse = useMemo(() => {
     const map = new Map<string, number>();
     for (const q of detail?.questions ?? []) if (q.passageId) map.set(q.passageId, (map.get(q.passageId) ?? 0) + 1);
     return map;
   }, [detail]);
-
-  const saveQuestion = (event: FormEvent) => {
-    event.preventDefault();
-    if (!question || !detail) return;
-    const options = question.options.map(o => o.trim());
-    if (!question.prompt.trim()) return setFieldError('Write the question.');
-    if (!question.skill.trim()) return setFieldError('Name the skill this question checks, for example “Main idea” or “Percent”.');
-    if (options.length < 2 || options.some(o => !o)) return setFieldError('Fill in every answer choice, or remove the empty ones.');
-    if (new Set(options).size !== options.length) return setFieldError('Two answer choices are the same.');
-    setFieldError('');
-    void run('question', async () => {
-      const body = { section: question.section, band: question.band, skill: question.skill.trim(), passageId: question.passageId || null, prompt: question.prompt.trim(), options, answer: question.answer, active: question.active };
-      if (question.id) await apiSend(`/api/placement-bank/questions/${question.id}`, 'PATCH', body);
-      else await apiSend(`/api/placement-bank/forms/${detail.form.id}/questions`, 'POST', body);
-      toast.success(question.id ? 'Question saved to the draft' : 'Question added to the draft');
-      setQuestion(null);
-      await refresh();
-    });
-  };
-
-  const savePassage = (event: FormEvent) => {
-    event.preventDefault();
-    if (!passage || !detail) return;
-    const body = passage.text.split(/\n\s*\n/).map(p => p.replace(/\s*\n\s*/g, ' ').trim()).filter(Boolean);
-    if (!passage.title.trim()) return setFieldError('Give the passage a title.');
-    if (!body.length) return setFieldError('Write the passage text.');
-    setFieldError('');
-    void run('passage', async () => {
-      if (passage.id) await apiSend(`/api/placement-bank/passages/${passage.id}`, 'PATCH', { title: passage.title.trim(), body });
-      else await apiSend(`/api/placement-bank/forms/${detail.form.id}/passages`, 'POST', { title: passage.title.trim(), body });
-      toast.success('Passage saved to the draft');
-      setPassage(null);
-      await refresh();
-    });
-  };
 
   const publish = () => detail && run('publish', async () => {
     if (!window.confirm(`Publish Form ${detail.form.id}? New tests will use this version. Tests already started keep the version they were given.`)) return;
@@ -215,6 +195,7 @@ export default function PlacementBank() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-sm"><Switch checked={detail.form.active} onCheckedChange={checked => setActive(Boolean(checked))} disabled={!canEdit || busy !== null || (!detail.form.latest && !detail.form.active)} />In rotation</label>
+            <Link to={`${editBase}/preview`} className={buttonVariants({ variant: 'outline' }) + ' border'}><MonitorPlay className="mr-2 h-4 w-4" aria-hidden="true" />Preview as student</Link>
             <Button type="button" variant="outline" onClick={() => setShowHistory(s => !s)} aria-expanded={showHistory}><History className="mr-2 h-4 w-4" />History</Button>
             {detail.canPublish && <Button type="button" onClick={() => void publish()} disabled={busy !== null || v.errors.length > 0 || !detail.form.hasChanges}>{busy === 'publish' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}Publish draft</Button>}
           </div>
@@ -256,13 +237,13 @@ export default function PlacementBank() {
             <h2 id="passages-title" className="text-lg font-semibold">Passages</h2>
             <p className="text-sm text-muted-foreground">Reading texts, tables and experiments that several questions share.</p>
           </div>
-          {canEdit && <Button type="button" variant="outline" onClick={() => { setFieldError(''); setPassage({ title: '', text: '' }); }}><Plus className="mr-2 h-4 w-4" />Add passage</Button>}
+          {canEdit && <Link to={`${editBase}/passages/new`} className={buttonVariants({ variant: 'outline' }) + ' border'}><Plus className="mr-2 h-4 w-4" aria-hidden="true" />Add passage</Link>}
         </div>
         {detail.passages.length === 0 ? <p className="mt-3 text-sm text-muted-foreground">No passages in this form.</p> : <ul className="mt-3 divide-y divide-border">
           {detail.passages.map(p => <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
             <div className="flex min-w-0 items-center gap-3"><FileText className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" /><div className="min-w-0"><p className="truncate font-medium">{p.title}</p><p className="text-xs text-muted-foreground">{p.body.length} paragraph{p.body.length === 1 ? '' : 's'} · used by {passageUse.get(p.id) ?? 0} question{passageUse.get(p.id) === 1 ? '' : 's'}</p></div></div>
             {canEdit && <div className="flex gap-1">
-              <Button type="button" variant="ghost" size="sm" onClick={() => { setFieldError(''); setPassage({ id: p.id, title: p.title, text: p.body.join('\n\n') }); }}><Pencil className="mr-1.5 h-3.5 w-3.5" />Edit<span className="sr-only"> {p.title}</span></Button>
+              <Link to={`${editBase}/passages/${p.id}`} className={buttonVariants({ variant: 'ghost', size: 'sm' })}><Pencil className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />Edit<span className="sr-only"> {p.title}</span></Link>
               <Button type="button" variant="ghost" size="sm" disabled={busy !== null} onClick={() => void run(`del-p-${p.id}`, async () => {
                 if (!window.confirm(`Delete the passage “${p.title}” from the draft?`)) return;
                 await apiSend(`/api/placement-bank/passages/${p.id}`, 'DELETE');
@@ -284,14 +265,14 @@ export default function PlacementBank() {
         return <section key={section.id} aria-labelledby={`sec-${section.id}`} className="rounded-sm border border-border bg-card shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3">
             <h3 id={`sec-${section.id}`} className="font-semibold">{section.title} <span className="font-normal text-muted-foreground">· {inSection.filter(q => q.active).length} questions</span></h3>
-            {canEdit && <Button type="button" variant="outline" size="sm" onClick={() => { setFieldError(''); setQuestion(emptyQuestion(section.id)); }}><Plus className="mr-1.5 h-4 w-4" />Add question</Button>}
+            {canEdit && <Link to={`${editBase}/questions/new?section=${section.id}`} className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' border'}><Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />Add question</Link>}
           </div>
           {PLACEMENT_BANDS.map(band => {
             const items = inSection.filter(q => q.band === band).sort((a, b) => a.sortOrder - b.sortOrder);
             return <div key={band} className="border-b border-border last:border-0">
               <p className="bg-muted/40 px-5 py-1.5 text-xs font-semibold text-muted-foreground">{PLACEMENT_BAND_LABELS[band]} <span className="font-normal">· {PLACEMENT_BAND_GRADES[band]}</span></p>
               {items.length === 0 ? <p className="px-5 py-3 text-sm text-destructive">No {PLACEMENT_BAND_LABELS[band]} questions. Publishing needs at least one.</p> : <ol className="divide-y divide-border">
-                {items.map((q, index) => <li key={q.id} className={`grid gap-3 px-5 py-3 md:grid-cols-[minmax(0,1fr)_auto] ${q.active ? '' : 'opacity-60'}`}>
+                {items.map((q, index) => <li key={q.id} id={`q-${q.id}`} className={`grid scroll-mt-24 gap-3 px-5 py-3 transition-colors duration-700 md:grid-cols-[minmax(0,1fr)_auto] ${q.active ? '' : 'text-muted-foreground'}`}>
                   <div className="min-w-0">
                     <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground"><span className="font-medium text-foreground">{q.skill}</span>{q.passageId && <span>· Passage: {passageTitle.get(q.passageId) ?? 'missing'}</span>}{!q.active && <span className="rounded-sm border border-border px-1.5 font-medium">Retired</span>}</p>
                     <p className="mt-1 line-clamp-2 whitespace-pre-line text-sm font-medium">{q.prompt}</p>
@@ -303,16 +284,22 @@ export default function PlacementBank() {
                       return <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground"><BarChart3 className="h-3.5 w-3.5" aria-hidden="true" /><span><span className="font-medium text-foreground tabular-nums">{stat.seen}</span> students · <span className="tabular-nums">{pct(stat.correct, stat.seen)}%</span> right · <span className="tabular-nums">{stat.wrong}</span> missed · <span className="tabular-nums">{stat.blank}</span> blank</span>{note && <span className="font-medium text-warning">{note}</span>}</p>;
                     })()}
                   </div>
-                  {canEdit && <div className="flex flex-wrap items-start gap-1">
+                  <div className="flex flex-wrap items-start gap-1">
+                    <Button type="button" variant="ghost" size="sm" aria-expanded={previewing.has(q.id)} aria-controls={`preview-${q.id}`} onClick={() => togglePreview(q.id)}>{previewing.has(q.id) ? <EyeOff className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" /> : <Eye className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />}Preview</Button>
+                    <Link to={`${editBase}/questions/${q.id}`} className={buttonVariants({ variant: 'ghost', size: 'sm' })}><Pencil className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />{canEdit ? 'Edit' : 'Open'}</Link>
+                  {canEdit && <>
                     <Button type="button" variant="ghost" size="sm" aria-label={`Move up: ${q.skill}`} disabled={index === 0 || busy !== null} onClick={() => void run(`mv-${q.id}`, async () => { await apiSend(`/api/placement-bank/questions/${q.id}/move`, 'POST', { direction: 'up' }); await loadDetail(formId); })}><ArrowUp className="h-4 w-4" /></Button>
                     <Button type="button" variant="ghost" size="sm" aria-label={`Move down: ${q.skill}`} disabled={index === items.length - 1 || busy !== null} onClick={() => void run(`mv-${q.id}`, async () => { await apiSend(`/api/placement-bank/questions/${q.id}/move`, 'POST', { direction: 'down' }); await loadDetail(formId); })}><ArrowDown className="h-4 w-4" /></Button>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => { setFieldError(''); setQuestion({ id: q.id, section: q.section, band: q.band, skill: q.skill, passageId: q.passageId ?? '', prompt: q.prompt, options: [...q.options], answer: q.answer, active: q.active }); }}><Pencil className="mr-1.5 h-3.5 w-3.5" />Edit</Button>
                     <Button type="button" variant="ghost" size="sm" disabled={busy !== null} onClick={() => void run(`act-${q.id}`, async () => { await apiSend(`/api/placement-bank/questions/${q.id}/active`, 'POST', { active: !q.active }); await refresh(); })}>{q.active ? <><X className="mr-1.5 h-3.5 w-3.5" />Retire</> : <><RotateCcw className="mr-1.5 h-3.5 w-3.5" />Restore</>}</Button>
                     {!q.active && <Button type="button" variant="ghost" size="sm" disabled={busy !== null} onClick={() => void run(`del-${q.id}`, async () => {
                       if (!window.confirm('Delete this retired question from the draft? Published versions keep their copy.')) return;
                       await apiSend(`/api/placement-bank/questions/${q.id}`, 'DELETE');
                       await refresh();
                     })}><Trash2 className="mr-1.5 h-3.5 w-3.5" />Delete</Button>}
+                  </>}
+                  </div>
+                  {previewing.has(q.id) && <div id={`preview-${q.id}`} className="max-w-3xl pt-1 md:col-span-2">
+                    <StudentQuestionPreview id={q.id} number={index + 1} prompt={q.prompt} options={q.options} answer={q.answer} passage={q.passageId ? detail.passages.find(p => p.id === q.passageId) ?? null : null} showAnswer />
                   </div>}
                 </li>)}
               </ol>}
@@ -322,105 +309,5 @@ export default function PlacementBank() {
       })}
     </>}
 
-    <Sheet open={question !== null} onOpenChange={open => { if (!open) setQuestion(null); }}>
-      <SheetContent side="right" className="w-full sm:max-w-xl">
-        {question && detail && <form onSubmit={saveQuestion} className="flex min-h-full flex-col">
-          <SheetHeader>
-            <SheetTitle>{question.id ? 'Edit question' : 'Add question'}</SheetTitle>
-            <SheetDescription>Form {detail.form.id} draft. Students see the answer choices in a shuffled order.</SheetDescription>
-          </SheetHeader>
-          <div className="flex-1 space-y-4 px-4">
-            {question.id && (() => {
-              const stat = stats[question.id];
-              if (!stat?.seen) return <p className="rounded-md border border-border bg-muted/40 p-3 text-sm text-muted-foreground">No students have had this question yet, so changing it affects no results.</p>;
-              const note = statsTone(stat);
-              return <section aria-labelledby="history-title" className="rounded-md border border-border bg-muted/40 p-3 text-sm">
-                <h3 id="history-title" className="flex items-center gap-2 font-semibold"><BarChart3 className="h-4 w-4" aria-hidden="true" />Before you change it</h3>
-                <dl className="mt-2 grid grid-cols-4 gap-2 text-center">
-                  <div><dt className="text-xs text-muted-foreground">Students</dt><dd className="text-base font-semibold tabular-nums">{stat.seen}</dd></div>
-                  <div><dt className="text-xs text-muted-foreground">Right</dt><dd className="text-base font-semibold tabular-nums text-success">{stat.correct}</dd></div>
-                  <div><dt className="text-xs text-muted-foreground">Missed</dt><dd className="text-base font-semibold tabular-nums text-destructive">{stat.wrong}</dd></div>
-                  <div><dt className="text-xs text-muted-foreground">Blank</dt><dd className="text-base font-semibold tabular-nums">{stat.blank}</dd></div>
-                </dl>
-                {stat.wrongChoices.length > 0 && <div className="mt-3">
-                  <p className="text-xs font-medium text-muted-foreground">Most common wrong answers</p>
-                  <ul className="mt-1 space-y-0.5">{stat.wrongChoices.map(c => <li key={c.text} className="flex justify-between gap-3"><span className="min-w-0 truncate">{c.text}</span><span className="shrink-0 tabular-nums text-muted-foreground">{c.count} student{c.count === 1 ? '' : 's'}</span></li>)}</ul>
-                </div>}
-                {note && <p className="mt-2 font-medium text-warning">{note}</p>}
-                <p className="mt-2 text-xs text-muted-foreground">Counts cover every published version that included this question. Results already sent keep the version their student had.</p>
-              </section>;
-            })()}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="text-sm font-medium">Subject
-                <select value={question.section} onChange={event => setQuestion({ ...question, section: event.target.value as PlacementSectionId })} className="mt-1.5 h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-                  {PLACEMENT_SECTIONS.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
-                </select>
-              </label>
-              <label className="text-sm font-medium">Level
-                <select value={question.band} onChange={event => setQuestion({ ...question, band: event.target.value as PlacementBand })} className="mt-1.5 h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-                  {PLACEMENT_BANDS.map(b => <option key={b} value={b}>{PLACEMENT_BAND_LABELS[b]}</option>)}
-                </select>
-                <span className="mt-1 block text-xs font-normal text-muted-foreground">{PLACEMENT_BAND_GRADES[question.band]}</span>
-              </label>
-            </div>
-            <label className="block text-sm font-medium">Skill
-              <Input value={question.skill} maxLength={80} onChange={event => setQuestion({ ...question, skill: event.target.value })} className="mt-1.5" placeholder="For example: Main idea, Percent, Food chains" />
-            </label>
-            <label className="block text-sm font-medium">Passage <span className="font-normal text-muted-foreground">optional</span>
-              <select value={question.passageId} onChange={event => setQuestion({ ...question, passageId: event.target.value })} className="mt-1.5 h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-                <option value="">No passage</option>
-                {detail.passages.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-              </select>
-            </label>
-            <label className="block text-sm font-medium">Question
-              <Textarea value={question.prompt} rows={4} maxLength={1500} onChange={event => setQuestion({ ...question, prompt: event.target.value })} className="mt-1.5" />
-            </label>
-            <fieldset>
-              <legend className="text-sm font-medium">Answer choices</legend>
-              <p className="text-xs text-muted-foreground">Select the correct answer. Use wrong answers that come from real mistakes students make.</p>
-              <div className="mt-2 space-y-2">
-                {question.options.map((option, i) => <div key={i} className={`flex items-center gap-2 rounded-md border p-1.5 pl-2.5 ${question.answer === i ? 'border-success bg-success/5' : 'border-border'}`}>
-                  <input type="radio" name="correct" checked={question.answer === i} onChange={() => setQuestion({ ...question, answer: i })} aria-label={`Choice ${letter(i)} is correct`} className="h-4 w-4 accent-[var(--success)]" />
-                  <span className="w-4 text-xs font-semibold text-muted-foreground" aria-hidden="true">{letter(i)}</span>
-                  <Input value={option} maxLength={400} aria-label={`Choice ${letter(i)}`} onChange={event => setQuestion({ ...question, options: question.options.map((o, j) => j === i ? event.target.value : o) })} className="h-9 flex-1" />
-                  {question.answer === i && <span className="text-xs font-medium text-success">Correct</span>}
-                  <Button type="button" variant="ghost" size="sm" aria-label={`Remove choice ${letter(i)}`} disabled={question.options.length <= 2} onClick={() => setQuestion({ ...question, options: question.options.filter((_, j) => j !== i), answer: question.answer === i ? 0 : question.answer > i ? question.answer - 1 : question.answer })}><X className="h-4 w-4" /></Button>
-                </div>)}
-              </div>
-              {question.options.length < 6 && <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setQuestion({ ...question, options: [...question.options, ''] })}><Plus className="mr-1.5 h-4 w-4" />Add choice</Button>}
-            </fieldset>
-            {fieldError && <p className="text-sm font-medium text-destructive" role="alert">{fieldError}</p>}
-          </div>
-          <SheetFooter className="flex-row justify-end gap-2 border-t border-border">
-            <Button type="button" variant="ghost" onClick={() => setQuestion(null)}>Cancel</Button>
-            <Button type="submit" disabled={busy === 'question'}>{busy === 'question' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save to draft</Button>
-          </SheetFooter>
-        </form>}
-      </SheetContent>
-    </Sheet>
-
-    <Sheet open={passage !== null} onOpenChange={open => { if (!open) setPassage(null); }}>
-      <SheetContent side="right" className="w-full sm:max-w-xl">
-        {passage && detail && <form onSubmit={savePassage} className="flex min-h-full flex-col">
-          <SheetHeader>
-            <SheetTitle>{passage.id ? 'Edit passage' : 'Add passage'}</SheetTitle>
-            <SheetDescription>Form {detail.form.id} draft. Leave an empty line between paragraphs.</SheetDescription>
-          </SheetHeader>
-          <div className="flex-1 space-y-4 px-4">
-            <label className="block text-sm font-medium">Title
-              <Input value={passage.title} maxLength={160} onChange={event => setPassage({ ...passage, title: event.target.value })} className="mt-1.5" />
-            </label>
-            <label className="block text-sm font-medium">Text
-              <Textarea value={passage.text} rows={14} onChange={event => setPassage({ ...passage, text: event.target.value })} className="mt-1.5 leading-relaxed" />
-            </label>
-            {fieldError && <p className="text-sm font-medium text-destructive" role="alert">{fieldError}</p>}
-          </div>
-          <SheetFooter className="flex-row justify-end gap-2 border-t border-border">
-            <Button type="button" variant="ghost" onClick={() => setPassage(null)}>Cancel</Button>
-            <Button type="submit" disabled={busy === 'passage'}>{busy === 'passage' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save to draft</Button>
-          </SheetFooter>
-        </form>}
-      </SheetContent>
-    </Sheet>
   </div>;
 }

@@ -160,3 +160,18 @@
 .pt-part{display:block;margin-top:10px;color:var(--lm);font-size:15px;font-weight:600;letter-spacing:0}
 .placement-test :is(p,li,dd,label){text-wrap:pretty}
 .pt-closed-icon{color:var(--lm)}
+.placement-test.pt-embed{min-height:0;background:transparent}
+.pt-embed .pt-group{margin-top:0}
+.pt-embed .pt-group+.pt-group{margin-top:28px}
+.pt-embed .pt-group-passage{grid-template-columns:1fr;gap:16px}
+.pt-embed .pt-passage{position:static;padding:18px}
+.pt-embed .pt-passage p{font-size:16px}
+.pt-embed-wide .pt-group-passage{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:28px}
+.pt-embed-wide .pt-passage{position:sticky;top:16px}
+.pt-option.pt-option-correct{border-color:var(--success);background:color-mix(in srgb,var(--success) 8%,var(--background))}
+.pt-option-correct .pt-option-letter{border-color:var(--success);color:var(--success)}
+.pt-answer-note{margin:8px 0 0;color:var(--success);font-size:13px;font-weight:650}
+@media (max-width:900px){.pt-embed-wide .pt-group-passage{grid-template-columns:1fr;gap:16px}.pt-embed-wide .pt-passage{position:static}}
+.landing.placement-test.pt-embed h2{max-width:none;margin:0;font-size:18px;font-weight:700;line-height:1.3;letter-spacing:-.01em;text-wrap:pretty}
+.landing.placement-test.pt-embed .pt-passage h2{padding-bottom:10px;margin-bottom:12px}
+.pt-embed-compact .pt-passage{max-height:280px;overflow:auto;overscroll-behavior:contain}
