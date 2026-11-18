@@ -130,12 +130,17 @@ const questionSchema = z.object({
   options: z.array(z.string().trim().min(1, 'Answer choices cannot be empty').max(400)).min(2, 'Add at least two answer choices').max(6, 'Use at most six answer choices'),
   answer: z.number().int().min(0),
   active: z.boolean().optional(),
+  expectedUpdatedAt: z.string().max(40).optional(),
 }).strict().refine(value => value.answer < value.options.length, { message: 'Mark the correct answer', path: ['answer'] });
 
 const passageSchema = z.object({
   title: z.string().trim().min(1, 'Give the passage a title').max(160),
   body: z.array(z.string().trim().max(4000)).min(1).max(20).transform(paragraphs => paragraphs.filter(Boolean)).refine(paragraphs => paragraphs.length > 0, 'Write the passage text'),
+  expectedUpdatedAt: z.string().max(40).optional(),
 }).strict();
+
+const staleEdit = (existing: { updatedAt: Date }, expected?: string) => Boolean(expected) && new Date(existing.updatedAt).toISOString() !== new Date(expected as string).toISOString();
+const STALE_MESSAGE = 'Someone else saved this after you opened it. Your changes are kept on this device. Reload to see the latest version, then apply your changes again.';
 
 const settingsSchema = z.object({
   isOpen: z.boolean(),
@@ -682,8 +687,8 @@ export function registerPlacementRoutes(ctx: PlacementRoutesContext) {
     const usage = await db.placementTestSubmission.groupBy({ by: ['formVersionId'], where: { formId: form.id }, _count: { _all: true } });
     res.json({
       form: summary,
-      passages: draft.passages.map(p => ({ id: p.id, title: p.title, body: p.body, sortOrder: p.sortOrder })),
-      questions: draft.questions.map(q => ({ id: q.id, section: q.section, band: q.band, skill: q.skill, passageId: q.passageId, prompt: q.prompt, options: q.options, answer: q.answer, sortOrder: q.sortOrder, active: q.active })),
+      passages: draft.passages.map((p: any) => ({ id: p.id, title: p.title, body: p.body, sortOrder: p.sortOrder, updatedAt: p.updatedAt })),
+      questions: draft.questions.map((q: any) => ({ id: q.id, section: q.section, band: q.band, skill: q.skill, passageId: q.passageId, prompt: q.prompt, options: q.options, answer: q.answer, sortOrder: q.sortOrder, active: q.active, updatedAt: q.updatedAt })),
       versions: versions.map((v: any) => ({ ...v, submissions: usage.find((u: any) => u.formVersionId === v.id)?._count._all ?? 0 })),
       validation,
       canEdit: BANK_ROLES.has(userOf(req).role),
@@ -732,6 +737,7 @@ export function registerPlacementRoutes(ctx: PlacementRoutesContext) {
     const existing = await db.placementBankQuestion.findUnique({ where: { id: req.params.id } });
     if (!existing) throw new BankError(404, 'Question not found');
     const input = questionSchema.parse(req.body);
+    if (staleEdit(existing, input.expectedUpdatedAt)) throw new BankError(409, STALE_MESSAGE);
     const question = await db.placementBankQuestion.update({ where: { id: existing.id }, data: {
       section: input.section, band: input.band, skill: input.skill, passageId: await checkPassage(existing.formId, input.passageId),
       prompt: input.prompt, options: input.options, answer: input.answer, ...(input.active !== undefined ? { active: input.active } : {}),
@@ -786,7 +792,8 @@ export function registerPlacementRoutes(ctx: PlacementRoutesContext) {
   app.patch('/api/placement-bank/passages/:id', authMiddleware, allow(BANK_ROLES), handle(async (req, res) => {
     const existing = await db.placementBankPassage.findUnique({ where: { id: req.params.id } });
     if (!existing) throw new BankError(404, 'Passage not found');
-    const input = passageSchema.parse(req.body);
+    const { expectedUpdatedAt, ...input } = passageSchema.parse(req.body);
+    if (staleEdit(existing, expectedUpdatedAt)) throw new BankError(409, STALE_MESSAGE);
     const passage = await db.placementBankPassage.update({ where: { id: existing.id }, data: input });
     await audit(req, 'UPDATE', passage.id, `Passage edited in placement form ${existing.formId} draft.`);
     res.json(passage);
