@@ -10,6 +10,7 @@ import './landing.css';
 const nav = [
   ['The platform', '#platform'],
   ['Learning Quest', '#learning-quest'],
+  ['Placement test', '/placement-test'],
   ["What's new", '#whats-new'],
   ['Kiosk downloads', '/kiosk-downloads'],
   ['About MRLC', '#about'],
@@ -158,6 +159,11 @@ export default function LandingPage() {
         <div className="landing-quest-copy"><h2 id="quest-title">Learning has room to play.</h2><p>Learning Quest lets people browse published courses and practise with short lessons, word games and guided challenges. A separate learner account saves public learning progress.</p><Link to="/language-quest" className="landing-button landing-button-primary">Explore Learning Quest<ArrowRight size={18} /></Link></div>
       </div></section>
 
+      <section id="placement" className="landing-placement" aria-labelledby="placement-title" tabIndex={-1}><div className="landing-section-inner landing-placement-grid">
+        <div><h2 id="placement-title">New to MRLC? Find the right class before day one.</h2><p>Take the placement test online. You need your name, a phone number and an email address, not an account. Teachers use your answers to choose the GED, Pre-GED or foundation class.</p><Link to="/placement-test" className="landing-button landing-button-primary">Take the placement test<ArrowRight size={18} /></Link></div>
+        <ol className="landing-placement-steps"><li><strong>Answer</strong><span>Reading, Math, Science and Social Studies, plus a short piece of writing. You have 90 minutes.</span></li><li><strong>Send</strong><span>You receive a reference number by email. Your answers save on your device while you work.</span></li><li><strong>Hear from a teacher</strong><span>A teacher reviews your test and emails your result and class placement.</span></li></ol>
+      </div></section>
+
       <section id="whats-new" className="landing-updates" aria-labelledby="updates-title" tabIndex={-1}><div className="landing-section-inner landing-updates-grid">
         <div><h2 id="updates-title">What’s new at MRLC LMS.</h2><p>Recent work in the school platform, with the newest changes first.</p></div>
         <div className="landing-update-list">{updates.map(([isoDate, date, title, detail]) => <article key={title}><time dateTime={isoDate}>{date}</time><div><h3>{title}</h3><p>{detail}</p></div></article>)}</div>
@@ -171,6 +177,7 @@ export default function LandingPage() {
       <div className="landing-footer-identity"><PublicBrandMark logoUrl={brandingSettings.logoUrl} schoolName={schoolName} /><p>Education · Dignity · Opportunity</p></div>
       <nav aria-label="Learning resources" className="landing-footer-links">
         <Link to="/language-quest">Learning Quest</Link>
+        <Link to="/placement-test">Placement test</Link>
         <Link to="/dictionary">Dictionary</Link>
         <Link to="/focus-app">Focus web app</Link>
         <Link to="/kiosk-downloads">Kiosk downloads</Link>

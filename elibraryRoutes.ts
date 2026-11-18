@@ -14,6 +14,7 @@ import multer from "multer";
 import { cleanEbookTitle, findDuplicateEbookTitle, findDuplicateEbookSeriesVolume, normalizedTitleForColumn } from "./lib/ebookTitles";
 import crypto from "crypto";
 import type { JwtPayload, COMIC_COMPRESSION_THRESHOLD_BYTES, EBOOK_CHUNK_DIR, EBOOK_COMPRESSION_THRESHOLD_BYTES, EBOOK_COVER_DIR, EBOOK_DIR, MAX_EBOOK_UPLOAD_BYTES, MAX_STANDARD_EBOOK_UPLOAD_BYTES, MAX_STORED_COMIC_BYTES, authMiddleware, createAuditLog, ebookChunkUpload, ebookCoverUpload, ebookUpload, logger, parseBoolean, schemas, validate } from "./server";
+import { importedMediaNeedsCourseReview } from './lib/courseMediaReview';
 
 export type ElibraryRoutesContext = {
   COMIC_COMPRESSION_THRESHOLD_BYTES: typeof COMIC_COMPRESSION_THRESHOLD_BYTES;
@@ -1103,6 +1104,9 @@ export function registerElibraryRoutes(app: Express, ctx: ElibraryRoutesContext)
     try {
       const current = await prisma.ebook.findUnique({ where: { id: req.params.id } });
       if (!current) { res.status(404).json({ error: "E-book not found" }); return; }
+      if (jwtUser.role !== 'ADMIN' && visibility && visibility !== 'TEACHERS_ONLY' && await importedMediaNeedsCourseReview(prisma, current.fileName)) {
+        res.status(403).json({ error: 'Submit the importing course for administrator approval before sharing this reading with students.' }); return;
+      }
       if (coverUrl !== undefined && coverUrl !== current.coverUrl && typeof coverUrl === "string" && coverUrl.startsWith("/uploads/ebook-covers/")) {
         pendingCoverPath = path.join(EBOOK_COVER_DIR, path.basename(coverUrl));
       }

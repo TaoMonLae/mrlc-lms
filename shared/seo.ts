@@ -36,6 +36,14 @@ export const PUBLIC_SEO_PAGES = [
     label: 'Open the dictionary',
   },
   {
+    path: '/placement-test',
+    title: 'New Student Placement Test | MRLC GED School',
+    heading: 'Placement test',
+    description: 'New students can take the free 90-minute MRLC placement test online without an account. Teachers use it to choose the GED, Pre-GED or foundation class.',
+    summary: 'A 90-minute placement test in reading, writing, mathematics, science and social studies. It needs a name, phone number and email, and results are sent by email.',
+    label: 'Take the placement test',
+  },
+  {
     path: '/kiosk-downloads',
     title: 'MRLC Kiosk Beta Downloads | Windows & Mac',
     heading: 'A focused school session, on this computer.',

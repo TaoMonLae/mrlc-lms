@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { ArrowRight, BookOpen, Crown, Flame, Heart, LayoutGrid, Languages, Map, Search, Sparkles, Star, Trophy, WholeWord, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -75,7 +75,8 @@ function HeartRefillBar({
 }
 
 function CourseLibrary({ courses, progressSavedText }: { courses: LanguageQuestCourseSummary[]; progressSavedText: string }) {
-  const [query, setQuery] = useState('');
+  const [params] = useSearchParams();
+  const [query, setQuery] = useState(() => (params.get('q') ?? '').slice(0, 160));
   const search = query.trim().toLocaleLowerCase();
   const matchingCourses = search
     ? courses.filter((course) => [course.title, course.description, course.language, course.category, course.code]

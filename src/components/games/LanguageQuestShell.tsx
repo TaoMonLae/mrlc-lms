@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { isMrlcKiosk } from '@/src/lib/kiosk';
+import { getCourseReturn } from '@/src/lib/courseReturn';
 import { useTheme } from '@/src/components/theme-provider';
 import { MrlcQuestBrand, TaoMonLaeCredit } from './MrlcQuestBrand';
 import {
@@ -80,6 +81,7 @@ export function LanguageQuestShell() {
 
 function LanguageQuestShellContent() {
   const { user, logout } = useAuth();
+  const courseReturn = user?.role === 'STUDENT' ? getCourseReturn(user.id) : null;
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -123,12 +125,12 @@ function LanguageQuestShellContent() {
                 variant="outline"
                 size="sm"
                 className="h-10 shrink-0 gap-1.5 rounded-full border-[var(--lq-steel-border)] bg-white px-2.5 font-bold text-[var(--lq-signal-blue)] shadow-sm hover:bg-sky-50 sm:px-3 dark:border-slate-700 dark:bg-slate-900 dark:text-sky-300 dark:hover:bg-slate-800"
-                render={<Link to={lmsHref} aria-label="Return to LMS" />}
+                render={<Link to={courseReturn ?? lmsHref} aria-label={courseReturn ? 'Return to course' : 'Return to LMS'} />}
                 nativeButton={false}
               >
                 <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden sm:inline">Return to LMS</span>
-                <span className="sm:hidden">LMS</span>
+                <span className="hidden sm:inline">{courseReturn ? 'Return to course' : 'Return to LMS'}</span>
+                <span className="sm:hidden">{courseReturn ? 'Course' : 'LMS'}</span>
               </Button>
             )}
             <nav aria-label="Learning Quest" className="hidden shrink-0 items-center gap-1 lg:flex">

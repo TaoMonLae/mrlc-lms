@@ -1,4 +1,3 @@
-import ExamManagementGate from "./components/exams/ExamManagementGate";
 import { Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { lazyWithRetry as lazy } from "./lib/lazyWithRetry";
@@ -8,6 +7,7 @@ const FinanceWorkspace = lazy(() => import("./components/financial/FinanceWorksp
 const AppLayout = lazy(() => import("./components/layout/AppLayout").then((module) => ({ default: module.AppLayout })));
 import { ExternalLearnerBoundary, ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { StudentFocusMonitor } from "./components/focus/StudentFocusMonitor";
+import ExamManagementGate from "./components/exams/ExamManagementGate";
 import { GameAccessGate } from "./components/games/GameAccessGate";
 const LoginPage = lazy(() => import("./pages/Login"));
 const SignupPage = lazy(() => import("./pages/Signup"));
@@ -63,6 +63,10 @@ const ClassesList = lazy(() => import("./pages/classes/ClassesList"));
 const ClassNew = lazy(() => import("./pages/classes/ClassNew"));
 const ClassProfile = lazy(() => import("./pages/classes/ClassProfile"));
 const Classwork = lazy(() => import("./pages/classwork/Classwork"));
+const Courses = lazy(() => import("./pages/courses/Courses"));
+const CourseEditor = lazy(() => import("./pages/courses/CourseEditor"));
+const CourseImport = lazy(() => import("./pages/courses/CourseImport"));
+const CourseLearn = lazy(() => import("./pages/courses/CourseLearn"));
 const ClassEdit = lazy(() => import("./pages/classes/ClassEdit"));
 
 const SubjectsList = lazy(() => import("./pages/subjects/SubjectsList"));
@@ -176,6 +180,9 @@ const ChatModeration = lazy(() => import("./pages/chat/ChatModeration"));
 const ChatStickers = lazy(() => import("./pages/chat/ChatStickers"));
 const AdmissionsList = lazy(() => import("./pages/admissions/AdmissionsList"));
 const AdmissionDetail = lazy(() => import("./pages/admissions/AdmissionDetail"));
+const PlacementResults = lazy(() => import("./pages/admissions/PlacementResults"));
+const PlacementResultDetail = lazy(() => import("./pages/admissions/PlacementResultDetail"));
+const PlacementTest = lazy(() => import("./pages/PlacementTest"));
 
 const RolesPermissions = lazy(() => import("./pages/settings/RolesPermissions"));
 const SettingsLayout = lazy(() => import("./pages/settings/SettingsLayout"));
@@ -335,6 +342,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/kiosk-downloads" element={<KioskDownloads />} />
+            <Route path="/placement-test" element={<PlacementTest />} />
             <Route path="/focus-app" element={<FocusApp />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
@@ -396,6 +404,16 @@ export default function App() {
                 <Route path="/updates" element={<ReleaseUpdates />} />
                 <Route element={<ProtectedRoute allowedRoles={['TEACHER', 'STUDENT', 'ADMIN']} />}>
                   <Route path="/classwork" element={<Classwork />} />
+                  <Route path="/courses" element={<Courses />} />
+                </Route>
+                <Route element={<ProtectedRoute strictRoles={['ADMIN', 'TEACHER']} />}>
+                  <Route path="/courses/new" element={<CourseEditor />} />
+                  <Route path="/courses/import" element={<CourseImport />} />
+                  <Route path="/courses/:id/edit" element={<CourseEditor />} />
+                  <Route path="/courses/:id/preview" element={<CourseLearn />} />
+                </Route>
+                <Route element={<ProtectedRoute strictRoles={['STUDENT']} />}>
+                  <Route path="/courses/learn/:enrollmentId" element={<CourseLearn />} />
                 </Route>
 
                 <Route element={<ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']} />}>
@@ -621,6 +639,11 @@ export default function App() {
                 <Route element={<ProtectedRoute requiredPermission="view_admissions" />}>
                   <Route path="/admissions" element={<AdmissionsList />} />
                   <Route path="/admissions/:id" element={<AdmissionDetail />} />
+                </Route>
+
+                <Route element={<ProtectedRoute strictRoles={['ADMIN', 'STAFF', 'TEACHER']} />}>
+                  <Route path="/placement-results" element={<PlacementResults />} />
+                  <Route path="/placement-results/:id" element={<PlacementResultDetail />} />
                 </Route>
 
                 <Route path="/library" element={<LibraryList />} />

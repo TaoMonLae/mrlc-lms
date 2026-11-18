@@ -57,12 +57,15 @@ import { registerVideoLearningRoutes, canReadVideo } from "./videoLearningRoutes
 import { registerFinanceRoutes } from "./financeRoutes";
 import { registerDocumentRoutes } from "./documentRoutes";
 import { registerVolunteerDocumentRoutes } from "./volunteerDocumentRoutes";
+import { registerCourseRoutes } from "./courseRoutes";
+import { importedMediaNeedsCourseReview } from "./lib/courseMediaReview";
 import { registerReportRoutes } from "./reportRoutes";
 import { registerElibraryRoutes } from "./elibraryRoutes";
 import { registerHrRoutes } from "./hrRoutes";
 import { registerFinancialReportRoutes } from "./financialReportRoutes";
 import { registerDutyRoutes } from "./dutyRoutes";
 import { registerCouncilRoutes } from "./councilRoutes";
+import { registerPlacementRoutes } from "./placementRoutes";
 import { registerFamilyRoutes } from "./familyRoutes";
 import { isGuardianApiRequestAllowed } from "./shared/familyAccess";
 import { composeQuestionSet, registerExamBankRoutes } from "./examBank";
@@ -6055,6 +6058,8 @@ async function startServer() {
     }
   });
 
+  registerPlacementRoutes({ app, prisma, authMiddleware, logger, createAuditLog, queueEmail, emailConfigured: () => Boolean(smtpTransport), appUrl: APP_URL, attemptSecret: JWT_SECRET as string, admissions: { nextAdmissionNo, addTimeline: addAdmissionTimeline, requiredDocuments: requiredAdmissionDocuments } });
+
   app.get("/api/library", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     // Cursor pagination: clients that pass ?cursor= (or ?paginated=1 for the
@@ -6857,6 +6862,9 @@ async function startServer() {
       return;
     }
     try {
+      if (jwtUser.role !== 'ADMIN' && videoUrl.startsWith('/uploads/videos/') && await importedMediaNeedsCourseReview(prisma, path.basename(videoUrl))) {
+        res.status(403).json({ error: 'Imported course media needs administrator approval before it can be reused or published.' }); return;
+      }
       const video = await prisma.videoLesson.create({
         data: {
           title,
@@ -6965,6 +6973,14 @@ async function startServer() {
       if (jwtUser.role === "TEACHER" && currentVideo.uploadedById !== jwtUser.userId) {
         res.status(403).json({ error: "You can only edit video lessons you uploaded" });
         return;
+      }
+      if (jwtUser.role !== 'ADMIN' && currentVideo.videoUrl.startsWith('/uploads/videos/')
+        && (status === 'PUBLISHED' || visibility && visibility !== 'TEACHERS_ONLY' || videoUrl && videoUrl !== currentVideo.videoUrl)
+        && await importedMediaNeedsCourseReview(prisma, path.basename(currentVideo.videoUrl))) {
+        res.status(403).json({ error: 'Submit the importing course for administrator approval before publishing or replacing this media.' }); return;
+      }
+      if (jwtUser.role !== 'ADMIN' && videoUrl?.startsWith('/uploads/videos/') && await importedMediaNeedsCourseReview(prisma, path.basename(videoUrl))) {
+        res.status(403).json({ error: 'Imported course media needs administrator approval before it can be reused in another video lesson.' }); return;
       }
       if (jwtUser.role === "TEACHER" && classId !== undefined && classId && !(await canAccessTeacherClass(req, classId))) {
         res.status(403).json({ error: "You can only assign videos to your assigned classes" });
@@ -12270,6 +12286,7 @@ async function startServer() {
   // ── Phase 2 advanced exam routes (registered before the SPA catch-all) ──────
   registerExamPhase2Routes({ app, prisma, authMiddleware, createAuditLog, logger, canManageExamClass });
   registerClassworkRoutes({ app, prisma, authMiddleware, logger, canManageExamClass });
+  registerCourseRoutes({ app, prisma, authMiddleware, logger, canManageExamClass, ebookDir: EBOOK_DIR, videoDir: VIDEO_FILES_DIR });
   registerVideoLearningRoutes({ app, prisma, authMiddleware, logger, canManageExamClass, appUrl: APP_URL });
   // ── Phase 3 reusable question bank routes ───────────────────────────────────
   registerExamBankRoutes({ app, prisma, authMiddleware, createAuditLog, logger, canManageExamClass });

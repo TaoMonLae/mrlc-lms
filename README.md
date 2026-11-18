@@ -22,6 +22,14 @@ MRLC LMS brings teaching, student records, assessment, communication, finance an
 
 ## Latest updates
 
+**October 31, 2026 · Teacher-created courses**
+
+Teachers can open **My Teaching → Courses** to create a syllabus, group lessons into modules, link existing videos, e-books, Learning Quest practice, homework and exams, and preview the student experience. Four editable GED outlines provide a starting structure. Teachers submit for administrator approval before assigning a published version to a class. Students use **My Learning → My Courses**, with saved progress and a return link from connected activities. Previously assigned syllabuses stay fixed when teachers edit a new draft.
+
+Apply migration `20261031010000_internal_courses`, regenerate the Prisma client, and rebuild/restart before using the module. Read [course research, design and deployment notes](docs/courses-research-and-design.md) for GED sources, permissions, completion rules and current limits. Templates require teacher-written content and review; they are not finished GED courses.
+
+Course editors now include **Export ZIP**, and **Courses → Import course** previews offline packages before creating a new draft. Syllabuses and plain-text lessons transfer with eligible PDFs and MP4/WebM files; imported media remains staff-only until administrator approval. A starter ZIP is available on the import page. See [offline course preparation and transfer](docs/offline-courses.md) for the workflow, limits and resource reconnect rules. No additional migration is needed for ZIP transfer.
+
 **October 30, 2026 · Volunteer documents**
 
 Administrators can open **People → Volunteer Documents** (`/documents/volunteers`) to issue an A4 landscape Certificate of Appreciation, a portrait Letter of Appreciation, or Proof of Part-Time Volunteering. Each template names Mon Refugee Organization and Mon Refugee Learning Centre (GED Program), includes required From/To month-year fields, and supports recorded service hours and an optional second signatory. Volunteers do not need student accounts.
