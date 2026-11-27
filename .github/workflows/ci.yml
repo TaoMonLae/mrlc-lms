@@ -27,7 +27,7 @@ jobs:
     env:
       CI: true
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/mrlc_test
-      SESSION_SECRET: ci-only-session-secret-change-me
+      SESSION_SECRET: ci-only-signing-key-${{ github.run_id }}-${{ github.run_attempt }}
       APP_URL: http://127.0.0.1:8000
       PORT: 8000
       SEED_ADMIN_PASSWORD: admin123

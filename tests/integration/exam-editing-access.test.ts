@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { randomUUID } from 'node:crypto';
-import jwt from 'jsonwebtoken';
+import { signSessionToken } from './sessionToken';
 import { PrismaClient } from '@prisma/client';
 import { cloneExam } from '../../lib/cloneExam';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -21,8 +21,8 @@ test('exam management protects access, cloned content, schedules and locked pape
       const u = await db.user.create({ data: { role: 'TEACHER', email: randomUUID()+'@example.test', firstName: 'Teacher', lastName: String(i) } });
       people.push(u.id);
     }
-    const request = (person: number, path: string, method = 'GET', body?: object) => fetch(base + path, {
-      method, headers: { Authorization: 'Bearer '+jwt.sign({ userId: people[person], role: 'TEACHER', email: 'test@example.test' }, secret!, { expiresIn: '5m' }), 'Content-Type': 'application/json' },
+    const request = async (person: number, path: string, method = 'GET', body?: object) => fetch(base + path, {
+      method, headers: { Authorization: 'Bearer ' + await signSessionToken(db, secret!, { userId: people[person], role: 'TEACHER', email: 'test@example.test' }, 300), 'Content-Type': 'application/json' },
       body: body && JSON.stringify(body),
     });
     async function check(person: number, path: string, method: string, status: number, body?: object) {

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { randomUUID } from 'node:crypto';
-import jwt from 'jsonwebtoken';
+import { signSessionToken } from './sessionToken';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 const url = process.env.VIDEO_TEST_DATABASE_URL;
@@ -13,7 +13,7 @@ test('video learning permissions, privacy, completion and integration', { skip: 
   const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: url! }) });
   const users: string[] = [], classes: string[] = [], videos: string[] = [], students: string[] = [], exams: string[] = [], playlists: string[] = [];
   let teacherId = '', subjectId = '', homeworkId = '';
-  const request = (user: number, role: string, path: string, method = 'GET', body?: unknown) => fetch(`${base}${path}`, { method, headers: { Authorization: `Bearer ${jwt.sign({ role, userId: users[user], email: 'learning@example.test' }, secret!, { expiresIn: '15m' })}`, 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  const request = async (user: number, role: string, path: string, method = 'GET', body?: unknown) => fetch(`${base}${path}`, { method, headers: { Authorization: `Bearer ${await signSessionToken(db, secret!, { role, userId: users[user], email: 'learning@example.test' }, 900)}`, 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
   const ok = async (response: Response, status = 200) => { assert.equal(response.status, status, await response.clone().text()); return response.json(); };
   try {
     for (const role of ['ADMIN', 'TEACHER', 'STUDENT', 'STUDENT', 'TEACHER'] as const) users.push((await db.user.create({ data: { role, email: `${randomUUID()}@example.test`, firstName: role, lastName: 'Learning Test' } })).id);

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { randomUUID } from 'node:crypto';
-import jwt from 'jsonwebtoken';
+import { signSessionToken } from './sessionToken';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 const url = process.env.HOMEWORK_TEST_DATABASE_URL;
@@ -14,12 +14,12 @@ test('homework ownership, private files, student hand-in and grading lifecycle',
   const users: string[] = [], teachers: string[] = [], students: string[] = [], homework: string[] = [], uploaded: any[] = [], videos: string[] = [];
   let classId = '';
   const roles = ['ADMIN', 'TEACHER', 'TEACHER', 'STUDENT', 'STUDENT'] as const;
-  const headers = (index: number) => ({ Authorization: `Bearer ${jwt.sign({ role: roles[index], userId: users[index], email: 'homework@example.test' }, secret!, { expiresIn: '15m' })}` });
-  const request = (index: number, path: string, method = 'GET', body?: unknown) => fetch(`${base}${path}`, { method, headers: { ...headers(index), 'Content-Type': 'application/json' }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
+  const headers = async (index: number) => ({ Authorization: `Bearer ${await signSessionToken(db, secret!, { role: roles[index], userId: users[index], email: 'homework@example.test' }, 900)}` });
+  const request = async (index: number, path: string, method = 'GET', body?: unknown) => fetch(`${base}${path}`, { method, headers: { ...await headers(index), 'Content-Type': 'application/json' }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
   const ok = async (response: Response, status = 200) => { assert.equal(response.status, status, await response.clone().text()); return response.json(); };
   const upload = async (index: number, name: string, content = 'My homework answer') => {
     const body = new FormData(); body.append('file', new File([content], name, { type: 'text/plain' }));
-    const file = await ok(await fetch(`${base}/api/homework-media`, { method: 'POST', headers: headers(index), body }), 201);
+    const file = await ok(await fetch(`${base}/api/homework-media`, { method: 'POST', headers: await headers(index), body }), 201);
     uploaded.push({ ...file, owner: index }); return file;
   };
   try {

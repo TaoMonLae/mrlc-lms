@@ -160,7 +160,7 @@ Dictionary datasets are loaded separately with `seed:en-my-dictionary`, `seed:mo
 | Setting | Purpose |
 | --- | --- |
 | `DATABASE_URL` | PostgreSQL connection used by the application and Prisma CLI |
-| `SESSION_SECRET` | Signing secret for authentication tokens |
+| `SESSION_SECRET` | Signing secret for authentication tokens; the server refuses to start when it is missing, shorter than 16 characters, or an example placeholder. Generate one with `openssl rand -base64 48` |
 | `APP_URL` | Public application origin for browser access and generated links; use HTTPS in production |
 | `SMTP_*` | Sender and transport configuration for password recovery and opted-in notification email |
 | Storage directory variables | Persistent locations for uploads, books, videos, documents and other assets |
