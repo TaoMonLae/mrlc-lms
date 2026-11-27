@@ -2,13 +2,19 @@ import type { PrismaClient } from '@prisma/client';
 
 type SessionIdentity = { userId: string; role: string; externalLearner?: boolean };
 
-/** Recheck every session against live access, including administrative status edits. */
-export async function accountStillMatchesToken(db: Pick<PrismaClient, 'user'>, identity: SessionIdentity) {
+export type SessionAccount = { mustChangePassword: boolean };
+
+export async function sessionAccountForToken(db: Pick<PrismaClient, 'user'>, identity: SessionIdentity): Promise<SessionAccount | null> {
   const current = await db.user.findUnique({
-    where: { id: identity.userId }, select: { role: true, isActive: true, isExternalLearner: true },
+    where: { id: identity.userId }, select: { role: true, isActive: true, isExternalLearner: true, mustChangePassword: true },
   });
-  return Boolean(current?.isActive && current.role === identity.role
+  const matches = Boolean(current?.isActive && current.role === identity.role
     && Boolean(current.isExternalLearner) === Boolean(identity.externalLearner));
+  return matches && current ? { mustChangePassword: Boolean(current.mustChangePassword) } : null;
+}
+
+export async function accountStillMatchesToken(db: Pick<PrismaClient, 'user'>, identity: SessionIdentity) {
+  return Boolean(await sessionAccountForToken(db, identity));
 }
 
 /** Compare-and-swap prevents concurrent requests from reusing one recovery code. */

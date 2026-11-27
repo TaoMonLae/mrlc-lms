@@ -13,6 +13,7 @@ import {
 import { Upload, Download, AlertCircle, CheckCircle2, Loader2, FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiSend } from '../../lib/api';
+import { TemporaryCredentialsPanel, type TemporaryCredential } from '../auth/TemporaryCredentialsDialog';
 
 // These must match the columns the /api/teachers/import endpoint reads.
 const TEMPLATE_COLUMNS = [
@@ -38,7 +39,7 @@ export function downloadTeacherTemplate() {
 
 interface CsvRow { [key: string]: string }
 interface RowError { row: number; message: string }
-interface ImportResult { createdCount: number; failedCount: number; errors: RowError[] }
+interface ImportResult { createdCount: number; failedCount: number; errors: RowError[]; credentials?: TemporaryCredential[] }
 
 export function TeacherCsvImport({ onImported }: { onImported?: () => void }) {
   const [open, setOpen] = useState(false);
@@ -108,7 +109,7 @@ export function TeacherCsvImport({ onImported }: { onImported?: () => void }) {
         <DialogHeader>
           <DialogTitle>Import Teachers from CSV</DialogTitle>
           <DialogDescription>
-            Download the template, fill in one teacher per row, then upload it here. Leave <code className="text-xs">password</code> blank to use the default <strong>Teacher123!</strong> (teacher must change it at first login), or set one to assign it directly.
+            Download the template, fill in one teacher per row, then upload it here. Leave <code className="text-xs">password</code> blank to generate a one-time password for that teacher. Every teacher must choose a new password at first sign-in.
           </DialogDescription>
         </DialogHeader>
 
@@ -162,6 +163,7 @@ export function TeacherCsvImport({ onImported }: { onImported?: () => void }) {
                   </ul>
                 </div>
               )}
+              <TemporaryCredentialsPanel credentials={result.credentials ?? []} accountLabel="teacher" />
             </div>
           )}
         </div>
