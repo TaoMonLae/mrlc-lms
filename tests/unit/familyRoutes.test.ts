@@ -9,7 +9,7 @@ const otherId = "22222222-2222-4222-8222-222222222222";
 
 function setup() {
   const routes = new Map<string, Handler[]>();
-  const app = Object.fromEntries(["get", "post", "patch"].map((method) => [method, (path: string, ...handlers: Handler[]) => routes.set(`${method.toUpperCase()} ${path}`, handlers)]));
+  const app = Object.fromEntries(["get", "post", "put", "patch", "delete"].map((method) => [method, (path: string, ...handlers: Handler[]) => routes.set(`${method.toUpperCase()} ${path}`, handlers)]));
   const messageQueries: any[] = [];
   const prisma = {
     user: { findUnique: async ({ where }: any) => ({ id: where.id, role: where.id === guardianId ? "GUARDIAN" : "ADMIN", isActive: true }) },
@@ -54,4 +54,5 @@ test("guardian tokens cannot read the staff inbox or another learner overview", 
   const session = { userId: guardianId, role: "GUARDIAN" };
   assert.equal((await request("GET", "/api/family/inbox", session)).status, 403);
   assert.equal((await request("GET", "/api/family/students/:studentId/overview", session, { studentId: otherId })).status, 404);
+  assert.equal((await request("PUT", "/api/family/links/:id/consent", session, { body: { scopes: ["LEARNING", "ATTENDANCE", "FEES"], note: "Self granted" } })).status, 403);
 });
