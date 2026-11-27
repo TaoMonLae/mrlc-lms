@@ -14,7 +14,8 @@ const payable = await db.expense.create({ data: { title: 'September classroom re
 await db.donation.create({ data: { donorId: donor.id, donationNumber: 'QA-CASH-' + Date.now(), amount: 18000, status: 'RECEIVED', donationDate: new Date('2026-07-01'), receivedDate: new Date('2026-08-10'), currency: 'MYR' } });
 await db.donation.create({ data: { donorId: donor.id, donationNumber: 'QA-KIND-' + Date.now(), amount: 99999, donationType: 'IN_KIND', status: 'RECEIVED', donationDate: new Date('2026-08-01'), currency: 'MYR' } });
 await db.donation.create({ data: { donorId: donor.id, donationNumber: 'QA-USD-' + Date.now(), amount: 99999, status: 'RECEIVED', donationDate: new Date('2026-08-01'), currency: 'USD' } });
-const token = jwt.sign({ userId: user.id, email: user.email, role: 'ADMIN' }, 'finance-disposable-test-secret-only', { expiresIn: '2h' });
+const adminSession = await db.authSession.create({ data: { userId: user.id, expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000) } });
+const token = jwt.sign({ userId: user.id, email: user.email, role: 'ADMIN', sessionId: adminSession.id }, 'finance-disposable-test-secret-only', { expiresIn: '2h' });
 const studentToken = jwt.sign({ userId: 'test-student', email: 'student@example.test', role: 'STUDENT' }, 'finance-disposable-test-secret-only', { expiresIn: '2h' });
 fs.writeFileSync('/tmp/mrlc-finance-fixtures.json', JSON.stringify({ token, studentToken, payable: payable.id, pending: pending.id, donor: donor.id }));
 await db.$disconnect(); console.log('Disposable fixtures ready');

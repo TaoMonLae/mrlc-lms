@@ -4,6 +4,7 @@ import { asyncHandler } from "./lib/asyncHandler";
 import { registerSeoRoutes, renderSeoHtml } from "./lib/seo";
 import { getSeoMetadata } from "./shared/seo";
 import { accountStillMatchesToken, consumeRecoveryCode } from "./lib/sessionAccess";
+import { sessionSecretProblem, SESSION_SECRET_HINT } from "./lib/sessionSecret";
 import { announcementAudienceWhere } from "./lib/announcementAudience";
 import { notificationService, syncTeacherAppUpdates, type NotificationInput } from "./lib/notifications";
 import { registerNotificationRoutes } from "./notificationRoutes";
@@ -788,8 +789,9 @@ function generatePaymentNumber(paymentDate = new Date()): string {
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.SESSION_SECRET;
-if (!JWT_SECRET || JWT_SECRET.length < 16) {
-  logger.error("FATAL: SESSION_SECRET must be set and at least 16 characters long.");
+const sessionSecretFailure = sessionSecretProblem(JWT_SECRET);
+if (sessionSecretFailure) {
+  logger.error(`FATAL: ${sessionSecretFailure} ${SESSION_SECRET_HINT}`);
   process.exit(1);
 }
 
@@ -811,20 +813,26 @@ function verifyToken(token: string): JwtPayload {
   return jwt.verify(token, JWT_SECRET as string) as JwtPayload;
 }
 
+class SessionRejectedError extends Error {}
+
+const SESSION_LAST_SEEN_REFRESH_MS = 5 * 60 * 1000;
+
+async function assertActiveSession(payload: JwtPayload): Promise<void> {
+  if (!payload.sessionId) throw new SessionRejectedError("Token is not bound to a session");
+  const session = await prisma.authSession.findUnique({ where: { id: payload.sessionId } });
+  if (!session || session.userId !== payload.userId || session.revokedAt || session.expiresAt <= new Date()) {
+    throw new SessionRejectedError("Session expired or revoked");
+  }
+  if (Date.now() - session.lastSeenAt.getTime() > SESSION_LAST_SEEN_REFRESH_MS) {
+    prisma.authSession.update({ where: { id: session.id }, data: { lastSeenAt: new Date() } }).catch(() => {});
+  }
+}
+
 async function verifyTokenSession(token: string): Promise<JwtPayload> {
   const payload = verifyToken(token);
   if (payload.externalLearner || payload.role === "GUARDIAN") throw new Error("School account required");
   if (!await accountStillMatchesToken(prisma, payload)) throw new Error("Account access changed");
-  if (!payload.sessionId) throw new Error("Missing sessionId");
-
-  const session = await prisma.authSession.findUnique({ where: { id: payload.sessionId } });
-  if (!session || session.userId !== payload.userId || session.revokedAt || session.expiresAt <= new Date()) {
-    throw new Error("Session revoked");
-  }
-  if (Date.now() - (session.lastSeenAt?.getTime() || 0) > 5 * 60 * 1000) {
-    prisma.authSession.update({ where: { id: session.id }, data: { lastSeenAt: new Date() } }).catch(() => {});
-  }
-
+  await assertActiveSession(payload);
   return payload;
 }
 
@@ -913,16 +921,7 @@ export async function authMiddleware(
   const token = authHeader.slice(7); // strip "Bearer "
   try {
     const payload = verifyToken(token);
-    if (payload.sessionId) {
-      const session = await prisma.authSession.findUnique({ where: { id: payload.sessionId } });
-      if (!session || session.userId !== payload.userId || session.revokedAt || session.expiresAt <= new Date()) {
-        res.status(401).json({ error: "Unauthorized: Session expired or revoked" });
-        return;
-      }
-      if (Date.now() - session.lastSeenAt.getTime() > 5 * 60 * 1000) {
-        prisma.authSession.update({ where: { id: session.id }, data: { lastSeenAt: new Date() } }).catch(() => {});
-      }
-    }
+    await assertActiveSession(payload);
     if (!await accountStillMatchesToken(prisma, payload)) {
       res.status(401).json({ error: "Unauthorized: Account access changed" });
       return;
@@ -942,6 +941,10 @@ export async function authMiddleware(
     (req as any).user = payload;
     next();
   } catch (error) {
+    if (error instanceof SessionRejectedError) {
+      res.status(401).json({ error: "Unauthorized: Session expired or revoked" });
+      return;
+    }
     if (error instanceof jwt.JsonWebTokenError || error instanceof jwt.TokenExpiredError || error instanceof jwt.NotBeforeError) {
       res.status(401).json({ error: "Unauthorized: Invalid or expired token" });
       return;
@@ -15315,17 +15318,7 @@ async function startServer() {
     logger,
     authenticate: async (token) => {
       const payload = verifyToken(token);
-      if (payload.sessionId) {
-        const session = await prisma.authSession.findUnique({ where: { id: payload.sessionId } });
-        if (
-          !session ||
-          session.userId !== payload.userId ||
-          session.revokedAt ||
-          session.expiresAt <= new Date()
-        ) {
-          throw new Error("Session expired or revoked");
-        }
-      }
+      await assertActiveSession(payload);
       const user = await prisma.user.findUnique({
         where: { id: payload.userId },
         select: {
