@@ -227,17 +227,25 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
         throw new Error(errData.error || 'Failed to save student details');
       }
       const savedStudent = await res.json();
-      if (!isEdit && savedStudent?.id && pendingProfilePhoto) await uploadPendingProfilePhoto(savedStudent.id);
-
-      toast.success(isEdit ? 'Student updated successfully' : 'Student enrolled successfully');
-      if (!isEdit && savedStudent?.temporaryPassword) {
-        setNewCredentials([{
+      const credentials: TemporaryCredential[] = !isEdit && savedStudent?.temporaryPassword
+        ? [{
           name: [savedStudent.user?.firstName, savedStudent.user?.lastName].filter(Boolean).join(' '),
           email: savedStudent.user?.email ?? '',
           temporaryPassword: savedStudent.temporaryPassword,
-        }]);
-        return;
+        }]
+        : [];
+      if (credentials.length) setNewCredentials(credentials);
+
+      if (!isEdit && savedStudent?.id && pendingProfilePhoto) {
+        try {
+          await uploadPendingProfilePhoto(savedStudent.id);
+        } catch (photoError: any) {
+          toast.error(photoError?.message || 'Student saved, but profile picture upload failed');
+        }
       }
+
+      toast.success(isEdit ? 'Student updated successfully' : 'Student enrolled successfully');
+      if (credentials.length) return;
       navigate('/students');
     } catch (err: any) {
       console.error(err);
