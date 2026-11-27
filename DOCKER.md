@@ -38,7 +38,7 @@ Override these via environment variables or a `.env` file next to
 | `POSTGRES_USER`     | `mrlc`                           | DB user |
 | `POSTGRES_PASSWORD` | `mrlc_password`                  | **change for production** |
 | `POSTGRES_DB`       | `school_lms`                     | DB name |
-| `SESSION_SECRET`    | `change-me-to-a-long-random-string` | **must be 16+ chars; change it** |
+| `SESSION_SECRET`    | none (required)                  | **required; generate with `openssl rand -base64 48`. The app refuses placeholder or short values** |
 | `APP_URL`           | `http://localhost:8000`          | public URL (CORS origin) |
 | `SEED_ON_START`     | `false`                          | set `true` once to seed |
 
@@ -49,7 +49,7 @@ docker build -t mrlc-lms .
 
 docker run -p 8000:8000 \
   -e DATABASE_URL="postgresql://USER:PASS@HOST:5432/school_lms" \
-  -e SESSION_SECRET="a-long-random-string-min-16-chars" \
+  -e SESSION_SECRET="$(openssl rand -base64 48)" \
   -e APP_URL="http://localhost:8000" \
   -e SEED_ON_START=true \
   mrlc-lms

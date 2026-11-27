@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { randomUUID } from 'node:crypto';
-import jwt from 'jsonwebtoken';
+import { signSessionToken } from './sessionToken';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
@@ -14,8 +14,8 @@ const enabled = Boolean(url && new URL(url).hostname === '127.0.0.1' && new URL(
 test('video create/edit normalize pasted YouTube links and reject malformed IDs', { skip: !enabled }, async () => {
   const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: url! }) });
   const users: string[] = []; const videos: string[] = [];
-  const request = (role: string, userId: string, endpoint: string, method: string, body?: unknown) => fetch(`${base}${endpoint}`, {
-    method, headers: { Authorization: `Bearer ${jwt.sign({ role, userId, email: 'video-test@example.test' }, secret!, { expiresIn: '5m' })}`, 'Content-Type': 'application/json' },
+  const request = async (role: string, userId: string, endpoint: string, method: string, body?: unknown) => fetch(`${base}${endpoint}`, {
+    method, headers: { Authorization: `Bearer ${await signSessionToken(db, secret!, { role, userId, email: 'video-test@example.test' }, 300)}`, 'Content-Type': 'application/json' },
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
   try {

@@ -2,7 +2,7 @@ import { CURRENT_RELEASE } from '../../src/data/releases';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { randomUUID } from 'node:crypto';
-import jwt from 'jsonwebtoken';
+import { signSessionToken } from './sessionToken';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { dutyExpenseToday } from '../../shared/dutyExpenses';
@@ -23,7 +23,7 @@ test('boarding student entry is connected to Finance review', { skip: !enabled }
   let browser: Browser | undefined;
   let accountantId = "";
   const request = async (role: string, userId: string, path: string, body?: unknown) => {
-    const token = jwt.sign({ role, userId, email: `${userId}@example.test` }, secret!, { expiresIn: '5m' });
+    const token = await signSessionToken(db, secret!, { role, userId, email: `${userId}@example.test` }, 300);
     const response = await fetch(`${base}${path}`, {
       method: body === undefined ? 'GET' : 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -56,7 +56,7 @@ test('boarding student entry is connected to Finance review', { skip: !enabled }
     if (process.env.DUTY_TEST_BROWSER_PATH) {
       browser = await chromium.launch({ headless: true, executablePath: process.env.DUTY_TEST_BROWSER_PATH });
       studentPage = await browser.newPage();
-      const token = jwt.sign({ role: 'STUDENT', userId: users[0], email: `BOARDING-${suffix}@example.test` }, secret!, { expiresIn: '5m' });
+      const token = await signSessionToken(db, secret!, { role: 'STUDENT', userId: users[0], email: `BOARDING-${suffix}@example.test` }, 300);
       await studentPage.addInitScript(({ token, userId, releaseId }) => {
         sessionStorage.setItem('auth_token', token);
         sessionStorage.setItem('auth_user', JSON.stringify({ id: userId, role: 'STUDENT', firstName: 'Expense', lastName: 'Test', boardingType: 'BOARDING', isActive: true }));

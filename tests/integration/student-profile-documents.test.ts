@@ -3,7 +3,7 @@ import test from 'node:test';
 import { randomUUID } from 'node:crypto';
 import { readdir, unlink } from 'node:fs/promises';
 import path from 'node:path';
-import jwt from 'jsonwebtoken';
+import { signSessionToken } from './sessionToken';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
@@ -19,9 +19,9 @@ test('only admin changes student photos; private document actions are authentica
   const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: url! }) });
   const suffix = randomUUID();
   const users: string[] = []; const students: string[] = []; const documents: string[] = []; const files: string[] = [];
-  const request = (role: string | null, userId: string, endpoint: string, method = 'GET', body?: BodyInit) => fetch(`${base}${endpoint}`, {
+  const request = async (role: string | null, userId: string, endpoint: string, method = 'GET', body?: BodyInit) => fetch(`${base}${endpoint}`, {
     method, ...(body ? { body } : {}), headers: {
-      ...(role ? { Authorization: `Bearer ${jwt.sign({ role, userId, email: `${userId}@example.test` }, secret!, { expiresIn: '5m' })}` } : {}),
+      ...(role ? { Authorization: `Bearer ${await signSessionToken(db, secret!, { role, userId, email: `${userId}@example.test` }, 300)}` } : {}),
       ...(typeof body === 'string' ? { 'Content-Type': 'application/json' } : {}),
     },
   });
