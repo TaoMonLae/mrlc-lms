@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { apiGet, apiSend, authHeaders } from '../../lib/api';
 import { localToday } from '../../lib/dates';
+import { TemporaryCredentialsDialog, type TemporaryCredential } from '@/src/components/auth/TemporaryCredentialsDialog';
 
 interface AdmissionDocument {
   id: string;
@@ -82,6 +83,7 @@ export default function AdmissionDetail() {
   const navigate = useNavigate();
   const [application, setApplication] = useState<AdmissionApplication | null>(null);
   const [loading, setLoading] = useState(true);
+  const [newCredentials, setNewCredentials] = useState<TemporaryCredential[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [interview, setInterview] = useState({ interviewAt: '', interviewMode: 'IN_PERSON', interviewLocation: '', interviewNotes: '' });
   const [decision, setDecision] = useState({ status: 'APPROVED', decisionNotes: '' });
@@ -194,6 +196,13 @@ export default function AdmissionDetail() {
       });
       toast.success(`Enrolled as ${result.student.studentCode}`);
       setApplication(result.application);
+      if (result.temporaryPassword) {
+        setNewCredentials([{
+          name: [result.student.user?.firstName, result.student.user?.lastName].filter(Boolean).join(' '),
+          email: result.student.user?.email ?? '',
+          temporaryPassword: result.temporaryPassword,
+        }]);
+      }
     } catch (error: any) {
       toast.error(error.message || 'Failed to enroll application');
     } finally {
@@ -212,6 +221,7 @@ export default function AdmissionDetail() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
+      <TemporaryCredentialsDialog credentials={newCredentials} accountLabel="student" onDone={() => setNewCredentials([])} />
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <Button variant="ghost" size="sm" className="-ml-3 mb-2" render={<Link to="/admissions" />} nativeButton={false}>
@@ -346,7 +356,7 @@ export default function AdmissionDetail() {
               <Field label="Student ID" value={conversion.studentCode} onChange={(value) => setConversion((prev) => ({ ...prev, studentCode: value }))} placeholder="Leave blank to generate" disabled={!canConvert} />
               <Field label="Class ID" value={conversion.classId} onChange={(value) => setConversion((prev) => ({ ...prev, classId: value }))} placeholder="Optional" disabled={!canConvert} />
               <Field label="Enrollment date" type="date" value={conversion.enrollmentDate} onChange={(value) => setConversion((prev) => ({ ...prev, enrollmentDate: value }))} disabled={!canConvert} />
-              <Field label="Initial password" type="password" value={conversion.password} onChange={(value) => setConversion((prev) => ({ ...prev, password: value }))} placeholder="Leave blank to force default change" disabled={!canConvert} />
+              <Field label="Initial password" type="password" value={conversion.password} onChange={(value) => setConversion((prev) => ({ ...prev, password: value }))} placeholder="Leave blank to generate one" disabled={!canConvert} />
               <Button type="submit" disabled={!canConvert || busy === 'convert'} className="w-full">
                 {busy === 'convert' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
                 Convert to Student

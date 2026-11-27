@@ -3,8 +3,10 @@ import { deliverOutboxMessage } from "./lib/emailDelivery";
 import { asyncHandler } from "./lib/asyncHandler";
 import { registerSeoRoutes, renderSeoHtml } from "./lib/seo";
 import { getSeoMetadata } from "./shared/seo";
-import { accountStillMatchesToken, consumeRecoveryCode } from "./lib/sessionAccess";
+import { consumeRecoveryCode, sessionAccountForToken } from "./lib/sessionAccess";
 import { sessionSecretProblem, SESSION_SECRET_HINT } from "./lib/sessionSecret";
+import { UNKNOWN_ACCOUNT_PASSWORD_HASH, initialPasswordFor, normalizeEmail, pickLoginAccount } from "./lib/accountCredentials";
+import { PASSWORD_CHANGE_REQUIRED_CODE, isPasswordChangePendingApiRequestAllowed } from "./shared/accountAccess";
 import { announcementAudienceWhere } from "./lib/announcementAudience";
 import { notificationService, syncTeacherAppUpdates, type NotificationInput } from "./lib/notifications";
 import { registerNotificationRoutes } from "./notificationRoutes";
@@ -831,7 +833,9 @@ async function assertActiveSession(payload: JwtPayload): Promise<void> {
 async function verifyTokenSession(token: string): Promise<JwtPayload> {
   const payload = verifyToken(token);
   if (payload.externalLearner || payload.role === "GUARDIAN") throw new Error("School account required");
-  if (!await accountStillMatchesToken(prisma, payload)) throw new Error("Account access changed");
+  const account = await sessionAccountForToken(prisma, payload);
+  if (!account) throw new Error("Account access changed");
+  if (account.mustChangePassword) throw new Error("Password change required");
   await assertActiveSession(payload);
   return payload;
 }
@@ -922,8 +926,13 @@ export async function authMiddleware(
   try {
     const payload = verifyToken(token);
     await assertActiveSession(payload);
-    if (!await accountStillMatchesToken(prisma, payload)) {
+    const account = await sessionAccountForToken(prisma, payload);
+    if (!account) {
       res.status(401).json({ error: "Unauthorized: Account access changed" });
+      return;
+    }
+    if (account.mustChangePassword && !isPasswordChangePendingApiRequestAllowed(req.method, req.originalUrl)) {
+      res.status(403).json({ error: "Change your temporary password to continue.", code: PASSWORD_CHANGE_REQUIRED_CODE });
       return;
     }
     if (payload.externalLearner) {
@@ -2274,6 +2283,26 @@ async function startServer() {
       return (acct ? "acct:" + acct + "|" : "") + "ip:" + ipKeyGenerator(req.ip || "");
     },
   });
+  const loginAccountKey = (req: express.Request) => String(req.body?.identifier || req.body?.email || "").trim().toLowerCase();
+  const loginAccountFailureLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    skipSuccessfulRequests: true,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many failed sign-in attempts for this account. Please try again after 15 minutes." },
+    skip: (req) => !loginAccountKey(req),
+    keyGenerator: (req) => "login-acct:" + loginAccountKey(req),
+  });
+  const loginIpFailureLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    skipSuccessfulRequests: true,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many failed sign-in attempts from this network. Please try again after 15 minutes." },
+    keyGenerator: (req) => "login-ip:" + ipKeyGenerator(req.ip || ""),
+  });
   const publicSignupLimiter = rateLimit({
     windowMs: 60 * 60 * 1000,
     max: 8,
@@ -2474,7 +2503,7 @@ async function startServer() {
    * "identifier" may be either the account's email address or its username.
    * Returns: { token: string, user: { id, email, role } }
    */
-  app.post("/api/auth/login", authLimiter, validate(schemas.login), async (req, res) => {
+  app.post("/api/auth/login", authLimiter, loginIpFailureLimiter, loginAccountFailureLimiter, validate(schemas.login), async (req, res) => {
     const { identifier, password, rememberMe, mfaCode } = req.body as {
       identifier?: string;
       password?: string;
@@ -2488,34 +2517,23 @@ async function startServer() {
     }
 
     try {
-      // Cast to `any` here: the Prisma client in this environment was
-      // generated before the `username` column was added to the schema (no
-      // network access to fetch the schema-engine binary in this sandbox to
-      // regenerate it) and its TS types don't know about the field yet,
-      // though the column itself exists per the migration. Running
-      // `prisma generate` in a normal dev environment removes the need for
-      // this cast.
-      const user = await prisma.user.findFirst({
-        where: { OR: [{ email: identifier }, { username: identifier } as any] },
+      const loginIdentifier = identifier.trim();
+      const candidates = await prisma.user.findMany({
+        where: { OR: [{ email: { equals: normalizeEmail(loginIdentifier), mode: "insensitive" } }, { username: { equals: loginIdentifier, mode: "insensitive" } }] },
         include: { studentProfile: { select: { id: true, boardingType: true, studentCouncilRole: true } } },
+        take: 5,
       });
+      const user = pickLoginAccount(candidates, loginIdentifier);
 
-      if (!user || !user.passwordHash) {
-        // Use constant-time comparison even for missing users to avoid timing attacks
-        await bcrypt.compare(password, "$2b$10$invalidhashpadding000000000000000000000000000000000000");
+      const passwordValid = await bcrypt.compare(password, user?.passwordHash || UNKNOWN_ACCOUNT_PASSWORD_HASH);
+      if (!user || !user.passwordHash || !passwordValid) {
+        if (user) logger.warn(`Failed login attempt for identifier: ${loginIdentifier}`);
         res.status(401).json({ error: "Invalid email/username or password" });
         return;
       }
 
       if (!user.isActive) {
         res.status(403).json({ error: "Account is disabled. Contact your administrator." });
-        return;
-      }
-
-      const passwordValid = await bcrypt.compare(password, user.passwordHash);
-      if (!passwordValid) {
-        logger.warn(`Failed login attempt for identifier: ${identifier}`);
-        res.status(401).json({ error: "Invalid email/username or password" });
         return;
       }
 
@@ -3211,6 +3229,7 @@ async function startServer() {
       return;
     }
     try {
+      const initialPassword = await initialPasswordFor(null);
       const result = await prisma.$transaction(async (tx) => {
         // Auto-generate studentCode if not provided
         const finalStudentCode = studentCode || await nextStudentCode(tx);
@@ -3219,9 +3238,10 @@ async function startServer() {
           data: {
             firstName,
             lastName,
-            email,
+            email: normalizeEmail(email),
             role: "STUDENT",
-            passwordHash: await bcrypt.hash("Student123!", 10),
+            passwordHash: initialPassword.passwordHash,
+            mustChangePassword: initialPassword.mustChangePassword,
           }
         });
         const student = await tx.student.create({
@@ -3277,7 +3297,7 @@ async function startServer() {
         "SUCCESS"
       );
 
-      res.status(201).json(result);
+      res.status(201).json({ ...result, temporaryPassword: initialPassword.temporaryPassword });
     } catch (err: any) {
       logger.error("Error creating student:", err);
       if (err.code === "P2002") {
@@ -3308,6 +3328,7 @@ async function startServer() {
     const s = (v: any) => (v == null ? "" : String(v).trim());
     const created: string[] = [];
     const errors: { row: number; message: string }[] = [];
+    const credentials: { row: number; name: string; email: string; temporaryPassword: string }[] = [];
     const seenCodes = new Set<string>();
     const seenEmails = new Set<string>();
 
@@ -3350,16 +3371,12 @@ async function startServer() {
       const dob = s(r.dateOfBirth);
       const dateOfBirth = dob && !isNaN(Date.parse(dob)) ? new Date(dob) : null;
 
-      // Optional per-row password. When supplied it's used as-is (min 6 chars) and
-      // the student is NOT forced to change it; otherwise a default is set and they
-      // must change it at first login.
       const password = s(r.password);
       if (password && password.length < 6) {
         errors.push({ row: rowNo, message: "password must be at least 6 characters" });
         continue;
       }
-      const passwordHash = await bcrypt.hash(password || "Student123!", 10);
-      const mustChangePassword = !password;
+      const { passwordHash, mustChangePassword, temporaryPassword } = await initialPasswordFor(password);
 
       try {
         await prisma.$transaction(async (tx) => {
@@ -3380,6 +3397,7 @@ async function startServer() {
         });
         seenCodes.add(studentCode); seenEmails.add(email);
         created.push(studentCode);
+        if (temporaryPassword) credentials.push({ row: rowNo, name: `${firstName} ${lastName}`, email, temporaryPassword });
       } catch (err: any) {
         errors.push({ row: rowNo, message: err?.code === "P2002" ? "Email or studentCode already exists" : "Could not create student" });
       }
@@ -3390,7 +3408,7 @@ async function startServer() {
       `Bulk student import: ${created.length} created, ${errors.length} skipped.`,
       req.ip, req.headers["user-agent"] || null, errors.length ? "WARNING" : "SUCCESS",
     );
-    res.json({ createdCount: created.length, failedCount: errors.length, errors });
+    res.json({ createdCount: created.length, failedCount: errors.length, errors, credentials });
   });
 
   app.get("/api/students/:id", authMiddleware, async (req, res) => {
@@ -3590,7 +3608,7 @@ async function startServer() {
             data: {
               firstName,
               lastName,
-              email,
+              email: email ? normalizeEmail(email) : email,
             }
           });
         }
@@ -3780,9 +3798,8 @@ async function startServer() {
       }
       const passwordHash = await bcrypt.hash(password, 10);
       const user = await prisma.$transaction(async (tx) => {
-        // See the cast note near the login route re: stale Prisma types.
         const created = await tx.user.create({
-          data: { firstName, lastName: lastName || "", email, username: username || null, passwordHash, role, isActive: status !== "DISABLED" },
+          data: { firstName, lastName: lastName || "", email: normalizeEmail(email), username: username || null, passwordHash, role, isActive: status !== "DISABLED", mustChangePassword: true },
           select: { id: true, firstName: true, lastName: true, email: true, username: true, role: true, isActive: true },
         } as any);
         // Optionally link an existing teacher/student profile to the new account.
@@ -5974,16 +5991,16 @@ async function startServer() {
 
         const studentCode = req.body.studentCode || await nextStudentCode(tx);
         const { firstName, lastName } = splitApplicantName(application.applicantName);
-        const emailAddress = application.email || `${studentCode.toLowerCase().replace(/[^a-z0-9]/g, "")}@mrlc-student.edu`;
-        const password = req.body.password || "Student123!";
+        const emailAddress = normalizeEmail(application.email || `${studentCode.toLowerCase().replace(/[^a-z0-9]/g, "")}@mrlc-student.edu`);
+        const initialPassword = await initialPasswordFor(req.body.password);
         const user = await tx.user.create({
           data: {
             firstName,
             lastName,
             email: emailAddress,
-            passwordHash: await bcrypt.hash(password, 10),
+            passwordHash: initialPassword.passwordHash,
             role: "STUDENT",
-            mustChangePassword: !req.body.password,
+            mustChangePassword: initialPassword.mustChangePassword,
           },
         });
         const student = await tx.student.create({
@@ -6014,7 +6031,7 @@ async function startServer() {
             status: "ACTIVE",
             enrollmentDate: req.body.enrollmentDate ? new Date(req.body.enrollmentDate) : new Date(),
           },
-          include: { user: true, class: true },
+          include: { user: { select: { id: true, firstName: true, lastName: true, email: true } }, class: true },
         });
 
         for (const document of application.documents.filter((doc: any) => doc.fileUrl)) {
@@ -6045,7 +6062,7 @@ async function startServer() {
           include: admissionInclude,
         });
         await addAdmissionTimeline(tx, application.id, "ENROLLED", "Converted to student", `Created student ${student.studentCode}.`, application.status, "ENROLLED", jwtUser);
-        return { application: updatedApplication, student };
+        return { application: updatedApplication, student, temporaryPassword: initialPassword.temporaryPassword };
       });
 
       await createAuditLog(jwtUser.userId, jwtUser.email, "CONVERT", "ADMISSION", result.application.id, `Admission ${result.application.applicationNo} converted to student ${result.student.studentCode}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
@@ -9631,7 +9648,7 @@ async function startServer() {
           data: {
             ...(firstName && { firstName }),
             ...(lastName !== undefined && { lastName }),
-            ...(email && { email }),
+            ...(email && { email: normalizeEmail(email) }),
             ...(username !== undefined && { username: username || null }),
             ...(role && { role }),
             ...(status !== undefined && { isActive: status !== "DISABLED" }),
@@ -9823,13 +9840,10 @@ async function startServer() {
         ? subjects.map((subject: string) => subject.trim()).filter(Boolean)
         : String(subjects || "").split(",").map((subject) => subject.trim()).filter(Boolean);
       const specialization = subjectList.join(", ");
-      // A shareable temporary password the admin hands to the teacher; they must
-      // change it on first login (mustChangePassword).
-      const tempPassword = `Mrlc-${crypto.randomBytes(4).toString("hex")}`;
+      const initialPassword = await initialPasswordFor(null);
       const result = await prisma.$transaction(async (tx) => {
-        const passwordHash = await bcrypt.hash(tempPassword, 10);
         const user = await tx.user.create({
-          data: { firstName, lastName, email: email.toLowerCase(), passwordHash, role: "TEACHER", isActive: true, mustChangePassword: true },
+          data: { firstName, lastName, email: normalizeEmail(email), passwordHash: initialPassword.passwordHash, role: "TEACHER", isActive: true, mustChangePassword: initialPassword.mustChangePassword },
         });
         const teacherCode = `TCH-${Date.now().toString().slice(-6)}`;
         const teacher = await tx.teacher.create({
@@ -9851,7 +9865,7 @@ async function startServer() {
       });
       await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "TEACHER", result.id,
         `Teacher '${firstName} ${lastName}' added.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
-      res.status(201).json({ ...result, tempPassword });
+      res.status(201).json({ ...result, temporaryPassword: initialPassword.temporaryPassword });
     } catch (err: any) {
       logger.error("Error creating teacher:", err);
       if (err.code === "P2002") { res.status(400).json({ error: "Email already exists" }); return; }
@@ -9869,6 +9883,7 @@ async function startServer() {
     const s = (v: any) => (v == null ? "" : String(v).trim());
     const created: string[] = [];
     const errors: { row: number; message: string }[] = [];
+    const credentials: { row: number; name: string; email: string; temporaryPassword: string }[] = [];
     const seenEmails = new Set<string>();
     const codeBase = Date.now().toString().slice(-6);
 
@@ -9903,16 +9918,12 @@ async function startServer() {
       const baseSalaryRaw = s(r.baseSalary);
       const baseSalary = baseSalaryRaw && !isNaN(Number(baseSalaryRaw)) ? Number(baseSalaryRaw) : 0;
 
-      // Optional per-row password. When supplied it's used as-is (min 6 chars)
-      // and the teacher is NOT forced to change it; otherwise a default is set
-      // and they must change it at first login.
       const password = s(r.password);
       if (password && password.length < 6) {
         errors.push({ row: rowNo, message: "password must be at least 6 characters" });
         continue;
       }
-      const passwordHash = await bcrypt.hash(password || "Teacher123!", 10);
-      const mustChangePassword = !password;
+      const { passwordHash, mustChangePassword, temporaryPassword } = await initialPasswordFor(password);
 
       try {
         await prisma.$transaction(async (tx) => {
@@ -9934,6 +9945,7 @@ async function startServer() {
         });
         seenEmails.add(email);
         created.push(email);
+        if (temporaryPassword) credentials.push({ row: rowNo, name: `${firstName} ${lastName}`, email, temporaryPassword });
       } catch (err: any) {
         errors.push({ row: rowNo, message: err?.code === "P2002" ? "Email or teacherCode already exists" : "Could not create teacher" });
       }
@@ -9944,7 +9956,7 @@ async function startServer() {
       `Bulk teacher import: ${created.length} created, ${errors.length} skipped.`,
       req.ip, req.headers["user-agent"] || null, errors.length ? "WARNING" : "SUCCESS",
     );
-    res.json({ createdCount: created.length, failedCount: errors.length, errors });
+    res.json({ createdCount: created.length, failedCount: errors.length, errors, credentials });
   });
 
   // ── Classes (create) ────────────────────────────────────────────────────────

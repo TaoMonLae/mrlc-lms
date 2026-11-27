@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import { localToday } from '../../lib/dates';
 import { ProfilePhotoCropDialog } from '@/src/components/profile/ProfilePhotoCropDialog';
+import { TemporaryCredentialsDialog, type TemporaryCredential } from '@/src/components/auth/TemporaryCredentialsDialog';
 
 const teacherSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
@@ -47,6 +48,7 @@ const EDUCATION_LEVELS = [
 
 export default function TeacherNew() {
   const navigate = useNavigate();
+  const [newCredentials, setNewCredentials] = useState<TemporaryCredential[]>([]);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const [pendingCropFile, setPendingCropFile] = useState<File | null>(null);
@@ -134,13 +136,10 @@ export default function TeacherNew() {
           toast.error(photoErr.error || 'Teacher was added, but profile photo upload failed');
         }
       }
-      if (created?.tempPassword) {
-        toast.success('Teacher added — share their temporary password', {
-          description: `Login: ${data.email}  •  Temporary password: ${created.tempPassword}. They'll be asked to change it on first sign-in.`,
-          duration: 30000,
-        });
-      } else {
-        toast.success('Teacher added successfully');
+      toast.success('Teacher added successfully');
+      if (created?.temporaryPassword) {
+        setNewCredentials([{ name: data.fullName.trim(), email: data.email.trim().toLowerCase(), temporaryPassword: created.temporaryPassword }]);
+        return;
       }
       navigate('/teachers');
     } catch (error: any) {
@@ -150,6 +149,7 @@ export default function TeacherNew() {
 
   return (
     <div className="space-y-6 max-w-[1000px] mx-auto pb-10">
+      <TemporaryCredentialsDialog credentials={newCredentials} accountLabel="teacher" onDone={() => navigate('/teachers')} />
       <div>
         <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground" render={<Link to="/teachers" />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />

@@ -39,3 +39,16 @@ export function safeAppReturnPath(value: unknown): string | null {
     : "";
   return `${candidate.pathname}${search}${hash}`;
 }
+
+const PASSWORD_CHANGE_PENDING_API = new Set([
+  "GET /api/auth/me",
+  "POST /api/auth/change-password",
+  "POST /api/auth/logout",
+  "GET /api/settings",
+]);
+
+export const PASSWORD_CHANGE_REQUIRED_CODE = "PASSWORD_CHANGE_REQUIRED";
+
+export function isPasswordChangePendingApiRequestAllowed(method: string, url: string): boolean {
+  return PASSWORD_CHANGE_PENDING_API.has(`${method.toUpperCase()} ${accountPathname(url)}`);
+}

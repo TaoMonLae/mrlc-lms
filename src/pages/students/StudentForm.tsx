@@ -18,6 +18,7 @@ import { ProfilePhotoCropDialog } from '@/src/components/profile/ProfilePhotoCro
 import { localToday } from '../../lib/dates';
 import { useAuth } from '../../providers/AuthProvider';
 import { STUDENT_COUNCIL_ROLES, STUDENT_COUNCIL_ROLE_LABELS } from '../../../shared/studentCouncil';
+import { TemporaryCredentialsDialog, type TemporaryCredential } from '@/src/components/auth/TemporaryCredentialsDialog';
 
 interface StudentFormProps {
   initialData?: any;
@@ -61,6 +62,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
   const { user } = useAuth();
   const canEditPhoto = user?.role === 'ADMIN';
   const navigate = useNavigate();
+  const [newCredentials, setNewCredentials] = useState<TemporaryCredential[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
   const [selectedClass, setSelectedClass] = useState<string>('');
   const [selectedGender, setSelectedGender] = useState<string>('MALE');
@@ -225,9 +227,25 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
         throw new Error(errData.error || 'Failed to save student details');
       }
       const savedStudent = await res.json();
-      if (!isEdit && savedStudent?.id && pendingProfilePhoto) await uploadPendingProfilePhoto(savedStudent.id);
+      const credentials: TemporaryCredential[] = !isEdit && savedStudent?.temporaryPassword
+        ? [{
+          name: [savedStudent.user?.firstName, savedStudent.user?.lastName].filter(Boolean).join(' '),
+          email: savedStudent.user?.email ?? '',
+          temporaryPassword: savedStudent.temporaryPassword,
+        }]
+        : [];
+      if (credentials.length) setNewCredentials(credentials);
+
+      if (!isEdit && savedStudent?.id && pendingProfilePhoto) {
+        try {
+          await uploadPendingProfilePhoto(savedStudent.id);
+        } catch (photoError: any) {
+          toast.error(photoError?.message || 'Student saved, but profile picture upload failed');
+        }
+      }
 
       toast.success(isEdit ? 'Student updated successfully' : 'Student enrolled successfully');
+      if (credentials.length) return;
       navigate('/students');
     } catch (err: any) {
       console.error(err);
@@ -245,6 +263,8 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
   const defaultFullName = `${initialData?.user?.firstName || initialData?.firstName || ''} ${initialData?.user?.lastName || initialData?.lastName || ''}`.trim();
 
   return (
+    <>
+    <TemporaryCredentialsDialog credentials={newCredentials} accountLabel="student" onDone={() => navigate('/students')} />
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* Personal Information */}
       <div className={sectionClass}>
@@ -522,5 +542,6 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
         onCropped={acceptPendingCrop}
       />
     </form>
+    </>
   );
 }

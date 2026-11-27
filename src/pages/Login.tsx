@@ -168,7 +168,7 @@ export default function LoginPage() {
 
         <div className="space-y-2">
           <label htmlFor="identifier" className="block text-sm font-bold text-foreground">Email or username</label>
-          <Input id="identifier" type="text" autoComplete="username" spellCheck={false} placeholder="Enter your school email or username" aria-invalid={Boolean(errors.identifier)} aria-describedby={errors.identifier ? 'identifier-error' : undefined} className="h-12 rounded-none border-input bg-card text-foreground placeholder:text-muted-foreground  px-4 text-base shadow-none focus-visible:border-primary focus-visible:ring-primary/25" {...register('identifier', { onChange: clearFeedback })} />
+          <Input id="identifier" type="text" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Enter your school email or username" aria-invalid={Boolean(errors.identifier)} aria-describedby={errors.identifier ? 'identifier-error' : undefined} className="h-12 rounded-none border-input bg-card text-foreground placeholder:text-muted-foreground  px-4 text-base shadow-none focus-visible:border-primary focus-visible:ring-primary/25" {...register('identifier', { onChange: clearFeedback })} />
           {errors.identifier && <p id="identifier-error" className="text-xs font-semibold text-red-600" role="alert">{errors.identifier.message}</p>}
         </div>
 
